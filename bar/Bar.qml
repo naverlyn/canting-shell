@@ -343,59 +343,59 @@ Scope {
             }
           }
 
-          // Now Playing
-          Rectangle {
-            height: 24
-            width: nowPlayingContent.width + 16
-            radius: 12
-            color: root.theme.bgSurface
-            visible: root.activePlayer !== null
+          // Now Playing (set to disabled)
+          // Rectangle {
+          //   height: 24
+          //   width: nowPlayingContent.width + 16
+          //   radius: 12
+          //   color: root.theme.bgSurface
+          //   visible: root.activePlayer !== null
 
-            Accessible.role: Accessible.Button
-            Accessible.name: {
-              if (!root.activePlayer) return "No media";
-              const artist = root.activePlayer.trackArtist || "";
-              const title = root.activePlayer.trackTitle || "";
-              return "Now playing: " + (artist ? artist + " - " : "") + title;
-            }
+          //   Accessible.role: Accessible.Button
+          //   Accessible.name: {
+          //     if (!root.activePlayer) return "No media";
+          //     const artist = root.activePlayer.trackArtist || "";
+          //     const title = root.activePlayer.trackTitle || "";
+          //     return "Now playing: " + (artist ? artist + " - " : "") + title;
+          //   }
 
-            Row {
-              id: nowPlayingContent
-              anchors.verticalCenter: parent.verticalCenter
-              anchors.left: parent.left
-              anchors.leftMargin: 8
-              spacing: 6
+          //   Row {
+          //     id: nowPlayingContent
+          //     anchors.verticalCenter: parent.verticalCenter
+          //     anchors.left: parent.left
+          //     anchors.leftMargin: 8
+          //     spacing: 6
 
-              Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.activePlayer && root.activePlayer.isPlaying ? "󰐊" : "󰏤"
-                color: root.theme.accentPrimary
-                font.pixelSize: 14
-                font.family: root.font
-              }
+          //     Text {
+          //       anchors.verticalCenter: parent.verticalCenter
+          //       text: root.activePlayer && root.activePlayer.isPlaying ? "󰐊" : "󰏤"
+          //       color: root.theme.accentPrimary
+          //       font.pixelSize: 14
+          //       font.family: root.font
+          //     }
 
-              Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: {
-                  if (!root.activePlayer) return "";
-                  const artist = root.activePlayer.trackArtist || "";
-                  const title = root.activePlayer.trackTitle || "";
-                  return artist ? artist + " - " + title : title;
-                }
-                color: root.theme.textPrimary
-                font.pixelSize: 11
-                font.family: root.font
-                elide: Text.ElideRight
-                width: Math.min(implicitWidth, 200)
-              }
-            }
+          //     Text {
+          //       anchors.verticalCenter: parent.verticalCenter
+          //       text: {
+          //         if (!root.activePlayer) return "";
+          //         const artist = root.activePlayer.trackArtist || "";
+          //         const title = root.activePlayer.trackTitle || "";
+          //         return artist ? artist + " - " + title : title;
+          //       }
+          //       color: root.theme.textPrimary
+          //       font.pixelSize: 11
+          //       font.family: root.font
+          //       elide: Text.ElideRight
+          //       width: Math.min(implicitWidth, 200)
+          //     }
+          //   }
 
-            MouseArea {
-              anchors.fill: parent
-              cursorShape: Qt.PointingHandCursor
-              onClicked: root.activePlayer.togglePlaying()
-            }
-          }
+          //   MouseArea {
+          //     anchors.fill: parent
+          //     cursorShape: Qt.PointingHandCursor
+          //     onClicked: root.activePlayer.togglePlaying()
+          //   }
+          // }
           // Weather
           Rectangle {
             height: 24
@@ -420,6 +420,56 @@ Scope {
               anchors.fill: parent
               cursorShape: Qt.PointingHandCursor
               onClicked: weatherProcess.running = true
+            }
+          }
+
+          // Control Center (WIP)
+          // TODO: Wi-Fi, Bluetooth, Display, Volume, Microphone, switch audio, airplane mode, etc.
+          Rectangle {
+            id: controlCenterButton
+            height: 24
+            width: controlCenterContent.width + 16
+            radius: 12
+            color: root.theme.bgSurface
+            Accessible.role: Accessible.Button
+            Accessible.name: "Control Center"
+
+            Row {
+              id: controlCenterContent
+              anchors.centerIn: parent
+              spacing: 6
+              Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: ""
+                color: root.theme.textPrimary
+                font.pixelSize: 10
+                font.family: root.font
+              }
+            }
+
+            MouseArea {
+              id: controlCenterArea
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onClicked: controlCenter.visible = !controlCenter.visible
+            }
+
+            Rectangle {
+              property var test
+              anchors.fill: parent
+              radius: parent.radius
+              color: root.theme.bgSurface
+              opacity: controlCenterArea.containsMouse ? 0.0 : 0.15
+              Behavior on opacity {
+                NumberAnimation { duration: 150 }
+              }
+            }
+            ControlCenter {
+              id: controlCenter
+              theme: root.theme.accentPrimary
+              font: root.font
+              anchorTarget: controlCenterButton
             }
           }
         }
@@ -451,7 +501,7 @@ Scope {
           anchors.left: parent.left
           anchors.verticalCenter: parent.verticalCenter
           spacing: 8
-          // testRectangle
+          // testRectangle (apps, disabled)
           // Rectangle {
           //   id: testButtonContent
           //   height: 24
@@ -481,6 +531,7 @@ Scope {
           //     }
           //   }
           // }
+
           // Network
             Rectangle {
               height: 24
