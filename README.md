@@ -50,7 +50,7 @@ optional, depending on which modules you use:
 if you'd like the full setup:
 
 ```bash
-git clone https://github.com/doannc2212/quickshell-config ~/.config/quickshell
+git clone https://github.com/naverlyn/quickshell-config ~/.config/quickshell
 quickshell
 ```
 
