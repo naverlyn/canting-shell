@@ -1,0 +1,2863 @@
+import QtQuick
+import QtQuick.Layouts
+import QtQml
+import Quickshell
+import Quickshell.Io
+import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
+import Quickshell.Services.Notifications
+import "../bar"
+import Quickshell.Wayland
+import Quickshell.Widgets
+import Quickshell.Hyprland
+
+PanelWindow {
+    id: controlCenter
+
+    property var theme: DefaultTheme {}
+    property string font: "Hack Nerd Font"
+    property var anchorTarget
+
+    // System Information
+    property string userName: "User"
+
+    // Toggle states
+    property bool wifiEnabled: true
+    property bool btEnabled: false
+    property bool btAvailable: false
+    property bool dndEnabled: false
+    property bool airplaneEnabled: false
+    property bool viewNotifications: false
+    
+    // Hardware states
+    property int currentBrightness: 50
+
+    // Wi-fi properties
+    property string currentSsid: ""
+    property var networkList: []
+    property string selectedSsid: ""
+    property bool selectedSsidSecured: false
+    
+    // Dropdown states for Main Audio / Mic device selectors
+    property bool sinkDropdownOpen: false
+    property bool sourceDropdownOpen: false
+
+    // Available hardware output sinks & input sources from Pipewire
+    readonly property var audioSinks: {
+        if (!Pipewire.ready) return [];
+        return Pipewire.nodes.values.filter(n => n.audio !== null && !n.isStream && n.isSink);
+    }
+    readonly property var audioSources: {
+        if (!Pipewire.ready) return [];
+        return Pipewire.nodes.values.filter(n => n.audio !== null && !n.isStream && !n.isSink);
+    }
+    
+    // Layer-shell panel in the top-right corner, below the bar. (A PopupWindow can't take
+    // keyboard focus or be part of a focus grab, so Esc / click-outside never worked there.)
+    screen: (anchorTarget && anchorTarget.QsWindow.window) ? anchorTarget.QsWindow.window.screen : null
+    anchors { top: true; right: true }
+    margins { top: 38; right: 10 }
+    exclusionMode: ExclusionMode.Ignore
+    focusable: true
+    WlrLayershell.layer: WlrLayer.Overlay
+
+    // 1. Permanent History Array
+    property var historyModel: []
+
+    // Notifications grouped by app (newest first); each group keeps its own items/actions
+    property var expandedApps: ({})
+    readonly property var notifGroups: {
+        const order = [];
+        const map = {};
+        for (const n of historyModel) {
+            const key = n.notifAppName;
+            if (!map[key]) { map[key] = { appName: key, items: [] }; order.push(key); }
+            map[key].items.push(n);
+        }
+        return order.map(k => map[k]);
+    }
+
+    function toggleGroup(app) {
+        const copy = Object.assign({}, expandedApps);
+        copy[app] = !copy[app];
+        expandedApps = copy;
+    }
+
+    function dismissNotif(id) {
+        historyModel = historyModel.filter(n => n.notifId !== id);
+    }
+
+    function dismissGroup(app) {
+        historyModel = historyModel.filter(n => n.notifAppName !== app);
+    }
+
+    // 2. Official Notification Daemon
+    NotificationServer {
+        id: notifServer
+    }
+
+    // 3. The Invisible Bridge: With a Timer delay to ensure properties are loaded
+    Instantiator {
+        model: notifServer.trackedNotifications
+        delegate: Item {
+            id: delegateBridge
+            property var notif: modelData
+
+            Timer {
+                id: extractTimer
+                interval: 100 // Wait 100ms for DBus payload (Actions, Summary) to fully bind
+                running: true
+                onTriggered: {
+                    if (!delegateBridge.notif) return;
+                    let n = delegateBridge.notif;
+                    
+                    let nId = n.id !== undefined ? n.id : Math.random();
+                    let arr = controlCenter.historyModel;
+                    
+                    for (let i = 0; i < arr.length; i++) {
+                        if (arr[i].notifId === nId) return; 
+                    }
+                    
+                    let extractedActions = [];
+                    let acts = n.actions || [];
+                    
+                    // Safely iterate the native DBus actions using a closure
+                    for (let i = 0; i < acts.length; i++) {
+                        (function(actionObj) {
+                            if (actionObj && actionObj.label) {
+                                extractedActions.push({
+                                    label: actionObj.label + "",
+                                    invokeFn: function() { try { actionObj.invoke(); } catch(e) {} },
+                                    customCmd: ""
+                                });
+                            }
+                        })(acts[i]);
+                    }
+                    
+                    let summaryStr = (n.summary || "New Notification") + "";
+                    let bodyStr = (n.body || "") + "";
+
+                    // Swappy screenshots: the script's own Open/Delete actions die with notify-send
+                    // (10s expiry), and the image only lives in the clipboard / a temp file.
+                    // Snapshot the clipboard NOW (script runs wl-copy before notifying) so every
+                    // card keeps its own image.
+                    if (bodyStr.indexOf("Swappy") !== -1) {
+                        let shotPath = "/tmp/qs-shot-" + Date.now() + "-" + nId + ".png";
+                        Quickshell.execDetached(["sh", "-c", "wl-paste --type image/png > '" + shotPath + "'"]);
+                        extractedActions = [
+                            { label: "Open", invokeFn: null, customCmd: "swappy -f '" + shotPath + "'" },
+                            { label: "Delete", invokeFn: null, customCmd: "rm -f '" + shotPath + "'" }
+                        ];
+                    } else if (/screenshot/i.test(summaryStr) && /saved/i.test(bodyStr) && !/not saved/i.test(bodyStr)) {
+                        // Regular grim screenshots (Super+Print, area, window, active, timers):
+                        // the script's own Open/Delete actions are gone by the time we show the card,
+                        // so locate the saved file by modification time closest to this notification.
+                        let ts = Date.now() / 1000;
+                        let findCmd = "d=\"$(xdg-user-dir PICTURES 2>/dev/null || echo \"$HOME/Pictures\")/Screenshots\"; " +
+                            "f=\"$(find \"$d\" -maxdepth 1 -type f -name '*.png' -printf '%T@ %p\\n' | " +
+                            "awk -v t=" + ts + " '{x=$1-t; if (x<0) x=-x; if (m==\"\" || x<m) {m=x; p=$0}} END {sub(/^[^ ]+ /, \"\", p); print p}')\"; ";
+                        extractedActions = [
+                            { label: "Open", invokeFn: null, customCmd: findCmd + "[ -n \"$f\" ] && xdg-open \"$f\"" },
+                            { label: "Delete", invokeFn: null, customCmd: findCmd + "[ -n \"$f\" ] && rm -f \"$f\"" }
+                        ];
+                    } else if (extractedActions.length === 0) {
+                        // FALLBACK: Provide default Accept and Dismiss buttons
+                        extractedActions = [
+                            {
+                                label: "Accept",
+                                invokeFn: (acts && acts.length > 0 && acts[0].invoke)
+                                    ? function() { try { acts[0].invoke(); } catch(e) {} }
+                                    : null,
+                                customCmd: ""
+                            },
+                            {
+                                label: "Dismiss",
+                                invokeFn: null,
+                                customCmd: ""
+                            }
+                        ];
+                    }
+
+                    let imgStr = (n.image || "") + "";
+                    if (imgStr.indexOf("image://qsimage/") !== -1) {
+                        imgStr = "";
+                    }
+
+                    // Deep copy strings
+                    let newItem = {
+                        notifId: nId,
+                        notifAppName: (n.appName || "Notification") + "",
+                        notifAppIcon: (n.appIcon || "") + "",
+                        notifImage: imgStr,
+                        notifSummary: summaryStr,
+                        notifBody: bodyStr,
+                        notifActions: extractedActions
+                    };
+
+                    controlCenter.historyModel = [newItem].concat(arr).slice(0, 50);
+                }
+            }
+        }
+    }
+
+    // Process for running manual shell commands if native actions time out
+    Process {
+        id: customActionProc
+        running: false
+    }
+
+    // Fetch the current username
+    Process {
+        command: ["whoami"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text.trim() !== "") {
+                    const name = text.trim();
+                    controlCenter.userName = name.charAt(0).toUpperCase() + name.slice(1);
+                }
+            }
+        }
+    }
+
+    // Toggle SwayNC (You can remove this if you fully switch to Quickshell notifications)
+    Process {
+        id: swayncToggleProc
+        command: ["swaync-client", "-t"]
+        running: false
+    }
+
+    // --- Brightness Processes ---
+    Process {
+        id: brightnessStatusProc
+        command: ["sh", "-c", "brightnessctl -m | head -n 1 | awk -F, '{print $5}' | tr -d '%'"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                let val = parseInt(text.trim());
+                if (!isNaN(val)) controlCenter.currentBrightness = val;
+            }
+        }
+    }
+
+    Process {
+        id: setBrightnessProc
+        running: false
+    }
+
+    function setBrightness(percent) {
+        setBrightnessProc.command = ["brightnessctl", "set", Math.round(percent) + "%"];
+        setBrightnessProc.running = true;
+    }
+
+    // Fetch the currently active SSID
+    Process {
+        id: activeSsidProc
+        command: ["sh", "-c", "nmcli -t -f active,ssid dev wifi | grep '^yes' | cut -d':' -f2"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: controlCenter.currentSsid = text.trim()
+        }
+    }
+
+    // Scan for available Wi-Fi networks
+    Process {
+        id: scanWifiProc
+        command: ["nmcli", "-t", "-f", "ssid,signal,security", "dev", "wifi"]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.trim().split('\n');
+                const nets = [];
+                const seen = new Set();
+                for (const line of lines) {
+                    if (!line) continue;
+                    const parts = line.split(':');
+                    if (parts.length >= 3) {
+                        const ssid = parts[0];
+                        if (!ssid || seen.has(ssid)) continue;
+                        seen.add(ssid);
+                        nets.push({ ssid: ssid, signal: parseInt(parts[1]), security: parts[2] !== "" });
+                    }
+                }
+                // Sort by signal strength, but always put the connected network at the top
+                controlCenter.networkList = nets.sort((a, b) => {
+                    if (a.ssid === controlCenter.currentSsid) return -1;
+                    if (b.ssid === controlCenter.currentSsid) return 1;
+                    return b.signal - a.signal;
+                });
+            }
+        }
+    }
+    // Connect to a selected network
+    Process {
+        id: connectWifiProc
+        running: false
+        onExited: {
+            activeSsidProc.running = true;
+            wifiPanel.visible = false;
+        }
+    }
+
+    function connectToNetwork(password) {
+        if (!selectedSsidSecured || password === "") {
+            connectWifiProc.command = ["nmcli", "dev", "wifi", "connect", selectedSsid];
+        } else {
+            connectWifiProc.command = ["nmcli", "dev", "wifi", "connect", selectedSsid, "password", password];
+        }
+        connectWifiProc.running = true;
+    }
+    
+    visible: false
+    implicitWidth: 320
+    // Fixed-size surface: resizing a layer-shell window every frame (content/animations
+    // changing height) makes the compositor reconfigure it at a low, uneven rate -> jitter.
+    // The visible card resizes inside this surface instead, and mask limits input to it.
+    implicitHeight: (screen ? screen.height : 1080) - 48
+    mask: Region { item: ccMainRect }
+    color: "transparent"
+
+    // Grab keyboard/pointer: Esc and clicks outside close it. The bar window is included
+    // so clicking the bar's control center button still works as a toggle.
+    HyprlandFocusGrab {
+        windows: controlCenter.anchorTarget
+            ? [controlCenter, controlCenter.anchorTarget.QsWindow.window]
+            : [controlCenter]
+        active: controlCenter.visible
+        onCleared: controlCenter.visible = false
+    }
+
+    // Esc handled at app level: whichever of our windows holds focus will trigger it
+    Shortcut {
+        sequence: "Escape"
+        context: Qt.ApplicationShortcut
+        enabled: controlCenter.visible
+        onActivated: controlCenter.visible = false
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            brightnessStatusProc.running = true;
+            ccMainRect.forceActiveFocus();
+        }
+    }
+
+    // Track default devices safely
+    PwObjectTracker {
+        id: audioTracker
+        objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
+    }
+
+    Process { id: wifiProc; running: false }
+    Process { id: airplaneProc; running: false }
+
+    // Bluetooth Toggle Process
+    Process {
+        id: btProc
+        running: false
+        onExited: btStatusProc.running = true
+    }
+
+    // Check initial Wi-Fi status on startup
+    Process {
+        id: wifiStatusProc
+        command: ["nmcli", "radio", "wifi"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                controlCenter.wifiEnabled = (text.trim() === "enabled");
+            }
+        }
+    }
+
+    // Check if Bluetooth hardware exists and whether it is powered on
+    Process {
+        id: btStatusProc
+        command: [
+            "sh", "-c",
+            "if [ -z \"$(ls -A /sys/class/bluetooth 2>/dev/null)\" ]; then echo 'none'; elif bluetoothctl show 2>/dev/null | grep -q 'Powered: yes'; then echo 'on'; else echo 'off'; fi"
+        ]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const res = text.trim();
+                if (res === "none") {
+                    controlCenter.btAvailable = false;
+                    controlCenter.btEnabled = false;
+                } else {
+                    controlCenter.btAvailable = true;
+                    controlCenter.btEnabled = (res === "on");
+                }
+            }
+        }
+    }
+
+    // DND
+    Process {
+        id: dndProc
+        command: ["swaync-client", "-d"]
+        running: false
+    }
+
+    // Checks initial DND status on startup
+    Process {
+        id: dndStatusProc
+        command: ["swaync-client", "-D"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                controlCenter.dndEnabled = (text.trim() === "true");
+            }
+        }
+    }
+
+    // wlogout Process
+    Process {
+        id: wlogoutProc
+        command: ["sh", "-c", "pidof wlogout || wlogout"]
+        running: false
+    }
+
+    // Check initial Airplane Mode status on startup
+    Process {
+        id: airplaneStatusProc
+        command: ["sh", "-c", "rfkill list wifi | grep -o 'Soft blocked: yes'"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const blocked = text.trim() !== "";
+                controlCenter.airplaneEnabled = blocked;
+                if (blocked) controlCenter.wifiEnabled = false;
+            }
+        }
+    }
+
+    // Toggle Functions
+    function toggleWifi() {
+        wifiEnabled = !wifiEnabled
+        if (wifiEnabled) airplaneEnabled = false
+        wifiProc.command = ["nmcli", "radio", "wifi", wifiEnabled ? "on" : "off"]
+        wifiProc.running = true
+    }
+
+    function toggleBt() {
+        if (!btAvailable) {
+            btStatusProc.running = true
+            return
+        }
+        const targetState = !btEnabled
+        btProc.command = ["bluetoothctl", "power", targetState ? "on" : "off"]
+        btProc.running = true
+    }
+
+    function togglednd() {
+        dndEnabled = !dndEnabled
+        dndProc.running = true
+    }
+
+    function toggleAirplane() {
+        const notifIcon = "$HOME/.config/swaync/images/ja.png"
+        if (airplaneEnabled) {
+            airplaneEnabled = false
+            wifiEnabled = true
+            airplaneProc.command = [
+                "sh", "-c",
+                `rfkill unblock wifi && notify-send -u low -i "${notifIcon}" " Airplane" " mode: OFF"`
+            ]
+        } else {
+            airplaneEnabled = true
+            wifiEnabled = false
+            airplaneProc.command = [
+                "sh", "-c",
+                `rfkill block wifi && notify-send -u low -i "${notifIcon}" " Airplane" " mode: ON"`
+            ]
+        }
+        airplaneProc.running = true
+    }
+
+    function openWlogout() {
+        controlCenter.visible = false
+        wlogoutProc.running = true
+    }
+
+    // Control Center Root
+    Rectangle {
+        id: ccMainRect
+        anchors { top: parent.top; left: parent.left; right: parent.right }
+        height: contentColumn.implicitHeight + 24
+        radius: 12
+        color: controlCenter.theme.bgSurface ? controlCenter.theme.bgSurface : "#2b2b2b"
+        border.color: Qt.rgba(1, 1, 1, 0.1)
+        border.width: 1
+        
+        focus: true
+        Keys.onEscapePressed: controlCenter.visible = false
+
+        opacity: controlCenter.visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 200 } }
+
+        Column {
+            id: contentColumn
+            anchors {
+                top: parent.top
+                left: parent.left
+                right: parent.right
+                margins: 12
+            }
+            spacing: 12
+
+            // --- Top Header ---
+            RowLayout {
+                width: parent.width
+                spacing: 12
+
+                // User Profile Section
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Rectangle {
+                        width: 30; height: 30; radius: 15
+                        color: controlCenter.theme.accentPrimary
+                        
+                        Text {
+                            anchors.centerIn: parent
+                            text: ""
+                            font.family: controlCenter.font
+                            font.pixelSize: 14
+                            color: controlCenter.theme.bgBase
+                        }
+                    }
+
+                    Text {
+                        text: controlCenter.userName
+                        font.family: controlCenter.font
+                        font.pixelSize: 13
+                        font.bold: true
+                        color: controlCenter.theme.textPrimary
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                }
+
+                // Battery Info Pill
+                Rectangle {
+                    width: 76
+                    height: 30
+                    radius: 15
+                    color: Qt.rgba(1, 1, 1, 0.08)
+
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: 6
+                        
+                        Text {
+                            text: SystemInfo.batteryIcon ? SystemInfo.batteryIcon : "󰁹"
+                            font.family: controlCenter.font
+                            font.pixelSize: 13
+                            color: controlCenter.theme.textPrimary
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                        
+                        Text {
+                            text: SystemInfo.batteryLevel ? SystemInfo.batteryLevel : "AC"
+                            font.family: controlCenter.font
+                            font.pixelSize: 11
+                            font.bold: true
+                            color: controlCenter.theme.textPrimary
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+
+                // Circular Settings Button
+                Rectangle {
+                    width: 30; height: 30; radius: 15
+                    color: Qt.rgba(1, 1, 1, 0.08)
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: ""
+                        font.family: controlCenter.font
+                        font.pixelSize: 13
+                        color: controlCenter.theme.textPrimary
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            controlCenter.visible = false
+                            qsSettingsProc.running = true
+                        }
+                    }
+
+                    Process {
+                        id: qsSettingsProc
+                        command: ["qs", "ipc", "call", "settings", "toggle"]
+                        running: false
+                    }
+                }
+
+                // Circular Power Button
+                Rectangle {
+                    width: 30; height: 30; radius: 15
+                    color: controlCenter.theme.accentPrimary
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰐥"
+                        font.family: controlCenter.font
+                        font.pixelSize: 13
+                        color: controlCenter.theme.bgBase
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: openWlogout()
+                    }
+                }
+            }
+
+            // --- Switcher (Control Center / Notifications) ---
+            Rectangle {
+                width: parent.width
+                height: 34
+                radius: 8
+                color: Qt.rgba(1, 1, 1, 0.05)
+                border.color: Qt.rgba(1, 1, 1, 0.06)
+                border.width: 1
+
+                Row {
+                    anchors.fill: parent
+                    anchors.margins: 3
+                    spacing: 0
+
+                    // Control Center
+                    Rectangle {
+                        width: parent.width / 2
+                        height: parent.height
+                        radius: 6
+                        color: !controlCenter.viewNotifications ? controlCenter.theme.bgSelected : "transparent"
+                        Behavior on color { ColorAnimation { duration: 180 } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Control Center"
+                            color: !controlCenter.viewNotifications ? controlCenter.theme.textPrimary : controlCenter.theme.textSecondary
+                            font.pixelSize: 11
+                            font.family: controlCenter.font
+                            font.bold: !controlCenter.viewNotifications
+                        }
+                        
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: controlCenter.viewNotifications = false
+                        }
+                    }
+
+                    // Notifications
+                    Rectangle {
+                        width: parent.width / 2
+                        height: parent.height
+                        radius: 6
+                        color: controlCenter.viewNotifications ? controlCenter.theme.bgSelected : "transparent"
+                        Behavior on color { ColorAnimation { duration: 180 } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Notifications"
+                            color: controlCenter.viewNotifications ? controlCenter.theme.textPrimary : controlCenter.theme.textSecondary
+                            font.pixelSize: 11
+                            font.family: controlCenter.font
+                            font.bold: controlCenter.viewNotifications
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: controlCenter.viewNotifications = true
+                        }
+                    }
+                }
+            }
+
+            // --- Main Content Container ---
+            Item {
+                width: parent.width
+                height: (controlCenter.viewNotifications && controlCenter.historyModel.length > 0) ? notificationsView.implicitHeight : controlCenterView.implicitHeight
+                clip: true
+                // Window is fixed-size now, so animating the card height is safe
+                Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+
+                // 1. Control Center View
+                Column {
+                    id: controlCenterView
+                    width: parent.width
+                    // Crossfade + slide; stays in the layout only while it is visible
+                    opacity: controlCenter.viewNotifications ? 0 : 1
+                    x: controlCenter.viewNotifications ? -30 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                    spacing: 12
+                    
+                    // --- Quick Settings Grid ---
+                    GridLayout {
+                        width: parent.width
+                        columns: 2
+                        rowSpacing: 8
+                        columnSpacing: 8
+
+                        // Wi-Fi
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 40
+                            radius: 8
+                            color: wifiEnabled ? controlCenter.theme.accentPrimary : Qt.rgba(1,1,1,0.05)
+                            Behavior on color { ColorAnimation { duration: 150 } }
+
+                            RowLayout {
+                                anchors.centerIn: parent
+                                spacing: 8
+                                Text {
+                                    text: wifiEnabled ? "󰖩" : "󰖪"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 16
+                                    color: wifiEnabled ? controlCenter.theme.bgBase : controlCenter.theme.textPrimary
+                                }
+                                Text {
+                                    text: (wifiEnabled && controlCenter.currentSsid !== "") ? controlCenter.currentSsid : "Wi-Fi"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 12
+                                    color: wifiEnabled ? controlCenter.theme.bgBase : controlCenter.theme.textPrimary
+                                    elide: Text.ElideRight
+                                    Layout.maximumWidth: 100
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                                onClicked: (mouse) => {
+                                    if (mouse.button === Qt.RightButton) {
+                                        toggleWifi();
+                                        if (!wifiEnabled) currentSsid = "";
+                                    } else if (mouse.button === Qt.LeftButton) {
+                                        if (wifiEnabled) {
+                                            controlCenter.visible = false;
+                                            scanWifiProc.running = true;
+                                            wifiPanel.visible = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Bluetooth
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 40
+                            radius: 8
+                            opacity: btAvailable ? 1.0 : 0.55
+                            color: (btAvailable && btEnabled) ? controlCenter.theme.accentPrimary : Qt.rgba(1,1,1,0.05)
+                            Behavior on color { ColorAnimation { duration: 150 } }
+
+                            RowLayout {
+                                anchors.centerIn: parent
+                                spacing: 8
+                                Text {
+                                    text: (btAvailable && btEnabled) ? "󰂯" : "󰂲"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 16
+                                    color: (btAvailable && btEnabled) ? controlCenter.theme.bgBase : controlCenter.theme.textPrimary
+                                }
+                                Text {
+                                    text: btAvailable ? "Bluetooth" : "No Bluetooth"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 12
+                                    color: (btAvailable && btEnabled) ? controlCenter.theme.bgBase : controlCenter.theme.textPrimary
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: btAvailable ? Qt.PointingHandCursor : Qt.ForbiddenCursor
+                                onClicked: toggleBt()
+                            }
+                        }
+
+                        // Airplane Mode
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 40
+                            radius: 8
+                            color: airplaneEnabled ? controlCenter.theme.accentPrimary : Qt.rgba(1,1,1,0.05)
+                            Behavior on color { ColorAnimation { duration: 150 } }
+
+                            RowLayout {
+                                anchors.centerIn: parent
+                                spacing: 8
+                                Text {
+                                    text: airplaneEnabled ? "󰀝" : "󰀞"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 16
+                                    color: airplaneEnabled ? controlCenter.theme.bgBase : controlCenter.theme.textPrimary
+                                }
+                                Text {
+                                    text: "Airplane"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 12
+                                    color: airplaneEnabled ? controlCenter.theme.bgBase : controlCenter.theme.textPrimary
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: toggleAirplane()
+                            }
+                        }
+
+                        // Do Not Disturb (DND)
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 40
+                            radius: 8
+                            color: dndEnabled ? controlCenter.theme.accentPrimary : Qt.rgba(1,1,1,0.05)
+                            Behavior on color { ColorAnimation { duration: 150 } }
+
+                            RowLayout {
+                                anchors.centerIn: parent
+                                spacing: 8
+                                Text {
+                                    text: dndEnabled ? "󰂛" : "󰂚"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 16
+                                    color: dndEnabled ? controlCenter.theme.bgBase : controlCenter.theme.textPrimary
+                                }
+                                Text {
+                                    text: "DND"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 12
+                                    color: dndEnabled ? controlCenter.theme.bgBase : controlCenter.theme.textPrimary
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: togglednd()
+                            }
+                        }
+                    }
+
+                    // --- Brightness Control ---
+                    Rectangle {
+                        id: brightnessGroup
+                        width: parent.width
+                        height: brightnessGroupCol.implicitHeight + 24
+                        radius: 10
+                        color: Qt.rgba(1, 1, 1, 0.05)
+                        border.color: Qt.rgba(1, 1, 1, 0.06)
+                        border.width: 1
+
+                        ColumnLayout {
+                            id: brightnessGroupCol
+                            anchors {
+                                top: parent.top
+                                left: parent.left
+                                right: parent.right
+                                margins: 12
+                            }
+                            spacing: 10
+
+                            Text {
+                                text: "Brightness"
+                                font.family: controlCenter.font
+                                font.pixelSize: 12
+                                font.bold: true
+                                color: controlCenter.theme.textPrimary
+                                Layout.fillWidth: true
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 10
+
+                                // Brightness Icon
+                                Rectangle {
+                                    width: 28; height: 28; radius: 7
+                                    color: Qt.rgba(1, 1, 1, 0.05)
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰃠"
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 15
+                                        color: controlCenter.theme.textPrimary
+                                    }
+                                }
+
+                                // Brightness Slider
+                                Rectangle {
+                                    id: brightnessSliderBg
+                                    Layout.fillWidth: true; height: 8; radius: 4; color: Qt.rgba(1, 1, 1, 0.12)
+
+                                    Rectangle {
+                                        id: brightnessSliderFill
+                                        height: parent.height; radius: 4
+                                        width: Math.min(parent.width, parent.width * (controlCenter.currentBrightness / 100.0))
+                                        color: controlCenter.theme.accentPrimary
+                                        Behavior on width { enabled: !brightnessSliderMouse.pressed; NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                                    }
+
+                                    Rectangle {
+                                        width: 14; height: 14; radius: 7; y: (parent.height - height) / 2
+                                        x: Math.max(0, Math.min(brightnessSliderBg.width - width, brightnessSliderFill.width - (width / 2)))
+                                        color: controlCenter.theme.textPrimary
+                                    }
+
+                                    MouseArea {
+                                        id: brightnessSliderMouse
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: (mouse) => updateBrightness(mouse.x, width)
+                                        onPositionChanged: (mouse) => { if (pressed) updateBrightness(mouse.x, width) }
+
+                                        function updateBrightness(mouseX, totalWidth) {
+                                            const percent = Math.max(0, Math.min(100, Math.round((mouseX / totalWidth) * 100)));
+                                            controlCenter.currentBrightness = percent;
+                                            controlCenter.setBrightness(percent);
+                                        }
+                                    }
+                                }
+
+                                // Percentage
+                                Text {
+                                    text: controlCenter.currentBrightness + "%"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                    color: controlCenter.theme.textSecondary
+                                    Layout.preferredWidth: 36
+                                    horizontalAlignment: Text.AlignRight
+                                    Layout.alignment: Qt.AlignVCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                            }
+                        }
+                    }
+
+                    // --- Grouped Audio & Microphone Controls ---
+                    Rectangle {
+                        id: audioGroup
+                        width: parent.width
+                        height: audioGroupCol.implicitHeight + 24
+                        radius: 10
+                        color: Qt.rgba(1, 1, 1, 0.05)
+                        border.color: Qt.rgba(1, 1, 1, 0.06)
+                        border.width: 1
+                        clip: true
+
+                        Behavior on height {
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
+
+                        ColumnLayout {
+                            id: audioGroupCol
+                            anchors {
+                                top: parent.top
+                                left: parent.left
+                                right: parent.right
+                                margins: 12
+                            }
+                            spacing: 10
+
+                            Text {
+                                text: "Volume"
+                                font.family: controlCenter.font
+                                font.pixelSize: 12
+                                font.bold: true
+                                color: controlCenter.theme.textPrimary
+                                Layout.fillWidth: true
+                            }
+
+                            // ================= SPEAKER (OUTPUT) SECTION =================
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Text {
+                                    text: "Speaker"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                    color: controlCenter.theme.textSecondary
+                                    Layout.fillWidth: true
+                                }
+
+                                // Slider Row: Mute Button + Slider + Percentage
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 10
+
+                                    Rectangle {
+                                        width: 28
+                                        height: 28
+                                        radius: 7
+                                        readonly property bool isMuted: !Pipewire.defaultAudioSink || !Pipewire.defaultAudioSink.audio || Pipewire.defaultAudioSink.audio.muted
+                                        color: isMuted ? Qt.rgba(1, 0.42, 0.42, 0.18) : (sinkMuteMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05))
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: parent.isMuted ? "󰝟" : "󰕾"
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 15
+                                            color: parent.isMuted ? controlCenter.theme.accentRed : controlCenter.theme.textPrimary
+                                        }
+
+                                        MouseArea {
+                                            id: sinkMuteMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                const sink = Pipewire.defaultAudioSink;
+                                                if (sink && sink.audio) sink.audio.muted = !sink.audio.muted;
+                                            }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        id: sinkSliderBg
+                                        Layout.fillWidth: true
+                                        height: 8
+                                        radius: 4
+                                        color: Qt.rgba(1, 1, 1, 0.12)
+
+                                        Rectangle {
+                                            id: sinkSliderFill
+                                            height: parent.height
+                                            radius: 4
+                                            width: {
+                                                const sink = Pipewire.defaultAudioSink;
+                                                if (!sink || !sink.audio) return 0;
+                                                return Math.min(parent.width, parent.width * sink.audio.volume);
+                                            }
+                                            color: controlCenter.theme.accentPrimary
+
+                                            Behavior on width {
+                                                enabled: !sinkSliderMouse.pressed
+                                                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                            }
+                                        }
+
+                                        Rectangle {
+                                            width: 14
+                                            height: 14
+                                            radius: 7
+                                            y: (parent.height - height) / 2
+                                            x: Math.max(0, Math.min(sinkSliderBg.width - width, sinkSliderFill.width - (width / 2)))
+                                            color: controlCenter.theme.textPrimary
+                                        }
+
+                                        MouseArea {
+                                            id: sinkSliderMouse
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: (mouse) => updateVolume(mouse.x, width)
+                                            onPositionChanged: (mouse) => {
+                                                if (pressed) updateVolume(mouse.x, width)
+                                            }
+
+                                            function updateVolume(mouseX, totalWidth) {
+                                                const sink = Pipewire.defaultAudioSink;
+                                                if (sink && sink.audio) {
+                                                    const newVol = Math.max(0, Math.min(1.0, mouseX / totalWidth));
+                                                    sink.audio.volume = newVol;
+                                                    if (sink.audio.muted) sink.audio.muted = false;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        text: {
+                                            const sink = Pipewire.defaultAudioSink;
+                                            if (!sink || !sink.audio) return "0%";
+                                            return sink.audio.muted ? "Muted" : Math.round(sink.audio.volume * 100) + "%";
+                                        }
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                        color: controlCenter.theme.textSecondary
+                                        Layout.preferredWidth: 36
+                                        horizontalAlignment: Text.AlignRight
+                                        Layout.alignment: Qt.AlignVCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                }
+
+                                // Output Device Selector Pill
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 30
+                                    radius: 7
+                                    color: controlCenter.sinkDropdownOpen
+                                        ? controlCenter.theme.bgSelected
+                                        : (sinkSelectorMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.2))
+                                    border.color: controlCenter.sinkDropdownOpen ? controlCenter.theme.accentPrimary : Qt.rgba(1, 1, 1, 0.06)
+                                    border.width: 1
+
+                                    Behavior on color { ColorAnimation { duration: 150; easing.type: Easing.OutQuad } }
+                                    Behavior on border.color { ColorAnimation { duration: 150; easing.type: Easing.OutQuad } }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 10
+                                        spacing: 8
+
+                                        Text {
+                                            text: "󰓃"
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 13
+                                            color: controlCenter.sinkDropdownOpen ? controlCenter.theme.textPrimary : controlCenter.theme.textMuted
+                                            Behavior on color { ColorAnimation { duration: 150 } }
+                                        }
+
+                                        Text {
+                                            text: {
+                                                const sink = Pipewire.defaultAudioSink;
+                                                return (sink && (sink.description || sink.nickname || sink.name))
+                                                    ? (sink.description || sink.nickname || sink.name)
+                                                    : "Output Device";
+                                            }
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: controlCenter.theme.textPrimary
+                                            elide: Text.ElideRight
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Text {
+                                            text: "󰅀"
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 14
+                                            color: controlCenter.theme.textMuted
+                                            rotation: controlCenter.sinkDropdownOpen ? 180 : 0
+                                            Behavior on rotation { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: sinkSelectorMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            controlCenter.sinkDropdownOpen = !controlCenter.sinkDropdownOpen;
+                                            if (controlCenter.sinkDropdownOpen) controlCenter.sourceDropdownOpen = false;
+                                        }
+                                    }
+                                }
+
+                                // Expandable Output Devices List
+                                Rectangle {
+                                    id: sinkDropdownBox
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: controlCenter.sinkDropdownOpen ? (sinkListCol.implicitHeight + 12) : 0
+                                    opacity: controlCenter.sinkDropdownOpen ? 1.0 : 0.0
+                                    visible: Layout.preferredHeight > 0
+                                    clip: true
+                                    radius: 8
+                                    color: Qt.rgba(0, 0, 0, 0.32)
+                                    border.color: Qt.rgba(1, 1, 1, 0.07)
+                                    border.width: controlCenter.sinkDropdownOpen ? 1 : 0
+
+                                    Behavior on Layout.preferredHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                                    Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.InOutQuad } }
+
+                                    ColumnLayout {
+                                        id: sinkListCol
+                                        anchors {
+                                            top: parent.top
+                                            left: parent.left
+                                            right: parent.right
+                                            margins: 6
+                                        }
+                                        spacing: 4
+
+                                        Text {
+                                            text: "No output devices found"
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 11
+                                            color: controlCenter.theme.textMuted
+                                            visible: controlCenter.audioSinks.length === 0
+                                            Layout.margins: 6
+                                        }
+
+                                        Repeater {
+                                            model: controlCenter.audioSinks
+
+                                            delegate: Rectangle {
+                                                id: sinkItemRect
+                                                readonly property bool isSelected: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.id === modelData.id
+                                                Layout.fillWidth: true
+                                                height: 30
+                                                radius: 6
+                                                scale: sinkItemMouse.pressed ? 0.98 : 1.0
+                                                color: isSelected
+                                                    ? controlCenter.theme.bgSelected
+                                                    : (sinkItemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+
+                                                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
+                                                Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutQuad } }
+
+                                                RowLayout {
+                                                    anchors.fill: parent
+                                                    anchors.leftMargin: 10
+                                                    anchors.rightMargin: 10
+                                                    spacing: 8
+
+                                                    Text {
+                                                        text: sinkItemRect.isSelected ? "󰄬" : "󰝥"
+                                                        font.family: controlCenter.font
+                                                        font.pixelSize: sinkItemRect.isSelected ? 13 : 8
+                                                        color: sinkItemRect.isSelected ? controlCenter.theme.accentPrimary : controlCenter.theme.textMuted
+                                                        Layout.preferredWidth: 14
+                                                        horizontalAlignment: Text.AlignHCenter
+                                                    }
+
+                                                    Text {
+                                                        text: modelData.description || modelData.nickname || modelData.name || "Audio Output"
+                                                        font.family: controlCenter.font
+                                                        font.pixelSize: 11
+                                                        font.bold: sinkItemRect.isSelected
+                                                        color: sinkItemRect.isSelected ? controlCenter.theme.textPrimary : controlCenter.theme.textSecondary
+                                                        elide: Text.ElideRight
+                                                        Layout.fillWidth: true
+                                                    }
+                                                }
+
+                                                MouseArea {
+                                                    id: sinkItemMouse
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        Pipewire.preferredDefaultAudioSink = modelData;
+                                                        controlCenter.sinkDropdownOpen = false;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Subtle Divider
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 1
+                                color: Qt.rgba(1, 1, 1, 0.08)
+                            }
+
+                            // ================= MICROPHONE (INPUT) SECTION =================
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Text {
+                                    text: "Microphone"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                    color: controlCenter.theme.textSecondary
+                                    Layout.fillWidth: true
+                                }
+
+                                // Slider Row: Mic Mute Button + Slider + Percentage
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 10
+
+                                    Rectangle {
+                                        width: 28
+                                        height: 28
+                                        radius: 7
+                                        readonly property bool isMuted: !Pipewire.defaultAudioSource || !Pipewire.defaultAudioSource.audio || Pipewire.defaultAudioSource.audio.muted
+                                        color: isMuted ? Qt.rgba(1, 0.42, 0.42, 0.18) : (sourceMuteMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05))
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: parent.isMuted ? "󰍭" : "󰍬"
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 15
+                                            color: parent.isMuted ? controlCenter.theme.accentRed : controlCenter.theme.textPrimary
+                                        }
+
+                                        MouseArea {
+                                            id: sourceMuteMouse
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                const source = Pipewire.defaultAudioSource;
+                                                if (source && source.audio) source.audio.muted = !source.audio.muted;
+                                            }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        id: sourceSliderBg
+                                        Layout.fillWidth: true
+                                        height: 8
+                                        radius: 4
+                                        color: Qt.rgba(1, 1, 1, 0.12)
+
+                                        Rectangle {
+                                            id: sourceSliderFill
+                                            height: parent.height
+                                            radius: 4
+                                            width: {
+                                                const source = Pipewire.defaultAudioSource;
+                                                if (!source || !source.audio) return 0;
+                                                return Math.min(parent.width, parent.width * source.audio.volume);
+                                            }
+                                            color: controlCenter.theme.accentPrimary
+
+                                            Behavior on width {
+                                                enabled: !sourceSliderMouse.pressed
+                                                NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                                            }
+                                        }
+
+                                        Rectangle {
+                                            width: 14
+                                            height: 14
+                                            radius: 7
+                                            y: (parent.height - height) / 2
+                                            x: Math.max(0, Math.min(sourceSliderBg.width - width, sourceSliderFill.width - (width / 2)))
+                                            color: controlCenter.theme.textPrimary
+                                        }
+
+                                        MouseArea {
+                                            id: sourceSliderMouse
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: (mouse) => updateVolume(mouse.x, width)
+                                            onPositionChanged: (mouse) => {
+                                                if (pressed) updateVolume(mouse.x, width)
+                                            }
+
+                                            function updateVolume(mouseX, totalWidth) {
+                                                const source = Pipewire.defaultAudioSource;
+                                                if (source && source.audio) {
+                                                    const newVol = Math.max(0, Math.min(1.0, mouseX / totalWidth));
+                                                    source.audio.volume = newVol;
+                                                    if (source.audio.muted) source.audio.muted = false;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        text: {
+                                            const source = Pipewire.defaultAudioSource;
+                                            if (!source || !source.audio) return "0%";
+                                            return source.audio.muted ? "Muted" : Math.round(source.audio.volume * 100) + "%";
+                                        }
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                        color: controlCenter.theme.textSecondary
+                                        Layout.preferredWidth: 36
+                                        horizontalAlignment: Text.AlignRight
+                                        Layout.alignment: Qt.AlignVCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                }
+
+                                // Input Device Selector Pill
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 30
+                                    radius: 7
+                                    color: controlCenter.sourceDropdownOpen
+                                        ? controlCenter.theme.bgSelected
+                                        : (sourceSelectorMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.2))
+                                    border.color: controlCenter.sourceDropdownOpen ? controlCenter.theme.accentPrimary : Qt.rgba(1, 1, 1, 0.06)
+                                    border.width: 1
+
+                                    Behavior on color { ColorAnimation { duration: 150; easing.type: Easing.OutQuad } }
+                                    Behavior on border.color { ColorAnimation { duration: 150; easing.type: Easing.OutQuad } }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 10
+                                        spacing: 8
+
+                                        Text {
+                                            text: "󰍬"
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 13
+                                            color: controlCenter.sourceDropdownOpen ? controlCenter.theme.textPrimary : controlCenter.theme.textMuted
+                                            Behavior on color { ColorAnimation { duration: 150 } }
+                                        }
+
+                                        Text {
+                                            text: {
+                                                const source = Pipewire.defaultAudioSource;
+                                                return (source && (source.description || source.nickname || source.name))
+                                                    ? (source.description || source.nickname || source.name)
+                                                    : "Input Device";
+                                            }
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: controlCenter.theme.textPrimary
+                                            elide: Text.ElideRight
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Text {
+                                            text: "󰅀"
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 14
+                                            color: controlCenter.theme.textMuted
+                                            rotation: controlCenter.sourceDropdownOpen ? 180 : 0
+                                            Behavior on rotation { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: sourceSelectorMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            controlCenter.sourceDropdownOpen = !controlCenter.sourceDropdownOpen;
+                                            if (controlCenter.sourceDropdownOpen) controlCenter.sinkDropdownOpen = false;
+                                        }
+                                    }
+                                }
+
+                                // Expandable Input Devices List
+                                Rectangle {
+                                    id: sourceDropdownBox
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: controlCenter.sourceDropdownOpen ? (sourceListCol.implicitHeight + 12) : 0
+                                    opacity: controlCenter.sourceDropdownOpen ? 1.0 : 0.0
+                                    visible: Layout.preferredHeight > 0
+                                    clip: true
+                                    radius: 8
+                                    color: Qt.rgba(0, 0, 0, 0.32)
+                                    border.color: Qt.rgba(1, 1, 1, 0.07)
+                                    border.width: controlCenter.sourceDropdownOpen ? 1 : 0
+
+                                    Behavior on Layout.preferredHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                                    Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.InOutQuad } }
+
+                                    ColumnLayout {
+                                        id: sourceListCol
+                                        anchors {
+                                            top: parent.top
+                                            left: parent.left
+                                            right: parent.right
+                                            margins: 6
+                                        }
+                                        spacing: 4
+
+                                        Text {
+                                            text: "No input devices found"
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 11
+                                            color: controlCenter.theme.textMuted
+                                            visible: controlCenter.audioSources.length === 0
+                                            Layout.margins: 6
+                                        }
+
+                                        Repeater {
+                                            model: controlCenter.audioSources
+
+                                            delegate: Rectangle {
+                                                id: sourceItemRect
+                                                readonly property bool isSelected: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.id === modelData.id
+                                                Layout.fillWidth: true
+                                                height: 30
+                                                radius: 6
+                                                scale: sourceItemMouse.pressed ? 0.98 : 1.0
+                                                color: isSelected
+                                                    ? controlCenter.theme.bgSelected
+                                                    : (sourceItemMouse.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent")
+
+                                                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
+                                                Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutQuad } }
+
+                                                RowLayout {
+                                                    anchors.fill: parent
+                                                    anchors.leftMargin: 10
+                                                    anchors.rightMargin: 10
+                                                    spacing: 8
+
+                                                    Text {
+                                                        text: sourceItemRect.isSelected ? "󰄬" : "󰝥"
+                                                        font.family: controlCenter.font
+                                                        font.pixelSize: sourceItemRect.isSelected ? 13 : 8
+                                                        color: sourceItemRect.isSelected ? controlCenter.theme.accentPrimary : controlCenter.theme.textMuted
+                                                        Layout.preferredWidth: 14
+                                                        horizontalAlignment: Text.AlignHCenter
+                                                    }
+
+                                                    Text {
+                                                        text: modelData.description || modelData.nickname || modelData.name || "Microphone"
+                                                        font.family: controlCenter.font
+                                                        font.pixelSize: 11
+                                                        font.bold: sourceItemRect.isSelected
+                                                        color: sourceItemRect.isSelected ? controlCenter.theme.textPrimary : controlCenter.theme.textSecondary
+                                                        elide: Text.ElideRight
+                                                        Layout.fillWidth: true
+                                                    }
+                                                }
+
+                                                MouseArea {
+                                                    id: sourceItemMouse
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        Pipewire.preferredDefaultAudioSource = modelData;
+                                                        controlCenter.sourceDropdownOpen = false;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // --- MPRIS Media Controls ---
+                    Rectangle {
+                        id: mprisCard
+                        width: parent.width
+                        height: mprisCol.implicitHeight + 28
+                        radius: 10
+                        color: Qt.rgba(1, 1, 1, 0.05)
+                        border.color: Qt.rgba(1, 1, 1, 0.06)
+                        border.width: 1
+
+                        // Pick a playing/loaded player first, or fall back to root.activePlayer
+                        readonly property var player: {
+                            const list = Mpris.players.values;
+                            const playing = list.find(p => p.isPlaying && p.trackTitle && p.trackTitle.trim() !== "");
+                            if (playing) return playing;
+                            const loaded = list.find(p => p.trackTitle && p.trackTitle.trim() !== "");
+                            if (loaded) return loaded;
+                            return root.activePlayer;
+                        }
+
+                        // Hide the panel when no track is loaded
+                        readonly property bool hasMedia: player !== null
+                            && ((player.trackTitle && player.trackTitle.trim() !== "") || player.isPlaying)
+
+                        property real currentPos: player ? player.position : 0
+                        readonly property real trackLen: (player && player.length > 0) ? player.length : 0
+
+                        visible: hasMedia
+
+                        function formatTime(seconds) {
+                            if (!seconds || seconds < 0 || isNaN(seconds)) return "0:00";
+                            const totalSec = Math.floor(seconds);
+                            const mins = Math.floor(totalSec / 60);
+                            const secs = totalSec % 60;
+                            return mins + ":" + (secs < 10 ? "0" + secs : secs);
+                        }
+
+                        // Poll player position every second while playing
+                        Timer {
+                            interval: 1000
+                            running: controlCenter.visible && mprisCard.player !== null && mprisCard.player.isPlaying
+                            repeat: true
+                            triggeredOnStart: true
+                            onTriggered: {
+                                if (mprisCard.player) {
+                                    mprisCard.player.positionChanged();
+                                    mprisCard.currentPos = mprisCard.player.position;
+                                }
+                            }
+                        }
+
+                        Connections {
+                            target: mprisCard.player
+                            function onPositionChanged() {
+                                if (!seekMouse.pressed && mprisCard.player) {
+                                    mprisCard.currentPos = mprisCard.player.position;
+                                }
+                            }
+                            function onTrackTitleChanged() {
+                                if (mprisCard.player) mprisCard.currentPos = mprisCard.player.position;
+                            }
+                        }
+
+                        ColumnLayout {
+                            id: mprisCol
+                            anchors {
+                                top: parent.top
+                                left: parent.left
+                                right: parent.right
+                                margins: 14
+                            }
+                            spacing: 12
+
+                            // 1. Top: Centered Song Title & Artist Name
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+
+                                Text {
+                                    text: mprisCard.player ? (mprisCard.player.trackTitle || "Unknown Title") : "Unknown Title"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 14
+                                    font.bold: true
+                                    color: controlCenter.theme.textPrimary
+                                    horizontalAlignment: Text.AlignHCenter
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: mprisCard.player ? (mprisCard.player.trackArtist || "Unknown Artist") : "Unknown Artist"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 11
+                                    color: controlCenter.theme.textSecondary
+                                    horizontalAlignment: Text.AlignHCenter
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+                            }
+
+                            // 2. Center: Album Art
+                            Rectangle {
+                                Layout.alignment: Qt.AlignHCenter
+                                width: 120
+                                height: 120
+                                radius: 10
+                                color: "#1e1e1e"
+                                border.color: Qt.rgba(1, 1, 1, 0.1)
+                                border.width: 1
+                                clip: true
+
+                                // Fallback Icon when no Album Art is available
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰎈"
+                                    font.family: controlCenter.font
+                                    font.pixelSize: 42
+                                    color: controlCenter.theme.textMuted
+                                    visible: albumArtImg.status !== Image.Ready
+                                }
+
+                                Image {
+                                    id: albumArtImg
+                                    anchors.fill: parent
+                                    anchors.margins: 1
+                                    source: (mprisCard.player && mprisCard.player.trackArtUrl) ? mprisCard.player.trackArtUrl : ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    visible: status === Image.Ready
+                                }
+                            }
+
+                            // 3. Seek Bar + Timestamps
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+
+                                // Progress Track
+                                Item {
+                                    id: seekBarContainer
+                                    Layout.fillWidth: true
+                                    height: 14
+
+                                    Rectangle {
+                                        id: seekTrackBg
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        width: parent.width
+                                        height: 4
+                                        radius: 2
+                                        color: Qt.rgba(1, 1, 1, 0.15)
+
+                                        Rectangle {
+                                            id: seekTrackFill
+                                            height: parent.height
+                                            radius: 2
+                                            width: {
+                                                if (mprisCard.trackLen <= 0) return 0;
+                                                const ratio = Math.max(0, Math.min(1, mprisCard.currentPos / mprisCard.trackLen));
+                                                return parent.width * ratio;
+                                            }
+                                            color: controlCenter.theme.textPrimary
+                                        }
+                                    }
+
+                                    // Seek Thumb
+                                    Rectangle {
+                                        width: 12
+                                        height: 12
+                                        radius: 6
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        x: Math.max(0, Math.min(seekBarContainer.width - width, seekTrackFill.width - (width / 2)))
+                                        color: controlCenter.theme.textPrimary
+                                    }
+
+                                    MouseArea {
+                                        id: seekMouse
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        enabled: mprisCard.player !== null && mprisCard.trackLen > 0
+                                        onPressed: (mouse) => seekTo(mouse.x)
+                                        onPositionChanged: (mouse) => {
+                                            if (pressed) seekTo(mouse.x)
+                                        }
+                                        function seekTo(mouseX) {
+                                            if (mprisCard.player && mprisCard.trackLen > 0) {
+                                                const ratio = Math.max(0, Math.min(1, mouseX / seekBarContainer.width));
+                                                const targetPos = ratio * mprisCard.trackLen;
+                                                mprisCard.currentPos = targetPos;
+                                                if (mprisCard.player.canSeek) {
+                                                    mprisCard.player.position = targetPos;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Timestamps Row (1:28 ... 4:15)
+                                RowLayout {
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: mprisCard.formatTime(mprisCard.currentPos)
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 10
+                                        color: controlCenter.theme.textSecondary
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: mprisCard.formatTime(mprisCard.trackLen)
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 10
+                                        color: controlCenter.theme.textSecondary
+                                    }
+                                }
+                            }
+
+                            // 4. Bottom: Transport Controls (Shuffle, Prev, Play/Pause Circle, Next, Loop)
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignHCenter
+                                spacing: 18
+
+                                // Shuffle Button
+                                Item {
+                                    width: 28; height: 28
+                                    Layout.alignment: Qt.AlignVCenter
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰒟"
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 16
+                                        color: (mprisCard.player && mprisCard.player.shuffle) ? controlCenter.theme.textPrimary : controlCenter.theme.textMuted
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (mprisCard.player && mprisCard.player.shuffleSupported) {
+                                                mprisCard.player.shuffle = !mprisCard.player.shuffle;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Previous Button
+                                Item {
+                                    width: 32; height: 32
+                                    Layout.alignment: Qt.AlignVCenter
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰒮"
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 22
+                                        color: prevMouse.containsMouse ? controlCenter.theme.textPrimary : controlCenter.theme.textSecondary
+                                    }
+                                    MouseArea {
+                                        id: prevMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: if (mprisCard.player) mprisCard.player.previous()
+                                    }
+                                }
+
+                                // Center Play / Pause Circle Button
+                                Rectangle {
+                                    width: 42
+                                    height: 42
+                                    radius: 21
+                                    Layout.alignment: Qt.AlignVCenter
+                                    color: playMouse.containsMouse
+                                        ? controlCenter.theme.textPrimary
+                                        : controlCenter.theme.accentPrimary
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: (mprisCard.player && mprisCard.player.isPlaying) ? "󰏤" : "󰐊"
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 20
+                                        color: controlCenter.theme.bgBase
+                                    }
+
+                                    MouseArea {
+                                        id: playMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: if (mprisCard.player) mprisCard.player.togglePlaying()
+                                    }
+                                }
+
+                                // Next Button
+                                Item {
+                                    width: 32; height: 32
+                                    Layout.alignment: Qt.AlignVCenter
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰒭"
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 22
+                                        color: nextMouse.containsMouse ? controlCenter.theme.textPrimary : controlCenter.theme.textSecondary
+                                    }
+                                    MouseArea {
+                                        id: nextMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: if (mprisCard.player) mprisCard.player.next()
+                                    }
+                                }
+
+                                // Repeat / Loop Button
+                                Item {
+                                    width: 28; height: 28
+                                    Layout.alignment: Qt.AlignVCenter
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: (mprisCard.player && mprisCard.player.loopState === MprisLoopState.Track) ? "󰑘" : "󰑖"
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 16
+                                        color: (mprisCard.player && mprisCard.player.loopState !== MprisLoopState.None) ? controlCenter.theme.textPrimary : controlCenter.theme.textMuted
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (mprisCard.player && mprisCard.player.loopSupported) {
+                                                if (mprisCard.player.loopState === MprisLoopState.None) {
+                                                    mprisCard.player.loopState = MprisLoopState.Playlist;
+                                                } else if (mprisCard.player.loopState === MprisLoopState.Playlist) {
+                                                    mprisCard.player.loopState = MprisLoopState.Track;
+                                                } else {
+                                                    mprisCard.player.loopState = MprisLoopState.None;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 2. Notifications View
+                Column {
+                    id: notificationsView
+                    width: parent.width
+                    opacity: controlCenter.viewNotifications ? 1 : 0
+                    x: controlCenter.viewNotifications ? 0 : 30
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                    spacing: 12
+
+                    // Clear All Button
+                    RowLayout {
+                        width: parent.width
+                        Item { Layout.fillWidth: true } 
+                        Rectangle {
+                            width: 70; height: 26; radius: 4
+                            color: controlCenter.theme.accentPrimary
+                            Text {
+                                anchors.centerIn: parent
+                                text: "Clear all"
+                                color: controlCenter.theme.bgBase
+                                font.family: controlCenter.font
+                                font.pixelSize: 11
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    controlCenter.historyModel = [];
+                                    if (notifServer.trackedNotifications) {
+                                        let notifs = notifServer.trackedNotifications.values || notifServer.trackedNotifications;
+                                        if (notifs) {
+                                            for (let i = notifs.length - 1; i >= 0; i--) {
+                                                if (notifs[i] && notifs[i].dismiss) {
+                                                    notifs[i].dismiss();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Notification List (grouped per app, Android-style stacks)
+                    ListView {
+                        id: notificationList
+                        width: parent.width
+                        height: Math.min(contentHeight, 400)
+                        implicitHeight: height
+                        clip: true
+                        spacing: 12
+                        
+                        model: controlCenter.notifGroups
+                        visible: controlCenter.historyModel.length > 0
+
+                        delegate: Column {
+                            id: groupDelegate
+                            property var group: modelData
+                            property string appName: modelData.appName
+                            property var items: modelData.items
+                            property bool multi: items.length > 1
+                            property bool expanded: controlCenter.expandedApps[appName] === true
+
+                            width: ListView.view.width
+                            spacing: 0
+
+                            // Group header (only for stacks): app, count, expand toggle, clear group
+                            Rectangle {
+                                width: parent.width
+                                height: groupDelegate.multi ? 28 : 0
+                                implicitHeight: height
+                                visible: groupDelegate.multi
+                                color: "transparent"
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 4
+                                    anchors.rightMargin: 4
+                                    spacing: 8
+
+                                    Text {
+                                        text: groupDelegate.appName
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                        color: controlCenter.theme.textSecondary
+                                    }
+                                    Rectangle {
+                                        width: 20; height: 16; radius: 8
+                                        color: Qt.rgba(1, 1, 1, 0.08)
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: groupDelegate.items.length
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 10
+                                            font.bold: true
+                                            color: controlCenter.theme.accentPrimary
+                                        }
+                                    }
+                                    Item { Layout.fillWidth: true }
+                                    Text {
+                                        text: groupDelegate.expanded ? "Collapse 󰅃" : "Expand 󰅀"
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 10
+                                        color: controlCenter.theme.accentPrimary
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            anchors.margins: -6
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: controlCenter.toggleGroup(groupDelegate.appName)
+                                        }
+                                    }
+                                    Text {
+                                        text: "Clear"
+                                        font.family: controlCenter.font
+                                        font.pixelSize: 10
+                                        color: controlCenter.theme.textMuted
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            anchors.margins: -6
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: controlCenter.dismissGroup(groupDelegate.appName)
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Cards: all when expanded, otherwise only the newest
+                            Column {
+                                width: parent.width
+                                spacing: 8
+
+                                Repeater {
+                                    model: groupDelegate.expanded ? groupDelegate.items : groupDelegate.items.slice(0, 1)
+
+                                    delegate: Item {
+                                        id: notifWrap
+                                        width: parent.width
+                                        height: notifDelegate.height + peekLayers.height
+                                        implicitHeight: height
+
+                                        Rectangle {
+                                            id: notifDelegate
+                                            property var notif: modelData
+                                            property int currentNotifId: modelData.notifId
+
+                                            width: parent.width
+                                            height: notifCardCol.implicitHeight + 24
+                                            implicitHeight: height
+                                            radius: 8
+                                            color: Qt.rgba(1, 1, 1, 0.05)
+                                            border.color: Qt.rgba(1, 1, 1, 0.06)
+                                            border.width: 1
+                                            clip: true
+
+                                            // Left vertical accent line
+                                            Rectangle {
+                                                width: 3
+                                                height: parent.height - 16
+                                                radius: 2
+                                                anchors.left: parent.left
+                                                anchors.leftMargin: 6
+                                                anchors.verticalCenter: parent.verticalCenter
+                                                color: controlCenter.theme.accentPrimary
+                                            }
+
+                                            ColumnLayout {
+                                                id: notifCardCol
+                                                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10 }
+                                                anchors.leftMargin: 16 // Give space for the accent line
+                                                spacing: 6
+
+                                                // Left: App Icon | Right: header, title, body (original layout)
+                                                RowLayout {
+                                                    Layout.fillWidth: true
+                                                    spacing: 12
+
+                                                    // Left: App Icon / Notification Image
+                                                    Rectangle {
+                                                        Layout.preferredWidth: 36
+                                                        Layout.preferredHeight: 36
+                                                        radius: 6
+                                                        color: (appIconImg.status === Image.Ready || notifImg.status === Image.Ready)
+                                                            ? "transparent"
+                                                            : Qt.rgba(1, 1, 1, 0.08)
+                                                        Layout.alignment: Qt.AlignTop
+                                                        clip: true
+
+                                                        IconImage {
+                                                            id: appIconImg
+                                                            anchors.centerIn: parent
+                                                            implicitSize: 28
+                                                            source: {
+                                                                let icon = notifDelegate.notif.notifAppIcon;
+                                                                if (icon && icon !== "") return Quickshell.iconPath(icon, true);
+                                                                let app = (notifDelegate.notif.notifAppName || "").toLowerCase();
+                                                                let sum = (notifDelegate.notif.notifSummary || "").toLowerCase();
+                                                                let body = (notifDelegate.notif.notifBody || "").toLowerCase();
+                                                                if (app.includes("whatsapp") || sum.includes("whatsapp") || body.includes("whatsapp"))
+                                                                    return Quickshell.iconPath("whatsapp", true);
+                                                                if (app.includes("brave")) return Quickshell.iconPath("brave-desktop", true);
+                                                                if (app.includes("firefox")) return Quickshell.iconPath("firefox", true);
+                                                                if (app.includes("discord")) return Quickshell.iconPath("discord", true);
+                                                                if (app.includes("spotify")) return Quickshell.iconPath("spotify", true);
+                                                                return "";
+                                                            }
+                                                            visible: status === Image.Ready
+                                                        }
+
+                                                        Image {
+                                                            id: notifImg
+                                                            anchors.centerIn: parent
+                                                            width: 28; height: 28
+                                                            source: notifDelegate.notif.notifImage ? notifDelegate.notif.notifImage : ""
+                                                            fillMode: Image.PreserveAspectFit
+                                                            visible: status === Image.Ready && appIconImg.status !== Image.Ready
+                                                        }
+
+                                                        Text {
+                                                            anchors.centerIn: parent
+                                                            text: {
+                                                                let name = (notifDelegate.notif.notifAppName + " " + notifDelegate.notif.notifSummary + " " + notifDelegate.notif.notifBody).toLowerCase();
+                                                                if (name.includes("whatsapp")) return "󰖣";
+                                                                if (name.includes("discord"))  return "󰙯";
+                                                                if (name.includes("firefox"))  return "󰈹";
+                                                                if (name.includes("chrome") || name.includes("brave")) return "󰊯";
+                                                                if (name.includes("spotify"))  return "󰓇";
+                                                                if (name.includes("telegram")) return "󰓓";
+                                                                if (name.includes("gmail") || name.includes("mail")) return "󰊫";
+                                                                if (name.includes("terminal") || name.includes("kitty") || name.includes("alacritty")) return "󰞷";
+                                                                return "󰂚";
+                                                            }
+                                                            font.family: controlCenter.font
+                                                            font.pixelSize: 14
+                                                            color: controlCenter.theme.accentPrimary
+                                                            visible: appIconImg.status !== Image.Ready && notifImg.status !== Image.Ready
+                                                        }
+                                                    }
+
+                                                    ColumnLayout {
+                                                        Layout.fillWidth: true
+                                                        Layout.alignment: Qt.AlignTop
+                                                        spacing: 4
+
+                                                RowLayout {
+                                                    Layout.fillWidth: true
+                                                    spacing: 6
+
+                                                    Text {
+                                                        text: notifDelegate.notif.notifAppName
+                                                        font.family: controlCenter.font
+                                                        font.pixelSize: 11
+                                                        font.bold: true
+                                                        color: controlCenter.theme.textPrimary
+                                                    }
+
+                                                    Text {
+                                                        text: "•"
+                                                        font.family: controlCenter.font
+                                                        font.pixelSize: 10
+                                                        color: controlCenter.theme.textMuted
+                                                    }
+
+                                                    Text {
+                                                        text: "Now"
+                                                        font.family: controlCenter.font
+                                                        font.pixelSize: 10
+                                                        color: controlCenter.theme.textMuted
+                                                        Layout.fillWidth: true
+                                                    }
+
+                                                    // Dismiss single notification button (circular button)
+                                                    Rectangle {
+                                                        width: 20
+                                                        height: 20
+                                                        radius: 10
+                                                        color: closeHover.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
+                                                        Layout.alignment: Qt.AlignVCenter
+
+                                                        Text {
+                                                            anchors.centerIn: parent
+                                                            text: "󰅖"
+                                                            font.family: controlCenter.font
+                                                            font.pixelSize: 11
+                                                            color: closeHover.containsMouse ? controlCenter.theme.accentRed : controlCenter.theme.textMuted
+                                                        }
+
+                                                        MouseArea {
+                                                            id: closeHover
+                                                            anchors.fill: parent
+                                                            hoverEnabled: true
+                                                            cursorShape: Qt.PointingHandCursor
+                                                            onClicked: controlCenter.dismissNotif(notifDelegate.currentNotifId)
+                                                        }
+                                                    }
+                                                }
+
+                                                    ColumnLayout {
+                                                        Layout.fillWidth: true
+                                                        spacing: 3
+
+                                                        // Summary / Title
+                                                        Text {
+                                                            text: notifDelegate.notif.notifSummary
+                                                            font.family: controlCenter.font
+                                                            font.pixelSize: 12
+                                                            font.bold: true
+                                                            color: controlCenter.theme.textPrimary
+                                                            wrapMode: Text.Wrap
+                                                            Layout.fillWidth: true
+                                                            visible: text !== ""
+                                                        }
+
+                                                        // Body Text
+                                                        Text {
+                                                            text: notifDelegate.notif.notifBody
+                                                            font.family: controlCenter.font
+                                                            font.pixelSize: 11
+                                                            color: controlCenter.theme.textSecondary
+                                                            wrapMode: Text.Wrap
+                                                            Layout.fillWidth: true
+                                                            visible: text !== ""
+                                                        }
+                                                    }
+
+                                                    }
+                                                }
+
+                                                // Stack badge pill row (+N) if grouped stack & collapsed
+                                                RowLayout {
+                                                    Layout.fillWidth: true
+                                                    visible: groupDelegate.multi && !groupDelegate.expanded && index === 0
+
+                                                    Item { Layout.fillWidth: true }
+
+                                                    Rectangle {
+                                                        Layout.preferredWidth: badgeText.implicitWidth + 10
+                                                        Layout.preferredHeight: 18
+                                                        radius: 9
+                                                        color: Qt.rgba(1, 1, 1, 0.1)
+
+                                                        Text {
+                                                            id: badgeText
+                                                            anchors.centerIn: parent
+                                                            text: "+" + (groupDelegate.items.length - 1)
+                                                            font.family: controlCenter.font
+                                                            font.pixelSize: 10
+                                                            font.bold: true
+                                                            color: controlCenter.theme.textSecondary
+                                                        }
+
+                                                        MouseArea {
+                                                            anchors.fill: parent
+                                                            cursorShape: Qt.PointingHandCursor
+                                                            onClicked: controlCenter.toggleGroup(groupDelegate.appName)
+                                                        }
+                                                    }
+                                                }
+
+                                                    // Interactive Inline Actions
+                                                    RowLayout {
+                                                        Layout.fillWidth: true
+                                                        Layout.preferredHeight: 28
+                                                        spacing: 6
+                                                        Layout.topMargin: 4
+                                                        Layout.bottomMargin: 2
+                                                        visible: notifDelegate.notif.notifActions && notifDelegate.notif.notifActions.length > 0
+
+                                                        Repeater {
+                                                            model: notifDelegate.notif.notifActions
+                                                            delegate: Rectangle {
+                                                                Layout.fillWidth: true
+                                                                Layout.preferredWidth: 1
+                                                                Layout.preferredHeight: 28
+                                                                height: 28
+                                                                radius: 14
+                                                                color: actionHover.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : Qt.rgba(1, 1, 1, 0.05)
+
+                                                                Text {
+                                                                    anchors.centerIn: parent
+                                                                    text: modelData.label
+                                                                    color: controlCenter.theme.accentPrimary
+                                                                    font.family: controlCenter.font
+                                                                    font.pixelSize: 11
+                                                                    font.bold: true
+                                                                }
+
+                                                                MouseArea {
+                                                                    id: actionHover
+                                                                    anchors.fill: parent
+                                                                    hoverEnabled: true
+                                                                    cursorShape: Qt.PointingHandCursor
+                                                                    onClicked: {
+                                                                        if (modelData.invokeFn) {
+                                                                            try { modelData.invokeFn(); } catch(e) {}
+                                                                        } else if (modelData.customCmd && modelData.customCmd !== "") {
+                                                                            Quickshell.execDetached(["sh", "-c", modelData.customCmd]);
+                                                                        }
+
+                                                                        controlCenter.dismissNotif(notifDelegate.currentNotifId);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                        }
+
+                                        // Stack "peek" layers directly under the top card while collapsed
+                                        Item {
+                                            id: peekLayers
+                                            y: notifDelegate.height
+                                            width: parent.width
+                                            height: (groupDelegate.multi && !groupDelegate.expanded && index === 0) ? 14 : 0
+                                            visible: height > 0
+                                            Rectangle {
+                                                y: 2
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                width: parent.width - 16
+                                                height: 8; radius: 6
+                                                color: Qt.rgba(1, 1, 1, 0.05); border.color: Qt.rgba(1, 1, 1, 0.06); border.width: 1
+                                            }
+                                            Rectangle {
+                                                y: 8
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                width: parent.width - 32
+                                                height: 6; radius: 6
+                                                color: Qt.rgba(1, 1, 1, 0.03); border.color: Qt.rgba(1, 1, 1, 0.06); border.width: 1
+                                            }
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: controlCenter.toggleGroup(groupDelegate.appName)
+                                            }
+                                        }
+                                    }
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+
+                    // Empty State
+                    Item {
+                        width: parent.width
+                        height: controlCenter.historyModel.length === 0 ? Math.max(120, controlCenterView.implicitHeight - 38) : 0
+                        implicitHeight: height
+                        visible: controlCenter.viewNotifications && controlCenter.historyModel.length === 0
+                        
+                        Text {
+                            anchors.centerIn: parent
+                            text: "No Notifications"
+                            font.family: controlCenter.font
+                            font.pixelSize: 14
+                            color: controlCenter.theme.textMuted
+                        }
+                    }
+                }
+            }
+        }
+
+    PanelWindow {
+        id: wifiPanel
+        visible: false
+        focusable: true
+        color: "transparent"
+        
+        // Track state and selection
+        property string expandedSsid: ""
+        property int selectedIndex: 0
+
+        // Reset state and grab keyboard focus when opened
+        onVisibleChanged: {
+            if (visible) {
+                selectedIndex = 0;
+                expandedSsid = "";
+                networkListView.forceActiveFocus();
+            }
+        }
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+        WlrLayershell.namespace: "quickshell-wifi-selector"
+
+        exclusionMode: ExclusionMode.Ignore
+
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
+
+        // Dark overlay backdrop
+        MouseArea {
+            anchors.fill: parent
+            onClicked: wifiPanel.visible = false
+
+            Rectangle {
+                anchors.fill: parent
+                color: controlCenter.theme.bgOverlay
+            }
+        }
+
+        // Centered selection box
+        Rectangle {
+            id: wifiMainRect
+            anchors.centerIn: parent
+            width: 480
+            height: 540
+            radius: 16
+            color: controlCenter.theme.bgBase
+            border.color: controlCenter.theme.bgBorder
+            border.width: 1
+
+            // Keyboard navigation (Keys can only attach to Items, not the PanelWindow itself)
+            Keys.onPressed: (event) => {
+                if (event.key === Qt.Key_Down) {
+                    event.accepted = true;
+                    wifiPanel.selectedIndex = Math.min(wifiPanel.selectedIndex + 1, networkListView.count - 1);
+                    networkListView.positionViewAtIndex(wifiPanel.selectedIndex, ListView.Contain);
+                } else if (event.key === Qt.Key_Up) {
+                    event.accepted = true;
+                    wifiPanel.selectedIndex = Math.max(wifiPanel.selectedIndex - 1, 0);
+                    networkListView.positionViewAtIndex(wifiPanel.selectedIndex, ListView.Contain);
+                } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    event.accepted = true;
+                    if (wifiPanel.selectedIndex >= 0 && wifiPanel.selectedIndex < controlCenter.networkList.length) {
+                        const selectedNet = controlCenter.networkList[wifiPanel.selectedIndex];
+                    
+                        if (wifiPanel.expandedSsid === selectedNet.ssid) {
+                            wifiPanel.expandedSsid = "";
+                        } else {
+                            wifiPanel.expandedSsid = selectedNet.ssid;
+                            controlCenter.selectedSsid = selectedNet.ssid;
+                            controlCenter.selectedSsidSecured = selectedNet.security;
+                            if (!selectedNet.security) {
+                                controlCenter.connectToNetwork("");
+                            }
+                        }
+                    }
+                } else if (event.key === Qt.Key_Escape) {
+                    event.accepted = true;
+                    wifiPanel.visible = false;
+                }
+            }
+
+
+            // Slide in from right to left animation
+            transform: Translate {
+                x: wifiPanel.visible ? 0 : 40
+                Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+            }
+            opacity: wifiPanel.visible ? 1 : 0
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 12
+
+                // Header with Title, Connected Network, and Toggle Switch
+                RowLayout {
+                    Layout.fillWidth: true
+                    
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+                        
+                        Text {
+                            text: "Available Networks"
+                            color: controlCenter.theme.accentPrimary
+                            font.pixelSize: 14
+                            font.family: controlCenter.font
+                            font.bold: true
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true } // Spacer
+
+                    // Top Right Wi-Fi Toggle
+                    Rectangle {
+                        width: 84
+                        height: 26
+                        radius: 6
+                        color: Qt.rgba(1, 1, 1, 0.05)
+                        border.color: Qt.rgba(1, 1, 1, 0.05)
+                        border.width: 1
+
+                        Row {
+                            anchors.fill: parent
+                            anchors.margins: 2
+                            spacing: 0
+
+                            // "On" segment
+                            Rectangle {
+                                width: parent.width / 2
+                                height: parent.height
+                                radius: 4
+                                color: controlCenter.wifiEnabled ? controlCenter.theme.bgSelected : "transparent"
+                                Behavior on color { ColorAnimation { duration: 150 } }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "On"
+                                    color: controlCenter.wifiEnabled ? controlCenter.theme.accentPrimary : controlCenter.theme.textMuted
+                                    font.pixelSize: 11
+                                    font.family: controlCenter.font
+                                    font.bold: controlCenter.wifiEnabled
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (!controlCenter.wifiEnabled) {
+                                            controlCenter.toggleWifi();
+                                            scanWifiProc.running = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // "Off" segment
+                            Rectangle {
+                                width: parent.width / 2
+                                height: parent.height
+                                radius: 4
+                                color: !controlCenter.wifiEnabled ? controlCenter.theme.bgSelected : "transparent"
+                                Behavior on color { ColorAnimation { duration: 150 } }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "Off"
+                                    color: !controlCenter.wifiEnabled ? controlCenter.theme.textPrimary : controlCenter.theme.textMuted
+                                    font.pixelSize: 11
+                                    font.family: controlCenter.font
+                                    font.bold: !controlCenter.wifiEnabled
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        if (controlCenter.wifiEnabled) {
+                                            controlCenter.toggleWifi();
+                                            controlCenter.networkList = [];
+                                            wifiPanel.expandedSsid = "";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Wi-Fi Network List
+                ListView {
+                    id: networkListView
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    model: controlCenter.networkList
+                    clip: true
+                    spacing: 4
+                    focus: true 
+
+                    add: Transition { NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 250; easing.type: Easing.OutCubic } }
+                    remove: Transition { NumberAnimation { property: "opacity"; to: 0; duration: 150 } }
+                    displaced: Transition { NumberAnimation { properties: "x,y"; duration: 250; easing.type: Easing.OutCubic } }
+
+                    delegate: Rectangle {
+                        id: networkDelegate
+                        required property var modelData
+                        required property int index
+
+                        width: networkListView.width
+                        readonly property bool isExpanded: wifiPanel.expandedSsid === modelData.ssid
+                        readonly property bool isSelected: wifiPanel.selectedIndex === index
+
+                        height: isExpanded ? (modelData.security ? 140 : 100) : 44
+                        radius: 8
+                        color: (isSelected || hoverArea.containsMouse || isExpanded) ? controlCenter.theme.bgSelected : "transparent"
+                        clip: true
+                        
+                        Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        Behavior on color { ColorAnimation { duration: 150 } }
+
+                        onIsExpandedChanged: {
+                            if (isExpanded && modelData.security) {
+                                pwdInput.forceActiveFocus();
+                            } else if (!isExpanded) {
+                                networkListView.forceActiveFocus(); 
+                            }
+                        }
+
+                        Rectangle {
+                            width: 3
+                            height: 24
+                            radius: 2
+                            color: controlCenter.theme.accentPrimary
+                            anchors.left: parent.left
+                            anchors.leftMargin: 2
+                            anchors.top: parent.top
+                            anchors.topMargin: 10
+                            visible: networkDelegate.isSelected
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            anchors.margins: isExpanded ? 14 : 0
+                            anchors.leftMargin: 14
+                            anchors.rightMargin: 14
+                            spacing: 12
+
+                            // Top Row
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: isExpanded ? -1 : 44
+                                spacing: 12
+
+                                Text {
+                                    text: {
+                                        if (modelData.signal > 80) return "󰤨";
+                                        if (modelData.signal > 60) return "󰤥";
+                                        if (modelData.signal > 40) return "󰤢";
+                                        return "󰤟";
+                                    }
+                                    color: networkDelegate.isSelected ? controlCenter.theme.accentPrimary : controlCenter.theme.textPrimary
+                                    font.pixelSize: 16
+                                    font.family: controlCenter.font
+                                }
+
+                                Text {
+                                    text: modelData.ssid
+                                    color: networkDelegate.isSelected ? controlCenter.theme.textPrimary : controlCenter.theme.textSecondary
+                                    font.pixelSize: 13
+                                    font.family: controlCenter.font
+                                    font.bold: networkDelegate.isSelected
+                                    Layout.fillWidth: true
+                                }
+                                
+                                Text {
+                                    text: "Connected"
+                                    color: controlCenter.theme.textPrimary
+                                    font.pixelSize: 13
+                                    font.family: controlCenter.font
+                                    visible: modelData.ssid === controlCenter.currentSsid
+                                }
+
+                                Text {
+                                    text: ""
+                                    visible: modelData.security && modelData.ssid !== controlCenter.currentSsid
+                                    color: controlCenter.theme.textMuted
+                                    font.pixelSize: 12
+                                    font.family: controlCenter.font
+                                }
+                            }
+
+                            // Expanded Dropdown Area
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                visible: networkDelegate.isExpanded
+                                opacity: networkDelegate.isExpanded ? 1 : 0
+                                Behavior on opacity { NumberAnimation { duration: 150 } }
+                                spacing: 12
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 38
+                                    radius: 6
+                                    visible: modelData.security
+                                    color: controlCenter.theme.bgSurface
+                                    border.color: pwdInput.activeFocus ? controlCenter.theme.accentPrimary : controlCenter.theme.bgBorder
+                                    border.width: 1
+
+                                    TextInput {
+                                        id: pwdInput
+                                        anchors.fill: parent
+                                        anchors.margins: 10
+                                        color: controlCenter.theme.textPrimary
+                                        font.pixelSize: 13
+                                        font.family: controlCenter.font
+                                        echoMode: TextInput.Password
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        
+                                        Keys.onEscapePressed: {
+                                            if (pwdInput.text !== "") {
+                                                pwdInput.text = "";
+                                            } else {
+                                                wifiPanel.expandedSsid = "";
+                                                networkListView.forceActiveFocus();
+                                            }
+                                        }
+                                        
+                                        Keys.onReturnPressed: {
+                                            controlCenter.selectedSsid = modelData.ssid;
+                                            controlCenter.selectedSsidSecured = modelData.security;
+                                            controlCenter.connectToNetwork(pwdInput.text);
+                                            wifiPanel.expandedSsid = "";
+                                            pwdInput.text = "";
+                                            networkListView.forceActiveFocus();
+                                        }
+                                    }
+
+                                    Text {
+                                        text: "Password"
+                                        color: controlCenter.theme.textMuted
+                                        font.pixelSize: 13
+                                        font.family: controlCenter.font
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 10
+                                        visible: pwdInput.text === ""
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+                                    
+                                    Item { Layout.fillWidth: true } 
+
+                                    Rectangle {
+                                        width: 80
+                                        height: 32
+                                        radius: 6
+                                        color: controlCenter.theme.bgSurface
+                                        border.color: controlCenter.theme.bgBorder
+                                        border.width: 1
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "Connect"
+                                            color: controlCenter.theme.textPrimary
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 12
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                controlCenter.selectedSsid = modelData.ssid;
+                                                controlCenter.selectedSsidSecured = modelData.security;
+                                                controlCenter.connectToNetwork(pwdInput.text);
+                                                wifiPanel.expandedSsid = "";
+                                                pwdInput.text = "";
+                                            }
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        width: 80
+                                        height: 32
+                                        radius: 6
+                                        color: controlCenter.theme.bgSurface
+                                        border.color: controlCenter.theme.bgBorder
+                                        border.width: 1
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "Cancel"
+                                            color: controlCenter.theme.textPrimary
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 12
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                wifiPanel.expandedSsid = "";
+                                                pwdInput.text = "";
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        MouseArea {
+                            id: hoverArea
+                            anchors.top: parent.top
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            height: 44
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onEntered: wifiPanel.selectedIndex = networkDelegate.index
+                            onClicked: {
+                                networkListView.forceActiveFocus();
+                                if (networkDelegate.isExpanded) {
+                                    wifiPanel.expandedSsid = "";
+                                } else {
+                                    wifiPanel.expandedSsid = modelData.ssid;
+                                    controlCenter.selectedSsid = modelData.ssid;
+                                    controlCenter.selectedSsidSecured = modelData.security;
+                                    if (!modelData.security) {
+                                        controlCenter.connectToNetwork("");
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Scanning for networks..."
+                        color: controlCenter.theme.textMuted
+                        font.pixelSize: 13
+                        font.family: controlCenter.font
+                        visible: scanWifiProc.running && controlCenter.wifiEnabled
+                    }
+                    
+                    Text {
+                        anchors.centerIn: parent
+                        text: "Wi-Fi is turned off"
+                        color: controlCenter.theme.textMuted
+                        font.pixelSize: 13
+                        font.family: controlCenter.font
+                        visible: !controlCenter.wifiEnabled
+                    }
+                }
+
+                // Footer Hints
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 4
+                    spacing: 16
+
+                    Row {
+                        spacing: 4
+                        Rectangle {
+                            width: hintUp.width + 8; height: 18; radius: 4; color: controlCenter.theme.bgSurface
+                            Text { id: hintUp; anchors.centerIn: parent; text: "↑↓"; color: controlCenter.theme.textMuted; font.pixelSize: 10; font.family: controlCenter.font }
+                        }
+                        Text { text: "navigate"; color: controlCenter.theme.textMuted; font.pixelSize: 10; font.family: controlCenter.font; anchors.verticalCenter: parent.verticalCenter }
+                    }
+
+                    Row {
+                        spacing: 4
+                        Rectangle {
+                            width: hintEnter.width + 8; height: 18; radius: 4; color: controlCenter.theme.bgSurface
+                            Text { id: hintEnter; anchors.centerIn: parent; text: "⏎"; color: controlCenter.theme.textMuted; font.pixelSize: 10; font.family: controlCenter.font }
+                        }
+                        Text { text: "select"; color: controlCenter.theme.textMuted; font.pixelSize: 10; font.family: controlCenter.font; anchors.verticalCenter: parent.verticalCenter }
+                    }
+
+                    Row {
+                        spacing: 4
+                        Rectangle {
+                            width: hintEsc.width + 8; height: 18; radius: 4; color: controlCenter.theme.bgSurface
+                            Text { id: hintEsc; anchors.centerIn: parent; text: "esc"; color: controlCenter.theme.textMuted; font.pixelSize: 10; font.family: controlCenter.font }
+                        }
+                        Text { text: "close"; color: controlCenter.theme.textMuted; font.pixelSize: 10; font.family: controlCenter.font; anchors.verticalCenter: parent.verticalCenter }
+                    }
+
+                    Item { Layout.fillWidth: true }
+                }
+            }
+        }
+    }
+}

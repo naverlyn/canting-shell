@@ -56,9 +56,7 @@ QtObject {
         }
         function onActionsChanged(): void {
             if (!notificationData.notification) return;
-            notificationData.actions = notificationData.notification.actions.map(function(a) {
-                return { identifier: a.identifier, text: a.text };
-            });
+            notificationData.actions = notificationData._parseActions(notificationData.notification);
         }
     }
 
@@ -70,6 +68,21 @@ QtObject {
         onTriggered: {
             notificationData.dismiss()
         }
+    }
+
+    function _parseActions(notif) {
+        if (!notif || !notif.actions) return [];
+        var res = [];
+        for (var i = 0; i < notif.actions.length; i++) {
+            var a = notif.actions[i];
+            if (!a) continue;
+            var text = (a.text !== undefined && a.text !== null ? String(a.text) : "").trim();
+            // FreeDesktop spec: 'default' action activates the notification body, not an explicit button.
+            // Also skip any actions with empty labels to avoid phantom blank buttons.
+            if (a.identifier === "default" || text === "") continue;
+            res.push({ identifier: a.identifier, text: text });
+        }
+        return res;
     }
 
     Component.onCompleted: {
@@ -84,9 +97,7 @@ QtObject {
 
         const rawTimeout = notification.expireTimeout;
         expireTimeout = rawTimeout > 0 ? rawTimeout : defaultTimeout;
-        actions   = notification.actions.map(function(a) {
-            return { identifier: a.identifier, text: a.text };
-        });
+        actions   = _parseActions(notification);
     }
 
     function dismiss(): void {
@@ -97,15 +108,32 @@ QtObject {
         destroy();
     }
 
+    function activate(): void {
+        if (closed) return;
+        if (notification && notification.actions) {
+            for (var i = 0; i < notification.actions.length; i++) {
+                var a = notification.actions[i];
+                if (a && a.identifier === "default") {
+                    invokeAction("default");
+                    return;
+                }
+            }
+        }
+        dismiss();
+    }
+
     function invokeAction(identifier): void {
         if (!identifier || closed) return;
         closed = true;
         NotificationService._remove(notificationData);
-        if (notification) {
-            const action = notification.actions.find(function(a) {
-                return a.identifier === identifier;
-            });
-            if (action) try { action.invoke(); } catch(e) {}
+        if (notification && notification.actions) {
+            for (var i = 0; i < notification.actions.length; i++) {
+                var a = notification.actions[i];
+                if (a && a.identifier === identifier) {
+                    try { a.invoke(); } catch(e) {}
+                    break;
+                }
+            }
         }
         destroy();
     }

@@ -525,6 +525,7 @@ Scope {
                         Repeater {
                             model: [
                                 { label: "Base",      key: "bgBase" },
+                                { label: "Transparent", key: "bgTransparent"},
                                 { label: "Surface",   key: "bgSurface" },
                                 { label: "Hover",     key: "bgHover" },
                                 { label: "Selected",  key: "bgSelected" },

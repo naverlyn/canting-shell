@@ -1,0 +1,533 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
+import Quickshell.Wayland
+import Quickshell.Widgets
+import "../ThemeSwitcher"
+
+Scope {
+    id: root
+    property var theme: Theme
+    property string font: "Hack Nerd Font"
+    
+    // UI state: 0: WiFi, 1: Bluetooth, 2: Display, 3: Appearance, 4: About
+    property int currentTab: 0
+    property var tabs: ["Wi-Fi", "Bluetooth", "Display", "Appearance", "About"]
+    property var tabIcons: ["󰖩", "󰂯", "󰍹", "󰏘", ""]
+
+    IpcHandler {
+        target: "settings"
+        function toggle() {
+            settingsWindow.visible = !settingsWindow.visible;
+        }
+    }
+
+    PanelWindow {
+        id: settingsWindow
+        visible: false
+        focusable: true
+        color: "transparent"
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+        WlrLayershell.namespace: "quickshell-settings"
+
+        exclusionMode: ExclusionMode.Ignore
+
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
+
+        // Overlay backdrop
+        MouseArea {
+            anchors.fill: parent
+            onClicked: settingsWindow.visible = false
+
+            Rectangle {
+                anchors.fill: parent
+                color: root.theme.bgOverlay ?? "#80000000"
+            }
+        }
+
+        // Floating Draggable & Resizable Window Card
+        Rectangle {
+            id: winCard
+            width: 740
+            height: 520
+            x: Math.max(10, (settingsWindow.width - width) / 2)
+            y: Math.max(10, (settingsWindow.height - height) / 2)
+            radius: 12
+            color: root.theme.bgBase
+            border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)
+            border.width: 1
+
+            readonly property int minWidth: 620
+            readonly property int minHeight: 400
+
+            // Absorb clicks on background
+            MouseArea { anchors.fill: parent }
+
+            // Drag Header Area
+            MouseArea {
+                id: dragHeader
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                height: 48
+                cursorShape: Qt.OpenHandCursor
+                property point dragStart
+
+                onPressed: (mouse) => {
+                    dragStart = Qt.point(mouse.x, mouse.y);
+                    cursorShape = Qt.ClosedHandCursor;
+                }
+                onReleased: cursorShape = Qt.OpenHandCursor
+                onPositionChanged: (mouse) => {
+                    if (pressed) {
+                        let dx = mouse.x - dragStart.x;
+                        let dy = mouse.y - dragStart.y;
+                        winCard.x = Math.max(0, Math.min(settingsWindow.width - winCard.width, winCard.x + dx));
+                        winCard.y = Math.max(0, Math.min(settingsWindow.height - winCard.height, winCard.y + dy));
+                    }
+                }
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                spacing: 0
+
+                // Sidebar
+                Rectangle {
+                    Layout.fillHeight: true
+                    width: 180
+                    color: root.theme.bgSurface
+                    radius: 12
+                    
+                    Rectangle {
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: 12
+                        color: parent.color
+                    }
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: 16
+                        spacing: 8
+
+                        // Sidebar Header with Drag Handle indicator
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.bottomMargin: 16
+
+                            Text {
+                                text: "Settings"
+                                font.family: root.font
+                                font.pixelSize: 18
+                                font.bold: true
+                                color: root.theme.textPrimary
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            Text {
+                                text: "󰓅"
+                                font.family: root.font
+                                font.pixelSize: 13
+                                color: root.theme.textMuted
+                                Layout.alignment: Qt.AlignVCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                        }
+
+                        Repeater {
+                            model: root.tabs.length
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 36
+                                radius: 8
+                                color: root.currentTab === index ? root.theme.bgSelected : (tabMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.05)) : "transparent")
+
+                                Behavior on color { ColorAnimation { duration: 150 } }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 12
+                                    anchors.rightMargin: 12
+                                    spacing: 12
+
+                                    Item {
+                                        width: 20
+                                        height: 20
+                                        Layout.alignment: Qt.AlignVCenter
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: root.tabIcons[index]
+                                            font.family: root.font
+                                            font.pixelSize: 14
+                                            color: root.currentTab === index ? root.theme.accentPrimary : root.theme.textSecondary
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                            Behavior on color { ColorAnimation { duration: 150 } }
+                                        }
+                                    }
+
+                                    Text {
+                                        text: root.tabs[index]
+                                        font.family: root.font
+                                        font.pixelSize: 13
+                                        font.bold: root.currentTab === index
+                                        color: root.currentTab === index ? root.theme.textPrimary : root.theme.textSecondary
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: tabMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.currentTab = index
+                                }
+                            }
+                        }
+                        
+                        Item { Layout.fillHeight: true }
+                    }
+                }
+
+                // Main Content Area with Close Button & Smooth Tab Animations
+                Item {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+
+                    // Close Button in Top Right
+                    Rectangle {
+                        z: 99
+                        anchors.top: parent.top
+                        anchors.right: parent.right
+                        anchors.margins: 12
+                        width: 26
+                        height: 26
+                        radius: 13
+                        color: closeMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.1)) : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "✕"
+                            font.family: root.font
+                            font.pixelSize: 12
+                            color: closeMouse.containsMouse ? root.theme.accentRed ?? "#f7768e" : root.theme.textMuted
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        MouseArea {
+                            id: closeMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: settingsWindow.visible = false
+                        }
+                    }
+
+                    // 0: Wi-Fi
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 0 ? 1 : 0
+                        scale: root.currentTab === 0 ? 1 : 0.98
+                        y: root.currentTab === 0 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        WifiSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 1: Bluetooth
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 1 ? 1 : 0
+                        scale: root.currentTab === 1 ? 1 : 0.98
+                        y: root.currentTab === 1 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        BluetoothSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 2: Display
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 2 ? 1 : 0
+                        scale: root.currentTab === 2 ? 1 : 0.98
+                        y: root.currentTab === 2 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        DisplaySettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 3: Appearance
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 3 ? 1 : 0
+                        scale: root.currentTab === 3 ? 1 : 0.98
+                        y: root.currentTab === 3 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        AppearanceSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 4: About
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 4 ? 1 : 0
+                        scale: root.currentTab === 4 ? 1 : 0.98
+                        y: root.currentTab === 4 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        AboutSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+                }
+            }
+
+            // --- 8-Direction Window Resize Handles ---
+
+            // Right Edge
+            MouseArea {
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                anchors.margins: -4
+                width: 8
+                cursorShape: Qt.SizeHorCursor
+                property real startX
+                property real startW
+                onPressed: (mouse) => { startX = mouse.x; startW = winCard.width; }
+                onPositionChanged: (mouse) => {
+                    if (pressed) winCard.width = Math.max(winCard.minWidth, startW + (mouse.x - startX));
+                }
+            }
+
+            // Bottom Edge
+            MouseArea {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.margins: -4
+                height: 8
+                cursorShape: Qt.SizeVerCursor
+                property real startY
+                property real startH
+                onPressed: (mouse) => { startY = mouse.y; startH = winCard.height; }
+                onPositionChanged: (mouse) => {
+                    if (pressed) winCard.height = Math.max(winCard.minHeight, startH + (mouse.y - startY));
+                }
+            }
+
+            // Left Edge
+            MouseArea {
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.left: parent.left
+                anchors.margins: -4
+                width: 8
+                cursorShape: Qt.SizeHorCursor
+                property real startMouseX
+                property real startWinX
+                property real startW
+                onPressed: (mouse) => {
+                    startMouseX = mouse.x;
+                    startWinX = winCard.x;
+                    startW = winCard.width;
+                }
+                onPositionChanged: (mouse) => {
+                    if (pressed) {
+                        let dx = mouse.x - startMouseX;
+                        let nw = Math.max(winCard.minWidth, startW - dx);
+                        winCard.x = startWinX + (startW - nw);
+                        winCard.width = nw;
+                    }
+                }
+            }
+
+            // Top Edge
+            MouseArea {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: -4
+                height: 8
+                cursorShape: Qt.SizeVerCursor
+                property real startMouseY
+                property real startWinY
+                property real startH
+                onPressed: (mouse) => {
+                    startMouseY = mouse.y;
+                    startWinY = winCard.y;
+                    startH = winCard.height;
+                }
+                onPositionChanged: (mouse) => {
+                    if (pressed) {
+                        let dy = mouse.y - startMouseY;
+                        let nh = Math.max(winCard.minHeight, startH - dy);
+                        winCard.y = startWinY + (startH - nh);
+                        winCard.height = nh;
+                    }
+                }
+            }
+
+            // Bottom-Right Corner
+            MouseArea {
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                width: 14; height: 14
+                anchors.margins: -4
+                cursorShape: Qt.SizeFDiagCursor
+                property point startMouse
+                property real startW
+                property real startH
+                onPressed: (mouse) => {
+                    startMouse = Qt.point(mouse.x, mouse.y);
+                    startW = winCard.width;
+                    startH = winCard.height;
+                }
+                onPositionChanged: (mouse) => {
+                    if (pressed) {
+                        winCard.width = Math.max(winCard.minWidth, startW + (mouse.x - startMouse.x));
+                        winCard.height = Math.max(winCard.minHeight, startH + (mouse.y - startMouse.y));
+                    }
+                }
+            }
+
+            // Top-Right Corner
+            MouseArea {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                width: 14; height: 14
+                anchors.margins: -4
+                cursorShape: Qt.SizeBDiagCursor
+                property point startMouse
+                property real startW
+                property real startH
+                property real startY
+                onPressed: (mouse) => {
+                    startMouse = Qt.point(mouse.x, mouse.y);
+                    startW = winCard.width;
+                    startH = winCard.height;
+                    startY = winCard.y;
+                }
+                onPositionChanged: (mouse) => {
+                    if (pressed) {
+                        winCard.width = Math.max(winCard.minWidth, startW + (mouse.x - startMouse.x));
+                        let dy = mouse.y - startMouse.y;
+                        let nh = Math.max(winCard.minHeight, startH - dy);
+                        winCard.y = startY + (startH - nh);
+                        winCard.height = nh;
+                    }
+                }
+            }
+
+            // Bottom-Left Corner
+            MouseArea {
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                width: 14; height: 14
+                anchors.margins: -4
+                cursorShape: Qt.SizeBDiagCursor
+                property point startMouse
+                property real startW
+                property real startH
+                property real startX
+                onPressed: (mouse) => {
+                    startMouse = Qt.point(mouse.x, mouse.y);
+                    startW = winCard.width;
+                    startH = winCard.height;
+                    startX = winCard.x;
+                }
+                onPositionChanged: (mouse) => {
+                    if (pressed) {
+                        let dx = mouse.x - startMouse.x;
+                        let nw = Math.max(winCard.minWidth, startW - dx);
+                        winCard.x = startX + (startW - nw);
+                        winCard.width = nw;
+                        winCard.height = Math.max(winCard.minHeight, startH + (mouse.y - startMouse.y));
+                    }
+                }
+            }
+
+            // Top-Left Corner
+            MouseArea {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                width: 14; height: 14
+                anchors.margins: -4
+                cursorShape: Qt.SizeFDiagCursor
+                property point startMouse
+                property real startW
+                property real startH
+                property real startX
+                property real startY
+                onPressed: (mouse) => {
+                    startMouse = Qt.point(mouse.x, mouse.y);
+                    startW = winCard.width;
+                    startH = winCard.height;
+                    startX = winCard.x;
+                    startY = winCard.y;
+                }
+                onPositionChanged: (mouse) => {
+                    if (pressed) {
+                        let dx = mouse.x - startMouse.x;
+                        let dy = mouse.y - startMouse.y;
+                        let nw = Math.max(winCard.minWidth, startW - dx);
+                        let nh = Math.max(winCard.minHeight, startH - dy);
+                        winCard.x = startX + (startW - nw);
+                        winCard.y = startY + (startH - nh);
+                        winCard.width = nw;
+                        winCard.height = nh;
+                    }
+                }
+            }
+        }
+    }
+}

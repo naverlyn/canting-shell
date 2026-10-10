@@ -34,12 +34,9 @@ Scope {
             id: notifWindow
             required property var modelData
             screen: modelData
-            visible: !NotificationService.doNotDisturb && NotificationService.notifications.length > 0
+            visible: NotificationService.notifications.length > 0
             focusable: false
             color: "transparent"
-            // visible: NotificationService.notifications.length > 0
-            // focusable: false
-            // color: "transparent"
 
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -76,13 +73,16 @@ Scope {
                         required property int index
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: cardContent.implicitHeight + 24
-                        radius: 12
-                        color: root.theme.bgBase
+                        Layout.preferredHeight: cardContent.implicitHeight + 28
+                        radius: 16
+                        color: cardHover.hovered ? Qt.lighter(root.theme.bgBase, 1.12) : root.theme.bgBase
                         border.color: modelData.urgency === NotificationUrgency.Critical ? root.theme.urgencyCritical :
-                                      modelData.urgency === NotificationUrgency.Low     ? root.theme.urgencyLow     : root.theme.bgBorder
+                                      modelData.urgency === NotificationUrgency.Low     ? Qt.alpha(root.theme.urgencyLow, 0.5)
+                                                                                         : Qt.alpha(root.theme.bgBorder, 0.9)
                         border.width: 1
                         clip: true
+
+                        Behavior on color { ColorAnimation { duration: 150 } }
 
                         Accessible.role: Accessible.StaticText
                         Accessible.name: (modelData.urgency === NotificationUrgency.Critical ? "[Critical] " :
@@ -94,12 +94,22 @@ Scope {
                             onHoveredChanged: notifCard.modelData.hovered = hovered
                         }
 
-                        NumberAnimation on opacity {
+                        transform: Translate { id: slide; x: 30 }
+
+                        ParallelAnimation {
                             id: entryAnim
-                            from: 0; to: 1
-                            duration: 200
-                            easing.type: Easing.OutCubic
-                            running: false
+                            NumberAnimation {
+                                target: notifCard; property: "opacity"
+                                from: 0; to: 1
+                                duration: 250
+                                easing.type: Easing.OutCubic
+                            }
+                            NumberAnimation {
+                                target: slide; property: "x"
+                                from: 30; to: 0
+                                duration: 300
+                                easing.type: Easing.OutCubic
+                            }
                         }
                         Component.onCompleted: entryAnim.start()
 
@@ -127,10 +137,13 @@ Scope {
                                 Layout.fillWidth: true
                                 spacing: 8
 
-                                Item {
-                                    Layout.preferredWidth: 16
-                                    Layout.preferredHeight: 16
+                                Rectangle {
+                                    Layout.preferredWidth: 24
+                                    Layout.preferredHeight: 24
                                     Layout.alignment: Qt.AlignVCenter
+                                    radius: 8
+                                    color: Qt.alpha(notifCard.modelData.urgency === NotificationUrgency.Critical
+                                                    ? root.theme.urgencyCritical : root.theme.urgencyNormal, 0.15)
 
                                     IconImage {
                                         anchors.centerIn: parent
@@ -200,7 +213,7 @@ Scope {
                             Text {
                                 text: notifCard.modelData.summary
                                 color: root.theme.textPrimary
-                                font.pixelSize: 13
+                                font.pixelSize: 14
                                 font.family: root.font
                                 font.bold: true
                                 elide: Text.ElideRight
@@ -227,9 +240,10 @@ Scope {
                                 }
 
                                 Rectangle {
-                                    Layout.preferredWidth: 24
-                                    Layout.preferredHeight: 24
-                                    radius: 4
+                                    Layout.preferredWidth: 44
+                                    Layout.preferredHeight: 44
+                                    Layout.alignment: Qt.AlignTop
+                                    radius: 10
                                     color: "transparent"
                                     clip: true
                                     visible: notifCard.modelData.image !== ""
@@ -238,8 +252,9 @@ Scope {
                                         anchors.fill: parent
                                         source: notifCard.modelData.image
                                         fillMode: Image.PreserveAspectCrop
-                                        sourceSize.width: 24
-                                        sourceSize.height: 24
+                                        sourceSize.width: 88
+                                        sourceSize.height: 88
+                                        smooth: true
                                     }
                                 }
                             }
@@ -256,13 +271,18 @@ Scope {
                                         id: actionBtn
                                         required property var modelData
 
-                                        Layout.preferredHeight: 26
-                                        Layout.preferredWidth: actionText.width + 16
-                                        radius: 6
-                                        color: actionHover.containsMouse ? root.theme.bgBorder : root.theme.bgSurface
+                                        visible: actionBtn.modelData && actionBtn.modelData.text && actionBtn.modelData.text.length > 0
+                                        Layout.preferredHeight: 28
+                                        Layout.preferredWidth: actionText.width + 24
+                                        radius: 14
+                                        color: actionHover.containsMouse
+                                               ? Qt.alpha(root.theme.accentPrimary, 0.28)
+                                               : Qt.alpha(root.theme.accentPrimary, 0.12)
+                                        border.width: 1
+                                        border.color: Qt.alpha(root.theme.accentPrimary, actionHover.containsMouse ? 0.5 : 0.2)
 
                                         Behavior on color {
-                                            ColorAnimation { duration: 100 }
+                                            ColorAnimation { duration: 120 }
                                         }
 
                                         Accessible.role: Accessible.Button
@@ -290,20 +310,20 @@ Scope {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                height: 2
-                                radius: 1
-                                color: root.theme.bgSurface
-                                Layout.topMargin: 2
+                                Layout.preferredHeight: 3
+                                radius: 1.5
+                                color: Qt.alpha(root.theme.bgSurface, 0.7)
+                                Layout.topMargin: 4
                                 visible: notifCard.modelData.urgency !== NotificationUrgency.Critical
 
                                 Rectangle {
                                     id: progressBar
                                     height: parent.height
                                     width: parent.width
-                                    radius: 1
-                                    color: notifCard.modelData.urgency === NotificationUrgency.Critical
-                                           ? root.theme.urgencyCritical : root.theme.urgencyNormal
-                                    opacity: 0.6
+                                    radius: 1.5
+                                    color: notifCard.modelData.urgency === NotificationUrgency.Low
+                                           ? root.theme.urgencyLow : root.theme.urgencyNormal
+                                    opacity: 0.85
 
                                     SequentialAnimation {
                                         running: notifCard.modelData.urgency !== NotificationUrgency.Critical
@@ -325,7 +345,7 @@ Scope {
                             anchors.fill: parent
                             anchors.topMargin: 30
                             z: -1
-                            onClicked: notifCard.modelData.dismiss()
+                            onClicked: notifCard.modelData.activate()
                             cursorShape: Qt.PointingHandCursor
                         }
                     }

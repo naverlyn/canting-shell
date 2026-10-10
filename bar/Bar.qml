@@ -3,89 +3,20 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Hyprland
 import Quickshell.Widgets
+import QtQuick.Controls
 import Quickshell.Services.SystemTray
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import Quickshell.Services.Notifications
-
+import QtQuick.Effects
+import "../ControlCenter"
 
 Scope {
   id: root
   property var theme: DefaultTheme {}
   property string font: "Hack Nerd Font"
   property bool barVisible: true
-  property string memoryUsage: "0.0 / 0 GiB (-100%)"
-  property string diskUsage: "Loading..."
-  property string weatherInfo: "Loading..."
-
-  // Memory fetch process
-  Process {
-    id: memProcess
-    command: ["sh", "-c", "free -g | awk '/Mem:/ {used=$3; total=$2; pct=(total>0)?(used / total*100):0; printf \"%.1f/%.1f GiB (%.0f%%)\", used, total, pct}'"]
-    running: true
-
-    stdout: SplitParser {
-      onRead: data => {
-        root.memoryUsage = data.trim();
-      }
-    }
-  }
-
-  Timer {
-    interval: 5000
-    running: true
-    repeat: true
-    onTriggered: memProcess.running = true
-  }
-
-  // Disk process
-  Process {
-    id: diskProcess
-    command: ["sh", "-c", "df -h / /home 2>/dev/null | awk 'NR>1 {printf \"%s (%s) \", $6, $5}' | sed 's/ $//'"]
-    running: true
-
-    stdout: SplitParser {
-      onRead: data => {
-        root.diskUsage = data.trim();
-      }
-    }
-  }
-
-  Timer {
-    interval: 10000
-    running: true
-    repeat: true
-    onTriggered: {
-      memProcess.running = true
-      diskProcess.running = true
-    }
-  }
-
-  // Weather process
-  Process {
-    id: weatherProcess
-    command: ["curl", "-s", "wttr.in/Jakarta?format=4"]
-    running: true
-
-    stdout: SplitParser {
-      onRead: data => {
-        root.weatherInfo = data.trim();
-      }
-    }
-  }
-
-  // Timer
-  Timer {
-    interval: 900000
-    running: true
-    repeat: true
-    onTriggered: {
-      memProcess.running = true
-      diskProcess.running = true
-      weatherProcess.running = true
-    }
-  }
 
   // MPRIS active player
   property var activePlayer: {
@@ -99,7 +30,7 @@ Scope {
 
   IpcHandler {
     target: "bar"
-    function toggle(): void { root.barVisible = !root.barVisible; }
+    function toggle() { root.barVisible = !root.barVisible; }
   }
 
   PwObjectTracker {
@@ -169,12 +100,13 @@ Scope {
       implicitHeight: 32
       color: '#363c3c3c'
 
+
       Item {
         anchors.fill: parent
         anchors.leftMargin: 10
         anchors.rightMargin: 10
 
-        // Right section: Time + Workspaces + Now Playing + Weather
+        // Right section: Time + Workspaces + Now Playing
         Row {
           id: rightSection
           anchors.right: parent.right
@@ -249,10 +181,17 @@ Scope {
           }
           // Time
           Rectangle {
+            id: timeWidget
             height: 24
             width: timeDate.width + 16
             radius: 12
-            color: root.theme.bgSurface
+            color: timeHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+            Behavior on color { ColorAnimation { duration: 150 } }
+
+            // Detects when the mouse is over the clock
+            HoverHandler {
+              id: timeHover
+            }
 
             Row {
               id: timeDate
@@ -281,6 +220,105 @@ Scope {
                 color: root.theme.textSecondary
                 font.pixelSize: 12
                 font.family: root.font
+              }
+            }
+
+            // The floating calendar popup
+            // The floating calendar popup
+            PopupWindow {
+              id: calendarPopup
+              visible: timeHover.hovered || calBox.opacity > 0
+
+              // 1. Explicitly set the Wayland surface size
+              implicitWidth: 280
+              implicitHeight: 308
+              
+              // 2. Make the surface background transparent so the border radius shows cleanly
+              color: "transparent"
+
+              anchor.window: timeWidget.QsWindow.window
+              anchor.edges: Edges.Bottom
+              anchor.gravity: Edges.Bottom
+              anchor.adjustment: PopupAdjustment.Slide | PopupAdjustment.Flip
+              anchor.onAnchoring: {
+                const win = timeWidget.QsWindow.window;
+                const widgetRect = win.contentItem.mapFromItem(
+                  timeWidget, 0, 0, timeWidget.width, timeWidget.height
+                );
+                calendarPopup.anchor.rect = widgetRect;
+              }
+
+              Rectangle {
+                id: calBox
+                opacity: timeHover.hovered ? 1 : 0
+                y: timeHover.hovered ? 8 : 0
+                transformOrigin: Item.Top
+                scale: timeHover.hovered ? 1 : 0.96
+                Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                width: 280
+                height: 300
+                color: root.theme.bgSurface
+                radius: 12
+                border.color: root.theme.bgBase
+                border.width: 2
+
+                ColumnLayout {
+                  anchors.fill: parent
+                  anchors.margins: 16
+                  spacing: 12
+
+                  Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Qt.formatDateTime(new Date(), "MMMM yyyy")
+                    color: root.theme.accentPrimary
+                    font.pixelSize: 14
+                    font.bold: true
+                    font.family: root.font
+                  }
+
+                  DayOfWeekRow {
+                    locale: Qt.locale("en_US")
+                    Layout.fillWidth: true
+                    delegate: Text {
+                      text: model.shortName
+                      color: root.theme.textSecondary
+                      font.pixelSize: 12
+                      font.family: root.font
+                      horizontalAlignment: Text.AlignHCenter
+                    }
+                  }
+
+                  MonthGrid {
+                    locale: Qt.locale("en_US")
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    
+                    delegate: Item {
+                      // Using an Item wrapper helps center text and backgrounds perfectly in Grid layouts
+                      implicitWidth: 24
+                      implicitHeight: 24
+                      
+                      Rectangle {
+                        anchors.centerIn: parent
+                        width: 24
+                        height: 24
+                        radius: 12
+                        color: root.theme.accentPrimary
+                        visible: model.today
+                      }
+                      
+                      Text {
+                        anchors.centerIn: parent
+                        text: model.day
+                        color: model.today ? root.theme.bgBase : root.theme.textPrimary
+                        font.pixelSize: 12
+                        font.family: root.font
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -343,74 +381,21 @@ Scope {
             }
           }
 
-          // Now Playing (set to disabled)
-          // Rectangle {
-          //   height: 24
-          //   width: nowPlayingContent.width + 16
-          //   radius: 12
-          //   color: root.theme.bgSurface
-          //   visible: root.activePlayer !== null
-
-          //   Accessible.role: Accessible.Button
-          //   Accessible.name: {
-          //     if (!root.activePlayer) return "No media";
-          //     const artist = root.activePlayer.trackArtist || "";
-          //     const title = root.activePlayer.trackTitle || "";
-          //     return "Now playing: " + (artist ? artist + " - " : "") + title;
-          //   }
-
-          //   Row {
-          //     id: nowPlayingContent
-          //     anchors.verticalCenter: parent.verticalCenter
-          //     anchors.left: parent.left
-          //     anchors.leftMargin: 8
-          //     spacing: 6
-
-          //     Text {
-          //       anchors.verticalCenter: parent.verticalCenter
-          //       text: root.activePlayer && root.activePlayer.isPlaying ? "󰐊" : "󰏤"
-          //       color: root.theme.accentPrimary
-          //       font.pixelSize: 14
-          //       font.family: root.font
-          //     }
-
-          //     Text {
-          //       anchors.verticalCenter: parent.verticalCenter
-          //       text: {
-          //         if (!root.activePlayer) return "";
-          //         const artist = root.activePlayer.trackArtist || "";
-          //         const title = root.activePlayer.trackTitle || "";
-          //         return artist ? artist + " - " + title : title;
-          //       }
-          //       color: root.theme.textPrimary
-          //       font.pixelSize: 11
-          //       font.family: root.font
-          //       elide: Text.ElideRight
-          //       width: Math.min(implicitWidth, 200)
-          //     }
-          //   }
-
-          //   MouseArea {
-          //     anchors.fill: parent
-          //     cursorShape: Qt.PointingHandCursor
-          //     onClicked: root.activePlayer.togglePlaying()
-          //   }
-          // }
-          // Weather
+          // Weather Area
           Rectangle {
             height: 24
             width: weatherContent.width + 16 
             radius: 12
             color: root.theme.bgSurface
             Accessible.role: Accessible.StaticText
-            Accessible.name: "Weather: " + root.weatherInfo
+            Accessible.name: "Weather: " + SystemInfo.weatherInfo
             Row {
               id: weatherContent
               anchors.centerIn: parent
               spacing: 6
               Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.weatherInfo
+                text: SystemInfo.weatherInfo
                 color: root.theme.textPrimary
                 font.pixelSize: 11
                 font.family: root.font
@@ -422,9 +407,8 @@ Scope {
               onClicked: weatherProcess.running = true
             }
           }
-
-          // Control Center (WIP)
-          // TODO: Wi-Fi, Bluetooth, Display, Volume, Microphone, switch audio, airplane mode, etc.
+          
+          // Control Center Trigger Button
           Rectangle {
             id: controlCenterButton
             height: 24
@@ -459,15 +443,16 @@ Scope {
               property var test
               anchors.fill: parent
               radius: parent.radius
-              color: root.theme.bgSurface
+              color: root.theme.accentPrimary 
               opacity: controlCenterArea.containsMouse ? 0.0 : 0.15
               Behavior on opacity {
                 NumberAnimation { duration: 150 }
               }
             }
+
             ControlCenter {
               id: controlCenter
-              theme: root.theme.accentPrimary
+              theme: root.theme
               font: root.font
               anchorTarget: controlCenterButton
             }
@@ -501,188 +486,45 @@ Scope {
           anchors.left: parent.left
           anchors.verticalCenter: parent.verticalCenter
           spacing: 8
-          // testRectangle (apps, disabled)
-          // Rectangle {
-          //   id: testButtonContent
-          //   height: 24
-          //   width:  testContent.implicitWidth + 16
-          //   radius: 12
-          //   color: root.theme.bgSurface
 
-          //   Row {
-          //     id: testContent
-          //     anchors.centerIn: parent
-          //     spacing: 6
+          // App grid launcher button
+          Rectangle {
+            id: appGridButton
+            height: 24
+            width: 28
+            radius: 12
+            color: root.theme.bgSurface
+            Accessible.role: Accessible.Button
+            Accessible.name: "Applications"
 
-          //     Text {
-          //       anchors.verticalCenter: parent.verticalCenter
-          //       text: "󰀻"
-          //       color: root.theme.textPrimary
-          //       font.pixelSize: 14
-          //       font.family: root.font
-          //     }
-              
-          //     Text {
-          //       anchors.verticalCenter: parent.verticalCenter
-          //       text: "Apps"
-          //       color: root.theme.textPrimary
-          //       font.pixelSize: 11
-          //       font.family: root.font
-          //     }
-          //   }
-          // }
-
-          // Network
             Rectangle {
-              height: 24
-              width: netContent.width + 12
-              radius: 12
-              color: root.theme.bgSurface
-              Accessible.role: Accessible.StaticText
-              Accessible.name: {
-                if (SystemInfo.networkType === "ethernet") return "Network: Ethernet"
-                if (SystemInfo.networkType === "wifi") return "Network: WiFi " + SystemInfo.networkInfo
-                return "Network: Disconnected"
-              }
-
-              Row {
-                id: netContent
-                anchors.centerIn: parent
-                spacing: 6
-
-                Text {
-                  anchors.verticalCenter: parent.verticalCenter
-                  text: {
-                    if (SystemInfo.networkType === "ethernet") return "󰈀"
-                    if (SystemInfo.networkType === "wifi") return "󰖩"
-                    return "󰖪"
-                  }
-                  color: SystemInfo.networkType === "disconnected" ? root.theme.textMuted : root.theme.accentGreen
-                  font.pixelSize: 14
-                  font.family: root.font
-                }
-                Text {
-                  anchors.verticalCenter: parent.verticalCenter
-                  text: SystemInfo.networkInfo
-                  color: root.theme.textPrimary
-                  font.pixelSize: 11
-                  font.family: root.font
-                }
-              }
+              anchors.fill: parent
+              radius: parent.radius
+              color: root.theme.accentPrimary
+              opacity: appGridMouse.containsMouse ? 0.15 : 0.0
+              Behavior on opacity { NumberAnimation { duration: 150 } }
             }
 
-            
-          // Volume
-          Rectangle {
-            height: 24
-            width: volContent.width + 12
-            radius: 12
-            color: root.theme.bgSurface
-
-            Accessible.role: Accessible.StaticText
-            Accessible.name: {
-              const sink = Pipewire.defaultAudioSink;
-              if (!sink || !sink.audio) return "Volume";
-              if (sink.audio.muted) return "Volume: muted";
-              return "Volume: " + Math.round(sink.audio.volume * 100) + "%";
-            }
-
-            Row {
-              id: volContent
+            Text {
               anchors.centerIn: parent
-              spacing: 6
-
-              Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: {
-                  const sink = Pipewire.defaultAudioSink;
-                  if (!sink || !sink.audio || sink.audio.muted || sink.audio.volume <= 0) return "󰖁";
-                  if (sink.audio.volume < 0.33) return "󰕿";
-                  if (sink.audio.volume < 0.66) return "󰖀";
-                  return "󰕾";
-                }
-                color: {
-                  const sink = Pipewire.defaultAudioSink;
-                  if (!sink || !sink.audio || sink.audio.muted) return root.theme.textMuted;
-                  return root.theme.accentPrimary;
-                }
-                font.pixelSize: 14
-                font.family: root.font
-              }
-
-              Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: {
-                  const sink = Pipewire.defaultAudioSink;
-                  if (!sink || !sink.audio) return "–";
-                  if (sink.audio.muted) return "Mute";
-                  return Math.round(sink.audio.volume * 100) + "%";
-                }
-                color: root.theme.textPrimary
-                font.pixelSize: 11
-                font.family: root.font
-              }
+              text: "󰀻"
+              color: root.theme.accentPrimary
+              font.pixelSize: 14
+              font.family: root.font
             }
 
             MouseArea {
+              id: appGridMouse
               anchors.fill: parent
+              hoverEnabled: true
               cursorShape: Qt.PointingHandCursor
-              acceptedButtons: Qt.LeftButton
-              onClicked: {
-                const sink = Pipewire.defaultAudioSink;
-                if (sink && sink.audio) sink.audio.muted = !sink.audio.muted;
-              }
-              onWheel: (wheel) => {
-                const sink = Pipewire.defaultAudioSink;
-                if (!sink || !sink.audio) return;
-                const delta = wheel.angleDelta.y > 0 ? 0.05 : -0.05;
-                sink.audio.volume = Math.max(0, Math.min(1.5, sink.audio.volume + delta));
-              }
-            }
-          }
-
-          // Brightness
-          Rectangle {
-            height: 24
-            width: brightContent.width + 12
-            radius: 12
-            color: root.theme.bgSurface
-            visible: brightnessFile.path !== ""
-
-            Accessible.role: Accessible.StaticText
-            Accessible.name: "Brightness: " + Math.round(root.brightnessValue * 100) + "%"
-
-            Row {
-              id: brightContent
-              anchors.centerIn: parent
-              spacing: 6
-
-              Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: "󰃠"
-                color: root.theme.accentOrange
-                font.pixelSize: 14
-                font.family: root.font
-              }
-
-              Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: Math.round(root.brightnessValue * 100) + "%"
-                color: root.theme.textPrimary
-                font.pixelSize: 11
-                font.family: root.font
-              }
+              onClicked: appGridProc.running = true
             }
 
-            MouseArea {
-              anchors.fill: parent
-              cursorShape: Qt.PointingHandCursor
-              onWheel: (wheel) => {
-                brightnessSetProc.command = wheel.angleDelta.y > 0
-                  ? ["brightnessctl", "set", "5%+"]
-                  : ["brightnessctl", "set", "5%-"];
-                brightnessSetProc.running = true;
-              }
+            Process {
+              id: appGridProc
+              command: ["qs", "ipc", "call", "appgrid", "toggle"]
+              running: false
             }
           }
 
@@ -701,12 +543,27 @@ Scope {
 
             // CPU
             Rectangle {
+              id: cpuPill
               height: 24
               width: cpuContent.width + 12
               radius: 12
-              color: root.theme.bgSurface
+              color: cpuHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+              Behavior on color { ColorAnimation { duration: 150 } }
               Accessible.role: Accessible.StaticText
               Accessible.name: "CPU: " + SystemInfo.cpuUsage
+
+              HoverHandler { id: cpuHover }
+
+              InfoPopup {
+                target: cpuPill
+                hovered: cpuHover.hovered
+                theme: root.theme
+                font: root.font
+                title: "CPU"
+                icon: "󰻠"
+                accent: root.theme.accentOrange
+                script: "cpu"
+              }
 
               Row {
                 id: cpuContent
@@ -730,45 +587,29 @@ Scope {
               }
             }
 
-            // Battery (since im on PC, battery set to off)
-            // Rectangle {
-            //   height: 24
-            //   width: battContent.width + 12
-            //   radius: 12
-            //   color: root.theme.bgSurface
-            //   Accessible.role: Accessible.StaticText
-            //   Accessible.name: "Battery: " + SystemInfo.batteryLevel
-
-            //   Row {
-            //     id: battContent
-            //     anchors.centerIn: parent
-            //     spacing: 6
-
-            //     Text {
-            //       anchors.verticalCenter: parent.verticalCenter
-            //       text: SystemInfo.batteryIcon
-            //       color: sysInfo.batteryColor
-            //       font.pixelSize: 14
-            //       font.family: root.font
-            //     }
-            //     Text {
-            //       anchors.verticalCenter: parent.verticalCenter
-            //       text: SystemInfo.batteryLevel
-            //       color: root.theme.textPrimary
-            //       font.pixelSize: 11
-            //       font.family: root.font
-            //     }
-            //   }
-            // }
-
             // Temperature
             Rectangle {
+              id: tempPill
               height: 24
               width: tempContent.width + 12
               radius: 12
-              color: root.theme.bgSurface
+              color: tempHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+              Behavior on color { ColorAnimation { duration: 150 } }
               Accessible.role: Accessible.StaticText
               Accessible.name: "Temperature: " + SystemInfo.temperature
+
+              HoverHandler { id: tempHover }
+
+              InfoPopup {
+                target: tempPill
+                hovered: tempHover.hovered
+                theme: root.theme
+                font: root.font
+                title: "Temperature"
+                icon: "󰔏"
+                accent: root.theme.accentPrimary
+                script: "temp"
+              }
 
               Row {
                 id: tempContent
@@ -778,7 +619,7 @@ Scope {
                 Text {
                   anchors.verticalCenter: parent.verticalCenter
                   text: "󰔏"
-                  color: root.theme.accentRed
+                  color: root.theme.accentPrimary
                   font.pixelSize: 14
                   font.family: root.font
                 }
@@ -793,12 +634,27 @@ Scope {
             }
             // Memory Usage
             Rectangle {
+              id: memPill
               height: 24
               width: memContent.width + 12
               radius: 12
-              color: root.theme.bgSurface
+              color: memHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+              Behavior on color { ColorAnimation { duration: 150 } }
               Accessible.role: Accessible.StaticText
-              Accessible.name: "Memory Usage: " + root.memoryUsage
+              Accessible.name: "Memory Usage: " + SystemInfo.memoryUsage
+
+              HoverHandler { id: memHover }
+
+              InfoPopup {
+                target: memPill
+                hovered: memHover.hovered
+                theme: root.theme
+                font: root.font
+                title: "Memory"
+                icon: "\uf2db"
+                accent: root.theme.accentPrimary
+                script: "mem"
+              }
               
               Row {
                 id: memContent
@@ -806,7 +662,7 @@ Scope {
                 spacing: 6
                 
                 Text {
-                  anchors.verticalCenter: parent.vertical
+                  anchors.verticalCenter: parent.verticalCenter
                   text: ""
                   color: root.theme.accentPrimary
                   font.pixelSize: 14
@@ -815,7 +671,7 @@ Scope {
                 
                 Text {
                   anchors.verticalCenter: parent.verticalCenter
-                  text: root.memoryUsage
+                  text: SystemInfo.memoryUsage
                   color: root.theme.textPrimary
                   font.pixelSize: 11
                   font.family: root.font
@@ -832,7 +688,7 @@ Scope {
               color: root.theme.bgSurface
               
               Accessible.role: Accessible.StaticText
-              Accessible.name: "/ (" + root.diskUsage + ")"
+              Accessible.name: "/ (" + SystemInfo.diskUsage + ")"
 
               MouseArea {
                 id: mouseArea
@@ -841,7 +697,7 @@ Scope {
                 cursorShape: Qt.PointingHandCursor
               }
 
-              // Glow when hover
+              // Glow
               Rectangle {
                 anchors.fill: parent
                 radius: parent.radius
@@ -868,43 +724,24 @@ Scope {
 
                 Text {
                   anchors.verticalCenter: parent.verticalCenter
-                  text: "" + root.diskUsage + "" 
+                  text: "" + SystemInfo.diskUsage + "" 
                   color: root.theme.textPrimary
                   font.pixelSize: 11
                   font.family: root.font
                 }
               }
+
+              InfoPopup {
+                target: diskButton
+                hovered: mouseArea.containsMouse
+                theme: root.theme
+                font: root.font
+                title: "Disk"
+                icon: "\uf0a0"
+                accent: root.theme.accentPrimary
+                script: "disk"
+              }
             }
-            // Rectangle {
-            //   height: 24
-            //   width: diskContent.width + 12
-            //   radius: 12
-            //   color: root.theme.bgSurface
-            //   Accessible.role: Accessible.StaticText
-            //   Accessible.name: "/ (" + root.diskUsage + ")"
-
-            //   Row {
-            //     id: diskContent
-            //     anchors.centerIn: parent
-            //     spacing: 6
-
-            //     Text {
-            //       anchors.verticalCenter: parent.verticalCenter
-            //       text: "" // Ikon Harddisk (Nerd Fonts)
-            //       color: root.theme.accentPrimary // Atau sesuaikan warna tema Anda
-            //       font.pixelSize: 14
-            //       font.family: root.font
-            //     }
-
-            //     Text {
-            //       anchors.verticalCenter: parent.verticalCenter
-            //       text: "" + root.diskUsage + "" // Format output: / (90%)
-            //       color: root.theme.textPrimary
-            //       font.pixelSize: 11
-            //       font.family: root.font
-            //     }
-            //   }
-            // }
           }
         }
       }

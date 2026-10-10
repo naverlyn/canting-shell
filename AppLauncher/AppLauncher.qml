@@ -11,6 +11,11 @@ Scope {
   property var theme: Theme
   property string font: "Hack Nerd Font"
   property bool commandMode: false
+  property int selectedIndex: 0
+
+  // Stores { "<appId>": { count: Number, lastUsed: Number } }
+  property var appUsage: ({})
+  readonly property string usageCachePath: "$HOME/.cache/qs_app_usage.json"
 
   IpcHandler {
     target: "launcher"
@@ -27,11 +32,72 @@ Scope {
     }
   }
 
-  property int selectedIndex: 0
+  // Load saved app usage history on startup
+  Process {
+    id: loadUsageProc
+    command: ["sh", "-c", `cat "${root.usageCachePath}" 2>/dev/null || echo '{}'`]
+    running: true
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try {
+          const parsed = JSON.parse(text.trim() || "{}");
+          if (parsed && typeof parsed === "object") {
+            root.appUsage = parsed;
+          }
+        } catch (e) {
+          root.appUsage = ({});
+        }
+      }
+    }
+  }
+
+  // Save updated app usage history to disk
+  Process {
+    id: saveUsageProc
+    running: false
+  }
 
   // Runner process for executing Linux commands
   Process {
     id: cmdRunner
+  }
+
+  function getAppKey(entry) {
+    return (entry && (entry.id || entry.name)) ? (entry.id || entry.name) : "";
+  }
+
+  // Frecency score: combines recency (timestamp) + frequency (+24h weight per launch)
+  function getFrecencyScore(entry, usageMap) {
+    const key = getAppKey(entry);
+    if (!key || !usageMap || !usageMap[key]) return 0;
+    const item = usageMap[key];
+    const count = item.count || 0;
+    const lastUsed = item.lastUsed || 0;
+    if (count <= 0) return 0;
+    return lastUsed + (count * 86400000);
+  }
+
+  function recordAppLaunch(entry) {
+    const key = getAppKey(entry);
+    if (!key) return;
+
+    const nextUsage = Object.assign({}, root.appUsage);
+    const prev = nextUsage[key] || { count: 0, lastUsed: 0 };
+    nextUsage[key] = {
+      count: (prev.count || 0) + 1,
+      lastUsed: Date.now()
+    };
+
+    // Reassign to trigger filteredApps re-evaluation
+    root.appUsage = nextUsage;
+
+    const jsonPayload = JSON.stringify(nextUsage);
+    saveUsageProc.command = [
+      "python3", "-c",
+      "import os, sys; p = os.path.expanduser('~/.cache/qs_app_usage.json'); open(p, 'w').write(sys.argv[1])",
+      jsonPayload
+    ];
+    saveUsageProc.running = true;
   }
 
   function runCommand(cmdText) {
@@ -43,25 +109,50 @@ Scope {
     }
   }
 
+  function switchMode(toCommandMode) {
+    if (root.commandMode === toCommandMode) return;
+    root.commandMode = toCommandMode;
+    if (toCommandMode) {
+      commandInput.forceActiveFocus();
+    } else {
+      searchInput.forceActiveFocus();
+    }
+  }
+
   ScriptModel {
     id: filteredApps
     objectProp: "id"
     values: {
+      const usage = root.appUsage;
       const all = [...DesktopEntries.applications.values];
       const q = searchInput.text.trim().toLowerCase();
-      if (q === "") return all.sort((a, b) => a.name.localeCompare(b.name));
+
+      if (q === "") {
+        return all.sort((a, b) => {
+          const scoreA = root.getFrecencyScore(a, usage);
+          const scoreB = root.getFrecencyScore(b, usage);
+          if (scoreA !== scoreB) return scoreB - scoreA;
+          return (a.name || "").localeCompare(b.name || "");
+        });
+      }
+
       return all.filter(d =>
         (d.name && d.name.toLowerCase().includes(q)) ||
         (d.genericName && d.genericName.toLowerCase().includes(q)) ||
         (d.keywords && d.keywords.some(k => k.toLowerCase().includes(q))) ||
         (d.categories && d.categories.some(c => c.toLowerCase().includes(q)))
       ).sort((a, b) => {
-        const an = a.name.toLowerCase();
-        const bn = b.name.toLowerCase();
+        const an = (a.name || "").toLowerCase();
+        const bn = (b.name || "").toLowerCase();
         const aStarts = an.startsWith(q);
         const bStarts = bn.startsWith(q);
         if (aStarts && !bStarts) return -1;
         if (!aStarts && bStarts) return 1;
+
+        const scoreA = root.getFrecencyScore(a, usage);
+        const scoreB = root.getFrecencyScore(b, usage);
+        if (scoreA !== scoreB) return scoreB - scoreA;
+
         return an.localeCompare(bn);
       });
     }
@@ -69,6 +160,7 @@ Scope {
 
   function launchApp(entry) {
     if (entry) {
+      recordAppLaunch(entry);
       entry.execute();
       launcherPanel.visible = false;
     }
@@ -140,7 +232,7 @@ Scope {
 
           Item { Layout.fillWidth: true }
 
-          // Applications | Commands column
+          // Mode toggle segment
           Rectangle {
             id: modeToggle
             implicitWidth: modeRow.implicitWidth + 6
@@ -159,7 +251,7 @@ Scope {
               anchors.margins: 3
               spacing: 3
 
-              // Applications tab
+              // Applications segment
               Rectangle {
                 Layout.fillHeight: true
                 implicitWidth: appsLabel.implicitWidth + 20
@@ -185,14 +277,11 @@ Scope {
                 MouseArea {
                   anchors.fill: parent
                   cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    root.commandMode = false;
-                    searchInput.forceActiveFocus();
-                  }
+                  onClicked: root.switchMode(false)
                 }
               }
 
-              // Commands tab
+              // Commands segment
               Rectangle {
                 Layout.fillHeight: true
                 implicitWidth: cmdsLabel.implicitWidth + 20
@@ -218,17 +307,14 @@ Scope {
                 MouseArea {
                   anchors.fill: parent
                   cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    root.commandMode = true;
-                    commandInput.forceActiveFocus();
-                  }
+                  onClicked: root.switchMode(true)
                 }
               }
             }
           }
         }
 
-        // Search bar
+        // Search bar (Applications mode)
         Rectangle {
           Layout.fillWidth: true
           height: 36
@@ -283,7 +369,10 @@ Scope {
                 Keys.onEscapePressed: launcherPanel.visible = false
 
                 Keys.onPressed: event => {
-                  if (event.key === Qt.Key_Down) {
+                  if (event.key === Qt.Key_Right && searchInput.cursorPosition === searchInput.text.length) {
+                    event.accepted = true;
+                    root.switchMode(true);
+                  } else if (event.key === Qt.Key_Down) {
                     event.accepted = true;
                     root.selectedIndex = Math.min(root.selectedIndex + 1, resultsList.count - 1);
                     resultsList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
@@ -319,7 +408,7 @@ Scope {
           }
         }
 
-        // Command Bar
+        // Search bar (Commands mode)
         Rectangle {
           Layout.fillWidth: true
           height: 36
@@ -370,7 +459,10 @@ Scope {
                 Keys.onEscapePressed: launcherPanel.visible = false
 
                 Keys.onPressed: event => {
-                  if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                  if (event.key === Qt.Key_Left && commandInput.cursorPosition === 0) {
+                    event.accepted = true;
+                    root.switchMode(false);
+                  } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                     event.accepted = true;
                     root.runCommand(commandInput.text);
                   }
@@ -391,7 +483,7 @@ Scope {
           }
         }
 
-        // App list
+        // App list (Applications mode)
         ListView {
           id: resultsList
           Layout.fillWidth: true
@@ -429,6 +521,8 @@ Scope {
             id: delegateRoot
             required property var modelData
             required property int index
+            readonly property string appKey: root.getAppKey(modelData)
+            readonly property int launchCount: (appKey && root.appUsage[appKey]) ? (root.appUsage[appKey].count || 0) : 0
 
             Accessible.role: Accessible.Button
             Accessible.name: (modelData.name ?? "Application") + (modelData.genericName ? " - " + modelData.genericName : "")
@@ -501,6 +595,17 @@ Scope {
                   Behavior on color { ColorAnimation { duration: 150 } }
                 }
               }
+
+              // Subtle Recent/Frequent Indicator Badge
+              Text {
+                visible: delegateRoot.launchCount > 0
+                text: "󰋚"
+                color: root.selectedIndex === delegateRoot.index ? root.theme.accentPrimary : root.theme.textMuted
+                font.pixelSize: 12
+                font.family: root.font
+                opacity: 0.75
+                Layout.alignment: Qt.AlignVCenter
+              }
             }
 
             MouseArea {
@@ -526,7 +631,7 @@ Scope {
           }
         }
 
-        // Commands hint
+        // Commands mode hint area
         Item {
           Layout.fillWidth: true
           Layout.fillHeight: true
@@ -548,7 +653,7 @@ Scope {
           }
         }
 
-        // Footer
+        // Footer hint
         RowLayout {
           Layout.fillWidth: true
           spacing: 16
@@ -562,6 +667,16 @@ Scope {
               Text { id: hintUp; anchors.centerIn: parent; text: "↑↓"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
             }
             Text { text: "navigate"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+          }
+
+          Row {
+            spacing: 4
+            Rectangle {
+              width: hintLeftRight.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
+              Behavior on color { ColorAnimation { duration: 150 } }
+              Text { id: hintLeftRight; anchors.centerIn: parent; text: "←→"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
+            }
+            Text { text: "mode"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
           }
 
           Row {

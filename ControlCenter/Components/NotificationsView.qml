@@ -1,0 +1,608 @@
+import QtQuick
+import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
+import Quickshell.Widgets
+import Quickshell.Services.Notifications
+
+Column {
+    id: root
+
+    property var theme
+    property string font: "Hack Nerd Font"
+
+    // 1. Permanent History Array
+    property var historyModel: []
+
+    // Notifications grouped by app (newest first); each group keeps its own items/actions
+    property var expandedApps: ({})
+    readonly property var notifGroups: {
+        const order = [];
+        const map = {};
+        for (const n of historyModel) {
+            const key = n.notifAppName;
+            if (!map[key]) { map[key] = { appName: key, items: [] }; order.push(key); }
+            map[key].items.push(n);
+        }
+        return order.map(k => map[k]);
+    }
+
+    function toggleGroup(app) {
+        const copy = Object.assign({}, expandedApps);
+        copy[app] = !copy[app];
+        expandedApps = copy;
+    }
+
+    function dismissNotif(id) {
+        historyModel = historyModel.filter(n => n.notifId !== id);
+    }
+
+    function dismissGroup(app) {
+        historyModel = historyModel.filter(n => n.notifAppName !== app);
+    }
+
+    function clearAll() {
+        root.historyModel = [];
+        if (notifServer.trackedNotifications) {
+            let notifs = notifServer.trackedNotifications.values || notifServer.trackedNotifications;
+            if (notifs) {
+                for (let i = notifs.length - 1; i >= 0; i--) {
+                    if (notifs[i] && notifs[i].dismiss) {
+                        notifs[i].dismiss();
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Official Notification Daemon
+    NotificationServer {
+        id: notifServer
+    }
+
+    // 3. The Invisible Bridge: With a Timer delay to ensure properties are loaded
+    Instantiator {
+        model: notifServer.trackedNotifications
+        delegate: Item {
+            id: delegateBridge
+            property var notif: modelData
+
+            Timer {
+                id: extractTimer
+                interval: 100 // Wait 100ms for DBus payload (Actions, Summary) to fully bind
+                running: true
+                onTriggered: {
+                    if (!delegateBridge.notif) return;
+                    let n = delegateBridge.notif;
+                    
+                    let nId = n.id !== undefined ? n.id : Math.random();
+                    let arr = root.historyModel;
+                    
+                    for (let i = 0; i < arr.length; i++) {
+                        if (arr[i].notifId === nId) return; 
+                    }
+                    
+                    let extractedActions = [];
+                    let acts = n.actions || [];
+                    
+                    // Safely iterate the native DBus actions using a closure
+                    for (let i = 0; i < acts.length; i++) {
+                        (function(actionObj) {
+                            if (actionObj && actionObj.label) {
+                                extractedActions.push({
+                                    label: actionObj.label + "",
+                                    invokeFn: function() { try { actionObj.invoke(); } catch(e) {} },
+                                    customCmd: ""
+                                });
+                            }
+                        })(acts[i]);
+                    }
+                    
+                    let summaryStr = (n.summary || "New Notification") + "";
+                    let bodyStr = (n.body || "") + "";
+
+                    // Swappy screenshots
+                    if (bodyStr.indexOf("Swappy") !== -1) {
+                        let shotPath = "/tmp/qs-shot-" + Date.now() + "-" + nId + ".png";
+                        Quickshell.execDetached(["sh", "-c", "wl-paste --type image/png > '" + shotPath + "'"]);
+                        extractedActions = [
+                            { label: "Open", invokeFn: null, customCmd: "swappy -f '" + shotPath + "'" },
+                            { label: "Delete", invokeFn: null, customCmd: "rm -f '" + shotPath + "'" }
+                        ];
+                    } else if (/screenshot/i.test(summaryStr) && /saved/i.test(bodyStr) && !/not saved/i.test(bodyStr)) {
+                        // Regular grim screenshots
+                        let ts = Date.now() / 1000;
+                        let findCmd = "d=\"$(xdg-user-dir PICTURES 2>/dev/null || echo \"$HOME/Pictures\")/Screenshots\"; " +
+                            "f=\"$(find \"$d\" -maxdepth 1 -type f -name '*.png' -printf '%T@ %p\\n' | " +
+                            "awk -v t=" + ts + " '{x=$1-t; if (x<0) x=-x; if (m==\"\" || x<m) {m=x; p=$0}} END {sub(/^[^ ]+ /, \"\", p); print p}')\"; ";
+                        extractedActions = [
+                            { label: "Open", invokeFn: null, customCmd: findCmd + "[ -n \"$f\" ] && xdg-open \"$f\"" },
+                            { label: "Delete", invokeFn: null, customCmd: findCmd + "[ -n \"$f\" ] && rm -f \"$f\"" }
+                        ];
+                    } else if (extractedActions.length === 0) {
+                        // FALLBACK: Provide default Accept and Dismiss buttons
+                        extractedActions = [
+                            {
+                                label: "Accept",
+                                invokeFn: (acts && acts.length > 0 && acts[0].invoke)
+                                    ? function() { try { acts[0].invoke(); } catch(e) {} }
+                                    : null,
+                                customCmd: ""
+                            },
+                            {
+                                label: "Dismiss",
+                                invokeFn: null,
+                                customCmd: ""
+                            }
+                        ];
+                    }
+
+                    let imgStr = (n.image || "") + "";
+                    if (imgStr.indexOf("image://qsimage/") !== -1) {
+                        imgStr = "";
+                    }
+
+                    // Deep copy strings
+                    let newItem = {
+                        notifId: nId,
+                        notifAppName: (n.appName || "Notification") + "",
+                        notifAppIcon: (n.appIcon || "") + "",
+                        notifImage: imgStr,
+                        notifSummary: summaryStr,
+                        notifBody: bodyStr,
+                        notifActions: extractedActions
+                    };
+
+                    root.historyModel = [newItem].concat(arr).slice(0, 50);
+                }
+            }
+        }
+    }
+
+    // Process for running manual shell commands if native actions time out
+    Process {
+        id: customActionProc
+        running: false
+    }
+
+    width: parent ? parent.width : 300
+    spacing: 12
+
+    // Clear All Button Row
+    RowLayout {
+        width: parent.width
+        Item { Layout.fillWidth: true } 
+        Rectangle {
+            width: 70; height: 26; radius: 4
+            color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+            Text {
+                anchors.centerIn: parent
+                text: "Clear all"
+                color: root.theme ? root.theme.bgBase : "#1e1e2e"
+                font.family: root.font
+                font.pixelSize: 11
+            }
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.clearAll()
+            }
+        }
+    }
+
+    // Notification List (grouped per app, Android-style stacks)
+    ListView {
+        id: notificationList
+        width: parent.width
+        height: Math.min(contentHeight, 400)
+        implicitHeight: height
+        clip: true
+        spacing: 12
+        
+        model: root.notifGroups
+        visible: root.historyModel.length > 0
+
+        delegate: Column {
+            id: groupDelegate
+            property var group: modelData
+            property string appName: modelData.appName
+            property var items: modelData.items
+            property bool multi: items.length > 1
+            property bool expanded: root.expandedApps[appName] === true
+
+            width: ListView.view.width
+            spacing: 0
+
+            // Group header (only for stacks): app, count, expand toggle, clear group
+            Rectangle {
+                width: parent.width
+                height: groupDelegate.multi ? 28 : 0
+                implicitHeight: height
+                visible: groupDelegate.multi
+                color: "transparent"
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 4
+                    anchors.rightMargin: 4
+                    spacing: 8
+
+                    Text {
+                        text: groupDelegate.appName
+                        font.family: root.font
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: root.theme ? root.theme.textSecondary : "#a6adc8"
+                    }
+                    Rectangle {
+                        width: 20; height: 16; radius: 8
+                        color: Qt.rgba(1, 1, 1, 0.08)
+                        Text {
+                            anchors.centerIn: parent
+                            text: groupDelegate.items.length
+                            font.family: root.font
+                            font.pixelSize: 10
+                            font.bold: true
+                            color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                        }
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: groupDelegate.expanded ? "Collapse 󰅃" : "Expand 󰅀"
+                        font.family: root.font
+                        font.pixelSize: 10
+                        color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -6
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.toggleGroup(groupDelegate.appName)
+                        }
+                    }
+                    Text {
+                        text: "Clear"
+                        font.family: root.font
+                        font.pixelSize: 10
+                        color: root.theme ? root.theme.textMuted : "#6c7086"
+                        MouseArea {
+                            anchors.fill: parent
+                            anchors.margins: -6
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.dismissGroup(groupDelegate.appName)
+                        }
+                    }
+                }
+            }
+
+            // Cards: all when expanded, otherwise only the newest
+            Column {
+                width: parent.width
+                spacing: 8
+
+                Repeater {
+                    model: groupDelegate.expanded ? groupDelegate.items : groupDelegate.items.slice(0, 1)
+
+                    delegate: Item {
+                        id: notifWrap
+                        width: parent.width
+                        height: notifDelegate.height + peekLayers.height
+                        implicitHeight: height
+
+                        Rectangle {
+                            id: notifDelegate
+                            property var notif: modelData
+                            property int currentNotifId: modelData.notifId
+
+                            width: parent.width
+                            height: notifCardCol.implicitHeight + 24
+                            implicitHeight: height
+                            radius: 8
+                            color: root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05) : Qt.rgba(1, 1, 1, 0.05)
+                            border.color: root.theme ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.06)
+                            border.width: 1
+                            clip: true
+
+                            // Left vertical accent line
+                            Rectangle {
+                                width: 3
+                                height: parent.height - 16
+                                radius: 2
+                                anchors.left: parent.left
+                                anchors.leftMargin: 6
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                            }
+
+                            ColumnLayout {
+                                id: notifCardCol
+                                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10 }
+                                anchors.leftMargin: 16
+                                spacing: 6
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 12
+
+                                    // Left: App Icon / Notification Image
+                                    Rectangle {
+                                        Layout.preferredWidth: 36
+                                        Layout.preferredHeight: 36
+                                        radius: 6
+                                        color: (appIconImg.status === Image.Ready || notifImg.status === Image.Ready)
+                                            ? "transparent"
+                                            : Qt.rgba(1, 1, 1, 0.08)
+                                        Layout.alignment: Qt.AlignTop
+                                        clip: true
+
+                                        IconImage {
+                                            id: appIconImg
+                                            anchors.centerIn: parent
+                                            implicitSize: 28
+                                            source: {
+                                                let icon = notifDelegate.notif.notifAppIcon;
+                                                if (icon && icon !== "") return Quickshell.iconPath(icon, true);
+                                                let app = (notifDelegate.notif.notifAppName || "").toLowerCase();
+                                                let sum = (notifDelegate.notif.notifSummary || "").toLowerCase();
+                                                let body = (notifDelegate.notif.notifBody || "").toLowerCase();
+                                                if (app.includes("whatsapp") || sum.includes("whatsapp") || body.includes("whatsapp"))
+                                                    return Quickshell.iconPath("whatsapp", true);
+                                                if (app.includes("brave")) return Quickshell.iconPath("brave-desktop", true);
+                                                if (app.includes("firefox")) return Quickshell.iconPath("firefox", true);
+                                                if (app.includes("discord")) return Quickshell.iconPath("discord", true);
+                                                if (app.includes("spotify")) return Quickshell.iconPath("spotify", true);
+                                                return "";
+                                            }
+                                            visible: status === Image.Ready
+                                        }
+
+                                        Image {
+                                            id: notifImg
+                                            anchors.centerIn: parent
+                                            width: 28; height: 28
+                                            source: notifDelegate.notif.notifImage ? notifDelegate.notif.notifImage : ""
+                                            fillMode: Image.PreserveAspectFit
+                                            visible: status === Image.Ready && appIconImg.status !== Image.Ready
+                                        }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: {
+                                                let name = (notifDelegate.notif.notifAppName + " " + notifDelegate.notif.notifSummary + " " + notifDelegate.notif.notifBody).toLowerCase();
+                                                if (name.includes("whatsapp")) return "󰖣";
+                                                if (name.includes("discord"))  return "󰙯";
+                                                if (name.includes("firefox"))  return "󰈹";
+                                                if (name.includes("chrome") || name.includes("brave")) return "󰊯";
+                                                if (name.includes("spotify"))  return "󰓇";
+                                                if (name.includes("telegram")) return "󰓓";
+                                                if (name.includes("gmail") || name.includes("mail")) return "󰊫";
+                                                if (name.includes("terminal") || name.includes("kitty") || name.includes("alacritty")) return "󰞷";
+                                                return "󰂚";
+                                            }
+                                            font.family: root.font
+                                            font.pixelSize: 14
+                                            color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                                            visible: appIconImg.status !== Image.Ready && notifImg.status !== Image.Ready
+                                        }
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignTop
+                                        spacing: 4
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 6
+
+                                            Text {
+                                                text: notifDelegate.notif.notifAppName
+                                                font.family: root.font
+                                                font.pixelSize: 11
+                                                font.bold: true
+                                                color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                                            }
+
+                                            Text {
+                                                text: "•"
+                                                font.family: root.font
+                                                font.pixelSize: 10
+                                                color: root.theme ? root.theme.textMuted : "#6c7086"
+                                            }
+
+                                            Text {
+                                                text: "Now"
+                                                font.family: root.font
+                                                font.pixelSize: 10
+                                                color: root.theme ? root.theme.textMuted : "#6c7086"
+                                                Layout.fillWidth: true
+                                            }
+
+                                            // Dismiss single notification button
+                                            Rectangle {
+                                                width: 20
+                                                height: 20
+                                                radius: 10
+                                                color: closeHover.containsMouse ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
+                                                Layout.alignment: Qt.AlignVCenter
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: "󰅖"
+                                                    font.family: root.font
+                                                    font.pixelSize: 11
+                                                    color: closeHover.containsMouse 
+                                                        ? (root.theme ? root.theme.accentRed : "#f38ba8") 
+                                                        : (root.theme ? root.theme.textMuted : "#6c7086")
+                                                }
+
+                                                MouseArea {
+                                                    id: closeHover
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: root.dismissNotif(notifDelegate.currentNotifId)
+                                                }
+                                            }
+                                        }
+
+                                        ColumnLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 3
+
+                                            // Summary / Title
+                                            Text {
+                                                text: notifDelegate.notif.notifSummary
+                                                font.family: root.font
+                                                font.pixelSize: 12
+                                                font.bold: true
+                                                color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                                                wrapMode: Text.Wrap
+                                                Layout.fillWidth: true
+                                                visible: text !== ""
+                                            }
+
+                                            // Body Text
+                                            Text {
+                                                text: notifDelegate.notif.notifBody
+                                                font.family: root.font
+                                                font.pixelSize: 11
+                                                color: root.theme ? root.theme.textSecondary : "#a6adc8"
+                                                wrapMode: Text.Wrap
+                                                Layout.fillWidth: true
+                                                visible: text !== ""
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Stack badge pill row (+N) if grouped stack & collapsed
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    visible: groupDelegate.multi && !groupDelegate.expanded && index === 0
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Rectangle {
+                                        Layout.preferredWidth: badgeText.implicitWidth + 10
+                                        Layout.preferredHeight: 18
+                                        radius: 9
+                                        color: Qt.rgba(1, 1, 1, 0.1)
+
+                                        Text {
+                                            id: badgeText
+                                            anchors.centerIn: parent
+                                            text: "+" + (groupDelegate.items.length - 1)
+                                            font.family: root.font
+                                            font.pixelSize: 10
+                                            font.bold: true
+                                            color: root.theme ? root.theme.textSecondary : "#a6adc8"
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: root.toggleGroup(groupDelegate.appName)
+                                        }
+                                    }
+                                }
+
+                                // Interactive Inline Actions
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 28
+                                    spacing: 6
+                                    Layout.topMargin: 4
+                                    Layout.bottomMargin: 2
+                                    visible: notifDelegate.notif.notifActions && notifDelegate.notif.notifActions.length > 0
+
+                                    Repeater {
+                                        model: notifDelegate.notif.notifActions
+                                        delegate: Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.preferredWidth: 1
+                                            Layout.preferredHeight: 28
+                                            height: 28
+                                            radius: 14
+                                            color: actionHover.containsMouse 
+                                                ? (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.12) : Qt.rgba(1, 1, 1, 0.12)) 
+                                                : (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06) : Qt.rgba(1, 1, 1, 0.05))
+
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: modelData.label
+                                                color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                                                font.family: root.font
+                                                font.pixelSize: 11
+                                                font.bold: true
+                                            }
+
+                                            MouseArea {
+                                                id: actionHover
+                                                anchors.fill: parent
+                                                hoverEnabled: true
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    if (modelData.invokeFn) {
+                                                        try { modelData.invokeFn(); } catch(e) {}
+                                                    } else if (modelData.customCmd && modelData.customCmd !== "") {
+                                                        Quickshell.execDetached(["sh", "-c", modelData.customCmd]);
+                                                    }
+
+                                                    root.dismissNotif(notifDelegate.currentNotifId);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Stack "peek" layers directly under the top card while collapsed
+                        Item {
+                            id: peekLayers
+                            y: notifDelegate.height
+                            width: parent.width
+                            height: (groupDelegate.multi && !groupDelegate.expanded && index === 0) ? 14 : 0
+                            visible: height > 0
+                            Rectangle {
+                                y: 2
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: parent.width - 16
+                                height: 8; radius: 6
+                                color: Qt.rgba(1, 1, 1, 0.05); border.color: Qt.rgba(1, 1, 1, 0.06); border.width: 1
+                            }
+                            Rectangle {
+                                y: 8
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: parent.width - 32
+                                height: 6; radius: 6
+                                color: Qt.rgba(1, 1, 1, 0.03); border.color: Qt.rgba(1, 1, 1, 0.06); border.width: 1
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.toggleGroup(groupDelegate.appName)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Empty State
+    Item {
+        width: parent.width
+        height: root.historyModel.length === 0 ? 160 : 0
+        implicitHeight: height
+        visible: root.historyModel.length === 0
+        
+        Text {
+            anchors.centerIn: parent
+            text: "No Notifications"
+            font.family: root.font
+            font.pixelSize: 14
+            color: root.theme ? root.theme.textMuted : "#6c7086"
+        }
+    }
+}
