@@ -25,7 +25,14 @@ GridLayout {
     columnSpacing: 8
 
     // Processes
-    Process { id: wifiProc; running: false }
+    Process {
+        id: wifiProc
+        running: false
+        onExited: {
+            wifiStatusProc.running = true;
+            activeSsidProc.running = true;
+        }
+    }
     Process { id: airplaneProc; running: false }
 
     Process {
@@ -105,8 +112,9 @@ GridLayout {
         }
     }
 
-    function toggleWifi() {
-        root.wifiEnabled = !root.wifiEnabled;
+    function setWifi(enabled) {
+        if (root.wifiEnabled === enabled) return;
+        root.wifiEnabled = enabled;
         if (root.wifiEnabled) {
             root.airplaneEnabled = false;
             activeSsidProc.running = true;
@@ -115,6 +123,10 @@ GridLayout {
         }
         wifiProc.command = ["nmcli", "radio", "wifi", root.wifiEnabled ? "on" : "off"];
         wifiProc.running = true;
+    }
+
+    function toggleWifi() {
+        setWifi(!root.wifiEnabled);
     }
 
     function toggleBt() {
@@ -198,9 +210,7 @@ GridLayout {
                 if (mouse.button === Qt.RightButton) {
                     root.toggleWifi();
                 } else if (mouse.button === Qt.LeftButton) {
-                    if (root.wifiEnabled) {
-                        root.openWifiRequested();
-                    }
+                    root.openWifiRequested();
                 }
             }
         }

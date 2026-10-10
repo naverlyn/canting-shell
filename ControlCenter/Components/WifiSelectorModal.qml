@@ -20,6 +20,7 @@ PanelWindow {
     property string expandedSsid: ""
     property int selectedIndex: 0
 
+    signal setWifiRequested(bool enabled)
     signal toggleWifiRequested()
     signal networkConnected(string ssid)
 
@@ -46,6 +47,38 @@ PanelWindow {
             expandedSsid = "";
             scanWifi();
             networkListView.forceActiveFocus();
+        }
+    }
+
+    onWifiEnabledChanged: {
+        if (wifiEnabled) {
+            scanDelayTimer.restart();
+        } else {
+            root.networkList = [];
+            root.expandedSsid = "";
+        }
+    }
+
+    Timer {
+        id: scanDelayTimer
+        interval: 1000
+        repeat: false
+        onTriggered: {
+            if (root.wifiEnabled) {
+                scanWifiProc.running = true;
+            }
+        }
+    }
+
+    Timer {
+        id: periodicScanTimer
+        interval: 8000
+        repeat: true
+        running: root.visible && root.wifiEnabled
+        onTriggered: {
+            if (!scanWifiProc.running) {
+                scanWifiProc.running = true;
+            }
         }
     }
 
@@ -240,8 +273,7 @@ PanelWindow {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     if (!root.wifiEnabled) {
-                                        root.toggleWifiRequested();
-                                        scanWifiProc.running = true;
+                                        root.setWifiRequested(true);
                                     }
                                 }
                             }
@@ -272,9 +304,7 @@ PanelWindow {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     if (root.wifiEnabled) {
-                                        root.toggleWifiRequested();
-                                        root.networkList = [];
-                                        root.expandedSsid = "";
+                                        root.setWifiRequested(false);
                                     }
                                 }
                             }
