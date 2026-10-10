@@ -414,7 +414,7 @@ Item {
                         Text {
                             id: wpPillText
                             anchors.centerIn: parent
-                            text: "󰸉 Wallpaper"
+                            text: "Wallpaper"
                             font.family: root.font
                             font.pixelSize: 10
                             font.bold: root.theme.wallpaperMode
