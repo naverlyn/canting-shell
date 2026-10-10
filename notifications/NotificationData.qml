@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Services.Notifications
 
 QtObject {
@@ -23,6 +24,41 @@ QtObject {
 
     readonly property int defaultTimeout: 5000  // ms — fallback auto-dismiss when app sends -1/0
 
+    function _checkIsWhatsApp(n) {
+        var sBody = ((n && n.body) || notificationData.body || "").toLowerCase();
+        var sApp = ((n && n.appName) || notificationData.appName || "").toLowerCase();
+        var sSum = ((n && n.summary) || notificationData.summary || "").toLowerCase();
+        var sIcon = ((n && n.appIcon) || notificationData.appIcon || "").toLowerCase();
+
+        return sBody.indexOf("web.whatsapp.com") !== -1 ||
+               sBody.indexOf("whatsapp.com") !== -1 ||
+               sSum.indexOf("whatsapp") !== -1 ||
+               sApp.indexOf("whatsapp") !== -1 ||
+               sIcon.indexOf("whatsapp") !== -1;
+    }
+
+    readonly property bool isWhatsApp: _checkIsWhatsApp(notification)
+
+    readonly property string displayAppName: {
+        if (isWhatsApp) {
+            if (!appName || appName === "Notification" || appName.toLowerCase() === "brave" || appName.toLowerCase() === "chromium") {
+                return "WhatsApp Web";
+            }
+        }
+        return appName || "Notification";
+    }
+
+    readonly property string displayBody: {
+        if (!body) return "";
+        if (isWhatsApp) {
+            var clean = body.replace(/^https?:\/\/web\.whatsapp\.com\/?\s*\n*/i, "");
+            clean = clean.replace(/^web\.whatsapp\.com\/?\s*\n*/i, "");
+            clean = clean.trim();
+            if (clean.length > 0) return clean;
+        }
+        return body;
+    }
+
     readonly property Connections _conn: Connections {
         target: notificationData.notification
 
@@ -34,16 +70,25 @@ QtObject {
         }
 
         function onSummaryChanged(): void {
-            if (notificationData.notification) notificationData.summary = notificationData.notification.summary || "";
+            if (notificationData.notification) {
+                notificationData.summary = notificationData.notification.summary || "";
+                notificationData.actions = notificationData._parseActions(notificationData.notification);
+            }
         }
         function onBodyChanged(): void {
-            if (notificationData.notification) notificationData.body = notificationData.notification.body || "";
+            if (notificationData.notification) {
+                notificationData.body = notificationData.notification.body || "";
+                notificationData.actions = notificationData._parseActions(notificationData.notification);
+            }
         }
         function onAppIconChanged(): void {
             if (notificationData.notification) notificationData.appIcon = notificationData.notification.appIcon || "";
         }
         function onAppNameChanged(): void {
-            if (notificationData.notification) notificationData.appName = notificationData.notification.appName || "";
+            if (notificationData.notification) {
+                notificationData.appName = notificationData.notification.appName || "";
+                notificationData.actions = notificationData._parseActions(notificationData.notification);
+            }
         }
         function onImageChanged(): void {
             if (notificationData.notification) notificationData.image = notificationData.notification.image || "";
@@ -71,17 +116,27 @@ QtObject {
     }
 
     function _parseActions(notif) {
-        if (!notif || !notif.actions) return [];
+        if (!notif) return [];
+        var rawActions = notif.actions || [];
         var res = [];
-        for (var i = 0; i < notif.actions.length; i++) {
-            var a = notif.actions[i];
+        var hasExplicitReply = false;
+        for (var i = 0; i < rawActions.length; i++) {
+            var a = rawActions[i];
             if (!a) continue;
             var text = (a.text !== undefined && a.text !== null ? String(a.text) : "").trim();
             // FreeDesktop spec: 'default' action activates the notification body, not an explicit button.
             // Also skip any actions with empty labels to avoid phantom blank buttons.
             if (a.identifier === "default" || text === "") continue;
-            res.push({ identifier: a.identifier, text: text });
+            if (a.identifier === "reply" || text.toLowerCase() === "reply") {
+                hasExplicitReply = true;
+            }
+            res.push({ identifier: a.identifier, text: text, isReply: false });
         }
+
+        if (_checkIsWhatsApp(notif) && !hasExplicitReply) {
+            res.unshift({ identifier: "reply", text: "Reply", isReply: true });
+        }
+
         return res;
     }
 
@@ -98,6 +153,25 @@ QtObject {
         const rawTimeout = notification.expireTimeout;
         expireTimeout = rawTimeout > 0 ? rawTimeout : defaultTimeout;
         actions   = _parseActions(notification);
+    }
+
+    function focusAppWindow(): void {
+        var app = (appName || "").toLowerCase();
+        var b = (body || "").toLowerCase();
+        if (isWhatsApp || b.indexOf("web.whatsapp.com") !== -1 || b.indexOf("whatsapp.com") !== -1 || app.indexOf("brave") !== -1) {
+            Quickshell.execDetached([
+                "sh", "-c",
+                'if ! hyprctl dispatch focuswindow "title:^(.*WhatsApp.*)$" 2>&1 | grep -q "ok"; then if ! hyprctl dispatch focuswindow "class:^(brave-browser|Brave-browser)$" 2>&1 | grep -q "ok"; then brave "https://web.whatsapp.com" >/dev/null 2>&1 & fi; fi'
+            ]);
+        } else if (app.indexOf("discord") !== -1 || app.indexOf("vesktop") !== -1) {
+            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:^(vesktop|discord)$"]);
+        } else if (app.indexOf("telegram") !== -1) {
+            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:^(telegramdesktop|org.telegram.desktop)$"]);
+        } else if (app.indexOf("spotify") !== -1) {
+            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:^(spotify)$"]);
+        } else if (app !== "" && app !== "notification") {
+            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:^(" + app + ")$"]);
+        }
     }
 
     function dismiss(): void {
@@ -119,6 +193,11 @@ QtObject {
                 }
             }
         }
+        if (isWhatsApp) {
+            invokeAction("reply");
+            return;
+        }
+        focusAppWindow();
         dismiss();
     }
 
@@ -126,15 +205,27 @@ QtObject {
         if (!identifier || closed) return;
         closed = true;
         NotificationService._remove(notificationData);
+
+        var actionToInvoke = identifier;
+        if (identifier === "reply") {
+            actionToInvoke = "default";
+        }
+
+        var invoked = false;
         if (notification && notification.actions) {
             for (var i = 0; i < notification.actions.length; i++) {
                 var a = notification.actions[i];
-                if (a && a.identifier === identifier) {
-                    try { a.invoke(); } catch(e) {}
+                if (a && a.identifier === actionToInvoke) {
+                    try { a.invoke(); invoked = true; } catch(e) {}
                     break;
                 }
             }
         }
+
+        if (identifier === "reply" || identifier === "default") {
+            focusAppWindow();
+        }
+
         destroy();
     }
 }

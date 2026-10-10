@@ -87,7 +87,7 @@ Scope {
                         Accessible.role: Accessible.StaticText
                         Accessible.name: (modelData.urgency === NotificationUrgency.Critical ? "[Critical] " :
                                          modelData.urgency === NotificationUrgency.Low       ? "[Low] "      : "") +
-                                         (modelData.appName || "Notification") + ": " + modelData.summary
+                                         (modelData.displayAppName || modelData.appName || "Notification") + ": " + modelData.summary
 
                         HoverHandler {
                             id: cardHover
@@ -112,6 +112,13 @@ Scope {
                             }
                         }
                         Component.onCompleted: entryAnim.start()
+
+                        MouseArea {
+                            id: cardClickArea
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: notifCard.modelData.activate()
+                        }
 
                         Rectangle {
                             width: 3
@@ -142,39 +149,44 @@ Scope {
                                     Layout.preferredHeight: 24
                                     Layout.alignment: Qt.AlignVCenter
                                     radius: 8
-                                    color: Qt.alpha(notifCard.modelData.urgency === NotificationUrgency.Critical
-                                                    ? root.theme.urgencyCritical : root.theme.urgencyNormal, 0.15)
+                                    color: notifCard.modelData.isWhatsApp
+                                           ? Qt.alpha("#25D366", 0.15)
+                                           : Qt.alpha(notifCard.modelData.urgency === NotificationUrgency.Critical
+                                                      ? root.theme.urgencyCritical : root.theme.urgencyNormal, 0.15)
 
                                     IconImage {
                                         anchors.centerIn: parent
                                         source: Quickshell.iconPath(notifCard.modelData.appIcon, true)
                                         implicitSize: 16
-                                        visible: notifCard.modelData.appIcon !== ""
+                                        visible: notifCard.modelData.appIcon !== "" && !notifCard.modelData.isWhatsApp
                                     }
 
                                     Text {
                                         anchors.centerIn: parent
-                                        visible: notifCard.modelData.appIcon === ""
+                                        visible: notifCard.modelData.appIcon === "" || notifCard.modelData.isWhatsApp
                                         text: {
-                                            const name = notifCard.modelData.appName.toLowerCase();
+                                            if (notifCard.modelData.isWhatsApp) return "󰖣";
+                                            const name = (notifCard.modelData.appName || "").toLowerCase();
                                             if (notifCard.modelData.urgency === NotificationUrgency.Critical) return "󰀦";
                                             if (name.includes("discord"))  return "󰙯";
                                             if (name.includes("firefox"))  return "󰈹";
-                                            if (name.includes("chrome"))   return "";
-                                            if (name.includes("telegram")) return "";
+                                            if (name.includes("chrome") || name.includes("brave")) return "󰈹";
+                                            if (name.includes("telegram")) return "󰈎";
                                             if (name.includes("spotify"))  return "󰓇";
-                                            if (name.includes("terminal") || name.includes("kitty") || name.includes("alacritty")) return "";
+                                            if (name.includes("terminal") || name.includes("kitty") || name.includes("alacritty")) return "󰞷";
                                             return "󰂚";
                                         }
-                                        color: notifCard.modelData.urgency === NotificationUrgency.Critical
-                                               ? root.theme.urgencyCritical : root.theme.urgencyNormal
+                                        color: notifCard.modelData.isWhatsApp
+                                               ? "#25D366"
+                                               : (notifCard.modelData.urgency === NotificationUrgency.Critical
+                                                  ? root.theme.urgencyCritical : root.theme.urgencyNormal)
                                         font.pixelSize: 14
                                         font.family: root.font
                                     }
                                 }
 
                                 Text {
-                                    text: notifCard.modelData.appName || "Notification"
+                                    text: notifCard.modelData.displayAppName || notifCard.modelData.appName || "Notification"
                                     color: root.theme.textMuted
                                     font.pixelSize: 11
                                     font.family: root.font
@@ -224,10 +236,10 @@ Scope {
                             RowLayout {
                                 Layout.fillWidth: true
                                 spacing: 8
-                                visible: notifCard.modelData.body !== "" || notifCard.modelData.image !== ""
+                                visible: (notifCard.modelData.displayBody || notifCard.modelData.body) !== "" || notifCard.modelData.image !== ""
 
                                 Text {
-                                    text: notifCard.modelData.body
+                                    text: notifCard.modelData.displayBody || notifCard.modelData.body
                                     color: root.theme.textSecondary
                                     font.pixelSize: 12
                                     font.family: root.font
@@ -271,15 +283,19 @@ Scope {
                                         id: actionBtn
                                         required property var modelData
 
+                                        readonly property bool isReply: actionBtn.modelData && (actionBtn.modelData.identifier === "reply" || actionBtn.modelData.isReply)
+
                                         visible: actionBtn.modelData && actionBtn.modelData.text && actionBtn.modelData.text.length > 0
                                         Layout.preferredHeight: 28
-                                        Layout.preferredWidth: actionText.width + 24
+                                        Layout.preferredWidth: actionContent.implicitWidth + 24
                                         radius: 14
-                                        color: actionHover.containsMouse
-                                               ? Qt.alpha(root.theme.accentPrimary, 0.28)
-                                               : Qt.alpha(root.theme.accentPrimary, 0.12)
+                                        color: isReply
+                                               ? (actionHover.containsMouse ? Qt.lighter(root.theme.accentPrimary, 1.15) : root.theme.accentPrimary)
+                                               : (actionHover.containsMouse ? Qt.alpha(root.theme.accentPrimary, 0.28) : Qt.alpha(root.theme.accentPrimary, 0.12))
                                         border.width: 1
-                                        border.color: Qt.alpha(root.theme.accentPrimary, actionHover.containsMouse ? 0.5 : 0.2)
+                                        border.color: isReply
+                                                      ? (actionHover.containsMouse ? Qt.lighter(root.theme.accentPrimary, 1.25) : root.theme.accentPrimary)
+                                                      : Qt.alpha(root.theme.accentPrimary, actionHover.containsMouse ? 0.5 : 0.2)
 
                                         Behavior on color {
                                             ColorAnimation { duration: 120 }
@@ -288,13 +304,27 @@ Scope {
                                         Accessible.role: Accessible.Button
                                         Accessible.name: actionBtn.modelData.text || ""
 
-                                        Text {
-                                            id: actionText
+                                        RowLayout {
+                                            id: actionContent
                                             anchors.centerIn: parent
-                                            text: actionBtn.modelData.text || ""
-                                            color: root.theme.accentPrimary
-                                            font.pixelSize: 11
-                                            font.family: root.font
+                                            spacing: 5
+
+                                            Text {
+                                                visible: actionBtn.isReply
+                                                text: "󰈎"
+                                                color: root.theme.bgBase
+                                                font.pixelSize: 11
+                                                font.family: root.font
+                                            }
+
+                                            Text {
+                                                id: actionText
+                                                text: actionBtn.modelData.text || ""
+                                                color: actionBtn.isReply ? root.theme.bgBase : root.theme.accentPrimary
+                                                font.pixelSize: 11
+                                                font.bold: actionBtn.isReply
+                                                font.family: root.font
+                                            }
                                         }
 
                                         MouseArea {
@@ -339,14 +369,6 @@ Scope {
                                     }
                                 }
                             }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            anchors.topMargin: 30
-                            z: -1
-                            onClicked: notifCard.modelData.activate()
-                            cursorShape: Qt.PointingHandCursor
                         }
                     }
                 }
