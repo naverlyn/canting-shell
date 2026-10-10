@@ -243,11 +243,13 @@ Item {
                             font.family: root.font
                             font.pixelSize: 22
                             color: root.theme.accentPrimary
+                            Layout.alignment: Qt.AlignVCenter
                         }
 
                         ColumnLayout {
                             spacing: 2
                             Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
 
                             Text {
                                 text: "Monitor Layout & Arrangement"
@@ -255,16 +257,23 @@ Item {
                                 font.pixelSize: 13
                                 font.bold: true
                                 color: root.theme.textPrimary
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
                             }
                             Text {
                                 text: "Drag to reposition, scale, rotate, or set mirror modes"
                                 font.family: root.font
                                 font.pixelSize: 11
                                 color: root.theme.textSecondary
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
                             }
                         }
 
                         Rectangle {
+                            Layout.preferredWidth: 100
+                            Layout.preferredHeight: 28
+                            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                             width: 100
                             height: 28
                             radius: 6

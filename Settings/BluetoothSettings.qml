@@ -93,18 +93,40 @@ Item {
                 opacity: root.btAvailable ? 1.0 : 0.4
                 enabled: root.btAvailable
 
+                // Smooth sliding active switch pill
+                Rectangle {
+                    x: root.btEnabled ? 2 : (parent.width / 2)
+                    y: 2
+                    width: (parent.width - 4) / 2
+                    height: parent.height - 4
+                    radius: 4
+                    color: root.btEnabled 
+                        ? (root.theme ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.2) : Qt.rgba(0.5, 0.7, 1, 0.2))
+                        : (root.theme ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : Qt.rgba(1, 1, 1, 0.08))
+                    border.color: root.btEnabled 
+                        ? (root.theme ? root.theme.accentPrimary : "#7aa2f7") 
+                        : (root.theme ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)) : Qt.rgba(1, 1, 1, 0.1))
+                    border.width: 1
+
+                    Behavior on x {
+                        NumberAnimation {
+                            duration: 200
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                    Behavior on color { ColorAnimation { duration: 180 } }
+                    Behavior on border.color { ColorAnimation { duration: 180 } }
+                }
+
                 Row {
                     anchors.fill: parent
                     anchors.margins: 2
                     spacing: 0
 
                     // "On" segment
-                    Rectangle {
+                    Item {
                         width: parent.width / 2
                         height: parent.height
-                        radius: 4
-                        color: root.btEnabled ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.05)) : "transparent"
-                        Behavior on color { ColorAnimation { duration: 150 } }
 
                         Text {
                             anchors.centerIn: parent
@@ -131,12 +153,9 @@ Item {
                     }
 
                     // "Off" segment
-                    Rectangle {
+                    Item {
                         width: parent.width / 2
                         height: parent.height
-                        radius: 4
-                        color: !root.btEnabled ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.05)) : "transparent"
-                        Behavior on color { ColorAnimation { duration: 150 } }
 
                         Text {
                             anchors.centerIn: parent
