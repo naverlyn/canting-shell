@@ -2,19 +2,20 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import ".."
 
 Rectangle {
     id: root
 
-    property var theme
+    property var theme: DefaultTheme {}
     property string font: "Hack Nerd Font"
     property int currentBrightness: 50
 
     width: parent ? parent.width : 300
     height: brightnessCol.implicitHeight + 24
     radius: 10
-    color: root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05) : Qt.rgba(1, 1, 1, 0.05)
-    border.color: root.theme ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.06)
+    color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05)
+    border.color: root.theme.bgBorder
     border.width: 1
 
     // Read current brightness
@@ -60,7 +61,7 @@ Rectangle {
             font.family: root.font
             font.pixelSize: 12
             font.bold: true
-            color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+            color: root.theme.textPrimary
             Layout.fillWidth: true
         }
 
@@ -71,14 +72,14 @@ Rectangle {
             // Brightness Icon
             Rectangle {
                 width: 28; height: 28; radius: 7
-                color: root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06) : Qt.rgba(1, 1, 1, 0.05)
+                color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06)
 
                 Text {
                     anchors.centerIn: parent
                     text: "󰃠"
                     font.family: root.font
                     font.pixelSize: 15
-                    color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                    color: root.theme.textPrimary
                 }
             }
 
@@ -88,16 +89,14 @@ Rectangle {
                 Layout.fillWidth: true
                 height: 8
                 radius: 4
-                color: root.theme 
-                    ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.18) 
-                    : Qt.rgba(1, 1, 1, 0.15)
+                color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.18)
 
                 Rectangle {
                     id: sliderFill
                     height: parent.height
                     radius: 4
                     width: Math.min(parent.width, parent.width * (root.currentBrightness / 100.0))
-                    color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                    color: root.theme.accentPrimary
                     Behavior on width {
                         enabled: !sliderMouse.pressed
                         NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
@@ -108,7 +107,7 @@ Rectangle {
                     width: 14; height: 14; radius: 7
                     y: (parent.height - height) / 2
                     x: Math.max(0, Math.min(sliderBg.width - width, sliderFill.width - (width / 2)))
-                    color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                    color: root.theme.textPrimary
                 }
 
                 MouseArea {
@@ -132,7 +131,7 @@ Rectangle {
                 font.family: root.font
                 font.pixelSize: 11
                 font.bold: true
-                color: root.theme ? root.theme.textSecondary : "#a6adc8"
+                color: root.theme.textSecondary
                 Layout.preferredWidth: 36
                 horizontalAlignment: Text.AlignRight
                 Layout.alignment: Qt.AlignVCenter

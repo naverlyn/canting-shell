@@ -3,10 +3,11 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
+import ".."
 
 Item {
     id: root
-    property var theme
+    property var theme: DefaultTheme {}
     property string font
 
     property var networks: []
@@ -84,6 +85,16 @@ Item {
         }
     }
 
+    function disconnectFromNetwork(ssid) {
+        disconnectProc.command = [
+            "sh", "-c",
+            'IFACE=$(nmcli -t -f DEVICE,TYPE,STATE dev 2>/dev/null | grep ":wifi:connected" | head -n1 | cut -d: -f1); [ -n "$IFACE" ] && nmcli dev disconnect "$IFACE"; [ -n "$1" ] && nmcli con down id "$1" 2>/dev/null || true',
+            "--",
+            ssid || root.currentSsid
+        ];
+        disconnectProc.running = true;
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 16
@@ -111,40 +122,18 @@ Item {
                 border.color: Qt.rgba(1, 1, 1, 0.05)
                 border.width: 1
 
-                // Smooth sliding active switch pill
-                Rectangle {
-                    x: root.wifiEnabled ? 2 : (parent.width / 2)
-                    y: 2
-                    width: (parent.width - 4) / 2
-                    height: parent.height - 4
-                    radius: 4
-                    color: root.wifiEnabled 
-                        ? (root.theme ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.2) : Qt.rgba(0.5, 0.7, 1, 0.2))
-                        : (root.theme ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : Qt.rgba(1, 1, 1, 0.08))
-                    border.color: root.wifiEnabled 
-                        ? (root.theme ? root.theme.accentPrimary : "#7aa2f7") 
-                        : (root.theme ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)) : Qt.rgba(1, 1, 1, 0.1))
-                    border.width: 1
-
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: 200
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                    Behavior on color { ColorAnimation { duration: 180 } }
-                    Behavior on border.color { ColorAnimation { duration: 180 } }
-                }
-
                 Row {
                     anchors.fill: parent
                     anchors.margins: 2
                     spacing: 0
 
                     // "On" segment
-                    Item {
+                    Rectangle {
                         width: parent.width / 2
                         height: parent.height
+                        radius: 4
+                        color: root.wifiEnabled ? root.theme.bgHover : "transparent"
+                        Behavior on color { ColorAnimation { duration: 150 } }
 
                         Text {
                             anchors.centerIn: parent
@@ -172,9 +161,12 @@ Item {
                     }
 
                     // "Off" segment
-                    Item {
+                    Rectangle {
                         width: parent.width / 2
                         height: parent.height
+                        radius: 4
+                        color: !root.wifiEnabled ? root.theme.bgHover : "transparent"
+                        Behavior on color { ColorAnimation { duration: 150 } }
 
                         Text {
                             anchors.centerIn: parent
@@ -221,7 +213,7 @@ Item {
                 readonly property bool isExpanded: root.expandedSsid === modelData.ssid
 
                 width: ListView.view.width
-                height: isExpanded ? (modelData.security ? 140 : 100) : 44
+                height: isExpanded ? ((modelData.security && !isCurrent) ? 140 : 100) : 44
                 radius: 8
                 color: (isCurrent || isExpanded || hoverArea.containsMouse) ? root.theme.bgSelected : "transparent"
                 clip: true
@@ -318,9 +310,9 @@ Item {
                             Layout.fillWidth: true
                             height: 38
                             radius: 6
-                            visible: modelData.security
+                            visible: modelData.security && !netDelegate.isCurrent
                             color: root.theme.bgSurface
-                            border.color: pwdInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                            border.color: pwdInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                             border.width: 1
 
                             TextInput {
@@ -367,25 +359,34 @@ Item {
                             spacing: 8
                             Item { Layout.fillWidth: true }
 
-                            // Connect button
+                            // Connect button (when not connected)
                             Rectangle {
+                                id: connectBtnRect
+                                visible: !netDelegate.isCurrent
                                 width: 80
                                 height: 32
                                 radius: 6
-                                color: root.theme.bgHover
-                                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                                color: connectBtnMouse.containsMouse
+                                    ? root.theme.accentCyan
+                                    : root.theme.accentPrimary
+                                border.color: "transparent"
                                 border.width: 1
+
+                                Behavior on color { ColorAnimation { duration: 150 } }
 
                                 Text {
                                     anchors.centerIn: parent
                                     text: "Connect"
-                                    color: root.theme.textPrimary
+                                    color: root.theme.bgBase
                                     font.family: root.font
                                     font.pixelSize: 12
+                                    font.bold: true
                                 }
 
                                 MouseArea {
+                                    id: connectBtnMouse
                                     anchors.fill: parent
+                                    hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
                                         if (modelData.security) {
@@ -400,13 +401,52 @@ Item {
                                 }
                             }
 
+                            // Disconnect button (when connected)
+                            Rectangle {
+                                visible: netDelegate.isCurrent
+                                width: 90
+                                height: 32
+                                radius: 6
+                                color: disconnectMouse.containsMouse 
+                                    ? root.theme.accentRed 
+                                    : Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.15)
+                                border.color: root.theme.accentRed
+                                border.width: 1
+
+                                Behavior on color { ColorAnimation { duration: 150 } }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: disconnectProc.running ? "Disconnecting..." : "Disconnect"
+                                    color: disconnectMouse.containsMouse 
+                                        ? root.theme.bgBase 
+                                        : root.theme.accentRed
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    font.bold: true
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                }
+
+                                MouseArea {
+                                    id: disconnectMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    enabled: !disconnectProc.running
+                                    onClicked: {
+                                        root.disconnectFromNetwork(modelData.ssid);
+                                        root.expandedSsid = "";
+                                    }
+                                }
+                            }
+
                             // Cancel button
                             Rectangle {
                                 width: 80
                                 height: 32
                                 radius: 6
                                 color: root.theme.bgHover
-                                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                                border.color: root.theme.bgBorder
                                 border.width: 1
 
                                 Text {
@@ -442,10 +482,9 @@ Item {
                     onClicked: {
                         if (netDelegate.isExpanded) {
                             root.expandedSsid = "";
-                        } else if (!netDelegate.isCurrent) {
-                            if (modelData.security) {
-                                root.expandedSsid = modelData.ssid;
-                            } else {
+                        } else {
+                            root.expandedSsid = modelData.ssid;
+                            if (!netDelegate.isCurrent && !modelData.security) {
                                 connectProc.command = ["nmcli", "dev", "wifi", "connect", modelData.ssid];
                                 connectProc.running = true;
                             }
@@ -454,6 +493,23 @@ Item {
                 }
             }
         }
-        Process { id: connectProc }
+
+        Process {
+            id: connectProc
+            onExited: {
+                activeSsidProc.running = true;
+                scanProc.running = true;
+            }
+        }
+
+        Process {
+            id: disconnectProc
+            running: false
+            onExited: {
+                root.currentSsid = "";
+                activeSsidProc.running = true;
+                scanProc.running = true;
+            }
+        }
     }
 }

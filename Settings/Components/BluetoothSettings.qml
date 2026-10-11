@@ -3,10 +3,11 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
+import ".."
 
 Item {
     id: root
-    property var theme
+    property var theme: DefaultTheme {}
     property string font
 
     property var devices: []
@@ -101,11 +102,11 @@ Item {
                     height: parent.height - 4
                     radius: 4
                     color: root.btEnabled 
-                        ? (root.theme ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.2) : Qt.rgba(0.5, 0.7, 1, 0.2))
-                        : (root.theme ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : Qt.rgba(1, 1, 1, 0.08))
+                        ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.2)
+                        : root.theme.bgHover
                     border.color: root.btEnabled 
-                        ? (root.theme ? root.theme.accentPrimary : "#7aa2f7") 
-                        : (root.theme ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)) : Qt.rgba(1, 1, 1, 0.1))
+                        ? root.theme.accentPrimary 
+                        : root.theme.bgBorder
                     border.width: 1
 
                     Behavior on x {
@@ -259,7 +260,7 @@ Item {
                                     height: 30
                                     radius: 6
                                     color: root.theme.bgSurface
-                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                                    border.color: root.theme.bgBorder
                                     border.width: 1
 
                                     Text {
@@ -286,7 +287,7 @@ Item {
                                     height: 30
                                     radius: 6
                                     color: root.theme.bgSurface
-                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                                    border.color: root.theme.bgBorder
                                     border.width: 1
 
                                     Text {
@@ -313,7 +314,7 @@ Item {
                                     height: 30
                                     radius: 6
                                     color: root.theme.bgSurface
-                                    border.color: Qt.rgba(0.9, 0.3, 0.3, 0.5)
+                                    border.color: Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.5)
                                     border.width: 1
 
                                     Text {
@@ -321,7 +322,7 @@ Item {
                                         text: "Forget"
                                         font.family: root.font
                                         font.pixelSize: 12
-                                        color: root.theme.accentRed ?? "#f7768e"
+                                        color: root.theme.accentRed
                                     }
 
                                     MouseArea {
@@ -341,7 +342,7 @@ Item {
                                     height: 30
                                     radius: 6
                                     color: root.theme.bgSurface
-                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                                    border.color: root.theme.bgBorder
                                     border.width: 1
 
                                     Text {

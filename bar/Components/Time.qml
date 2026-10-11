@@ -2,12 +2,13 @@ pragma Singleton
 
 import Quickshell
 import QtQuick
+import ".."
 
 Singleton {
   id: root
 
   readonly property string timeString: {
-    Qt.formatDateTime(clock.date, "hh:mm:ss")
+    Qt.formatDateTime(clock.date, BarConfig.showSeconds ? "hh:mm:ss" : "hh:mm")
   }
 
   readonly property string dateString: {

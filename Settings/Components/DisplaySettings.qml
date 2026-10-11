@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
+import ".."
 
 Item {
     id: root
@@ -105,13 +106,6 @@ Item {
                         anchors.fill: parent
                         anchors.margins: 16
                         spacing: 16
-
-                        Text {
-                            text: "󰍹"
-                            font.family: root.font
-                            font.pixelSize: 24
-                            color: root.theme.accentPrimary
-                        }
 
                         ColumnLayout {
                             spacing: 2
@@ -238,14 +232,6 @@ Item {
                         anchors.margins: 14
                         spacing: 14
 
-                        Text {
-                            text: "󰆍"
-                            font.family: root.font
-                            font.pixelSize: 22
-                            color: root.theme.accentPrimary
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-
                         ColumnLayout {
                             spacing: 2
                             Layout.fillWidth: true
@@ -271,15 +257,21 @@ Item {
                         }
 
                         Rectangle {
+                            id: editorBtn
                             Layout.preferredWidth: 100
                             Layout.preferredHeight: 28
                             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                             width: 100
                             height: 28
                             radius: 6
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)
+                            color: editorHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.12)) : root.theme.bgSurface
+                            border.color: editorHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
                             border.width: 1
+
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                            HoverHandler { id: editorHover }
 
                             Text {
                                 anchors.centerIn: parent

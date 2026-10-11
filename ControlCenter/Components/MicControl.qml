@@ -2,11 +2,12 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Pipewire
+import ".."
 
 ColumnLayout {
     id: root
 
-    property var theme
+    property var theme: DefaultTheme {}
     property string font: "Hack Nerd Font"
     property bool dropdownOpen: false
 
@@ -24,7 +25,7 @@ ColumnLayout {
         font.family: root.font
         font.pixelSize: 11
         font.bold: true
-        color: root.theme ? root.theme.textSecondary : "#a6adc8"
+        color: root.theme.textSecondary
         Layout.fillWidth: true
     }
 
@@ -39,10 +40,10 @@ ColumnLayout {
             radius: 7
             readonly property bool isMuted: !Pipewire.defaultAudioSource || !Pipewire.defaultAudioSource.audio || Pipewire.defaultAudioSource.audio.muted
             color: isMuted 
-                ? Qt.rgba(1, 0.42, 0.42, 0.18) 
+                ? Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.18) 
                 : (sourceMuteMouse.containsMouse 
-                    ? (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.1) : Qt.rgba(1, 1, 1, 0.1))
-                    : (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06) : Qt.rgba(1, 1, 1, 0.05)))
+                    ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.1)
+                    : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06))
             Behavior on color { ColorAnimation { duration: 140 } }
 
             Text {
@@ -51,8 +52,8 @@ ColumnLayout {
                 font.family: root.font
                 font.pixelSize: 15
                 color: parent.isMuted 
-                    ? (root.theme ? root.theme.accentRed : "#f38ba8") 
-                    : (root.theme ? root.theme.textPrimary : "#cdd6f4")
+                    ? root.theme.accentRed 
+                    : root.theme.textPrimary
             }
 
             MouseArea {
@@ -72,9 +73,7 @@ ColumnLayout {
             Layout.fillWidth: true
             height: 8
             radius: 4
-            color: root.theme 
-                ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.18) 
-                : Qt.rgba(1, 1, 1, 0.15)
+            color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.18)
 
             Rectangle {
                 id: sourceSliderFill
@@ -85,7 +84,7 @@ ColumnLayout {
                     if (!source || !source.audio) return 0;
                     return Math.min(parent.width, parent.width * source.audio.volume);
                 }
-                color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                color: root.theme.accentPrimary
 
                 Behavior on width {
                     enabled: !sourceSliderMouse.pressed
@@ -99,7 +98,7 @@ ColumnLayout {
                 radius: 7
                 y: (parent.height - height) / 2
                 x: Math.max(0, Math.min(sourceSliderBg.width - width, sourceSliderFill.width - (width / 2)))
-                color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                color: root.theme.textPrimary
             }
 
             MouseArea {
@@ -131,7 +130,7 @@ ColumnLayout {
             font.family: root.font
             font.pixelSize: 11
             font.bold: true
-            color: root.theme ? root.theme.textSecondary : "#a6adc8"
+            color: root.theme.textSecondary
             Layout.preferredWidth: 36
             horizontalAlignment: Text.AlignRight
             Layout.alignment: Qt.AlignVCenter
@@ -145,13 +144,13 @@ ColumnLayout {
         height: 30
         radius: 7
         color: root.dropdownOpen
-            ? (root.theme ? root.theme.bgSelected : "#313244")
+            ? root.theme.bgSelected
             : (sourceSelectorMouse.containsMouse 
-                ? (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.08) : Qt.rgba(1, 1, 1, 0.08)) 
-                : (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.04) : Qt.rgba(0, 0, 0, 0.2)))
+                ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.08) 
+                : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.04))
         border.color: root.dropdownOpen 
-            ? (root.theme ? root.theme.accentPrimary : "#a6e3a1") 
-            : (root.theme ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.06))
+            ? root.theme.accentPrimary 
+            : root.theme.bgBorder
         border.width: 1
 
         Behavior on color { ColorAnimation { duration: 150; easing.type: Easing.OutQuad } }
@@ -168,8 +167,8 @@ ColumnLayout {
                 font.family: root.font
                 font.pixelSize: 13
                 color: root.dropdownOpen 
-                    ? (root.theme ? root.theme.textPrimary : "#cdd6f4") 
-                    : (root.theme ? root.theme.textMuted : "#6c7086")
+                    ? root.theme.textPrimary 
+                    : root.theme.textMuted
                 Behavior on color { ColorAnimation { duration: 150 } }
             }
 
@@ -183,7 +182,7 @@ ColumnLayout {
                 font.family: root.font
                 font.pixelSize: 11
                 font.bold: true
-                color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                color: root.theme.textPrimary
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
@@ -192,7 +191,7 @@ ColumnLayout {
                 text: "󰅀"
                 font.family: root.font
                 font.pixelSize: 14
-                color: root.theme ? root.theme.textMuted : "#6c7086"
+                color: root.theme.textMuted
                 rotation: root.dropdownOpen ? 180 : 0
                 Behavior on rotation { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             }
@@ -219,8 +218,8 @@ ColumnLayout {
         visible: Layout.preferredHeight > 0
         clip: true
         radius: 8
-        color: root.theme ? (root.theme.bgSelected || root.theme.bgSurface) : Qt.rgba(0, 0, 0, 0.32)
-        border.color: root.theme ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.07)
+        color: root.theme.bgSurface
+        border.color: root.theme.bgBorder
         border.width: root.dropdownOpen ? 1 : 0
 
         Behavior on Layout.preferredHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -240,7 +239,7 @@ ColumnLayout {
                 text: "No input devices found"
                 font.family: root.font
                 font.pixelSize: 11
-                color: root.theme ? root.theme.textMuted : "#6c7086"
+                color: root.theme.textMuted
                 visible: root.audioSources.length === 0
                 Layout.margins: 6
             }
@@ -256,9 +255,9 @@ ColumnLayout {
                     radius: 6
                     scale: sourceItemMouse.pressed ? 0.98 : 1.0
                     color: isSelected
-                        ? (root.theme ? root.theme.bgSelected : "#313244")
+                        ? root.theme.bgSelected
                         : (sourceItemMouse.containsMouse 
-                            ? (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.08) : Qt.rgba(1, 1, 1, 0.08)) 
+                            ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.08) 
                             : "transparent")
 
                     Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
@@ -275,8 +274,8 @@ ColumnLayout {
                             font.family: root.font
                             font.pixelSize: sourceItemRect.isSelected ? 13 : 8
                             color: sourceItemRect.isSelected 
-                                ? (root.theme ? root.theme.accentPrimary : "#a6e3a1") 
-                                : (root.theme ? root.theme.textMuted : "#6c7086")
+                                ? root.theme.accentPrimary 
+                                : root.theme.textMuted
                             Layout.preferredWidth: 14
                             horizontalAlignment: Text.AlignHCenter
                         }
@@ -287,8 +286,8 @@ ColumnLayout {
                             font.pixelSize: 11
                             font.bold: sourceItemRect.isSelected
                             color: sourceItemRect.isSelected 
-                                ? (root.theme ? root.theme.textPrimary : "#cdd6f4") 
-                                : (root.theme ? root.theme.textSecondary : "#a6adc8")
+                                ? root.theme.textPrimary 
+                                : root.theme.textSecondary
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }

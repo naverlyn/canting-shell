@@ -2,6 +2,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import QtQuick.Layouts
+import ".."
 
 // Hover details popup anchored below `target`.
 // Runs bar/scripts/<script>.sh while hovered. Script output is tab-separated:
@@ -46,8 +47,8 @@ PopupWindow {
   implicitHeight: box.implicitHeight + 8
 
   anchor.window: target.QsWindow.window
-  anchor.edges: Edges.Bottom
-  anchor.gravity: Edges.Bottom
+  anchor.edges: BarConfig.position === "bottom" ? Edges.Top : Edges.Bottom
+  anchor.gravity: BarConfig.position === "bottom" ? Edges.Top : Edges.Bottom
   anchor.adjustment: PopupAdjustment.Slide | PopupAdjustment.Flip
   anchor.onAnchoring: {
     const win = target.QsWindow.window;
@@ -56,7 +57,7 @@ PopupWindow {
 
   Process {
     id: proc
-    command: ["sh", Qt.resolvedUrl("scripts/" + popup.script + ".sh").toString().replace("file://", "")]
+    command: ["sh", Qt.resolvedUrl("../scripts/" + popup.script + ".sh").toString().replace("file://", "")]
     running: false
     stdout: StdioCollector {
       onStreamFinished: {
@@ -80,8 +81,8 @@ PopupWindow {
   Rectangle {
     id: box
     opacity: popup.hovered ? 1 : 0
-    y: popup.hovered ? 8 : 0
-    transformOrigin: Item.Top
+    y: popup.hovered ? (BarConfig.position === "bottom" ? -8 : 8) : 0
+    transformOrigin: BarConfig.position === "bottom" ? Item.Bottom : Item.Top
     scale: popup.hovered ? 1 : 0.96
 
     Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }

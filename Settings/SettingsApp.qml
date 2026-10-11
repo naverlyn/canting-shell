@@ -6,16 +6,52 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import "../ThemeSwitcher"
+import "./Components"
 
 Scope {
     id: root
     property var theme: Theme
     property string font: "Hack Nerd Font"
     
-    // UI state: 0: WiFi, 1: Bluetooth, 2: Display, 3: Appearance, 4: About
+    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About
     property int currentTab: 0
-    property var tabs: ["Wi-Fi", "Bluetooth", "Display", "Appearance", "About"]
-    property var tabIcons: ["󰖩", "󰂯", "󰍹", "󰏘", ""]
+    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About"]
+    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", ""]
+
+    property var sections: [
+        {
+            category: "System",
+            items: [
+                { id: "wifi", name: "Wi-Fi", icon: "󰖩", pageIndex: 0 },
+                { id: "bluetooth", name: "Bluetooth", icon: "󰂯", pageIndex: 1 },
+                { id: "sound", name: "Sound", icon: "󰕾", pageIndex: 2 },
+                { id: "power", name: "Power", icon: "󰐥", pageIndex: 4 }
+            ]
+        },
+        {
+            category: "Hardware",
+            items: [
+                { id: "display", name: "Display", icon: "󰍹", pageIndex: 8 },
+                { id: "mouse", name: "Mouse & Touchpad", icon: "󰍽", pageIndex: 5 },
+                { id: "keyboard", name: "Keyboard", icon: "󰌌", pageIndex: 6 },
+                { id: "apps", name: "Applications", icon: "󰵆", pageIndex: 7 }
+            ]
+        },
+        {
+            category: "Quickshell",
+            items: [
+                { id: "bar", name: "Bar Settings", icon: "󰮲", pageIndex: 10 },
+                { id: "appearance", name: "Appearance", icon: "󰏘", pageIndex: 9 },
+                { id: "notifications", name: "Notifications", icon: "󰂚", pageIndex: 3 }
+            ]
+        },
+        {
+            category: "About",
+            items: [
+                { id: "about", name: "About", icon: "", pageIndex: 11 }
+            ]
+        }
+    ]
 
     onCurrentTabChanged: {
         if (root.theme) {
@@ -28,6 +64,22 @@ Scope {
         target: "settings"
         function toggle() {
             settingsWindow.visible = !settingsWindow.visible;
+        }
+        function open(tabName) {
+            if (tabName !== undefined && tabName !== "") {
+                let target = String(tabName).toLowerCase().trim();
+                for (let s = 0; s < root.sections.length; s++) {
+                    for (let i = 0; i < root.sections[s].items.length; i++) {
+                        let item = root.sections[s].items[i];
+                        if (item.name.toLowerCase().includes(target) || (item.id && item.id.toLowerCase() === target)) {
+                            root.currentTab = item.pageIndex;
+                            settingsWindow.visible = true;
+                            return;
+                        }
+                    }
+                }
+            }
+            settingsWindow.visible = true;
         }
     }
 
@@ -42,6 +94,16 @@ Scope {
                 root.theme.previewIndex = -1;
                 root.theme.previewAccent = "";
             }
+            if (visible) {
+                winCard.forceActiveFocus();
+            }
+        }
+
+        Shortcut {
+            sequence: "Escape"
+            context: Qt.WindowShortcut
+            enabled: settingsWindow.visible
+            onActivated: settingsWindow.visible = false
         }
 
         WlrLayershell.layer: WlrLayer.Overlay
@@ -55,6 +117,11 @@ Scope {
             bottom: true
             left: true
             right: true
+        }
+
+        Keys.onEscapePressed: (event) => {
+            settingsWindow.visible = false;
+            event.accepted = true;
         }
 
         // Overlay backdrop
@@ -79,6 +146,12 @@ Scope {
             color: root.theme.bgBase
             border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)
             border.width: 1
+
+            focus: true
+            Keys.onEscapePressed: (event) => {
+                settingsWindow.visible = false;
+                event.accepted = true;
+            }
 
             readonly property int minWidth: 720
             readonly property int minHeight: 480
@@ -118,7 +191,7 @@ Scope {
                 // Sidebar
                 Rectangle {
                     Layout.fillHeight: true
-                    width: 180
+                    width: 204
                     color: root.theme.bgSurface
                     radius: 12
                     
@@ -132,13 +205,18 @@ Scope {
 
                     ColumnLayout {
                         anchors.fill: parent
-                        anchors.margins: 16
+                        anchors.topMargin: 16
+                        anchors.bottomMargin: 16
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
                         spacing: 8
 
                         // Sidebar Header with Drag Handle indicator
                         RowLayout {
                             Layout.fillWidth: true
-                            Layout.bottomMargin: 16
+                            Layout.leftMargin: 4
+                            Layout.rightMargin: 4
+                            Layout.bottomMargin: 4
 
                             Text {
                                 text: "Settings"
@@ -162,103 +240,129 @@ Scope {
                             }
                         }
 
-                        Item {
+                        // Scrollable categorized sections
+                        Flickable {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: root.tabs.length * 36 + (root.tabs.length - 1) * 8
+                            Layout.fillHeight: true
+                            contentHeight: sectionsCol.implicitHeight
+                            contentWidth: width
+                            flickableDirection: Flickable.VerticalFlick
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
 
-                            // Smooth sliding active indicator pill
-                            Rectangle {
-                                id: activeTabPill
-                                width: parent.width
-                                height: 36
-                                radius: 8
-                                color: root.theme.bgSelected
-                                y: root.currentTab * (36 + 8)
-
-                                Behavior on y {
-                                    NumberAnimation {
-                                        duration: 220
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
-
-                                // Accent indicator bar on the left edge
-                                Rectangle {
-                                    anchors.left: parent.left
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.leftMargin: 2
-                                    width: 3
-                                    height: 18
-                                    radius: 1.5
-                                    color: root.theme.accentPrimary
-
-                                    Behavior on color { ColorAnimation { duration: 150 } }
+                            ScrollBar.vertical: ScrollBar {
+                                policy: ScrollBar.AsNeeded
+                                contentItem: Rectangle {
+                                    implicitWidth: 4
+                                    radius: 2
+                                    color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.2)
                                 }
                             }
 
-                            Column {
-                                anchors.fill: parent
-                                spacing: 8
+                            ColumnLayout {
+                                id: sectionsCol
+                                width: parent.width
+                                spacing: 4
 
                                 Repeater {
-                                    model: root.tabs.length
-                                    Rectangle {
-                                        width: parent.width
-                                        height: 36
-                                        radius: 8
-                                        color: (tabMouse.containsMouse && root.currentTab !== index) ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.05)) : "transparent"
+                                    model: root.sections
+                                    delegate: ColumnLayout {
+                                        id: secCol
+                                        required property var modelData
+                                        required property int index
+                                        Layout.fillWidth: true
+                                        spacing: 2
 
-                                        Behavior on color { ColorAnimation { duration: 150 } }
-
-                                        RowLayout {
-                                            anchors.fill: parent
-                                            anchors.leftMargin: 12
-                                            anchors.rightMargin: 12
-                                            spacing: 12
-
-                                            Item {
-                                                width: 20
-                                                height: 20
-                                                Layout.alignment: Qt.AlignVCenter
-
-                                                Text {
-                                                    anchors.centerIn: parent
-                                                    text: root.tabIcons[index]
-                                                    font.family: root.font
-                                                    font.pixelSize: 14
-                                                    color: root.currentTab === index ? root.theme.accentPrimary : root.theme.textSecondary
-                                                    horizontalAlignment: Text.AlignHCenter
-                                                    verticalAlignment: Text.AlignVCenter
-                                                    Behavior on color { ColorAnimation { duration: 150 } }
-                                                }
-                                            }
+                                        // Section Category Header
+                                        Item {
+                                            Layout.fillWidth: true
+                                            height: secCol.index === 0 ? 22 : 28
 
                                             Text {
-                                                text: root.tabs[index]
+                                                anchors.left: parent.left
+                                                anchors.leftMargin: 8
+                                                anchors.bottom: parent.bottom
+                                                anchors.bottomMargin: 4
+                                                text: secCol.modelData.category
                                                 font.family: root.font
-                                                font.pixelSize: 13
-                                                font.bold: root.currentTab === index
-                                                color: root.currentTab === index ? root.theme.textPrimary : root.theme.textSecondary
-                                                Layout.fillWidth: true
-                                                Layout.alignment: Qt.AlignVCenter
-                                                verticalAlignment: Text.AlignVCenter
-                                                Behavior on color { ColorAnimation { duration: 150 } }
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                font.capitalization: Font.AllUppercase
+                                                color: root.theme.textMuted ?? Qt.rgba(1,1,1,0.4)
                                             }
                                         }
 
-                                        MouseArea {
-                                            id: tabMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: root.currentTab = index
+                                        // Section Items
+                                        Repeater {
+                                            model: secCol.modelData.items
+                                            delegate: Rectangle {
+                                                id: itemRect
+                                                required property var modelData
+                                                required property int index
+
+                                                Layout.fillWidth: true
+                                                height: 34
+                                                radius: 7
+                                                color: root.currentTab === itemRect.modelData.pageIndex
+                                                    ? root.theme.bgSelected
+                                                    : (tabMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.05)) : "transparent")
+
+                                                Behavior on color { ColorAnimation { duration: 150 } }
+
+                                                RowLayout {
+                                                    anchors.fill: parent
+                                                    anchors.leftMargin: 10
+                                                    anchors.rightMargin: 10
+                                                    spacing: 10
+
+                                                    Item {
+                                                        width: 18
+                                                        height: 18
+                                                        Layout.alignment: Qt.AlignVCenter
+
+                                                        Text {
+                                                            anchors.centerIn: parent
+                                                            text: itemRect.modelData.icon
+                                                            font.family: root.font
+                                                            font.pixelSize: 14
+                                                            color: root.currentTab === itemRect.modelData.pageIndex
+                                                                ? root.theme.accentPrimary
+                                                                : root.theme.textSecondary
+                                                            horizontalAlignment: Text.AlignHCenter
+                                                            verticalAlignment: Text.AlignVCenter
+                                                            Behavior on color { ColorAnimation { duration: 150 } }
+                                                        }
+                                                    }
+
+                                                    Text {
+                                                        text: itemRect.modelData.name
+                                                        font.family: root.font
+                                                        font.pixelSize: 13
+                                                        font.bold: root.currentTab === itemRect.modelData.pageIndex
+                                                        color: root.currentTab === itemRect.modelData.pageIndex
+                                                            ? root.theme.textPrimary
+                                                            : root.theme.textSecondary
+                                                        Layout.fillWidth: true
+                                                        Layout.alignment: Qt.AlignVCenter
+                                                        verticalAlignment: Text.AlignVCenter
+                                                        elide: Text.ElideRight
+                                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                                    }
+                                                }
+
+                                                MouseArea {
+                                                    id: tabMouse
+                                                    anchors.fill: parent
+                                                    hoverEnabled: true
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: root.currentTab = itemRect.modelData.pageIndex
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                        
-                        Item { Layout.fillHeight: true }
                     }
                 }
 
@@ -307,17 +411,13 @@ Scope {
                         anchors.margins: 24
                         anchors.topMargin: 36
                         visible: opacity > 0
-                        enabled: root.currentTab === 0
                         opacity: root.currentTab === 0 ? 1 : 0
-                        scale: root.currentTab === 0 ? 1 : 0.985
+                        scale: root.currentTab === 0 ? 1 : 0.98
+                        y: root.currentTab === 0 ? 0 : 8
 
-                        transform: Translate {
-                            y: root.currentTab === 0 ? 0 : (root.currentTab > 0 ? -16 : 16)
-                            Behavior on y { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
-                        }
-
-                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
                         WifiSettings { anchors.fill: parent; theme: root.theme; font: root.font }
                     }
@@ -328,80 +428,183 @@ Scope {
                         anchors.margins: 24
                         anchors.topMargin: 36
                         visible: opacity > 0
-                        enabled: root.currentTab === 1
                         opacity: root.currentTab === 1 ? 1 : 0
-                        scale: root.currentTab === 1 ? 1 : 0.985
+                        scale: root.currentTab === 1 ? 1 : 0.98
+                        y: root.currentTab === 1 ? 0 : 8
 
-                        transform: Translate {
-                            y: root.currentTab === 1 ? 0 : (root.currentTab > 1 ? -16 : 16)
-                            Behavior on y { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
-                        }
-
-                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
                         BluetoothSettings { anchors.fill: parent; theme: root.theme; font: root.font }
                     }
 
-                    // 2: Display
+                    // 2: Sound
                     Item {
                         anchors.fill: parent
                         anchors.margins: 24
                         anchors.topMargin: 36
                         visible: opacity > 0
-                        enabled: root.currentTab === 2
                         opacity: root.currentTab === 2 ? 1 : 0
-                        scale: root.currentTab === 2 ? 1 : 0.985
+                        scale: root.currentTab === 2 ? 1 : 0.98
+                        y: root.currentTab === 2 ? 0 : 8
 
-                        transform: Translate {
-                            y: root.currentTab === 2 ? 0 : (root.currentTab > 2 ? -16 : 16)
-                            Behavior on y { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
-                        }
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                        SoundSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 3: Notifications
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 3 ? 1 : 0
+                        scale: root.currentTab === 3 ? 1 : 0.98
+                        y: root.currentTab === 3 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        NotificationSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 4: Power
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 4 ? 1 : 0
+                        scale: root.currentTab === 4 ? 1 : 0.98
+                        y: root.currentTab === 4 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        PowerSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 5: Mouse & Touchpad
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 5 ? 1 : 0
+                        scale: root.currentTab === 5 ? 1 : 0.98
+                        y: root.currentTab === 5 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        MouseSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 6: Keyboard
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 6 ? 1 : 0
+                        scale: root.currentTab === 6 ? 1 : 0.98
+                        y: root.currentTab === 6 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        KeyboardSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 7: Default Applications
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 7 ? 1 : 0
+                        scale: root.currentTab === 7 ? 1 : 0.98
+                        y: root.currentTab === 7 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        DefaultAppsSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 8: Display
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 8 ? 1 : 0
+                        scale: root.currentTab === 8 ? 1 : 0.98
+                        y: root.currentTab === 8 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
                         DisplaySettings { anchors.fill: parent; theme: root.theme; font: root.font }
                     }
 
-                    // 3: Appearance
+                    // 9: Appearance
                     Item {
                         anchors.fill: parent
                         anchors.margins: 24
                         anchors.topMargin: 36
                         visible: opacity > 0
-                        enabled: root.currentTab === 3
-                        opacity: root.currentTab === 3 ? 1 : 0
-                        scale: root.currentTab === 3 ? 1 : 0.985
+                        opacity: root.currentTab === 9 ? 1 : 0
+                        scale: root.currentTab === 9 ? 1 : 0.98
+                        y: root.currentTab === 9 ? 0 : 8
 
-                        transform: Translate {
-                            y: root.currentTab === 3 ? 0 : (root.currentTab > 3 ? -16 : 16)
-                            Behavior on y { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
-                        }
-
-                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
                         AppearanceSettings { anchors.fill: parent; theme: root.theme; font: root.font }
                     }
 
-                    // 4: About
+                    // 10: Bar Settings
                     Item {
                         anchors.fill: parent
                         anchors.margins: 24
                         anchors.topMargin: 36
                         visible: opacity > 0
-                        enabled: root.currentTab === 4
-                        opacity: root.currentTab === 4 ? 1 : 0
-                        scale: root.currentTab === 4 ? 1 : 0.985
+                        opacity: root.currentTab === 10 ? 1 : 0
+                        scale: root.currentTab === 10 ? 1 : 0.98
+                        y: root.currentTab === 10 ? 0 : 8
 
-                        transform: Translate {
-                            y: root.currentTab === 4 ? 0 : (root.currentTab > 4 ? -16 : 16)
-                            Behavior on y { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
-                        }
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
+                        BarSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 11: About
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 11 ? 1 : 0
+                        scale: root.currentTab === 11 ? 1 : 0.98
+                        y: root.currentTab === 11 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
                         AboutSettings { anchors.fill: parent; theme: root.theme; font: root.font }
                     }

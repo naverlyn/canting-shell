@@ -4,11 +4,12 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
+import ".."
 
 Column {
     id: root
 
-    property var theme
+    property var theme: DefaultTheme {}
     property string font: "Hack Nerd Font"
 
     // 1. Permanent History Array
@@ -101,6 +102,40 @@ Column {
                     let summaryStr = (n.summary || "New Notification") + "";
                     let bodyStr = (n.body || "") + "";
 
+                    // WhatsApp Web
+                    let isWA = bodyStr.indexOf("web.whatsapp.com") !== -1 ||
+                               bodyStr.indexOf("whatsapp.com") !== -1 ||
+                               summaryStr.toLowerCase().indexOf("whatsapp") !== -1 ||
+                               (n.appName || "").toLowerCase().indexOf("whatsapp") !== -1;
+
+                    if (isWA) {
+                        let clean = bodyStr.replace(/^https?:\/\/web\.whatsapp\.com\/?\s*\n*/i, "");
+                        clean = clean.replace(/^web\.whatsapp\.com\/?\s*\n*/i, "");
+                        clean = clean.trim();
+                        if (clean.length > 0) bodyStr = clean;
+
+                        let defaultAct = null;
+                        for (let k = 0; k < acts.length; k++) {
+                            if (acts[k] && (acts[k].identifier === "default" || acts[k].id === "default")) {
+                                defaultAct = acts[k];
+                                break;
+                            }
+                        }
+
+                        let focusCmd = 'if ! hyprctl dispatch focuswindow "title:^(.*WhatsApp.*)$" 2>&1 | grep -q "ok"; then if ! hyprctl dispatch focuswindow "class:^(brave-browser|Brave-browser)$" 2>&1 | grep -q "ok"; then brave "https://web.whatsapp.com" >/dev/null 2>&1 & fi; fi';
+
+                        extractedActions.unshift({
+                            label: "Reply",
+                            invokeFn: function() {
+                                if (defaultAct && defaultAct.invoke) {
+                                    try { defaultAct.invoke(); } catch(e) {}
+                                }
+                                Quickshell.execDetached(["sh", "-c", focusCmd]);
+                            },
+                            customCmd: ""
+                        });
+                    }
+
                     // Swappy screenshots
                     if (bodyStr.indexOf("Swappy") !== -1) {
                         let shotPath = "/tmp/qs-shot-" + Date.now() + "-" + nId + ".png";
@@ -145,7 +180,7 @@ Column {
                     // Deep copy strings
                     let newItem = {
                         notifId: nId,
-                        notifAppName: (n.appName || "Notification") + "",
+                        notifAppName: (isWA ? "WhatsApp Web" : (n.appName || "Notification")) + "",
                         notifAppIcon: (n.appIcon || "") + "",
                         notifImage: imgStr,
                         notifSummary: summaryStr,
@@ -174,11 +209,11 @@ Column {
         Item { Layout.fillWidth: true } 
         Rectangle {
             width: 70; height: 26; radius: 4
-            color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+            color: root.theme.accentPrimary
             Text {
                 anchors.centerIn: parent
                 text: "Clear all"
-                color: root.theme ? root.theme.bgBase : "#1e1e2e"
+                color: root.theme.bgBase
                 font.family: root.font
                 font.pixelSize: 11
             }
@@ -232,7 +267,7 @@ Column {
                         font.family: root.font
                         font.pixelSize: 11
                         font.bold: true
-                        color: root.theme ? root.theme.textSecondary : "#a6adc8"
+                        color: root.theme.textSecondary
                     }
                     Rectangle {
                         width: 20; height: 16; radius: 8
@@ -243,7 +278,7 @@ Column {
                             font.family: root.font
                             font.pixelSize: 10
                             font.bold: true
-                            color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                            color: root.theme.accentPrimary
                         }
                     }
                     Item { Layout.fillWidth: true }
@@ -251,7 +286,7 @@ Column {
                         text: groupDelegate.expanded ? "Collapse 󰅃" : "Expand 󰅀"
                         font.family: root.font
                         font.pixelSize: 10
-                        color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                        color: root.theme.accentPrimary
                         MouseArea {
                             anchors.fill: parent
                             anchors.margins: -6
@@ -263,7 +298,7 @@ Column {
                         text: "Clear"
                         font.family: root.font
                         font.pixelSize: 10
-                        color: root.theme ? root.theme.textMuted : "#6c7086"
+                        color: root.theme.textMuted
                         MouseArea {
                             anchors.fill: parent
                             anchors.margins: -6
@@ -297,8 +332,8 @@ Column {
                             height: notifCardCol.implicitHeight + 24
                             implicitHeight: height
                             radius: 8
-                            color: root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05) : Qt.rgba(1, 1, 1, 0.05)
-                            border.color: root.theme ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.06)
+                            color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05)
+                            border.color: root.theme.bgBorder
                             border.width: 1
                             clip: true
 
@@ -310,7 +345,7 @@ Column {
                                 anchors.left: parent.left
                                 anchors.leftMargin: 6
                                 anchors.verticalCenter: parent.verticalCenter
-                                color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                                color: root.theme.accentPrimary
                             }
 
                             ColumnLayout {
@@ -380,7 +415,7 @@ Column {
                                             }
                                             font.family: root.font
                                             font.pixelSize: 14
-                                            color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                                            color: root.theme.accentPrimary
                                             visible: appIconImg.status !== Image.Ready && notifImg.status !== Image.Ready
                                         }
                                     }
@@ -399,21 +434,21 @@ Column {
                                                 font.family: root.font
                                                 font.pixelSize: 11
                                                 font.bold: true
-                                                color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                                                color: root.theme.textPrimary
                                             }
 
                                             Text {
                                                 text: "•"
                                                 font.family: root.font
                                                 font.pixelSize: 10
-                                                color: root.theme ? root.theme.textMuted : "#6c7086"
+                                                color: root.theme.textMuted
                                             }
 
                                             Text {
                                                 text: "Now"
                                                 font.family: root.font
                                                 font.pixelSize: 10
-                                                color: root.theme ? root.theme.textMuted : "#6c7086"
+                                                color: root.theme.textMuted
                                                 Layout.fillWidth: true
                                             }
 
@@ -431,8 +466,8 @@ Column {
                                                     font.family: root.font
                                                     font.pixelSize: 11
                                                     color: closeHover.containsMouse 
-                                                        ? (root.theme ? root.theme.accentRed : "#f38ba8") 
-                                                        : (root.theme ? root.theme.textMuted : "#6c7086")
+                                                        ? root.theme.accentRed 
+                                                        : root.theme.textMuted
                                                 }
 
                                                 MouseArea {
@@ -455,7 +490,7 @@ Column {
                                                 font.family: root.font
                                                 font.pixelSize: 12
                                                 font.bold: true
-                                                color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                                                color: root.theme.textPrimary
                                                 wrapMode: Text.Wrap
                                                 Layout.fillWidth: true
                                                 visible: text !== ""
@@ -466,7 +501,7 @@ Column {
                                                 text: notifDelegate.notif.notifBody
                                                 font.family: root.font
                                                 font.pixelSize: 11
-                                                color: root.theme ? root.theme.textSecondary : "#a6adc8"
+                                                color: root.theme.textSecondary
                                                 wrapMode: Text.Wrap
                                                 Layout.fillWidth: true
                                                 visible: text !== ""
@@ -495,7 +530,7 @@ Column {
                                             font.family: root.font
                                             font.pixelSize: 10
                                             font.bold: true
-                                            color: root.theme ? root.theme.textSecondary : "#a6adc8"
+                                            color: root.theme.textSecondary
                                         }
 
                                         MouseArea {
@@ -524,13 +559,13 @@ Column {
                                             height: 28
                                             radius: 14
                                             color: actionHover.containsMouse 
-                                                ? (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.12) : Qt.rgba(1, 1, 1, 0.12)) 
-                                                : (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06) : Qt.rgba(1, 1, 1, 0.05))
+                                                ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.12)
+                                                : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06)
 
                                             Text {
                                                 anchors.centerIn: parent
                                                 text: modelData.label
-                                                color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                                                color: root.theme.accentPrimary
                                                 font.family: root.font
                                                 font.pixelSize: 11
                                                 font.bold: true
@@ -602,7 +637,7 @@ Column {
             text: "No Notifications"
             font.family: root.font
             font.pixelSize: 14
-            color: root.theme ? root.theme.textMuted : "#6c7086"
+            color: root.theme.textMuted
         }
     }
 }

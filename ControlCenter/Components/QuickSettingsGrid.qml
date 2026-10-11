@@ -2,11 +2,12 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import ".."
 
 GridLayout {
     id: root
 
-    property var theme
+    property var theme: DefaultTheme {}
     property string font: "Hack Nerd Font"
 
     // Toggle states
@@ -178,8 +179,10 @@ GridLayout {
         Layout.fillWidth: true
         height: 40
         radius: 8
-        color: root.wifiEnabled ? (root.theme ? root.theme.accentPrimary : "#a6e3a1") : (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06) : Qt.rgba(1,1,1,0.05))
-        border.color: root.wifiEnabled ? "transparent" : (root.theme ? root.theme.bgBorder : "transparent")
+        color: root.wifiEnabled 
+            ? root.theme.accentPrimary 
+            : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06)
+        border.color: root.wifiEnabled ? "transparent" : root.theme.bgBorder
         border.width: 1
         Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -190,13 +193,13 @@ GridLayout {
                 text: root.wifiEnabled ? "󰖩" : "󰖪"
                 font.family: root.font
                 font.pixelSize: 16
-                color: root.wifiEnabled ? (root.theme ? root.theme.bgBase : "#1e1e2e") : (root.theme ? root.theme.textPrimary : "#cdd6f4")
+                color: root.wifiEnabled ? root.theme.bgBase : root.theme.textPrimary
             }
             Text {
                 text: (root.wifiEnabled && root.currentSsid !== "") ? root.currentSsid : "Wi-Fi"
                 font.family: root.font
                 font.pixelSize: 12
-                color: root.wifiEnabled ? (root.theme ? root.theme.bgBase : "#1e1e2e") : (root.theme ? root.theme.textPrimary : "#cdd6f4")
+                color: root.wifiEnabled ? root.theme.bgBase : root.theme.textPrimary
                 elide: Text.ElideRight
                 Layout.maximumWidth: 100
             }
@@ -222,8 +225,10 @@ GridLayout {
         height: 40
         radius: 8
         opacity: root.btAvailable ? 1.0 : 0.55
-        color: (root.btAvailable && root.btEnabled) ? (root.theme ? root.theme.accentPrimary : "#a6e3a1") : (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06) : Qt.rgba(1,1,1,0.05))
-        border.color: (root.btAvailable && root.btEnabled) ? "transparent" : (root.theme ? root.theme.bgBorder : "transparent")
+        color: (root.btAvailable && root.btEnabled) 
+            ? root.theme.accentPrimary 
+            : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06)
+        border.color: (root.btAvailable && root.btEnabled) ? "transparent" : root.theme.bgBorder
         border.width: 1
         Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -234,13 +239,13 @@ GridLayout {
                 text: (root.btAvailable && root.btEnabled) ? "󰂯" : "󰂲"
                 font.family: root.font
                 font.pixelSize: 16
-                color: (root.btAvailable && root.btEnabled) ? (root.theme ? root.theme.bgBase : "#1e1e2e") : (root.theme ? root.theme.textPrimary : "#cdd6f4")
+                color: (root.btAvailable && root.btEnabled) ? root.theme.bgBase : root.theme.textPrimary
             }
             Text {
                 text: root.btAvailable ? "Bluetooth" : "No Bluetooth"
                 font.family: root.font
                 font.pixelSize: 12
-                color: (root.btAvailable && root.btEnabled) ? (root.theme ? root.theme.bgBase : "#1e1e2e") : (root.theme ? root.theme.textPrimary : "#cdd6f4")
+                color: (root.btAvailable && root.btEnabled) ? root.theme.bgBase : root.theme.textPrimary
             }
         }
 
@@ -256,8 +261,10 @@ GridLayout {
         Layout.fillWidth: true
         height: 40
         radius: 8
-        color: root.airplaneEnabled ? (root.theme ? root.theme.accentPrimary : "#a6e3a1") : (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06) : Qt.rgba(1,1,1,0.05))
-        border.color: root.airplaneEnabled ? "transparent" : (root.theme ? root.theme.bgBorder : "transparent")
+        color: root.airplaneEnabled 
+            ? root.theme.accentPrimary 
+            : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06)
+        border.color: root.airplaneEnabled ? "transparent" : root.theme.bgBorder
         border.width: 1
         Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -268,13 +275,13 @@ GridLayout {
                 text: root.airplaneEnabled ? "󰀝" : "󰀞"
                 font.family: root.font
                 font.pixelSize: 16
-                color: root.airplaneEnabled ? (root.theme ? root.theme.bgBase : "#1e1e2e") : (root.theme ? root.theme.textPrimary : "#cdd6f4")
+                color: root.airplaneEnabled ? root.theme.bgBase : root.theme.textPrimary
             }
             Text {
                 text: "Airplane"
                 font.family: root.font
                 font.pixelSize: 12
-                color: root.airplaneEnabled ? (root.theme ? root.theme.bgBase : "#1e1e2e") : (root.theme ? root.theme.textPrimary : "#cdd6f4")
+                color: root.airplaneEnabled ? root.theme.bgBase : root.theme.textPrimary
             }
         }
 
@@ -290,8 +297,10 @@ GridLayout {
         Layout.fillWidth: true
         height: 40
         radius: 8
-        color: root.dndEnabled ? (root.theme ? root.theme.accentPrimary : "#a6e3a1") : (root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06) : Qt.rgba(1,1,1,0.05))
-        border.color: root.dndEnabled ? "transparent" : (root.theme ? root.theme.bgBorder : "transparent")
+        color: root.dndEnabled 
+            ? root.theme.accentPrimary 
+            : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06)
+        border.color: root.dndEnabled ? "transparent" : root.theme.bgBorder
         border.width: 1
         Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -302,13 +311,13 @@ GridLayout {
                 text: root.dndEnabled ? "󰂛" : "󰂚"
                 font.family: root.font
                 font.pixelSize: 16
-                color: root.dndEnabled ? (root.theme ? root.theme.bgBase : "#1e1e2e") : (root.theme ? root.theme.textPrimary : "#cdd6f4")
+                color: root.dndEnabled ? root.theme.bgBase : root.theme.textPrimary
             }
             Text {
                 text: "DND"
                 font.family: root.font
                 font.pixelSize: 12
-                color: root.dndEnabled ? (root.theme ? root.theme.bgBase : "#1e1e2e") : (root.theme ? root.theme.textPrimary : "#cdd6f4")
+                color: root.dndEnabled ? root.theme.bgBase : root.theme.textPrimary
             }
         }
 

@@ -11,6 +11,7 @@ import Quickshell.Services.Pipewire
 import Quickshell.Services.Notifications
 import QtQuick.Effects
 import "../ControlCenter"
+import "./Components"
 
 Scope {
   id: root
@@ -83,26 +84,52 @@ Scope {
     }
   }
 
+  Process {
+    id: weatherProcess
+    running: false
+    onRunningChanged: {
+      if (running) {
+        SystemInfo.refreshWeather();
+        running = false;
+      }
+    }
+  }
+
   Variants {
     model: Quickshell.screens
 
     PanelWindow {
       required property var modelData
       screen: modelData
-      visible: root.barVisible
+      visible: root.barVisible && BarConfig.barVisible && (BarConfig.allMonitors || modelData === Quickshell.screens[0])
 
       anchors {
-        top: true
+        top: BarConfig.position === "top"
+        bottom: BarConfig.position === "bottom"
         left: true
         right: true
       }
 
-      implicitHeight: 32
-      color: '#363c3c3c'
+      implicitHeight: BarConfig.barHeight + (BarConfig.floating ? 12 : 0)
+      color: "transparent"
 
+      Rectangle {
+        id: barBackground
+        anchors.fill: parent
+        anchors.topMargin: BarConfig.floating && BarConfig.position === "top" ? 6 : 0
+        anchors.bottomMargin: BarConfig.floating && BarConfig.position === "bottom" ? 6 : 0
+        anchors.leftMargin: BarConfig.floating ? 12 : 0
+        anchors.rightMargin: BarConfig.floating ? 12 : 0
+        radius: BarConfig.floating ? 12 : 0
+        color: (root.theme && root.theme.bgBase)
+          ? Qt.rgba(root.theme.bgBase.r, root.theme.bgBase.g, root.theme.bgBase.b, BarConfig.barOpacity)
+          : Qt.rgba(0.21, 0.23, 0.23, BarConfig.barOpacity)
+        border.color: BarConfig.floating ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)) : "transparent"
+        border.width: BarConfig.floating ? 1 : 0
+      }
 
       Item {
-        anchors.fill: parent
+        anchors.fill: barBackground
         anchors.leftMargin: 10
         anchors.rightMargin: 10
 
@@ -118,6 +145,7 @@ Scope {
           // https://github.com/quickshell-mirror/quickshell/issues/26
           // https://github.com/quickshell-mirror/quickshell/pull/777
           Rectangle {
+            visible: BarConfig.showTray
             implicitHeight: 24
             implicitWidth: trayIcons.implicitWidth + 4
             radius: 12
@@ -182,6 +210,7 @@ Scope {
           // Time
           Rectangle {
             id: timeWidget
+            visible: BarConfig.showTime
             height: 24
             width: timeDate.width + 16
             radius: 12
@@ -217,13 +246,13 @@ Scope {
               Text {
                 anchors.verticalCenter: parent.verticalCenter
                 text: Time.dateString
+                visible: BarConfig.showDate
                 color: root.theme.textSecondary
                 font.pixelSize: 12
                 font.family: root.font
               }
             }
 
-            // The floating calendar popup
             // The floating calendar popup
             PopupWindow {
               id: calendarPopup
@@ -237,8 +266,8 @@ Scope {
               color: "transparent"
 
               anchor.window: timeWidget.QsWindow.window
-              anchor.edges: Edges.Bottom
-              anchor.gravity: Edges.Bottom
+              anchor.edges: BarConfig.position === "bottom" ? Edges.Top : Edges.Bottom
+              anchor.gravity: BarConfig.position === "bottom" ? Edges.Top : Edges.Bottom
               anchor.adjustment: PopupAdjustment.Slide | PopupAdjustment.Flip
               anchor.onAnchoring: {
                 const win = timeWidget.QsWindow.window;
@@ -251,8 +280,8 @@ Scope {
               Rectangle {
                 id: calBox
                 opacity: timeHover.hovered ? 1 : 0
-                y: timeHover.hovered ? 8 : 0
-                transformOrigin: Item.Top
+                y: timeHover.hovered ? (BarConfig.position === "bottom" ? -8 : 8) : 0
+                transformOrigin: BarConfig.position === "bottom" ? Item.Bottom : Item.Top
                 scale: timeHover.hovered ? 1 : 0.96
                 Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                 Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -325,6 +354,7 @@ Scope {
 
           // Workspaces
           Row {
+            visible: BarConfig.showWorkspaces
             spacing: 4
 
             Repeater {
@@ -383,11 +413,12 @@ Scope {
 
           // Weather Area
           Rectangle {
+            visible: BarConfig.showWeather
             height: 24
             width: weatherContent.width + 16 
             radius: 12
             color: root.theme.bgSurface
-            Accessible.role: Accessible.StaticText
+            Accessible.role: Accessible.Button
             Accessible.name: "Weather: " + SystemInfo.weatherInfo
             Row {
               id: weatherContent
@@ -404,13 +435,14 @@ Scope {
             MouseArea {
               anchors.fill: parent
               cursorShape: Qt.PointingHandCursor
-              onClicked: weatherProcess.running = true
+              onClicked: SystemInfo.refreshWeather()
             }
           }
           
           // Control Center Trigger Button
           Rectangle {
             id: controlCenterButton
+            visible: BarConfig.showControlCenter
             height: 24
             width: controlCenterContent.width + 16
             radius: 12
@@ -461,6 +493,7 @@ Scope {
 
         // Center section: Window Title (truly centered in bar)
         Rectangle {
+          visible: BarConfig.showWindowTitle
           anchors.centerIn: parent
           height: 24
           width: Math.max(0, parent.width - 2 * Math.max(leftSection.width, rightSection.width) - 32)
@@ -490,6 +523,7 @@ Scope {
           // App grid launcher button
           Rectangle {
             id: appGridButton
+            visible: BarConfig.showAppGrid
             height: 24
             width: 28
             radius: 12
@@ -544,6 +578,7 @@ Scope {
             // CPU
             Rectangle {
               id: cpuPill
+              visible: BarConfig.showCpu
               height: 24
               width: cpuContent.width + 12
               radius: 12
@@ -590,6 +625,7 @@ Scope {
             // Temperature
             Rectangle {
               id: tempPill
+              visible: BarConfig.showTemp
               height: 24
               width: tempContent.width + 12
               radius: 12
@@ -607,7 +643,7 @@ Scope {
                 font: root.font
                 title: "Temperature"
                 icon: "󰔏"
-                accent: root.theme.accentPrimary
+                accent: root.theme.accentRed
                 script: "temp"
               }
 
@@ -619,7 +655,7 @@ Scope {
                 Text {
                   anchors.verticalCenter: parent.verticalCenter
                   text: "󰔏"
-                  color: root.theme.accentPrimary
+                  color: root.theme.accentRed
                   font.pixelSize: 14
                   font.family: root.font
                 }
@@ -635,6 +671,7 @@ Scope {
             // Memory Usage
             Rectangle {
               id: memPill
+              visible: BarConfig.showMemory
               height: 24
               width: memContent.width + 12
               radius: 12
@@ -682,6 +719,7 @@ Scope {
             // Disk usage
             Rectangle {
               id: diskButton
+              visible: BarConfig.showDisk
               height: 24
               width: diskContent.width + 12
               radius: 12

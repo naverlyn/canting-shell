@@ -3,11 +3,12 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import ".."
 
 PanelWindow {
     id: root
 
-    property var theme
+    property var theme: DefaultTheme {}
     property string font: "Hack Nerd Font"
 
     property bool wifiEnabled: true
@@ -23,6 +24,7 @@ PanelWindow {
     signal setWifiRequested(bool enabled)
     signal toggleWifiRequested()
     signal networkConnected(string ssid)
+    signal networkDisconnected(string ssid)
 
     visible: false
     focusable: true
@@ -133,6 +135,18 @@ PanelWindow {
         }
     }
 
+    // Disconnect from network
+    Process {
+        id: disconnectWifiProc
+        running: false
+        onExited: {
+            root.currentSsid = "";
+            activeSsidProc.running = true;
+            root.networkDisconnected(root.selectedSsid);
+            scanWifi();
+        }
+    }
+
     function scanWifi() {
         if (root.wifiEnabled) {
             scanWifiProc.running = true;
@@ -148,6 +162,17 @@ PanelWindow {
         connectWifiProc.running = true;
     }
 
+    function disconnectFromNetwork(ssid) {
+        root.selectedSsid = ssid || root.currentSsid;
+        disconnectWifiProc.command = [
+            "sh", "-c",
+            'IFACE=$(nmcli -t -f DEVICE,TYPE,STATE dev 2>/dev/null | grep ":wifi:connected" | head -n1 | cut -d: -f1); [ -n "$IFACE" ] && nmcli dev disconnect "$IFACE"; [ -n "$1" ] && nmcli con down id "$1" 2>/dev/null || true',
+            "--",
+            root.selectedSsid
+        ];
+        disconnectWifiProc.running = true;
+    }
+
     // Dark overlay backdrop
     MouseArea {
         anchors.fill: parent
@@ -155,7 +180,7 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
-            color: root.theme ? root.theme.bgOverlay : Qt.rgba(0, 0, 0, 0.6)
+            color: root.theme.bgOverlay
         }
     }
 
@@ -166,8 +191,8 @@ PanelWindow {
         width: 480
         height: 540
         radius: 16
-        color: root.theme ? root.theme.bgBase : "#1e1e2e"
-        border.color: root.theme ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.1)
+        color: root.theme.bgBase
+        border.color: root.theme.bgBorder
         border.width: 1
 
         // Keyboard navigation
@@ -191,7 +216,7 @@ PanelWindow {
                         root.expandedSsid = selectedNet.ssid;
                         root.selectedSsid = selectedNet.ssid;
                         root.selectedSsidSecured = selectedNet.security;
-                        if (!selectedNet.security) {
+                        if (selectedNet.ssid !== root.currentSsid && !selectedNet.security) {
                             root.connectToNetwork("");
                         }
                     }
@@ -225,7 +250,7 @@ PanelWindow {
                     
                     Text {
                         text: "Available Networks"
-                        color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                        color: root.theme.accentPrimary
                         font.pixelSize: 14
                         font.family: root.font
                         font.bold: true
@@ -253,15 +278,15 @@ PanelWindow {
                             width: parent.width / 2
                             height: parent.height
                             radius: 4
-                            color: root.wifiEnabled ? (root.theme ? root.theme.bgSelected : "#313244") : "transparent"
+                            color: root.wifiEnabled ? root.theme.bgSelected : "transparent"
                             Behavior on color { ColorAnimation { duration: 150 } }
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "On"
                                 color: root.wifiEnabled 
-                                    ? (root.theme ? root.theme.accentPrimary : "#a6e3a1") 
-                                    : (root.theme ? root.theme.textMuted : "#6c7086")
+                                    ? root.theme.accentPrimary 
+                                    : root.theme.textMuted
                                 font.pixelSize: 11
                                 font.family: root.font
                                 font.bold: root.wifiEnabled
@@ -284,15 +309,15 @@ PanelWindow {
                             width: parent.width / 2
                             height: parent.height
                             radius: 4
-                            color: !root.wifiEnabled ? (root.theme ? root.theme.bgSelected : "#313244") : "transparent"
+                            color: !root.wifiEnabled ? root.theme.bgSelected : "transparent"
                             Behavior on color { ColorAnimation { duration: 150 } }
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "Off"
                                 color: !root.wifiEnabled 
-                                    ? (root.theme ? root.theme.textPrimary : "#cdd6f4") 
-                                    : (root.theme ? root.theme.textMuted : "#6c7086")
+                                    ? root.theme.textPrimary 
+                                    : root.theme.textMuted
                                 font.pixelSize: 11
                                 font.family: root.font
                                 font.bold: !root.wifiEnabled
@@ -333,13 +358,14 @@ PanelWindow {
                     required property int index
 
                     width: networkListView.width
+                    readonly property bool isCurrent: modelData.ssid === root.currentSsid
                     readonly property bool isExpanded: root.expandedSsid === modelData.ssid
                     readonly property bool isSelected: root.selectedIndex === index
 
-                    height: isExpanded ? (modelData.security ? 140 : 100) : 44
+                    height: isExpanded ? ((modelData.security && !isCurrent) ? 140 : 100) : 44
                     radius: 8
                     color: (isSelected || hoverArea.containsMouse || isExpanded) 
-                        ? (root.theme ? root.theme.bgSelected : "#313244") 
+                        ? root.theme.bgSelected 
                         : "transparent"
                     clip: true
                     
@@ -347,7 +373,7 @@ PanelWindow {
                     Behavior on color { ColorAnimation { duration: 150 } }
 
                     onIsExpandedChanged: {
-                        if (isExpanded && modelData.security) {
+                        if (isExpanded && modelData.security && !isCurrent) {
                             pwdInput.forceActiveFocus();
                         } else if (!isExpanded) {
                             networkListView.forceActiveFocus(); 
@@ -358,7 +384,7 @@ PanelWindow {
                         width: 3
                         height: 24
                         radius: 2
-                        color: root.theme ? root.theme.accentPrimary : "#a6e3a1"
+                        color: root.theme.accentPrimary
                         anchors.left: parent.left
                         anchors.leftMargin: 2
                         anchors.top: parent.top
@@ -388,8 +414,8 @@ PanelWindow {
                                     return "󰤟";
                                 }
                                 color: networkDelegate.isSelected 
-                                    ? (root.theme ? root.theme.accentPrimary : "#a6e3a1") 
-                                    : (root.theme ? root.theme.textPrimary : "#cdd6f4")
+                                    ? root.theme.accentPrimary 
+                                    : root.theme.textPrimary
                                 font.pixelSize: 16
                                 font.family: root.font
                             }
@@ -397,26 +423,27 @@ PanelWindow {
                             Text {
                                 text: modelData.ssid
                                 color: networkDelegate.isSelected 
-                                    ? (root.theme ? root.theme.textPrimary : "#cdd6f4") 
-                                    : (root.theme ? root.theme.textSecondary : "#a6adc8")
+                                    ? root.theme.textPrimary 
+                                    : root.theme.textSecondary
                                 font.pixelSize: 13
                                 font.family: root.font
                                 font.bold: networkDelegate.isSelected
                                 Layout.fillWidth: true
+                                elide: Text.ElideRight
                             }
                             
                             Text {
                                 text: "Connected"
-                                color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                                color: root.theme.accentPrimary
                                 font.pixelSize: 13
                                 font.family: root.font
-                                visible: modelData.ssid === root.currentSsid
+                                visible: networkDelegate.isCurrent
                             }
 
                             Text {
                                 text: ""
-                                visible: modelData.security && modelData.ssid !== root.currentSsid
-                                color: root.theme ? root.theme.textMuted : "#6c7086"
+                                visible: modelData.security && !networkDelegate.isCurrent
+                                color: root.theme.textMuted
                                 font.pixelSize: 12
                                 font.family: root.font
                             }
@@ -434,18 +461,18 @@ PanelWindow {
                                 Layout.fillWidth: true
                                 height: 38
                                 radius: 6
-                                visible: modelData.security
-                                color: root.theme ? root.theme.bgSurface : "#181825"
+                                visible: modelData.security && !networkDelegate.isCurrent
+                                color: root.theme.bgSurface
                                 border.color: pwdInput.activeFocus 
-                                    ? (root.theme ? root.theme.accentPrimary : "#a6e3a1") 
-                                    : (root.theme ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.1))
+                                    ? root.theme.accentPrimary 
+                                    : root.theme.bgBorder
                                 border.width: 1
 
                                 TextInput {
                                     id: pwdInput
                                     anchors.fill: parent
                                     anchors.margins: 10
-                                    color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                                    color: root.theme.textPrimary
                                     font.pixelSize: 13
                                     font.family: root.font
                                     echoMode: TextInput.Password
@@ -472,7 +499,7 @@ PanelWindow {
 
                                 Text {
                                     text: "Password"
-                                    color: root.theme ? root.theme.textMuted : "#6c7086"
+                                    color: root.theme.textMuted
                                     font.pixelSize: 13
                                     font.family: root.font
                                     anchors.verticalCenter: parent.verticalCenter
@@ -488,24 +515,34 @@ PanelWindow {
                                 
                                 Item { Layout.fillWidth: true } 
 
+                                // Connect button (when not connected)
                                 Rectangle {
+                                    id: connectBtnRect
+                                    visible: !networkDelegate.isCurrent
                                     width: 80
                                     height: 32
                                     radius: 6
-                                    color: root.theme ? root.theme.bgSurface : "#181825"
-                                    border.color: root.theme ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.1)
+                                    color: connectBtnMouse.containsMouse
+                                        ? root.theme.accentCyan
+                                        : root.theme.accentPrimary
+                                    border.color: "transparent"
                                     border.width: 1
+
+                                    Behavior on color { ColorAnimation { duration: 150 } }
 
                                     Text {
                                         anchors.centerIn: parent
                                         text: "Connect"
-                                        color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                                        color: root.theme.bgBase
                                         font.family: root.font
                                         font.pixelSize: 12
+                                        font.bold: true
                                     }
 
                                     MouseArea {
+                                        id: connectBtnMouse
                                         anchors.fill: parent
+                                        hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
                                             root.selectedSsid = modelData.ssid;
@@ -517,18 +554,58 @@ PanelWindow {
                                     }
                                 }
 
+                                // Disconnect button (when connected)
+                                Rectangle {
+                                    visible: networkDelegate.isCurrent
+                                    width: 90
+                                    height: 32
+                                    radius: 6
+                                    color: disconnectBtnMouse.containsMouse
+                                        ? root.theme.accentRed
+                                        : Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.15)
+                                    border.color: root.theme.accentRed
+                                    border.width: 1
+
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: disconnectWifiProc.running ? "Disconnecting..." : "Disconnect"
+                                        color: disconnectBtnMouse.containsMouse
+                                            ? root.theme.bgBase
+                                            : root.theme.accentRed
+                                        font.family: root.font
+                                        font.pixelSize: 12
+                                        font.bold: true
+                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                    }
+
+                                    MouseArea {
+                                        id: disconnectBtnMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        enabled: !disconnectWifiProc.running
+                                        onClicked: {
+                                            root.disconnectFromNetwork(modelData.ssid);
+                                            root.expandedSsid = "";
+                                        }
+                                    }
+                                }
+
+                                // Cancel button
                                 Rectangle {
                                     width: 80
                                     height: 32
                                     radius: 6
-                                    color: root.theme ? root.theme.bgSurface : "#181825"
-                                    border.color: root.theme ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.1)
+                                    color: root.theme.bgSurface
+                                    border.color: root.theme.bgBorder
                                     border.width: 1
 
                                     Text {
                                         anchors.centerIn: parent
                                         text: "Cancel"
-                                        color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                                        color: root.theme.textPrimary
                                         font.family: root.font
                                         font.pixelSize: 12
                                     }
@@ -563,7 +640,7 @@ PanelWindow {
                                 root.expandedSsid = modelData.ssid;
                                 root.selectedSsid = modelData.ssid;
                                 root.selectedSsidSecured = modelData.security;
-                                if (!modelData.security) {
+                                if (!networkDelegate.isCurrent && !modelData.security) {
                                     root.connectToNetwork("");
                                 }
                             }
@@ -574,7 +651,7 @@ PanelWindow {
                 Text {
                     anchors.centerIn: parent
                     text: "Scanning for networks..."
-                    color: root.theme ? root.theme.textMuted : "#6c7086"
+                    color: root.theme.textMuted
                     font.pixelSize: 13
                     font.family: root.font
                     visible: scanWifiProc.running && root.wifiEnabled
@@ -583,7 +660,7 @@ PanelWindow {
                 Text {
                     anchors.centerIn: parent
                     text: "Wi-Fi is turned off"
-                    color: root.theme ? root.theme.textMuted : "#6c7086"
+                    color: root.theme.textMuted
                     font.pixelSize: 13
                     font.family: root.font
                     visible: !root.wifiEnabled
@@ -600,16 +677,16 @@ PanelWindow {
                     spacing: 4
                     Rectangle {
                         width: hintUp.width + 8; height: 18; radius: 4
-                        color: root.theme ? root.theme.bgSurface : "#181825"
+                        color: root.theme.bgSurface
                         Text { 
                             id: hintUp; anchors.centerIn: parent; text: "↑↓"
-                            color: root.theme ? root.theme.textMuted : "#6c7086"
+                            color: root.theme.textMuted
                             font.pixelSize: 10; font.family: root.font 
                         }
                     }
                     Text { 
                         text: "navigate"; 
-                        color: root.theme ? root.theme.textMuted : "#6c7086"
+                        color: root.theme.textMuted
                         font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter 
                     }
                 }
@@ -618,16 +695,16 @@ PanelWindow {
                     spacing: 4
                     Rectangle {
                         width: hintEnter.width + 8; height: 18; radius: 4
-                        color: root.theme ? root.theme.bgSurface : "#181825"
+                        color: root.theme.bgSurface
                         Text { 
                             id: hintEnter; anchors.centerIn: parent; text: "⏎"
-                            color: root.theme ? root.theme.textMuted : "#6c7086"
+                            color: root.theme.textMuted
                             font.pixelSize: 10; font.family: root.font 
                         }
                     }
                     Text { 
                         text: "select"
-                        color: root.theme ? root.theme.textMuted : "#6c7086"
+                        color: root.theme.textMuted
                         font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter 
                     }
                 }
@@ -636,16 +713,16 @@ PanelWindow {
                     spacing: 4
                     Rectangle {
                         width: hintEsc.width + 8; height: 18; radius: 4
-                        color: root.theme ? root.theme.bgSurface : "#181825"
+                        color: root.theme.bgSurface
                         Text { 
                             id: hintEsc; anchors.centerIn: parent; text: "esc"
-                            color: root.theme ? root.theme.textMuted : "#6c7086"
+                            color: root.theme.textMuted
                             font.pixelSize: 10; font.family: root.font 
                         }
                     }
                     Text { 
                         text: "close"
-                        color: root.theme ? root.theme.textMuted : "#6c7086"
+                        color: root.theme.textMuted
                         font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter 
                     }
                 }

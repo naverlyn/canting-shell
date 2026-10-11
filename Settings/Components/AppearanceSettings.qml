@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
+import ".."
 
 Item {
     id: root
@@ -724,29 +725,6 @@ Item {
                 anchors.topMargin: 10
                 anchors.bottomMargin: 10
                 spacing: 12
-
-                // Framed icon matching top card style
-                Rectangle {
-                    width: 36
-                    height: 36
-                    radius: 18
-                    color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.12)
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                    Behavior on border.color { ColorAnimation { duration: 150 } }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: ""
-                        font.family: root.font
-                        font.pixelSize: 18
-                        color: root.theme.accentPrimary
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                    }
-                }
 
                 ColumnLayout {
                     spacing: 2

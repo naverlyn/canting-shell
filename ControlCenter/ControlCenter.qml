@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import "./Components"
+import "../bar"
 
 PanelWindow {
     id: controlCenter
@@ -16,8 +17,16 @@ PanelWindow {
 
     // Layer-shell panel in the top-right corner, below the bar.
     screen: (anchorTarget && anchorTarget.QsWindow.window) ? anchorTarget.QsWindow.window.screen : null
-    anchors { top: true; right: true }
-    margins { top: 38; right: 10 }
+    anchors {
+        top: BarConfig.position === "top"
+        bottom: BarConfig.position === "bottom"
+        right: true
+    }
+    margins {
+        top: BarConfig.position === "top" ? (BarConfig.barHeight + (BarConfig.floating ? 12 : 6)) : 0
+        bottom: BarConfig.position === "bottom" ? (BarConfig.barHeight + (BarConfig.floating ? 12 : 6)) : 0
+        right: 10
+    }
     exclusionMode: ExclusionMode.Ignore
     focusable: true
     WlrLayershell.layer: WlrLayer.Overlay
@@ -57,11 +66,16 @@ PanelWindow {
     // Control Center Root Card
     Rectangle {
         id: ccMainRect
-        anchors { top: parent.top; left: parent.left; right: parent.right }
+        anchors {
+            top: BarConfig.position === "top" ? parent.top : undefined
+            bottom: BarConfig.position === "bottom" ? parent.bottom : undefined
+            left: parent.left
+            right: parent.right
+        }
         height: contentColumn.implicitHeight + 24
         radius: 12
-        color: controlCenter.theme.bgSurface ? controlCenter.theme.bgSurface : "#2b2b2b"
-        border.color: controlCenter.theme.bgBorder ? controlCenter.theme.bgBorder : Qt.rgba(1, 1, 1, 0.1)
+        color: controlCenter.theme.bgSurface
+        border.color: controlCenter.theme.bgBorder
         border.width: 1
         
         focus: true
@@ -127,7 +141,6 @@ PanelWindow {
                         font: controlCenter.font
                         onOpenWifiRequested: {
                             controlCenter.visible = false;
-                            wifiModal.wifiEnabled = quickSettings.wifiEnabled;
                             wifiModal.visible = true;
                         }
                     }
@@ -179,8 +192,12 @@ PanelWindow {
         theme: controlCenter.theme
         font: controlCenter.font
         wifiEnabled: quickSettings.wifiEnabled
+        onSetWifiRequested: (enabled) => quickSettings.setWifi(enabled)
         onToggleWifiRequested: quickSettings.toggleWifi()
         onNetworkConnected: (ssid) => {
+            quickSettings.refresh();
+        }
+        onNetworkDisconnected: (ssid) => {
             quickSettings.refresh();
         }
     }

@@ -253,9 +253,7 @@ Scope {
           }
         }
 
-        // ==========================================
-        // VIEW 1: BUILT-IN FOLDER BROWSER
-        // ==========================================
+        /* View 1: Folder browser */
         ColumnLayout {
           Layout.fillWidth: true
           Layout.fillHeight: true
@@ -805,9 +803,7 @@ Scope {
           }
         }
 
-        // ==========================================
-        // VIEW 2: WALLPAPER PICKER GRID
-        // ==========================================
+        /* View 2: Wallpaper picker grid */
         ColumnLayout {
           Layout.fillWidth: true
           Layout.fillHeight: true

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
+import ".."
 
 Item {
     id: root
@@ -21,7 +22,7 @@ Item {
 
     Process {
         id: gnomeInfoProc
-        command: ["/home/xeana/.config/quickshell/Settings/get_about_info.sh"]
+        command: ["/home/xeana/.config/quickshell/Settings/scripts/get_about_info.sh"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -72,31 +73,13 @@ Item {
             // GNOME-style Top System Badge
             Rectangle {
                 Layout.fillWidth: true
-                height: 90
+                height: 72
                 radius: 12
                 color: root.theme.bgSurface
 
                 RowLayout {
                     anchors.fill: parent
                     anchors.margins: 16
-                    spacing: 16
-
-                    Rectangle {
-                        width: 52
-                        height: 52
-                        radius: 26
-                        color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.15)
-                        border.color: root.theme.accentPrimary
-                        border.width: 1
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: ""
-                            font.family: root.font
-                            font.pixelSize: 26
-                            color: root.theme.accentPrimary
-                        }
-                    }
 
                     ColumnLayout {
                         spacing: 2

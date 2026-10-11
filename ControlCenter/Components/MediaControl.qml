@@ -2,11 +2,12 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Mpris
+import ".."
 
 Rectangle {
     id: root
 
-    property var theme
+    property var theme: DefaultTheme {}
     property string font: "Hack Nerd Font"
 
     // Pick a playing/loaded player first
@@ -30,8 +31,8 @@ Rectangle {
     width: parent ? parent.width : 300
     height: mprisCol.implicitHeight + 28
     radius: 10
-    color: root.theme ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05) : Qt.rgba(1, 1, 1, 0.05)
-    border.color: root.theme ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.06)
+    color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05)
+    border.color: root.theme.bgBorder
     border.width: 1
 
     function formatTime(seconds) {
@@ -88,7 +89,7 @@ Rectangle {
                 font.family: root.font
                 font.pixelSize: 14
                 font.bold: true
-                color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                color: root.theme.textPrimary
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -98,7 +99,7 @@ Rectangle {
                 text: root.player ? (root.player.trackArtist || "Unknown Artist") : "Unknown Artist"
                 font.family: root.font
                 font.pixelSize: 11
-                color: root.theme ? root.theme.textSecondary : "#a6adc8"
+                color: root.theme.textSecondary
                 horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -111,8 +112,8 @@ Rectangle {
             width: 120
             height: 120
             radius: 10
-            color: "#1e1e1e"
-            border.color: Qt.rgba(1, 1, 1, 0.1)
+            color: root.theme.bgBase
+            border.color: root.theme.bgBorder
             border.width: 1
             clip: true
 
@@ -122,7 +123,7 @@ Rectangle {
                 text: "󰎈"
                 font.family: root.font
                 font.pixelSize: 42
-                color: root.theme ? root.theme.textMuted : "#6c7086"
+                color: root.theme.textMuted
                 visible: albumArtImg.status !== Image.Ready
             }
 
@@ -154,9 +155,7 @@ Rectangle {
                     width: parent.width
                     height: 4
                     radius: 2
-                    color: root.theme 
-                        ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.18) 
-                        : Qt.rgba(1, 1, 1, 0.15)
+                    color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.18)
 
                     Rectangle {
                         id: seekTrackFill
@@ -167,7 +166,7 @@ Rectangle {
                             const ratio = Math.max(0, Math.min(1, root.currentPos / root.trackLen));
                             return parent.width * ratio;
                         }
-                        color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                        color: root.theme.accentPrimary
                     }
                 }
 
@@ -178,7 +177,7 @@ Rectangle {
                     radius: 6
                     anchors.verticalCenter: parent.verticalCenter
                     x: Math.max(0, Math.min(seekBarContainer.width - width, seekTrackFill.width - (width / 2)))
-                    color: root.theme ? root.theme.textPrimary : "#cdd6f4"
+                    color: root.theme.textPrimary
                 }
 
                 MouseArea {
@@ -211,7 +210,7 @@ Rectangle {
                     text: root.formatTime(root.currentPos)
                     font.family: root.font
                     font.pixelSize: 10
-                    color: root.theme ? root.theme.textSecondary : "#a6adc8"
+                    color: root.theme.textSecondary
                 }
 
                 Item { Layout.fillWidth: true }
@@ -220,7 +219,7 @@ Rectangle {
                     text: root.formatTime(root.trackLen)
                     font.family: root.font
                     font.pixelSize: 10
-                    color: root.theme ? root.theme.textSecondary : "#a6adc8"
+                    color: root.theme.textSecondary
                 }
             }
         }
@@ -241,8 +240,8 @@ Rectangle {
                     font.family: root.font
                     font.pixelSize: 16
                     color: (root.player && root.player.shuffle) 
-                        ? (root.theme ? root.theme.textPrimary : "#cdd6f4") 
-                        : (root.theme ? root.theme.textMuted : "#6c7086")
+                        ? root.theme.textPrimary 
+                        : root.theme.textMuted
                 }
                 MouseArea {
                     anchors.fill: parent
@@ -265,8 +264,8 @@ Rectangle {
                     font.family: root.font
                     font.pixelSize: 22
                     color: prevMouse.containsMouse 
-                        ? (root.theme ? root.theme.textPrimary : "#cdd6f4") 
-                        : (root.theme ? root.theme.textSecondary : "#a6adc8")
+                        ? root.theme.textPrimary 
+                        : root.theme.textSecondary
                 }
                 MouseArea {
                     id: prevMouse
@@ -284,15 +283,15 @@ Rectangle {
                 radius: 21
                 Layout.alignment: Qt.AlignVCenter
                 color: playMouse.containsMouse
-                    ? (root.theme ? root.theme.textPrimary : "#cdd6f4")
-                    : (root.theme ? root.theme.accentPrimary : "#a6e3a1")
+                    ? root.theme.accentCyan
+                    : root.theme.accentPrimary
 
                 Text {
                     anchors.centerIn: parent
                     text: (root.player && root.player.isPlaying) ? "󰏤" : "󰐊"
                     font.family: root.font
                     font.pixelSize: 20
-                    color: root.theme ? root.theme.bgBase : "#1e1e2e"
+                    color: root.theme.bgBase
                 }
 
                 MouseArea {
@@ -314,8 +313,8 @@ Rectangle {
                     font.family: root.font
                     font.pixelSize: 22
                     color: nextMouse.containsMouse 
-                        ? (root.theme ? root.theme.textPrimary : "#cdd6f4") 
-                        : (root.theme ? root.theme.textSecondary : "#a6adc8")
+                        ? root.theme.textPrimary 
+                        : root.theme.textSecondary
                 }
                 MouseArea {
                     id: nextMouse
@@ -336,8 +335,8 @@ Rectangle {
                     font.family: root.font
                     font.pixelSize: 16
                     color: (root.player && root.player.loopState !== MprisLoopState.None) 
-                        ? (root.theme ? root.theme.textPrimary : "#cdd6f4") 
-                        : (root.theme ? root.theme.textMuted : "#6c7086")
+                        ? root.theme.textPrimary 
+                        : root.theme.textMuted
                 }
                 MouseArea {
                     anchors.fill: parent
