@@ -26,6 +26,11 @@ Rectangle {
     implicitHeight: 28
     radius:         circular ? height / 2 : 8
     color:          (area.containsMouse && _enabled) ? hoverColor : baseColor
+    scale:          (area.pressed && _enabled) ? 0.94 : 1.0
+
+    Behavior on color { ColorAnimation { duration: 130 } }
+    Behavior on border.color { ColorAnimation { duration: 130 } }
+    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
     Text {
         id: iconLabel
@@ -34,6 +39,7 @@ Rectangle {
               ? root.icon + "  " + root.label
               : root.icon !== "" ? root.icon : root.label
         color: root.iconColor
+        Behavior on color { ColorAnimation { duration: 130 } }
         font  { pixelSize: root.iconSize; bold: root.bold; family: root.font }
     }
 

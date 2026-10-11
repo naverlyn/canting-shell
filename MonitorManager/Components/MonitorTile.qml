@@ -21,11 +21,13 @@ Item {
   signal clicked(int idx)
   signal dragStarted()
   signal dragEnded(int idx, real canvasX, real canvasY)
+  signal dragCanceled()
 
   readonly property bool _isMirror: monitor.mirrorOf !== ""
   readonly property bool _inStrip: monitor.disabled || _isMirror
 
   Rectangle {
+    id: tileRect
     anchors.fill: parent
     radius: 6
     color: root.selected
@@ -38,6 +40,12 @@ Item {
                      : root.theme.bgBorder)
     border.width: root.selected ? 2 : 1
     opacity: root.monitor.disabled ? 0.45 : 1.0
+    scale: (dragArea.drag.active && !root._inStrip) ? 1.02 : (dragArea.containsMouse ? 1.01 : 1.0)
+
+    Behavior on color { ColorAnimation { duration: 150 } }
+    Behavior on border.color { ColorAnimation { duration: 150 } }
+    Behavior on opacity { NumberAnimation { duration: 150 } }
+    Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
     Text {
       id: nameText
@@ -51,6 +59,7 @@ Item {
       }
       text: root.monitor.name
       color: root.selected ? root.theme.accentPrimary : root.theme.textPrimary
+      Behavior on color { ColorAnimation { duration: 150 } }
       font {
         pixelSize: Math.max(9, Math.min(13, root.width / 10))
         bold: true
@@ -72,6 +81,7 @@ Item {
       color: (root._isMirror && !root.monitor.disabled)
              ? root.theme.accentCyan
              : root.theme.textSecondary
+      Behavior on color { ColorAnimation { duration: 150 } }
       font {
         pixelSize: Math.max(8, Math.min(11, root.width / 14))
         family: root.font
@@ -115,6 +125,7 @@ Item {
   MouseArea {
     id: dragArea
     anchors.fill: parent
+    hoverEnabled: true
     drag.target: root._inStrip ? null : root
     drag.axis: Drag.XAndYAxis
     drag.minimumX: root.dragMinX
@@ -123,13 +134,26 @@ Item {
     drag.maximumY: root.dragMaxY
     cursorShape: root._inStrip ? Qt.PointingHandCursor : Qt.SizeAllCursor
 
+    property bool wasDragged: false
+
     onClicked: root.clicked(root.index)
 
     onPressed: {
+      wasDragged = false;
       if (drag.target !== null) root.dragStarted();
     }
+    onPositionChanged: {
+      if (drag.active) wasDragged = true;
+    }
     onReleased: {
-      if (drag.active) root.dragEnded(root.index, root.x, root.y);
+      if (wasDragged) {
+        root.dragEnded(root.index, root.x, root.y);
+      } else {
+        root.dragCanceled();
+      }
+    }
+    onCanceled: {
+      root.dragCanceled();
     }
   }
 }

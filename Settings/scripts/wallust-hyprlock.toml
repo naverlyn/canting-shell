@@ -1,0 +1,8 @@
+backend = "kmeans"
+color_space = "labmixed"
+palette = "dark16"
+threshold = 11
+
+[templates]
+hyprlock.template = 'colors-hyprland.conf'
+hyprlock.target = '~/.config/quickshell/Settings/scripts/wallust-hyprlock.conf'

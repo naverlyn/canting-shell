@@ -1,11 +1,15 @@
 /*
  * SoundSettings.qml
  *
- * GNOME-style grouped card layout for system sound controls.
+ * Grouped preferences for system audio output & input routing and volume levels.
+ * Inspired by GNOME Settings / Libadwaita (AdwPreferencesPage, AdwPreferencesGroup, AdwExpanderRow, AdwActionRow).
+ *
  * Features:
- *   - Grouped Output & Input cards with row dividers
- *   - Device selector dropdown with inline Test button
- *   - Clean horizontal volume slider with mute icon
+ *   - Grouped Output & Input cards with row dividers (AdwPreferencesGroup style)
+ *   - Polished inline expandable device selectors with smooth cubic animations (AdwExpanderRow style)
+ *   - Inset sub-container styling for option lists matching GNOME nested rows
+ *   - Clean horizontal volume sliders with mute icons (AdwActionRow with GtkScale)
+ *   - Canberra sound bell test trigger
  *   - Powered natively by Quickshell.Services.Pipewire
  */
 
@@ -20,7 +24,7 @@ import ".."
 Item {
     id: root
     property var theme
-    property string font
+    property string font: "Hack Nerd Font"
 
     /* Dropdown expansion states */
     property bool outputDropdownOpen: false
@@ -109,7 +113,7 @@ Item {
                 Layout.fillWidth: true
             }
 
-            /* Output Group */
+            /* Output group */
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
@@ -141,10 +145,10 @@ Item {
                         }
                         spacing: 0
 
-                        /* Row 1: Output Device & Test */
+                        /* Row 1: Output device & audio test */
                         Item {
                             Layout.fillWidth: true
-                            height: 48
+                            height: 50
 
                             RowLayout {
                                 anchors.fill: parent
@@ -163,15 +167,17 @@ Item {
 
                                 Item { Layout.fillWidth: true }
 
-                                /* Device Dropdown Selector Button */
+                                /* Device Selector Pill */
                                 Rectangle {
                                     id: sinkDropdownBtn
                                     width: 260
                                     height: 32
                                     radius: 6
-                                    color: sinkDropHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.04))
-                                    border.color: root.outputDropdownOpen ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
-                                    border.width: 1
+                                    color: root.outputDropdownOpen 
+                                        ? (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.12)) 
+                                        : (sinkDropHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.04)))
+                                    border.color: root.outputDropdownOpen ? root.theme.accentPrimary : (sinkDropHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)))
+                                    border.width: root.outputDropdownOpen ? 1.5 : 1
                                     Layout.alignment: Qt.AlignVCenter
 
                                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -198,16 +204,19 @@ Item {
                                             text: "󰅀"
                                             font.family: root.font
                                             font.pixelSize: 12
-                                            color: root.theme.textSecondary
+                                            color: root.outputDropdownOpen ? root.theme.accentPrimary : root.theme.textSecondary
                                             rotation: root.outputDropdownOpen ? 180 : 0
-                                            Behavior on rotation { NumberAnimation { duration: 160 } }
+                                            Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                                         }
                                     }
 
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.outputDropdownOpen = !root.outputDropdownOpen
+                                        onClicked: {
+                                            if (!root.outputDropdownOpen) root.inputDropdownOpen = false;
+                                            root.outputDropdownOpen = !root.outputDropdownOpen;
+                                        }
                                     }
                                 }
 
@@ -245,57 +254,88 @@ Item {
                             }
                         }
 
-                        /* Expandable Output Devices Dropdown Menu */
-                        ColumnLayout {
+                        // Expandable output devices list
+                        Rectangle {
+                            id: sinkExpandBox
                             Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            Layout.bottomMargin: 8
-                            visible: root.outputDropdownOpen
-                            spacing: 4
+                            Layout.leftMargin: 8
+                            Layout.rightMargin: 8
+                            Layout.bottomMargin: root.outputDropdownOpen ? 8 : 0
+                            Layout.preferredHeight: root.outputDropdownOpen ? (sinkListCol.implicitHeight + 8) : 0
+                            opacity: root.outputDropdownOpen ? 1.0 : 0.0
+                            clip: true
+                            radius: 8
+                            color: Qt.rgba(0, 0, 0, 0.18)
+                            border.color: root.outputDropdownOpen ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                            border.width: 1
 
-                            Repeater {
-                                model: root.audioSinks
-                                delegate: Rectangle {
-                                    Layout.fillWidth: true
-                                    height: 34
-                                    radius: 6
-                                    readonly property bool isSelected: root.defaultSink && root.defaultSink.id === modelData.id
-                                    color: isSelected ? root.theme.bgSelected : (itemHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : "transparent")
+                            Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                            Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.InOutQuad } }
+                            Behavior on Layout.bottomMargin { NumberAnimation { duration: 200 } }
 
-                                    HoverHandler { id: itemHover }
+                            ColumnLayout {
+                                id: sinkListCol
+                                anchors {
+                                    top: parent.top
+                                    left: parent.left
+                                    right: parent.right
+                                    margins: 4
+                                }
+                                spacing: 2
 
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 10
-                                        spacing: 8
+                                Repeater {
+                                    model: root.audioSinks
+                                    delegate: Rectangle {
+                                        Layout.fillWidth: true
+                                        height: 36
+                                        radius: 6
+                                        readonly property bool isSelected: root.defaultSink && root.defaultSink.id === modelData.id
+                                        color: isSelected 
+                                            ? (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.12)) 
+                                            : (itemHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : "transparent")
+                                        border.color: isSelected 
+                                            ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.3) 
+                                            : "transparent"
+                                        border.width: 1
 
-                                        Text {
-                                            text: modelData.description || modelData.name || "Output"
-                                            font.family: root.font
-                                            font.pixelSize: 12
-                                            font.bold: isSelected
-                                            color: isSelected ? root.theme.textPrimary : root.theme.textSecondary
-                                            elide: Text.ElideRight
-                                            Layout.fillWidth: true
+                                        Behavior on color { ColorAnimation { duration: 130 } }
+                                        Behavior on border.color { ColorAnimation { duration: 130 } }
+
+                                        HoverHandler { id: itemHover }
+
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 12
+                                            anchors.rightMargin: 12
+                                            spacing: 8
+
+                                            Text {
+                                                text: modelData.description || modelData.name || "Output"
+                                                font.family: root.font
+                                                font.pixelSize: 12
+                                                font.bold: isSelected
+                                                color: isSelected ? (root.theme.accentPrimary ?? "#7aa2f7") : root.theme.textPrimary
+                                                elide: Text.ElideRight
+                                                Layout.fillWidth: true
+                                            }
+
+                                            Text {
+                                                visible: isSelected
+                                                text: "󰄬"
+                                                font.family: root.font
+                                                font.pixelSize: 13
+                                                font.bold: true
+                                                color: root.theme.accentPrimary
+                                            }
                                         }
 
-                                        Text {
-                                            visible: isSelected
-                                            text: "󰄬"
-                                            font.family: root.font
-                                            font.pixelSize: 12
-                                            color: root.theme.accentPrimary
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            Pipewire.preferredDefaultAudioSink = modelData;
-                                            root.outputDropdownOpen = false;
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                Pipewire.preferredDefaultAudioSink = modelData;
+                                                root.outputDropdownOpen = false;
+                                            }
                                         }
                                     }
                                 }
@@ -311,7 +351,7 @@ Item {
                             color: Qt.rgba(1, 1, 1, 0.05)
                         }
 
-                        /* Row 2: Volume Slider */
+                        /* Row 2: Volume slider & mute toggle */
                         Item {
                             Layout.fillWidth: true
                             height: 48
@@ -322,14 +362,26 @@ Item {
                                 anchors.rightMargin: 12
                                 spacing: 16
 
-                                Text {
-                                    text: "Volume"
-                                    font.family: root.font
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                    color: root.theme.textPrimary
-                                    Layout.preferredWidth: 100
+                                ColumnLayout {
+                                    Layout.preferredWidth: 120
                                     Layout.alignment: Qt.AlignVCenter
+                                    spacing: 2
+
+                                    Text {
+                                        text: "Volume"
+                                        font.family: root.font
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        color: root.theme.textPrimary
+                                    }
+
+                                    Text {
+                                        text: root.isSinkMuted ? "Muted" : (root.sinkVolumePercent + "%")
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                        color: root.isSinkMuted ? (root.theme.accentRed ?? "#f7768e") : (root.theme.accentPrimary ?? "#7aa2f7")
+                                    }
                                 }
 
                                 /* Slider Track */
@@ -404,7 +456,7 @@ Item {
                 }
             }
 
-            /* Input Group */
+            /* Input group */
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
@@ -436,10 +488,10 @@ Item {
                         }
                         spacing: 0
 
-                        /* Row 1: Input Device */
+                        /* Row 1: Input device selector */
                         Item {
                             Layout.fillWidth: true
-                            height: 48
+                            height: 50
 
                             RowLayout {
                                 anchors.fill: parent
@@ -464,9 +516,11 @@ Item {
                                     width: 326
                                     height: 32
                                     radius: 6
-                                    color: srcDropHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.04))
-                                    border.color: root.inputDropdownOpen ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
-                                    border.width: 1
+                                    color: root.inputDropdownOpen 
+                                        ? (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.12)) 
+                                        : (srcDropHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.04)))
+                                    border.color: root.inputDropdownOpen ? root.theme.accentPrimary : (srcDropHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)))
+                                    border.width: root.inputDropdownOpen ? 1.5 : 1
                                     Layout.alignment: Qt.AlignVCenter
 
                                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -493,63 +547,9 @@ Item {
                                             text: "󰅀"
                                             font.family: root.font
                                             font.pixelSize: 12
-                                            color: root.theme.textSecondary
+                                            color: root.inputDropdownOpen ? root.theme.accentPrimary : root.theme.textSecondary
                                             rotation: root.inputDropdownOpen ? 180 : 0
-                                            Behavior on rotation { NumberAnimation { duration: 160 } }
-                                        }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.inputDropdownOpen = !root.inputDropdownOpen
-                                    }
-                                }
-                            }
-                        }
-
-                        /* Expandable Input Devices Dropdown Menu */
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            Layout.bottomMargin: 8
-                            visible: root.inputDropdownOpen
-                            spacing: 4
-
-                            Repeater {
-                                model: root.audioSources
-                                delegate: Rectangle {
-                                    Layout.fillWidth: true
-                                    height: 34
-                                    radius: 6
-                                    readonly property bool isSelected: root.defaultSource && root.defaultSource.id === modelData.id
-                                    color: isSelected ? root.theme.bgSelected : (srcItemHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : "transparent")
-
-                                    HoverHandler { id: srcItemHover }
-
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 10
-                                        spacing: 8
-
-                                        Text {
-                                            text: modelData.description || modelData.name || "Microphone"
-                                            font.family: root.font
-                                            font.pixelSize: 12
-                                            font.bold: isSelected
-                                            color: isSelected ? root.theme.textPrimary : root.theme.textSecondary
-                                            elide: Text.ElideRight
-                                            Layout.fillWidth: true
-                                        }
-
-                                        Text {
-                                            visible: isSelected
-                                            text: "󰄬"
-                                            font.family: root.font
-                                            font.pixelSize: 12
-                                            color: root.theme.accentPrimary
+                                            Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                                         }
                                     }
 
@@ -557,8 +557,96 @@ Item {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
-                                            Pipewire.preferredDefaultAudioSource = modelData;
-                                            root.inputDropdownOpen = false;
+                                            if (!root.inputDropdownOpen) root.outputDropdownOpen = false;
+                                            root.inputDropdownOpen = !root.inputDropdownOpen;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Expandable input devices list
+                        Rectangle {
+                            id: srcExpandBox
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 8
+                            Layout.rightMargin: 8
+                            Layout.bottomMargin: root.inputDropdownOpen ? 8 : 0
+                            Layout.preferredHeight: root.inputDropdownOpen ? (srcListCol.implicitHeight + 8) : 0
+                            opacity: root.inputDropdownOpen ? 1.0 : 0.0
+                            clip: true
+                            radius: 8
+                            color: Qt.rgba(0, 0, 0, 0.18)
+                            border.color: root.inputDropdownOpen ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                            border.width: 1
+
+                            Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                            Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.InOutQuad } }
+                            Behavior on Layout.bottomMargin { NumberAnimation { duration: 200 } }
+
+                            ColumnLayout {
+                                id: srcListCol
+                                anchors {
+                                    top: parent.top
+                                    left: parent.left
+                                    right: parent.right
+                                    margins: 4
+                                }
+                                spacing: 2
+
+                                Repeater {
+                                    model: root.audioSources
+                                    delegate: Rectangle {
+                                        Layout.fillWidth: true
+                                        height: 36
+                                        radius: 6
+                                        readonly property bool isSelected: root.defaultSource && root.defaultSource.id === modelData.id
+                                        color: isSelected 
+                                            ? (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.12)) 
+                                            : (srcItemHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : "transparent")
+                                        border.color: isSelected 
+                                            ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.3) 
+                                            : "transparent"
+                                        border.width: 1
+
+                                        Behavior on color { ColorAnimation { duration: 130 } }
+                                        Behavior on border.color { ColorAnimation { duration: 130 } }
+
+                                        HoverHandler { id: srcItemHover }
+
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 12
+                                            anchors.rightMargin: 12
+                                            spacing: 8
+
+                                            Text {
+                                                text: modelData.description || modelData.name || "Microphone"
+                                                font.family: root.font
+                                                font.pixelSize: 12
+                                                font.bold: isSelected
+                                                color: isSelected ? (root.theme.accentPrimary ?? "#7aa2f7") : root.theme.textPrimary
+                                                elide: Text.ElideRight
+                                                Layout.fillWidth: true
+                                            }
+
+                                            Text {
+                                                visible: isSelected
+                                                text: "󰄬"
+                                                font.family: root.font
+                                                font.pixelSize: 13
+                                                font.bold: true
+                                                color: root.theme.accentPrimary
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                Pipewire.preferredDefaultAudioSource = modelData;
+                                                root.inputDropdownOpen = false;
+                                            }
                                         }
                                     }
                                 }
@@ -574,7 +662,7 @@ Item {
                             color: Qt.rgba(1, 1, 1, 0.05)
                         }
 
-                        /* Row 2: Input Volume Slider */
+                        /* Row 2: Input volume slider & mic mute toggle */
                         Item {
                             Layout.fillWidth: true
                             height: 48
@@ -585,14 +673,26 @@ Item {
                                 anchors.rightMargin: 12
                                 spacing: 16
 
-                                Text {
-                                    text: "Volume"
-                                    font.family: root.font
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                    color: root.theme.textPrimary
-                                    Layout.preferredWidth: 100
+                                ColumnLayout {
+                                    Layout.preferredWidth: 120
                                     Layout.alignment: Qt.AlignVCenter
+                                    spacing: 2
+
+                                    Text {
+                                        text: "Volume"
+                                        font.family: root.font
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        color: root.theme.textPrimary
+                                    }
+
+                                    Text {
+                                        text: root.isSourceMuted ? "Muted" : (root.sourceVolumePercent + "%")
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                        color: root.isSourceMuted ? (root.theme.accentRed ?? "#f7768e") : (root.theme.accentPrimary ?? "#7aa2f7")
+                                    }
                                 }
 
                                 /* Slider Track */

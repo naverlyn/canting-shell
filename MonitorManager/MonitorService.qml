@@ -184,7 +184,10 @@ Singleton {
               // the monitor name, so a direct display in the UI would show "0" instead of
               // "eDP-1".  Resolve it to the name so the rest of the codebase never sees raw IDs.
               const asId = parseInt(m.mirrorOf, 10);
-              if (!isNaN(asId)) return raw.find(x => x.id === asId)?.name ?? "";
+              if (!isNaN(asId)) {
+                const match = raw.find(x => x.id === asId);
+                return match ? match.name : "";
+              }
               return m.mirrorOf;
             })(),
             availableModes: m.availableModes,

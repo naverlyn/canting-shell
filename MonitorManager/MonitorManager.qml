@@ -167,11 +167,11 @@ Scope {
 
   IpcHandler {
     target: "monitors"
-    function toggle(): void {
+    function toggle() {
       if (root.isOpen) root.isOpen = false;
       else root.openEditor();
     }
-    function refresh(): void { MonitorService.refresh(); }
+    function refresh() { MonitorService.refresh(); }
   }
 
   Connections {
@@ -247,6 +247,7 @@ Scope {
 
     // Main card
     Rectangle {
+      id: mainCard
       anchors.centerIn: parent
       width: 960
       height: 640
@@ -273,7 +274,7 @@ Scope {
           spacing: 12
 
           Text {
-            text: "󰍺  Monitor Manager"
+            text: "Monitor Manager"
             color: root.theme.accentPrimary
             font { pixelSize: 14; bold: true; family: root.font }
           }
@@ -282,13 +283,22 @@ Scope {
 
           // Refresh button
           IconButton {
+            id: refreshBtn
             width: 28; height: 28
             circular:  true
             theme:     root.theme
             font:      root.font
             icon:      "󰑐"
-            iconColor: MonitorService.loading ? root.theme.textMuted : root.theme.textSecondary
+            iconColor: MonitorService.loading ? root.theme.accentPrimary : root.theme.textSecondary
             onClicked: MonitorService.refresh()
+
+            RotationAnimation on rotation {
+              running: MonitorService.loading
+              loops: Animation.Infinite
+              from: 0
+              to: 360
+              duration: 900
+            }
           }
         }
 
@@ -321,7 +331,7 @@ Scope {
             Layout.fillHeight: true
             visible: root.selectedIndex >= 0 && root.editState.length > 0
 
-            monitor:     visible ? root.editState[root.selectedIndex] : null
+            monitor:     (root.selectedIndex >= 0 && root.selectedIndex < root.editState.length) ? root.editState[root.selectedIndex] : null
             allMonitors: root.editState
             theme:       root.theme
             font:        root.font
@@ -504,12 +514,19 @@ Scope {
           }
 
           Rectangle {
+            id: applyBtn
             width: applyText.width + 24; height: 32; radius: 8
             color: (root.isApplying || MonitorService.loading || root.hasOverlap)
-                   ? root.theme.bgSurface : root.theme.accentPrimary
+                   ? root.theme.bgSurface
+                   : (applyMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.15)) : root.theme.accentPrimary)
             border.color: root.theme.bgBorder
             border.width: 1
             opacity: (root.isApplying || MonitorService.loading || root.hasOverlap) ? 0.5 : 1.0
+            scale: applyMouse.pressed ? 0.96 : 1.0
+
+            Behavior on color { ColorAnimation { duration: 140 } }
+            Behavior on opacity { NumberAnimation { duration: 140 } }
+            Behavior on scale { NumberAnimation { duration: 100 } }
 
             Text {
               id: applyText
@@ -520,7 +537,9 @@ Scope {
               font { pixelSize: 12; bold: true; family: root.font }
             }
             MouseArea {
+              id: applyMouse
               anchors.fill: parent
+              hoverEnabled: true
               cursorShape: (root.isApplying || MonitorService.loading || root.hasOverlap)
                            ? Qt.ArrowCursor : Qt.PointingHandCursor
               enabled: !root.isApplying && !MonitorService.loading && !root.hasOverlap

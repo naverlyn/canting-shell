@@ -222,9 +222,11 @@ Item {
                                 Rectangle {
                                     id: speedTrack
                                     Layout.fillWidth: true
-                                    height: 6
-                                    radius: 3
-                                    color: root.theme.bgSelected
+                                    height: 7
+                                    radius: 3.5
+                                    color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.14)
+                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                    border.width: 1
                                     Layout.alignment: Qt.AlignVCenter
 
                                     /* Fill mapped from -1.0 to 1.0 (range of 2.0) */
@@ -233,19 +235,44 @@ Item {
                                         radius: parent.radius
                                         width: Math.max(0, Math.min(parent.width, parent.width * ((root.pointerSensitivity + 1.0) / 2.0)))
                                         color: root.theme.accentPrimary
+
+                                        Behavior on width {
+                                            enabled: !speedMouse.pressed
+                                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                                        }
                                     }
 
+                                    // Outer halo ring on hover/press
                                     Rectangle {
-                                        width: speedMouse.containsMouse || speedMouse.pressed ? 16 : 14
+                                        anchors.centerIn: speedKnob
+                                        width: speedKnob.width + (speedMouse.pressed ? 8 : (speedMouse.containsMouse ? 6 : 0))
                                         height: width
                                         radius: width / 2
-                                        color: root.theme.accentPrimary
-                                        border.color: root.theme.bgBase
-                                        border.width: 2
+                                        color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, speedMouse.pressed ? 0.35 : (speedMouse.containsMouse ? 0.2 : 0))
+                                        z: 1
+
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                    }
+
+                                    // Tactile white knob
+                                    Rectangle {
+                                        id: speedKnob
+                                        width: speedMouse.containsMouse || speedMouse.pressed ? 17 : 15
+                                        height: width
+                                        radius: width / 2
+                                        color: "#ffffff"
+                                        border.color: root.theme.accentPrimary
+                                        border.width: 3
                                         anchors.verticalCenter: parent.verticalCenter
                                         x: Math.max(0, Math.min(speedTrack.width - width, (speedTrack.width * ((root.pointerSensitivity + 1.0) / 2.0)) - (width / 2)))
+                                        z: 2
 
-                                        Behavior on width { NumberAnimation { duration: 100 } }
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on x {
+                                            enabled: !speedMouse.pressed
+                                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                                        }
                                     }
 
                                     MouseArea {

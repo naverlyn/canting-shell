@@ -5,6 +5,23 @@
   "floating": false,
   "barOpacity": 0.23,
   "allMonitors": true,
+  "leftWidgets": [
+    "appGrid",
+    "temp",
+    "memory",
+    "cpu",
+    "disk"
+  ],
+  "centerWidgets": [
+    "windowTitle"
+  ],
+  "rightWidgets": [
+    "tray",
+    "clock",
+    "weather",
+    "workspaces",
+    "controlCenter"
+  ],
   "showAppGrid": true,
   "showCpu": true,
   "showMemory": true,

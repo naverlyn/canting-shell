@@ -1,13 +1,21 @@
 /*
  * BarSettings.qml
  *
- * GNOME-style grouped card layout for customizing the Quickshell Top Bar.
+ * Grouped preferences for customizing the Quickshell Desktop Bar.
+ * Inspired by GNOME Settings / Libadwaita (AdwPreferencesPage, AdwPreferencesGroup, AdwActionRow).
+ *
  * Features:
- *   - General layout: visibility, top/bottom position, height presets, floating style, opacity
- *   - Multi-monitor display preference
- *   - Left section widget toggles: Applications, CPU, Temp, Memory, Disk
- *   - Center section: Active Window Title
- *   - Right section widget toggles: Workspaces, Weather, Clock, Seconds, Date, System Tray, Control Center
+ *   - Interactive Modular Building Blocks Builder:
+ *       * Left, Center, and Right visual drop/section columns
+ *       * Quick shift between sections (Left <-> Center <-> Right)
+ *       * Move Up/Down within section
+ *       * Quick visibility toggle on block
+ *   - Comprehensive Widget Preferences:
+ *       * Position segmented picker (Left | Center | Right) for each widget
+ *       * Reorder arrows & master visibility switch
+ *       * Contextual sub-options (e.g. Clock seconds & date)
+ *   - General Bar Appearance:
+ *       * Master visibility, dock position (top/bottom), height presets, floating style, opacity slider, multi-monitor
  *   - Real-time reactive updates via BarConfig singleton
  */
 
@@ -21,15 +29,150 @@ import ".."
 Item {
     id: root
     property var theme
-    property string font
+    property string font: "Hack Nerd Font"
 
-    /* Reusable Toggle Row Component */
+    /* Reusable compact icon button */
+    component MiniIconButton: Rectangle {
+        id: miniBtn
+        property string iconText: ""
+        property string tooltipText: ""
+        property bool btnEnabled: true
+        signal clicked()
+
+        width: 24
+        height: 24
+        radius: 6
+        color: !btnEnabled ? "transparent" : (btnHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.1)) : (root.theme.bgBase ?? Qt.rgba(0,0,0,0.2)))
+        border.color: !btnEnabled ? "transparent" : (btnHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.08)))
+        border.width: 1
+        opacity: btnEnabled ? 1.0 : 0.3
+
+        Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on border.color { ColorAnimation { duration: 120 } }
+
+        HoverHandler { id: btnHover; enabled: miniBtn.btnEnabled }
+
+        Text {
+            anchors.centerIn: parent
+            text: miniBtn.iconText
+            font.family: root.font
+            font.pixelSize: 11
+            color: miniBtn.btnEnabled ? (btnHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary) : root.theme.textMuted
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: miniBtn.btnEnabled
+            cursorShape: miniBtn.btnEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: miniBtn.clicked()
+        }
+    }
+
+    /* Building Block Card Component */
+    component BlockCard: Rectangle {
+        id: blockCard
+        property string widgetId: ""
+        property string currentSection: ""
+        property int itemIndex: 0
+        property int totalInList: 1
+
+        readonly property var meta: BarConfig.getWidgetMeta(widgetId)
+        readonly property bool isVisible: BarConfig.isWidgetVisible(widgetId)
+
+        Layout.fillWidth: true
+        height: 38
+        radius: 8
+        color: cardHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : (root.theme.bgBase ?? Qt.rgba(0,0,0,0.2))
+        border.color: isVisible ? (cardHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))) : Qt.rgba(1,1,1,0.05)
+        border.width: 1
+        opacity: isVisible ? 1.0 : 0.55
+
+        Behavior on color { ColorAnimation { duration: 140 } }
+        Behavior on border.color { ColorAnimation { duration: 140 } }
+        Behavior on opacity { NumberAnimation { duration: 140 } }
+
+        HoverHandler { id: cardHover }
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: 8
+            anchors.rightMargin: 8
+            spacing: 6
+
+            // Icon
+            Text {
+                text: blockCard.meta.icon
+                font.family: root.font
+                font.pixelSize: 13
+                color: blockCard.isVisible ? root.theme.accentPrimary : root.theme.textMuted
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            // Title
+            Text {
+                text: blockCard.meta.name
+                font.family: root.font
+                font.pixelSize: 11
+                font.bold: true
+                color: blockCard.isVisible ? root.theme.textPrimary : root.theme.textMuted
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            // Action Buttons
+            RowLayout {
+                spacing: 3
+                Layout.alignment: Qt.AlignVCenter
+
+                // Shift Left
+                MiniIconButton {
+                    iconText: "◀"
+                    tooltipText: "Move to previous section"
+                    btnEnabled: blockCard.currentSection !== "left"
+                    onClicked: BarConfig.moveWidgetSectionLeft(blockCard.widgetId)
+                }
+
+                // Move Up
+                MiniIconButton {
+                    iconText: "▲"
+                    tooltipText: "Move earlier"
+                    btnEnabled: blockCard.itemIndex > 0
+                    onClicked: BarConfig.moveWidgetUp(blockCard.widgetId)
+                }
+
+                // Move Down
+                MiniIconButton {
+                    iconText: "▼"
+                    tooltipText: "Move later"
+                    btnEnabled: blockCard.itemIndex < blockCard.totalInList - 1
+                    onClicked: BarConfig.moveWidgetDown(blockCard.widgetId)
+                }
+
+                // Shift Right
+                MiniIconButton {
+                    iconText: "▶"
+                    tooltipText: "Move to next section"
+                    btnEnabled: blockCard.currentSection !== "right"
+                    onClicked: BarConfig.moveWidgetSectionRight(blockCard.widgetId)
+                }
+
+                // Toggle visibility
+                MiniIconButton {
+                    iconText: blockCard.isVisible ? "󰈈" : "󰈉"
+                    tooltipText: blockCard.isVisible ? "Hide widget" : "Show widget"
+                    btnEnabled: true
+                    onClicked: BarConfig.setWidgetVisible(blockCard.widgetId, !blockCard.isVisible)
+                }
+            }
+        }
+    }
+
+    /* Reusable standard switch row component */
     component SettingToggleRow: Item {
         id: toggleRow
         property string title: ""
         property string desc: ""
-        property string icon: ""
-        property color iconColor: root.theme.accentPrimary
         property bool checked: false
         property bool rowEnabled: true
         signal toggled(bool val)
@@ -45,23 +188,6 @@ Item {
             anchors.leftMargin: 12
             anchors.rightMargin: 12
             spacing: 12
-
-            Rectangle {
-                visible: toggleRow.icon !== ""
-                width: 32
-                height: 32
-                radius: 8
-                color: Qt.rgba(toggleRow.iconColor.r, toggleRow.iconColor.g, toggleRow.iconColor.b, 0.12)
-                Layout.alignment: Qt.AlignVCenter
-
-                Text {
-                    anchors.centerIn: parent
-                    text: toggleRow.icon
-                    font.family: root.font
-                    font.pixelSize: 15
-                    color: toggleRow.iconColor
-                }
-            }
 
             ColumnLayout {
                 spacing: 2
@@ -87,7 +213,6 @@ Item {
 
             Item { Layout.fillWidth: true }
 
-            /* Toggle Switch matching MouseSettings */
             Rectangle {
                 id: switchTrack
                 width: 44
@@ -119,37 +244,53 @@ Item {
         }
     }
 
-    /* Main Scrollable View */
+    /* Main scrollable view */
     Flickable {
         anchors.fill: parent
         contentHeight: mainCol.implicitHeight + 24
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
+        ScrollBar.vertical: ScrollBar {
+            policy: ScrollBar.AsNeeded
+            contentItem: Rectangle {
+                implicitWidth: 4
+                radius: 2
+                color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.2)
+            }
+        }
+
         ColumnLayout {
             id: mainCol
             width: parent.width
-            spacing: 20
+            spacing: 22
 
-            // Header Row: Title & Reset Button on the right
+            // Header
             RowLayout {
                 Layout.fillWidth: true
 
-                Text {
-                    text: "Bar Settings"
-                    font.family: root.font
-                    font.pixelSize: 20
-                    font.bold: true
-                    color: root.theme.textPrimary
-                    Layout.alignment: Qt.AlignVCenter
+                ColumnLayout {
+                    spacing: 3
+                    Text {
+                        text: "Bar Settings"
+                        font.family: root.font
+                        font.pixelSize: 20
+                        font.bold: true
+                        color: root.theme.textPrimary
+                    }
+                    Text {
+                        text: "Configure modular building blocks, positions, and desktop bar appearance"
+                        font.family: root.font
+                        font.pixelSize: 12
+                        color: root.theme.textSecondary
+                    }
                 }
 
-                // Spacer pushing the button all the way to the right
                 Item { Layout.fillWidth: true }
 
                 Rectangle {
                     id: resetBtn
-                    implicitWidth: resetContent.implicitWidth + 24
+                    implicitWidth: resetText.implicitWidth + 24
                     height: 32
                     radius: 7
                     color: resetHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : (root.theme.bgSurface ?? Qt.rgba(1,1,1,0.04))
@@ -162,26 +303,15 @@ Item {
 
                     HoverHandler { id: resetHover }
 
-                    RowLayout {
-                        id: resetContent
+                    Text {
+                        id: resetText
                         anchors.centerIn: parent
-                        spacing: 6
-
-                        Text {
-                            text: "󰑐"
-                            font.family: root.font
-                            font.pixelSize: 13
-                            color: resetHover.hovered ? root.theme.accentPrimary : root.theme.textSecondary
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                        }
-
-                        Text {
-                            text: "Reset to Default"
-                            font.family: root.font
-                            font.pixelSize: 12
-                            font.bold: true
-                            color: root.theme.textPrimary
-                        }
+                        text: "Reset to Default"
+                        font.family: root.font
+                        font.pixelSize: 12
+                        font.bold: true
+                        color: resetHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
+                        Behavior on color { ColorAnimation { duration: 140 } }
                     }
 
                     MouseArea {
@@ -192,13 +322,432 @@ Item {
                 }
             }
 
-            /* Group 1: General & Layout */
+            // Building blocks builder
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 4
+                    Text {
+                        text: "Bar Layout & Building Blocks"
+                        font.family: root.font
+                        font.pixelSize: 13
+                        font.bold: true
+                        color: root.theme.textSecondary
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: "Use ◀ ▶ to move between sections, ▲ ▼ to reorder"
+                        font.family: root.font
+                        font.pixelSize: 11
+                        color: root.theme.textMuted
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: blockBuilderLayout.implicitHeight + 24
+                    radius: 12
+                    color: root.theme.bgSurface
+                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.width: 1
+
+                    RowLayout {
+                        id: blockBuilderLayout
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                            margins: 12
+                        }
+                        spacing: 12
+                        Layout.fillWidth: true
+
+                        // Left section column
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignTop
+                            implicitHeight: leftColContent.implicitHeight + 20
+                            radius: 10
+                            color: root.theme.bgBase ?? Qt.rgba(0,0,0,0.2)
+                            border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.06)
+                            border.width: 1
+
+                            ColumnLayout {
+                                id: leftColContent
+                                anchors {
+                                    left: parent.left
+                                    right: parent.right
+                                    top: parent.top
+                                    margins: 10
+                                }
+                                spacing: 8
+
+                                // Section Header Pill
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 28
+                                    radius: 6
+                                    color: root.theme.bgSelected ?? Qt.rgba(1,1,1,0.08)
+
+                                    RowLayout {
+                                        anchors.centerIn: parent
+                                        spacing: 6
+                                        Text {
+                                            text: "Left Section"
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: root.theme.accentPrimary
+                                        }
+                                        Text {
+                                            text: "(" + BarConfig.leftWidgets.length + ")"
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            color: root.theme.textMuted
+                                        }
+                                    }
+                                }
+
+                                // Widgets in Left Section
+                                Repeater {
+                                    model: BarConfig.leftWidgets
+                                    delegate: BlockCard {
+                                        required property string modelData
+                                        required property int index
+                                        widgetId: modelData
+                                        currentSection: "left"
+                                        itemIndex: index
+                                        totalInList: BarConfig.leftWidgets.length
+                                    }
+                                }
+
+                                // Empty state placeholder
+                                Rectangle {
+                                    visible: BarConfig.leftWidgets.length === 0
+                                    Layout.fillWidth: true
+                                    height: 60
+                                    radius: 8
+                                    color: "transparent"
+                                    border.color: Qt.rgba(1,1,1,0.1)
+                                    border.width: 1
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "No widgets on Left\nMove blocks here with ◀"
+                                        font.family: root.font
+                                        font.pixelSize: 10
+                                        color: root.theme.textMuted
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+                                }
+                            }
+                        }
+
+                        // Center section column
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignTop
+                            implicitHeight: centerColContent.implicitHeight + 20
+                            radius: 10
+                            color: root.theme.bgBase ?? Qt.rgba(0,0,0,0.2)
+                            border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.06)
+                            border.width: 1
+
+                            ColumnLayout {
+                                id: centerColContent
+                                anchors {
+                                    left: parent.left
+                                    right: parent.right
+                                    top: parent.top
+                                    margins: 10
+                                }
+                                spacing: 8
+
+                                // Section Header Pill
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 28
+                                    radius: 6
+                                    color: root.theme.bgSelected ?? Qt.rgba(1,1,1,0.08)
+
+                                    RowLayout {
+                                        anchors.centerIn: parent
+                                        spacing: 6
+                                        Text {
+                                            text: "Center Section"
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: root.theme.accentPrimary
+                                        }
+                                        Text {
+                                            text: "(" + BarConfig.centerWidgets.length + ")"
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            color: root.theme.textMuted
+                                        }
+                                    }
+                                }
+
+                                // Widgets in Center Section
+                                Repeater {
+                                    model: BarConfig.centerWidgets
+                                    delegate: BlockCard {
+                                        required property string modelData
+                                        required property int index
+                                        widgetId: modelData
+                                        currentSection: "center"
+                                        itemIndex: index
+                                        totalInList: BarConfig.centerWidgets.length
+                                    }
+                                }
+
+                                // Empty state placeholder
+                                Rectangle {
+                                    visible: BarConfig.centerWidgets.length === 0
+                                    Layout.fillWidth: true
+                                    height: 60
+                                    radius: 8
+                                    color: "transparent"
+                                    border.color: Qt.rgba(1,1,1,0.1)
+                                    border.width: 1
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "No widgets in Center\nMove blocks here with ◀ or ▶"
+                                        font.family: root.font
+                                        font.pixelSize: 10
+                                        color: root.theme.textMuted
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+                                }
+                            }
+                        }
+
+                        // Right section column
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignTop
+                            implicitHeight: rightColContent.implicitHeight + 20
+                            radius: 10
+                            color: root.theme.bgBase ?? Qt.rgba(0,0,0,0.2)
+                            border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.06)
+                            border.width: 1
+
+                            ColumnLayout {
+                                id: rightColContent
+                                anchors {
+                                    left: parent.left
+                                    right: parent.right
+                                    top: parent.top
+                                    margins: 10
+                                }
+                                spacing: 8
+
+                                // Section Header Pill
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    height: 28
+                                    radius: 6
+                                    color: root.theme.bgSelected ?? Qt.rgba(1,1,1,0.08)
+
+                                    RowLayout {
+                                        anchors.centerIn: parent
+                                        spacing: 6
+                                        Text {
+                                            text: "Right Section"
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: root.theme.accentPrimary
+                                        }
+                                        Text {
+                                            text: "(" + BarConfig.rightWidgets.length + ")"
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            color: root.theme.textMuted
+                                        }
+                                    }
+                                }
+
+                                // Widgets in Right Section
+                                Repeater {
+                                    model: BarConfig.rightWidgets
+                                    delegate: BlockCard {
+                                        required property string modelData
+                                        required property int index
+                                        widgetId: modelData
+                                        currentSection: "right"
+                                        itemIndex: index
+                                        totalInList: BarConfig.rightWidgets.length
+                                    }
+                                }
+
+                                // Empty state placeholder
+                                Rectangle {
+                                    visible: BarConfig.rightWidgets.length === 0
+                                    Layout.fillWidth: true
+                                    height: 60
+                                    radius: 8
+                                    color: "transparent"
+                                    border.color: Qt.rgba(1,1,1,0.1)
+                                    border.width: 1
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "No widgets on Right\nMove blocks here with ▶"
+                                        font.family: root.font
+                                        font.pixelSize: 10
+                                        color: root.theme.textMuted
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Widget preferences
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
 
                 Text {
-                    text: "General"
+                    text: "Widget Preferences"
+                    font.family: root.font
+                    font.pixelSize: 13
+                    font.bold: true
+                    color: root.theme.textSecondary
+                    Layout.leftMargin: 4
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: widgetsListCol.implicitHeight + 16
+                    radius: 12
+                    color: root.theme.bgSurface
+                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.width: 1
+
+                    ColumnLayout {
+                        id: widgetsListCol
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                            margins: 8
+                        }
+                        spacing: 0
+
+                        Repeater {
+                            model: BarConfig.widgetDefinitions
+                            delegate: ColumnLayout {
+                                id: widgetItem
+                                required property var modelData
+                                required property int index
+                                Layout.fillWidth: true
+                                spacing: 0
+
+                                SettingToggleRow {
+                                    title: widgetItem.modelData.name
+                                    desc: widgetItem.modelData.desc
+                                    checked: BarConfig.isWidgetVisible(widgetItem.modelData.id)
+                                    onToggled: (val) => {
+                                        BarConfig.setWidgetVisible(widgetItem.modelData.id, val);
+                                    }
+                                }
+
+                                // Separator between widgets
+                                Rectangle {
+                                    visible: widgetItem.index < BarConfig.widgetDefinitions.length - 1
+                                    Layout.fillWidth: true
+                                    Layout.leftMargin: 12
+                                    Layout.rightMargin: 12
+                                    height: 1
+                                    color: Qt.rgba(1, 1, 1, 0.05)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Clock options
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    text: "Clock Options"
+                    font.family: root.font
+                    font.pixelSize: 13
+                    font.bold: true
+                    color: root.theme.textSecondary
+                    Layout.leftMargin: 4
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: clockCol.implicitHeight + 16
+                    radius: 12
+                    color: root.theme.bgSurface
+                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.width: 1
+
+                    ColumnLayout {
+                        id: clockCol
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                            margins: 8
+                        }
+                        spacing: 0
+
+                        SettingToggleRow {
+                            title: "Show Seconds in Clock"
+                            desc: "Display precision seconds format (hh:mm:ss)"
+                            rowEnabled: BarConfig.showTime
+                            checked: BarConfig.showSeconds
+                            onToggled: (val) => {
+                                BarConfig.showSeconds = val;
+                                BarConfig.saveConfig();
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 12
+                            Layout.rightMargin: 12
+                            height: 1
+                            color: Qt.rgba(1, 1, 1, 0.05)
+                        }
+
+                        SettingToggleRow {
+                            title: "Show Date in Clock"
+                            desc: "Display weekday and calendar date alongside the time"
+                            rowEnabled: BarConfig.showTime
+                            checked: BarConfig.showDate
+                            onToggled: (val) => {
+                                BarConfig.showDate = val;
+                                BarConfig.saveConfig();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // General bar appearance
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                Text {
+                    text: "General Appearance"
                     font.family: root.font
                     font.pixelSize: 13
                     font.bold: true
@@ -224,11 +773,10 @@ Item {
                         }
                         spacing: 0
 
-                        // Master Bar Visibility
+                        // Master bar visibility
                         SettingToggleRow {
-                            title: "Show Top Bar"
-                            desc: "Display the desktop status bar"
-                            icon: "󰮲"
+                            title: "Show Desktop Bar"
+                            desc: "Display the top/bottom system status bar"
                             checked: BarConfig.barVisible
                             onToggled: (val) => {
                                 BarConfig.barVisible = val;
@@ -244,7 +792,7 @@ Item {
                             color: Qt.rgba(1, 1, 1, 0.05)
                         }
 
-                        // Bar Position Selector
+                        // Bar position selector (Top / Bottom)
                         Item {
                             Layout.fillWidth: true
                             height: 52
@@ -254,22 +802,6 @@ Item {
                                 anchors.leftMargin: 12
                                 anchors.rightMargin: 12
                                 spacing: 12
-
-                                Rectangle {
-                                    width: 32
-                                    height: 32
-                                    radius: 8
-                                    color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.12)
-                                    Layout.alignment: Qt.AlignVCenter
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "󰞵"
-                                        font.family: root.font
-                                        font.pixelSize: 15
-                                        color: root.theme.accentPrimary
-                                    }
-                                }
 
                                 ColumnLayout {
                                     spacing: 2
@@ -284,7 +816,7 @@ Item {
                                     }
 
                                     Text {
-                                        text: "Dock to top or bottom edge of the screen"
+                                        text: "Dock to top or bottom edge of the display"
                                         font.family: root.font
                                         font.pixelSize: 11
                                         color: root.theme.textSecondary
@@ -294,7 +826,7 @@ Item {
                                 Item { Layout.fillWidth: true }
 
                                 Rectangle {
-                                    width: 170
+                                    width: 150
                                     height: 32
                                     radius: 7
                                     color: root.theme.bgBase ?? Qt.rgba(0,0,0,0.25)
@@ -307,7 +839,7 @@ Item {
                                         anchors.margins: 3
                                         spacing: 4
 
-                                        // Top Button
+                                        // Top button
                                         Rectangle {
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
@@ -318,24 +850,14 @@ Item {
 
                                             HoverHandler { id: posTopHover }
 
-                                            RowLayout {
+                                            Text {
                                                 anchors.centerIn: parent
-                                                spacing: 6
-
-                                                Text {
-                                                    text: "󰮲"
-                                                    font.family: root.font
-                                                    font.pixelSize: 12
-                                                    color: BarConfig.position === "top" ? root.theme.accentPrimary : root.theme.textSecondary
-                                                }
-
-                                                Text {
-                                                    text: "Top"
-                                                    font.family: root.font
-                                                    font.pixelSize: 11
-                                                    font.bold: BarConfig.position === "top"
-                                                    color: BarConfig.position === "top" ? root.theme.textPrimary : root.theme.textSecondary
-                                                }
+                                                text: "Top"
+                                                font.family: root.font
+                                                font.pixelSize: 11
+                                                font.bold: BarConfig.position === "top"
+                                                color: BarConfig.position === "top" ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                                                opacity: BarConfig.position === "top" ? 1.0 : (posTopHover.hovered ? 1.0 : 0.75)
                                             }
 
                                             MouseArea {
@@ -348,7 +870,7 @@ Item {
                                             }
                                         }
 
-                                        // Bottom Button
+                                        // Bottom button
                                         Rectangle {
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
@@ -359,24 +881,14 @@ Item {
 
                                             HoverHandler { id: posBotHover }
 
-                                            RowLayout {
+                                            Text {
                                                 anchors.centerIn: parent
-                                                spacing: 6
-
-                                                Text {
-                                                    text: "󰞵"
-                                                    font.family: root.font
-                                                    font.pixelSize: 12
-                                                    color: BarConfig.position === "bottom" ? root.theme.accentPrimary : root.theme.textSecondary
-                                                }
-
-                                                Text {
-                                                    text: "Bottom"
-                                                    font.family: root.font
-                                                    font.pixelSize: 11
-                                                    font.bold: BarConfig.position === "bottom"
-                                                    color: BarConfig.position === "bottom" ? root.theme.textPrimary : root.theme.textSecondary
-                                                }
+                                                text: "Bottom"
+                                                font.family: root.font
+                                                font.pixelSize: 11
+                                                font.bold: BarConfig.position === "bottom"
+                                                color: BarConfig.position === "bottom" ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                                                opacity: BarConfig.position === "bottom" ? 1.0 : (posBotHover.hovered ? 1.0 : 0.75)
                                             }
 
                                             MouseArea {
@@ -401,7 +913,7 @@ Item {
                             color: Qt.rgba(1, 1, 1, 0.05)
                         }
 
-                        // Bar Height Presets
+                        // Height presets
                         Item {
                             Layout.fillWidth: true
                             height: 52
@@ -411,22 +923,6 @@ Item {
                                 anchors.leftMargin: 12
                                 anchors.rightMargin: 12
                                 spacing: 12
-
-                                Rectangle {
-                                    width: 32
-                                    height: 32
-                                    radius: 8
-                                    color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.12)
-                                    Layout.alignment: Qt.AlignVCenter
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "󰹞"
-                                        font.family: root.font
-                                        font.pixelSize: 15
-                                        color: root.theme.accentPrimary
-                                    }
-                                }
 
                                 ColumnLayout {
                                     spacing: 2
@@ -457,18 +953,19 @@ Item {
                                     Repeater {
                                         model: [
                                             { label: "28px", value: 28 },
-                                            { label: "32px", value: 32 },
+                                             { label: "32px", value: 32 },
                                             { label: "36px", value: 36 },
                                             { label: "40px", value: 40 }
                                         ]
 
                                         delegate: Rectangle {
+                                            id: heightPresetBtn
                                             width: 52
                                             height: 28
                                             radius: 6
                                             readonly property bool isSelected: BarConfig.barHeight === modelData.value
-                                            color: isSelected ? root.theme.bgSelected : (hHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : root.theme.bgBase)
-                                            border.color: isSelected ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
+                                            color: heightPresetBtn.isSelected ? root.theme.bgSelected : (hHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : root.theme.bgBase)
+                                            border.color: heightPresetBtn.isSelected ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
                                             border.width: 1
 
                                             HoverHandler { id: hHover }
@@ -478,8 +975,9 @@ Item {
                                                 text: modelData.label
                                                 font.family: root.font
                                                 font.pixelSize: 11
-                                                font.bold: isSelected
-                                                color: isSelected ? root.theme.accentPrimary : root.theme.textPrimary
+                                                font.bold: heightPresetBtn.isSelected
+                                                color: heightPresetBtn.isSelected ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                                                opacity: heightPresetBtn.isSelected ? 1.0 : (hHover.hovered ? 1.0 : 0.75)
                                             }
 
                                             MouseArea {
@@ -504,11 +1002,10 @@ Item {
                             color: Qt.rgba(1, 1, 1, 0.05)
                         }
 
-                        // Floating Style Toggle
+                        // Floating style toggle
                         SettingToggleRow {
                             title: "Floating Bar"
                             desc: "Add screen margins and rounded outer corners"
-                            icon: "󰞵"
                             checked: BarConfig.floating
                             onToggled: (val) => {
                                 BarConfig.floating = val;
@@ -524,7 +1021,7 @@ Item {
                             color: Qt.rgba(1, 1, 1, 0.05)
                         }
 
-                        // Bar Opacity Slider
+                        // Bar opacity slider
                         Item {
                             Layout.fillWidth: true
                             height: 52
@@ -534,22 +1031,6 @@ Item {
                                 anchors.leftMargin: 12
                                 anchors.rightMargin: 12
                                 spacing: 12
-
-                                Rectangle {
-                                    width: 32
-                                    height: 32
-                                    radius: 8
-                                    color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.12)
-                                    Layout.alignment: Qt.AlignVCenter
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "󰃠"
-                                        font.family: root.font
-                                        font.pixelSize: 15
-                                        color: root.theme.accentPrimary
-                                    }
-                                }
 
                                 ColumnLayout {
                                     spacing: 2
@@ -637,346 +1118,13 @@ Item {
                             color: Qt.rgba(1, 1, 1, 0.05)
                         }
 
-                        // Multi-Monitor Display
+                        // Multi-monitor preference
                         SettingToggleRow {
                             title: "Show on All Displays"
                             desc: "Display status bar across all connected monitors"
-                            icon: "󰍹"
                             checked: BarConfig.allMonitors
                             onToggled: (val) => {
                                 BarConfig.allMonitors = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-                    }
-                }
-            }
-
-            /* Group 2: Left Section Widgets */
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Text {
-                    text: "Left Section Widgets"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textSecondary
-                    Layout.leftMargin: 4
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: leftCol.implicitHeight + 16
-                    radius: 12
-                    color: root.theme.bgSurface
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
-
-                    ColumnLayout {
-                        id: leftCol
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            top: parent.top
-                            margins: 8
-                        }
-                        spacing: 0
-
-                        SettingToggleRow {
-                            title: "Applications Launcher"
-                            desc: "Quick access button for the application launcher grid"
-                            icon: "󰀻"
-                            checked: BarConfig.showAppGrid
-                            onToggled: (val) => {
-                                BarConfig.showAppGrid = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        SettingToggleRow {
-                            title: "CPU Monitor"
-                            desc: "Live processor usage pill with details popup"
-                            icon: "󰻠"
-                            iconColor: root.theme.accentOrange ?? "#ff9e64"
-                            checked: BarConfig.showCpu
-                            onToggled: (val) => {
-                                BarConfig.showCpu = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        SettingToggleRow {
-                            title: "CPU Temperature"
-                            desc: "Thermal sensor status pill with breakdown popup"
-                            icon: "󰔏"
-                            iconColor: root.theme.accentRed ?? "#f7768e"
-                            checked: BarConfig.showTemp
-                            onToggled: (val) => {
-                                BarConfig.showTemp = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        SettingToggleRow {
-                            title: "Memory (RAM)"
-                            desc: "Live memory utilization percentage and process popup"
-                            icon: ""
-                            checked: BarConfig.showMemory
-                            onToggled: (val) => {
-                                BarConfig.showMemory = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        SettingToggleRow {
-                            title: "Disk Usage"
-                            desc: "Root partition storage utilization pill"
-                            icon: ""
-                            checked: BarConfig.showDisk
-                            onToggled: (val) => {
-                                BarConfig.showDisk = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-                    }
-                }
-            }
-
-            /* Group 3: Center Section Widget */
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Text {
-                    text: "Center Section"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textSecondary
-                    Layout.leftMargin: 4
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: centerCol.implicitHeight + 16
-                    radius: 12
-                    color: root.theme.bgSurface
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
-
-                    ColumnLayout {
-                        id: centerCol
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            top: parent.top
-                            margins: 8
-                        }
-                        spacing: 0
-
-                        SettingToggleRow {
-                            title: "Active Window Title"
-                            desc: "Show the title of the currently focused window in the center"
-                            icon: "󰖲"
-                            checked: BarConfig.showWindowTitle
-                            onToggled: (val) => {
-                                BarConfig.showWindowTitle = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-                    }
-                }
-            }
-
-            /* Group 4: Right Section Widgets */
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                Text {
-                    text: "Right Section Widgets"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textSecondary
-                    Layout.leftMargin: 4
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: rightCol.implicitHeight + 16
-                    radius: 12
-                    color: root.theme.bgSurface
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
-
-                    ColumnLayout {
-                        id: rightCol
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            top: parent.top
-                            margins: 8
-                        }
-                        spacing: 0
-
-                        SettingToggleRow {
-                            title: "Workspaces"
-                            desc: "Desktop workspace switcher pills with active and urgent indicators"
-                            icon: "󰮲"
-                            checked: BarConfig.showWorkspaces
-                            onToggled: (val) => {
-                                BarConfig.showWorkspaces = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        SettingToggleRow {
-                            title: "Weather Info"
-                            desc: "Live weather conditions and temperature readout"
-                            icon: "󰖐"
-                            checked: BarConfig.showWeather
-                            onToggled: (val) => {
-                                BarConfig.showWeather = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        SettingToggleRow {
-                            title: "Clock & Calendar"
-                            desc: "Time widget pill with interactive calendar popup on hover"
-                            icon: "󰥔"
-                            checked: BarConfig.showTime
-                            onToggled: (val) => {
-                                BarConfig.showTime = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        SettingToggleRow {
-                            title: "Show Seconds in Clock"
-                            desc: "Display precision seconds format (hh:mm:ss)"
-                            icon: "󱑎"
-                            rowEnabled: BarConfig.showTime
-                            checked: BarConfig.showSeconds
-                            onToggled: (val) => {
-                                BarConfig.showSeconds = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        SettingToggleRow {
-                            title: "Show Date in Clock"
-                            desc: "Display weekday and date alongside the time"
-                            icon: "󰸗"
-                            rowEnabled: BarConfig.showTime
-                            checked: BarConfig.showDate
-                            onToggled: (val) => {
-                                BarConfig.showDate = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        SettingToggleRow {
-                            title: "System Tray"
-                            desc: "Background application status indicators and context menus"
-                            icon: "󰚥"
-                            checked: BarConfig.showTray
-                            onToggled: (val) => {
-                                BarConfig.showTray = val;
-                                BarConfig.saveConfig();
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        SettingToggleRow {
-                            title: "Control Center Button"
-                            desc: "Quick settings gear toggle for volume, mic, wifi, and bluetooth"
-                            icon: ""
-                            checked: BarConfig.showControlCenter
-                            onToggled: (val) => {
-                                BarConfig.showControlCenter = val;
                                 BarConfig.saveConfig();
                             }
                         }

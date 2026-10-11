@@ -29,7 +29,7 @@ Item {
     mirrorDropdown.close();
   }
 
-  // ── Mode dropdown overlay ────────────────────────────────────────────────
+  // Mode dropdown overlay
   Popup {
     id: modeDropdown
     parent: modePill
@@ -38,6 +38,15 @@ Item {
     width: modePill.width
     padding: 1  // background border is drawn inward, so contentItem overlaps it without this
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+
+    enter: Transition {
+      NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+      NumberAnimation { property: "scale"; from: 0.96; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+    }
+    exit: Transition {
+      NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 120; easing.type: Easing.OutCubic }
+      NumberAnimation { property: "scale"; from: 1.0; to: 0.96; duration: 120; easing.type: Easing.OutCubic }
+    }
 
     onOpened: panel.modePickerOpen   = true
     onClosed: panel.modePickerOpen   = false
@@ -52,7 +61,7 @@ Item {
     contentItem: ListView {
       id: modeList
       implicitHeight: Math.min(contentHeight + 2, 180)
-      model: panel.monitor?.availableModes ?? []
+      model: (panel.monitor && panel.monitor.availableModes) ? panel.monitor.availableModes : []
       boundsBehavior: Flickable.StopAtBounds
       clip: true
 
@@ -61,7 +70,10 @@ Item {
         width: modeList.width
         height: 28
         radius: 4
-        color: modelData === (panel.monitor?.selectedMode ?? "") ? panel.theme.accentPrimary : "transparent"
+        color: modelData === (panel.monitor ? panel.monitor.selectedMode : "")
+               ? panel.theme.accentPrimary
+               : (modeItemArea.containsMouse ? (panel.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : "transparent")
+        Behavior on color { ColorAnimation { duration: 120 } }
 
         Row {
           anchors { fill: parent; leftMargin: 10; rightMargin: 10 }
@@ -69,7 +81,7 @@ Item {
 
           Text {
             text: modelData.split("@")[0]
-            color: modelData === (panel.monitor?.selectedMode ?? "") ? panel.theme.bgBase : panel.theme.textPrimary
+            color: modelData === (panel.monitor ? panel.monitor.selectedMode : "") ? panel.theme.bgBase : panel.theme.textPrimary
             font { pixelSize: 11; family: panel.font }
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - rateText.width
@@ -77,14 +89,16 @@ Item {
           Text {
             id: rateText
             text: "@" + (modelData.split("@")[1] ?? "")
-            color: modelData === (panel.monitor?.selectedMode ?? "") ? panel.theme.bgBase : panel.theme.textMuted
+            color: modelData === (panel.monitor ? panel.monitor.selectedMode : "") ? panel.theme.bgBase : panel.theme.textMuted
             font { pixelSize: 11; family: panel.font }
             anchors.verticalCenter: parent.verticalCenter
           }
         }
 
         MouseArea {
+          id: modeItemArea
           anchors.fill: parent
+          hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             panel.modeSelected(modelData);
@@ -95,7 +109,7 @@ Item {
     }
   }
 
-  // ── Mirror dropdown overlay ──────────────────────────────────────────────
+  // Mirror dropdown overlay
   Popup {
     id: mirrorDropdown
     parent: mirrorPill
@@ -104,6 +118,15 @@ Item {
     width: mirrorPill.width
     padding: 1  // background border is drawn inward, so contentItem overlaps it without this
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+
+    enter: Transition {
+      NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+      NumberAnimation { property: "scale"; from: 0.96; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+    }
+    exit: Transition {
+      NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 120; easing.type: Easing.OutCubic }
+      NumberAnimation { property: "scale"; from: 1.0; to: 0.96; duration: 120; easing.type: Easing.OutCubic }
+    }
 
     onOpened: panel.mirrorPickerOpen = true
     onClosed: panel.mirrorPickerOpen = false
@@ -134,12 +157,15 @@ Item {
         width: mirrorList.width
         height: 28
         radius: 4
-        color: modelData === (panel.monitor?.mirrorOf ?? "") ? panel.theme.accentPrimary : "transparent"
+        color: modelData === (panel.monitor ? panel.monitor.mirrorOf : "")
+               ? panel.theme.accentPrimary
+               : (mirrorItemArea.containsMouse ? (panel.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : "transparent")
+        Behavior on color { ColorAnimation { duration: 120 } }
 
         Text {
           anchors { fill: parent; leftMargin: 10 }
           text: modelData === "" ? "None" : modelData
-          color: modelData === (panel.monitor?.mirrorOf ?? "")
+          color: modelData === (panel.monitor ? panel.monitor.mirrorOf : "")
                  ? panel.theme.bgBase
                  : (modelData === "" ? panel.theme.textMuted : panel.theme.textPrimary)
           font { pixelSize: 11; family: panel.font }
@@ -147,7 +173,9 @@ Item {
         }
 
         MouseArea {
+          id: mirrorItemArea
           anchors.fill: parent
+          hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             panel.mirrorChanged(modelData);
@@ -158,12 +186,11 @@ Item {
     }
   }
 
-  // All children use optional chaining (monitor?.X) so bindings are safe when monitor is null
+  // ScrollView guards its content against null monitor
   ScrollView {
     anchors.fill: parent
     clip: true
     contentWidth: availableWidth
-    // ScrollView is visible but content guards itself against null monitor
     visible: panel.monitor !== null
 
     ColumnLayout {
@@ -173,13 +200,13 @@ Item {
       // Monitor identity
       Text {
         Layout.fillWidth: true
-        text: panel.monitor?.name ?? ""
+        text: panel.monitor ? panel.monitor.name : ""
         color: panel.theme.textPrimary
         font { pixelSize: 14; bold: true; family: panel.font }
       }
       Text {
         Layout.fillWidth: true
-        text: panel.monitor?.description ?? ""
+        text: (panel.monitor && panel.monitor.description) ? panel.monitor.description : ""
         color: panel.theme.textMuted
         font { pixelSize: 11; family: panel.font }
         elide: Text.ElideRight
@@ -204,13 +231,14 @@ Item {
         color: panel.theme.bgSurface
         border.color: panel.modePickerOpen ? panel.theme.accentPrimary : panel.theme.bgBorder
         border.width: 1
+        Behavior on border.color { ColorAnimation { duration: 150 } }
 
         Row {
           anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
           spacing: 0
 
           Text {
-            text: (panel.monitor?.selectedMode ?? "").replace("Hz", "")
+            text: (panel.monitor && panel.monitor.selectedMode) ? panel.monitor.selectedMode.replace("Hz", "") : ""
             color: panel.theme.textPrimary
             font { pixelSize: 12; family: panel.font }
             anchors.verticalCenter: parent.verticalCenter
@@ -256,23 +284,33 @@ Item {
         Repeater {
           model: [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0]
           Rectangle {
+            id: scaleBtn
             required property real modelData
             width: 38; height: 26; radius: 6
-            color: Math.abs((panel.monitor?.scale ?? -1) - modelData) < 0.01 ? panel.theme.accentPrimary : panel.theme.bgSurface
-            border.color: panel.theme.bgBorder
+            color: Math.abs((panel.monitor ? panel.monitor.scale : -1) - modelData) < 0.01
+                   ? panel.theme.accentPrimary
+                   : (scaleMouse.containsMouse ? (panel.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : panel.theme.bgSurface)
+            border.color: Math.abs((panel.monitor ? panel.monitor.scale : -1) - modelData) < 0.01 ? panel.theme.accentPrimary : panel.theme.bgBorder
             border.width: 1
+            scale: scaleMouse.pressed ? 0.94 : (scaleMouse.containsMouse ? 1.04 : 1.0)
+
+            Behavior on color { ColorAnimation { duration: 140 } }
+            Behavior on border.color { ColorAnimation { duration: 140 } }
+            Behavior on scale { NumberAnimation { duration: 100 } }
 
             Text {
               anchors.centerIn: parent
-              text: modelData + "×"
-              color: Math.abs((panel.monitor?.scale ?? -1) - modelData) < 0.01 ? panel.theme.bgBase : panel.theme.textPrimary
+              text: scaleBtn.modelData + "×"
+              color: Math.abs((panel.monitor ? panel.monitor.scale : -1) - scaleBtn.modelData) < 0.01 ? panel.theme.bgBase : panel.theme.textPrimary
               font { pixelSize: 10; family: panel.font }
             }
 
             MouseArea {
+              id: scaleMouse
               anchors.fill: parent
+              hoverEnabled: true
               cursorShape: Qt.PointingHandCursor
-              onClicked: panel.scaleSelected(modelData)
+              onClicked: panel.scaleSelected(scaleBtn.modelData)
             }
           }
         }
@@ -300,33 +338,43 @@ Item {
           ]
 
           Rectangle {
+            id: rotBtn
             required property var modelData
             width: 52; height: 26; radius: 6
-            color: (panel.monitor?.transform ?? -1) === modelData.t ? panel.theme.accentPrimary : panel.theme.bgSurface
-            border.color: panel.theme.bgBorder
+            color: (panel.monitor ? panel.monitor.transform : -1) === modelData.t
+                   ? panel.theme.accentPrimary
+                   : (rotMouse.containsMouse ? (panel.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : panel.theme.bgSurface)
+            border.color: (panel.monitor ? panel.monitor.transform : -1) === modelData.t ? panel.theme.accentPrimary : panel.theme.bgBorder
             border.width: 1
+            scale: rotMouse.pressed ? 0.94 : (rotMouse.containsMouse ? 1.03 : 1.0)
+
+            Behavior on color { ColorAnimation { duration: 140 } }
+            Behavior on border.color { ColorAnimation { duration: 140 } }
+            Behavior on scale { NumberAnimation { duration: 100 } }
 
             Row {
               anchors.centerIn: parent
               spacing: 4
               Text {
-                text: modelData.icon
+                text: rotBtn.modelData.icon
                 anchors.verticalCenter: parent.verticalCenter
-                color: (panel.monitor?.transform ?? -1) === modelData.t ? panel.theme.bgBase : panel.theme.textMuted
+                color: (panel.monitor ? panel.monitor.transform : -1) === rotBtn.modelData.t ? panel.theme.bgBase : panel.theme.textMuted
                 font { pixelSize: 13; family: panel.font }
               }
               Text {
-                text: modelData.label
+                text: rotBtn.modelData.label
                 anchors.verticalCenter: parent.verticalCenter
-                color: (panel.monitor?.transform ?? -1) === modelData.t ? panel.theme.bgBase : panel.theme.textPrimary
+                color: (panel.monitor ? panel.monitor.transform : -1) === rotBtn.modelData.t ? panel.theme.bgBase : panel.theme.textPrimary
                 font { pixelSize: 10; family: panel.font }
               }
             }
 
             MouseArea {
+              id: rotMouse
               anchors.fill: parent
+              hoverEnabled: true
               cursorShape: Qt.PointingHandCursor
-              onClicked: panel.transformChanged(modelData.t)
+              onClicked: panel.transformChanged(rotBtn.modelData.t)
             }
           }
         }
@@ -351,14 +399,15 @@ Item {
         color: panel.theme.bgSurface
         border.color: panel.mirrorPickerOpen ? panel.theme.accentPrimary : panel.theme.bgBorder
         border.width: 1
+        Behavior on border.color { ColorAnimation { duration: 150 } }
 
         Row {
           anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
           spacing: 0
 
           Text {
-            text: (panel.monitor?.mirrorOf ?? "") === "" ? "None" : (panel.monitor?.mirrorOf ?? "")
-            color: (panel.monitor?.mirrorOf ?? "") === "" ? panel.theme.textMuted : panel.theme.textPrimary
+            text: (panel.monitor && panel.monitor.mirrorOf) ? panel.monitor.mirrorOf : "None"
+            color: (panel.monitor && panel.monitor.mirrorOf) ? panel.theme.textPrimary : panel.theme.textMuted
             font { pixelSize: 12; family: panel.font }
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - 20
@@ -391,32 +440,36 @@ Item {
 
       // Enable / Disable toggle
       Rectangle {
+        id: enableBtn
         Layout.fillWidth: true
         height: 32
         radius: 8
-        color: (panel.monitor?.disabled ?? true) ? panel.theme.bgSurface : panel.theme.accentGreen
-        border.color: panel.theme.bgBorder
+        color: (!panel.monitor || panel.monitor.disabled)
+               ? (enableMouse.containsMouse ? (panel.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : panel.theme.bgSurface)
+               : (enableMouse.containsMouse ? (panel.theme.accentGreenHover ?? panel.theme.accentGreen) : panel.theme.accentGreen)
+        border.color: (!panel.monitor || panel.monitor.disabled) ? panel.theme.bgBorder : panel.theme.accentGreen
         border.width: 1
+        scale: enableMouse.pressed ? 0.97 : 1.0
+
+        Behavior on color { ColorAnimation { duration: 180 } }
+        Behavior on border.color { ColorAnimation { duration: 180 } }
+        Behavior on scale { NumberAnimation { duration: 100 } }
 
         Row {
           anchors.centerIn: parent
           spacing: 8
           Text {
-            text: (panel.monitor?.disabled ?? true) ? "" : ""
+            text: (!panel.monitor || panel.monitor.disabled) ? "Disabled" : "Enabled"
             anchors.verticalCenter: parent.verticalCenter
-            color: (panel.monitor?.disabled ?? true) ? panel.theme.textMuted : panel.theme.bgBase
-            font { pixelSize: 14; family: panel.font }
-          }
-          Text {
-            text: (panel.monitor?.disabled ?? true) ? "Disabled" : "Enabled"
-            anchors.verticalCenter: parent.verticalCenter
-            color: (panel.monitor?.disabled ?? true) ? panel.theme.textMuted : panel.theme.bgBase
+            color: (!panel.monitor || panel.monitor.disabled) ? panel.theme.textMuted : panel.theme.bgBase
             font { pixelSize: 12; bold: true; family: panel.font }
           }
         }
 
         MouseArea {
+          id: enableMouse
           anchors.fill: parent
+          hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             if (panel.monitor !== null) panel.enableToggled(panel.monitor.disabled);

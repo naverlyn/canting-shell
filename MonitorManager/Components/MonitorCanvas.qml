@@ -210,6 +210,7 @@ Item {
 
       onClicked: canvas.monitorSelected(index)
       onDragStarted: canvas.isDragging = true
+      onDragCanceled: canvas.isDragging = false
       onDragEnded: (idx, cx, cy) => {
         canvas.isDragging = false;
         canvas.snapAndCommit(idx, cx, cy);
@@ -247,6 +248,7 @@ Item {
 
       onClicked: idx => canvas.monitorSelected(idx)
       onDragStarted: {}
+      onDragCanceled: {}
       onDragEnded: (idx, cx, cy) => {}
     }
   }

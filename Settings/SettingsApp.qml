@@ -13,10 +13,10 @@ Scope {
     property var theme: Theme
     property string font: "Hack Nerd Font"
     
-    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About
+    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About, 12: Lock Screen
     property int currentTab: 0
-    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About"]
-    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", ""]
+    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About", "Lock Screen"]
+    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", "", "󰌾"]
 
     property var sections: [
         {
@@ -25,7 +25,8 @@ Scope {
                 { id: "wifi", name: "Wi-Fi", icon: "󰖩", pageIndex: 0 },
                 { id: "bluetooth", name: "Bluetooth", icon: "󰂯", pageIndex: 1 },
                 { id: "sound", name: "Sound", icon: "󰕾", pageIndex: 2 },
-                { id: "power", name: "Power", icon: "󰐥", pageIndex: 4 }
+                { id: "power", name: "Power", icon: "󰐥", pageIndex: 4 },
+                { id: "hyprlock", name: "Lock Screen", icon: "󰌾", pageIndex: 12 }
             ]
         },
         {
@@ -62,10 +63,10 @@ Scope {
 
     IpcHandler {
         target: "settings"
-        function toggle(): void {
+        function toggle() {
             settingsWindow.visible = !settingsWindow.visible;
         }
-        function open(tabName: string): void {
+        function open(tabName: string) {
             if (tabName !== undefined && tabName !== "") {
                 let target = String(tabName).toLowerCase().trim();
                 for (let s = 0; s < root.sections.length; s++) {
@@ -119,7 +120,6 @@ Scope {
             right: true
         }
 
-
         // Overlay backdrop
         MouseArea {
             anchors.fill: parent
@@ -134,8 +134,8 @@ Scope {
         // Floating Draggable & Resizable Window Card
         Rectangle {
             id: winCard
-            width: 880
-            height: 620
+            width: 940
+            height: 640
             x: Math.max(10, (settingsWindow.width - width) / 2)
             y: Math.max(10, (settingsWindow.height - height) / 2)
             radius: 14
@@ -149,8 +149,9 @@ Scope {
                 event.accepted = true;
             }
 
-            readonly property int minWidth: 720
-            readonly property int minHeight: 480
+            readonly property int minWidth: 780
+            readonly property int minHeight: 500
+            property int sidebarWidth: 240
 
             // Absorb clicks on background
             MouseArea { anchors.fill: parent }
@@ -186,11 +187,14 @@ Scope {
 
                 // Sidebar
                 Rectangle {
+                    id: sidebarRect
                     Layout.fillHeight: true
-                    width: 204
+                    Layout.preferredWidth: winCard.sidebarWidth
+                    width: winCard.sidebarWidth
                     color: root.theme.bgSurface
                     radius: 12
                     
+                    // Square off right corners adjacent to main content
                     Rectangle {
                         anchors.right: parent.right
                         anchors.top: parent.top
@@ -199,20 +203,57 @@ Scope {
                         color: parent.color
                     }
 
+                    // Subtle vertical border dividing sidebar and content
+                    Rectangle {
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        width: 1
+                        color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    }
+
+                    // Interactive horizontal splitter to resize sidebar
+                    MouseArea {
+                        id: sidebarSplitter
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.rightMargin: -4
+                        width: 9
+                        cursorShape: Qt.SplitHCursor
+                        z: 20
+
+                        property real startScreenX: 0
+                        property int startW: 0
+
+                        onPressed: (mouse) => {
+                            let pt = mapToItem(settingsWindow, mouse.x, 0);
+                            startScreenX = pt.x;
+                            startW = winCard.sidebarWidth;
+                        }
+                        onPositionChanged: (mouse) => {
+                            if (pressed) {
+                                let curPt = mapToItem(settingsWindow, mouse.x, 0);
+                                let delta = curPt.x - startScreenX;
+                                winCard.sidebarWidth = Math.max(190, Math.min(360, startW + delta));
+                            }
+                        }
+                    }
+
                     ColumnLayout {
                         anchors.fill: parent
-                        anchors.topMargin: 16
-                        anchors.bottomMargin: 16
+                        anchors.topMargin: 14
+                        anchors.bottomMargin: 14
                         anchors.leftMargin: 12
                         anchors.rightMargin: 12
-                        spacing: 8
+                        spacing: 6
 
                         // Sidebar Header with Drag Handle indicator
                         RowLayout {
                             Layout.fillWidth: true
                             Layout.leftMargin: 4
                             Layout.rightMargin: 4
-                            Layout.bottomMargin: 4
+                            Layout.bottomMargin: 2
 
                             Text {
                                 text: "Settings"
@@ -247,18 +288,13 @@ Scope {
                             boundsBehavior: Flickable.StopAtBounds
 
                             ScrollBar.vertical: ScrollBar {
-                                policy: ScrollBar.AsNeeded
-                                contentItem: Rectangle {
-                                    implicitWidth: 4
-                                    radius: 2
-                                    color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.2)
-                                }
+                                policy: ScrollBar.AlwaysOff
                             }
 
                             ColumnLayout {
                                 id: sectionsCol
                                 width: parent.width
-                                spacing: 4
+                                spacing: 2
 
                                 Repeater {
                                     model: root.sections
@@ -267,18 +303,18 @@ Scope {
                                         required property var modelData
                                         required property int index
                                         Layout.fillWidth: true
-                                        spacing: 2
+                                        spacing: 1
 
                                         // Section Category Header
                                         Item {
                                             Layout.fillWidth: true
-                                            height: secCol.index === 0 ? 22 : 28
+                                            height: secCol.index === 0 ? 18 : 22
 
                                             Text {
                                                 anchors.left: parent.left
                                                 anchors.leftMargin: 8
                                                 anchors.bottom: parent.bottom
-                                                anchors.bottomMargin: 4
+                                                anchors.bottomMargin: 3
                                                 text: secCol.modelData.category
                                                 font.family: root.font
                                                 font.pixelSize: 10
@@ -297,7 +333,7 @@ Scope {
                                                 required property int index
 
                                                 Layout.fillWidth: true
-                                                height: 34
+                                                height: 33
                                                 radius: 7
                                                 color: root.currentTab === itemRect.modelData.pageIndex
                                                     ? root.theme.bgSelected
@@ -307,8 +343,8 @@ Scope {
 
                                                 RowLayout {
                                                     anchors.fill: parent
-                                                    anchors.leftMargin: 10
-                                                    anchors.rightMargin: 10
+                                                    anchors.leftMargin: 12
+                                                    anchors.rightMargin: 12
                                                     spacing: 10
 
                                                     Item {
@@ -603,6 +639,23 @@ Scope {
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
                         AboutSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                    }
+
+                    // 12: Lock Screen (Hyprlock)
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 12 ? 1 : 0
+                        scale: root.currentTab === 12 ? 1 : 0.98
+                        y: root.currentTab === 12 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        HyprlockSettings { anchors.fill: parent; theme: root.theme; font: root.font }
                     }
                 }
             }

@@ -146,7 +146,9 @@ Item {
                     Layout.fillWidth: true
                     height: 8
                     radius: 4
-                    color: root.theme.bgSelected
+                    color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.14)
+                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.width: 1
 
                     // Progress Fill Bar
                     Rectangle {
@@ -154,21 +156,40 @@ Item {
                         radius: parent.radius
                         width: Math.max(0, Math.min(parent.width, parent.width * (root.brightness / 100)))
                         color: root.theme.accentPrimary
+
+                        Behavior on width {
+                            enabled: !sliderMouse.pressed
+                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    // Outer halo ring on hover/press
+                    Rectangle {
+                        anchors.centerIn: sliderBall
+                        width: sliderBall.width + (sliderMouse.pressed ? 8 : (sliderMouse.containsMouse ? 6 : 0))
+                        height: width
+                        radius: width / 2
+                        color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, sliderMouse.pressed ? 0.35 : (sliderMouse.containsMouse ? 0.2 : 0))
+                        z: 1
+
+                        Behavior on width { NumberAnimation { duration: 120 } }
+                        Behavior on color { ColorAnimation { duration: 120 } }
                     }
 
                     // Slider Ball / Knob
                     Rectangle {
                         id: sliderBall
-                        width: sliderMouse.containsMouse || sliderMouse.pressed ? 18 : 14
+                        width: sliderMouse.containsMouse || sliderMouse.pressed ? 18 : 16
                         height: width
                         radius: width / 2
-                        color: root.theme.accentPrimary
-                        border.color: root.theme.bgBase
-                        border.width: 2
+                        color: "#ffffff"
+                        border.color: root.theme.accentPrimary
+                        border.width: 3
                         anchors.verticalCenter: parent.verticalCenter
                         x: Math.max(0, Math.min(sliderTrack.width - width, (sliderTrack.width * (root.brightness / 100)) - (width / 2)))
+                        z: 2
 
-                        Behavior on width { NumberAnimation { duration: 100 } }
+                        Behavior on width { NumberAnimation { duration: 120 } }
                         Behavior on x { NumberAnimation { duration: sliderMouse.pressed ? 0 : 80; easing.type: Easing.OutCubic } }
                     }
 
