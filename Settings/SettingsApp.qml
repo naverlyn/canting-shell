@@ -62,10 +62,10 @@ Scope {
 
     IpcHandler {
         target: "settings"
-        function toggle() {
+        function toggle(): void {
             settingsWindow.visible = !settingsWindow.visible;
         }
-        function open(tabName) {
+        function open(tabName: string): void {
             if (tabName !== undefined && tabName !== "") {
                 let target = String(tabName).toLowerCase().trim();
                 for (let s = 0; s < root.sections.length; s++) {
@@ -119,10 +119,6 @@ Scope {
             right: true
         }
 
-        Keys.onEscapePressed: (event) => {
-            settingsWindow.visible = false;
-            event.accepted = true;
-        }
 
         // Overlay backdrop
         MouseArea {
