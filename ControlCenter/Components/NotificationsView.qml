@@ -59,6 +59,11 @@ Column {
     // 2. Official Notification Daemon
     NotificationServer {
         id: notifServer
+        actionsSupported:    true
+        bodySupported:       true
+        bodyMarkupSupported: true
+        imageSupported:      true
+        keepOnReload:        false
     }
 
     // 3. The Invisible Bridge: With a Timer delay to ensure properties are loaded
@@ -67,6 +72,14 @@ Column {
         delegate: Item {
             id: delegateBridge
             property var notif: modelData
+            property int lastProcessedGen: -1
+
+            Connections {
+                target: delegateBridge.notif
+                function onLastGenerationChanged() {
+                    extractTimer.restart();
+                }
+            }
 
             Timer {
                 id: extractTimer
@@ -75,8 +88,14 @@ Column {
                 onTriggered: {
                     if (!delegateBridge.notif) return;
                     let n = delegateBridge.notif;
+                    let gen = n.lastGeneration !== undefined ? n.lastGeneration : 0;
+                    if (delegateBridge.lastProcessedGen === gen && gen === 0) {
+                        // Already processed this exact generation
+                    }
+                    delegateBridge.lastProcessedGen = gen;
                     
-                    let nId = n.id !== undefined ? n.id : Math.random();
+                    let baseId = n.id !== undefined ? n.id : Math.random();
+                    let nId = gen > 0 ? (baseId + "_" + gen) : baseId;
                     let arr = root.historyModel;
                     
                     for (let i = 0; i < arr.length; i++) {
@@ -89,9 +108,10 @@ Column {
                     // Safely iterate the native DBus actions using a closure
                     for (let i = 0; i < acts.length; i++) {
                         (function(actionObj) {
-                            if (actionObj && actionObj.label) {
+                            let lbl = actionObj ? (actionObj.text || actionObj.label || "") : "";
+                            if (actionObj && lbl && actionObj.identifier !== "default") {
                                 extractedActions.push({
-                                    label: actionObj.label + "",
+                                    label: lbl + "",
                                     invokeFn: function() { try { actionObj.invoke(); } catch(e) {} },
                                     customCmd: ""
                                 });
@@ -234,7 +254,7 @@ Column {
         clip: true
         spacing: 12
         
-        model: root.notifGroups
+        model: root.visible ? root.notifGroups : []
         visible: root.historyModel.length > 0
 
         delegate: Column {

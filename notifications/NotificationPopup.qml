@@ -25,6 +25,10 @@ Scope {
         function dnd_off(): void {
             NotificationService.doNotDisturb = false;
         }
+
+        function set_position(pos: string): void {
+            NotificationService.setToastPosition(pos);
+        }
     }
 
     Variants {
@@ -38,15 +42,31 @@ Scope {
             focusable: false
             color: "transparent"
 
+            readonly property string toastPos: NotificationService.toastPosition || "top-right"
+            readonly property bool isTop: toastPos.indexOf("top") === 0
+            readonly property bool isBottom: toastPos.indexOf("bottom") === 0
+            readonly property bool isLeft: toastPos.indexOf("left") !== -1
+            readonly property bool isRight: toastPos.indexOf("right") !== -1
+            readonly property bool isCenter: toastPos.indexOf("center") !== -1
+
             WlrLayershell.layer: WlrLayer.Overlay
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             WlrLayershell.namespace: "quickshell-notifications"
 
-            exclusionMode: ExclusionMode.Ignore
+            exclusionMode: ExclusionMode.Normal
 
             anchors {
-                top: true
-                right: true
+                top: notifWindow.isTop
+                bottom: notifWindow.isBottom
+                left: notifWindow.isLeft
+                right: notifWindow.isRight
+            }
+
+            margins {
+                top: notifWindow.isTop ? NotificationService.toastMarginY : 0
+                bottom: notifWindow.isBottom ? NotificationService.toastMarginY : 0
+                left: notifWindow.isLeft ? NotificationService.toastMarginX : 0
+                right: notifWindow.isRight ? NotificationService.toastMarginX : 0
             }
 
             implicitWidth: 380
@@ -54,11 +74,9 @@ Scope {
 
             ColumnLayout {
                 id: notifColumn
-                anchors.top: parent.top
-                anchors.right: parent.right
-                anchors.topMargin: 10
-                anchors.rightMargin: 10
                 width: 360
+                x: notifWindow.isLeft ? 10 : (notifWindow.isRight ? parent.width - width - 10 : Math.round((parent.width - width) / 2))
+                y: notifWindow.isBottom ? Math.max(0, parent.height - implicitHeight - 10) : 10
                 spacing: 8
 
                 Repeater {
@@ -94,7 +112,11 @@ Scope {
                             onHoveredChanged: notifCard.modelData.hovered = hovered
                         }
 
-                        transform: Translate { id: slide; x: 30 }
+                        transform: Translate {
+                            id: slide
+                            x: notifWindow.isLeft ? -30 : (notifWindow.isRight ? 30 : 0)
+                            y: notifWindow.isCenter ? (notifWindow.isBottom ? 24 : -24) : 0
+                        }
 
                         ParallelAnimation {
                             id: entryAnim
@@ -106,7 +128,15 @@ Scope {
                             }
                             NumberAnimation {
                                 target: slide; property: "x"
-                                from: 30; to: 0
+                                from: notifWindow.isLeft ? -30 : (notifWindow.isRight ? 30 : 0)
+                                to: 0
+                                duration: 300
+                                easing.type: Easing.OutCubic
+                            }
+                            NumberAnimation {
+                                target: slide; property: "y"
+                                from: notifWindow.isCenter ? (notifWindow.isBottom ? 24 : -24) : 0
+                                to: 0
                                 duration: 300
                                 easing.type: Easing.OutCubic
                             }
@@ -364,7 +394,7 @@ Scope {
                                             to: 0
                                             duration: notifCard.modelData.expireTimeout > 0
                                                       ? notifCard.modelData.expireTimeout
-                                                      : notifCard.modelData.defaultTimeout  // no * 1000: matches the timer — Quickshell passes raw D-Bus ms
+                                                      : notifCard.modelData.defaultTimeout  // no * 1000: matches the timer - Quickshell passes raw D-Bus ms
                                         }
                                     }
                                 }

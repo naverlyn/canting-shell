@@ -81,7 +81,7 @@ Item {
     radius: 8
   }
 
-  // Dot grid background — painted once into a 24×24 tile, then GPU-tiled across the
+  // Dot grid background - painted once into a 24×24 tile, then GPU-tiled across the
   // canvas via Image.Tile.  Resizes don't re-run any JS; only theme changes repaint
   // the single tile.
   Canvas {
@@ -184,7 +184,7 @@ Item {
       dragMaxX: canvas.width  - width
       dragMaxY: canvas.height - canvas._stripH - height
 
-      // Orange border warns the user that two independent monitors are misaligned — a gap
+      // Orange border warns the user that two independent monitors are misaligned - a gap
       // or overlap that Hyprland will reject or mis-render.  Only canvas-placed monitors
       // are considered; disabled and mirroring outputs are excluded by definition.
       Rectangle {
@@ -268,7 +268,7 @@ Item {
     if (!sx && Math.abs(lx) < T)      { lx = 0;   sx = true; }
     if (!sy && Math.abs(ly) < T)      { ly = 0;   sy = true; }
 
-    // Snap to adjacent monitor edges — only against canvas-placed monitors;
+    // Snap to adjacent monitor edges - only against canvas-placed monitors;
     // mirrors share coordinates with their source so snapping against them
     // would be redundant noise.
     for (let i = 0; i < monitors.length; i++) {
@@ -315,7 +315,7 @@ Item {
         const relY = (ly + dH / 2) - (o.y + oH / 2);
 
         if (Math.abs(relX) >= Math.abs(relY)) {
-          // Horizontal resolution — snap to o's right or left edge.
+          // Horizontal resolution - snap to o's right or left edge.
           if (relX >= 0) {
             lx = o.x + oW;                              // place to the right of o
           } else {
@@ -323,7 +323,7 @@ Item {
             lx = target >= 0 ? target : o.x + oW;      // prefer left; fall back right
           }
         } else {
-          // Vertical resolution — snap to o's bottom or top edge.
+          // Vertical resolution - snap to o's bottom or top edge.
           if (relY >= 0) {
             ly = o.y + oH;                              // place below o
           } else {

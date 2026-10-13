@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
+import "../bar"
 
 Scope {
   id: root
@@ -11,34 +12,120 @@ Scope {
   property string font: "Hack Nerd Font"
   property int selectedIndex: 0
 
-  // Layout
   readonly property int cellSize: 96
   readonly property int columns: 5
-  readonly property int barHeight: 32
-  readonly property int edgeMargin: 8
+  readonly property int edgeMargin: 10
 
-  // Shares the usage history written by AppLauncher
+  property string activeBarPos: "top"
+  property real activeNormX: 0.05
+  property real activeNormY: 0.05
+  property int activeBarClearance: 0
+
   property var appUsage: ({})
   readonly property string usageCachePath: "$HOME/.cache/qs_app_usage.json"
+
+  function edgeBarClearance(edgePos) {
+    const list = BarConfig.bars || [];
+    let maxClearance = 0;
+    for (let i = 0; i < list.length; i++) {
+      const b = list[i];
+      if (!b || b.enabled === false || b.position !== edgePos) continue;
+      const h = b.barHeight !== undefined ? b.barHeight : 38;
+      const fl = b.floating !== undefined ? b.floating : false;
+      const isV = (edgePos === "left" || edgePos === "right");
+      const c = isV ? (h + 16 + (fl ? 12 : 0)) : (h + (fl ? 12 : 6));
+      if (c > maxClearance) maxClearance = c;
+    }
+    return maxClearance;
+  }
+
+  function resolveDefaultPlacement() {
+    const list = BarConfig.bars || [];
+    let chosenBar = null;
+    let chosenPanelIdx = 0;
+    let chosenTotalPanels = 1;
+
+    for (let i = 0; i < list.length; i++) {
+      const b = list[i];
+      if (!b || b.enabled === false) continue;
+      if (!chosenBar) chosenBar = b;
+      const bId = b.id ? String(b.id) : ("bar_" + (i + 1));
+      if (!BarConfig.isWidgetVisible("appGrid", bId)) continue;
+      const panels = Array.isArray(b.panels) ? b.panels : [];
+      for (let p = 0; p < panels.length; p++) {
+        if (Array.isArray(panels[p]) && panels[p].indexOf("appGrid") !== -1) {
+          chosenBar = b;
+          chosenPanelIdx = p;
+          chosenTotalPanels = panels.length;
+          break;
+        }
+      }
+    }
+
+    if (!chosenBar) {
+      activeBarPos = BarConfig.position || "top";
+      activeNormX = 0.05;
+      activeNormY = 0.05;
+      activeBarClearance = edgeBarClearance(activeBarPos);
+      return;
+    }
+
+    const pos = chosenBar.position || "top";
+    const frac = chosenTotalPanels <= 1
+      ? 0.05
+      : (chosenPanelIdx === 0
+        ? 0.05
+        : (chosenPanelIdx === chosenTotalPanels - 1 ? 0.95 : (chosenPanelIdx / (chosenTotalPanels - 1))));
+
+    activeBarPos = pos;
+    if (pos === "left" || pos === "right") {
+      activeNormX = pos === "left" ? 0.05 : 0.95;
+      activeNormY = frac;
+    } else {
+      activeNormX = frac;
+      activeNormY = pos === "top" ? 0.05 : 0.95;
+    }
+    activeBarClearance = edgeBarClearance(pos);
+  }
+
+  function openOrToggle() {
+    gridPanel.visible = !gridPanel.visible;
+    if (gridPanel.visible) {
+      searchInput.text = "";
+      root.selectedIndex = 0;
+      loadUsageProc.running = true;
+      searchInput.forceActiveFocus();
+    }
+  }
 
   IpcHandler {
     target: "appgrid"
 
-    function toggle(): void {
-      gridPanel.visible = !gridPanel.visible
-      if (gridPanel.visible) {
-        searchInput.text = ""
-        root.selectedIndex = 0
-        loadUsageProc.running = true
-        searchInput.forceActiveFocus()
+    function toggle() {
+      if (!gridPanel.visible) {
+        root.resolveDefaultPlacement();
       }
+      root.openOrToggle();
+    }
+
+    function toggleAt(barPos: string, normX: string, normY: string, clearance: string) {
+      if (!gridPanel.visible) {
+        root.activeBarPos = barPos || "top";
+        const nx = parseFloat(normX);
+        const ny = parseFloat(normY);
+        const cl = parseInt(clearance);
+        root.activeNormX = isNaN(nx) ? 0.05 : nx;
+        root.activeNormY = isNaN(ny) ? 0.05 : ny;
+        root.activeBarClearance = isNaN(cl) ? 0 : cl;
+      }
+      root.openOrToggle();
     }
   }
 
   Process {
     id: loadUsageProc
     command: ["sh", "-c", `cat "${root.usageCachePath}" 2>/dev/null || echo '{}'`]
-    running: true
+    running: false
     stdout: StdioCollector {
       onStreamFinished: {
         try {
@@ -96,6 +183,7 @@ Scope {
     id: filteredApps
     objectProp: "id"
     values: {
+      if (!gridPanel.visible) return [];
       const usage = root.appUsage;
       const all = [...DesktopEntries.applications.values];
       const q = searchInput.text.trim().toLowerCase();
@@ -154,19 +242,63 @@ Scope {
       onClicked: gridPanel.visible = false
     }
 
-    // Menu box anchored to the top-left, just below the bar
     Rectangle {
       id: box
-      x: root.edgeMargin
-      y: root.barHeight + root.edgeMargin
       width: root.columns * root.cellSize + 32
       height: 520
+
+      readonly property int topClear: Math.max(
+        root.edgeMargin,
+        (root.activeBarPos === "top"
+          ? Math.max(root.activeBarClearance, root.edgeBarClearance("top"))
+          : root.edgeBarClearance("top")) + root.edgeMargin
+      )
+      readonly property int bottomClear: Math.max(
+        root.edgeMargin,
+        (root.activeBarPos === "bottom"
+          ? Math.max(root.activeBarClearance, root.edgeBarClearance("bottom"))
+          : root.edgeBarClearance("bottom")) + root.edgeMargin
+      )
+      readonly property int leftClear: Math.max(
+        root.edgeMargin,
+        (root.activeBarPos === "left"
+          ? Math.max(root.activeBarClearance, root.edgeBarClearance("left"))
+          : root.edgeBarClearance("left")) + root.edgeMargin
+      )
+      readonly property int rightClear: Math.max(
+        root.edgeMargin,
+        (root.activeBarPos === "right"
+          ? Math.max(root.activeBarClearance, root.edgeBarClearance("right"))
+          : root.edgeBarClearance("right")) + root.edgeMargin
+      )
+
+      x: {
+        if (root.activeBarPos === "left") return leftClear;
+        if (root.activeBarPos === "right") return Math.max(leftClear, gridPanel.width - width - rightClear);
+        if (root.activeNormX > 0.62) return Math.max(leftClear, gridPanel.width - width - rightClear);
+        if (root.activeNormX >= 0.38 && root.activeNormX <= 0.62) {
+          const centered = Math.round(root.activeNormX * gridPanel.width - (width / 2));
+          return Math.max(leftClear, Math.min(gridPanel.width - width - rightClear, centered));
+        }
+        return leftClear;
+      }
+
+      y: {
+        if (root.activeBarPos === "bottom") return Math.max(topClear, gridPanel.height - height - bottomClear);
+        if (root.activeBarPos === "top") return topClear;
+        if (root.activeNormY > 0.62) return Math.max(topClear, gridPanel.height - height - bottomClear);
+        if (root.activeNormY >= 0.38 && root.activeNormY <= 0.62) {
+          const centered = Math.round(root.activeNormY * gridPanel.height - (height / 2));
+          return Math.max(topClear, Math.min(gridPanel.height - height - bottomClear, centered));
+        }
+        return topClear;
+      }
+
       radius: 16
       color: root.theme.bgBase
       border.color: root.theme.bgBorder
       border.width: 1
 
-      // Swallow clicks so they don't close the panel
       MouseArea { anchors.fill: parent }
 
       ColumnLayout {

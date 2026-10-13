@@ -11,7 +11,7 @@ Singleton {
   property var  monitors:             []
   property bool loading:              false
   property bool persistenceAvailable: false
-  property string configFormat:       "conf" // "conf" or "lua" — which hyprland.* is active
+  property string configFormat:       "conf" // "conf" or "lua" - which hyprland.* is active
 
   property var  _lastEdits:     []
   property bool _pendingVerify: false
@@ -123,7 +123,7 @@ Singleton {
     if (_pendingVerify) verifyApply();
   }
 
-  // Debounce timer — absorbs hotplug bursts (DisplayPort negotiation)
+  // Debounce timer - absorbs hotplug bursts (DisplayPort negotiation)
   Timer {
     id: refreshDebounce
     interval: 250
@@ -213,7 +213,7 @@ Singleton {
     running: false
     stdout: StdioCollector {
       onStreamFinished: {
-        // hyprctl always exits 0 — parse stdout for errors
+        // hyprctl always exits 0 - parse stdout for errors
         const lines  = text.trim().split("\n");
         const errors = lines.filter(l => l.trim() !== "" && l.trim() !== "ok");
 
@@ -238,7 +238,7 @@ Singleton {
     }
   }
 
-  // Write monitors.conf — fire and forget; log errors
+  // Write monitors.conf - fire and forget; log errors
   Process {
     id: writeProc
     running: false

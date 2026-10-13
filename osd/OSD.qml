@@ -127,7 +127,7 @@ Scope {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 12
 
-        // Volume pill — vertical
+        // Volume pill - vertical
         Rectangle {
           id: volumePill
           width: 36
@@ -197,7 +197,7 @@ Scope {
           }
         }
 
-        // Brightness pill — vertical
+        // Brightness pill - vertical
         Rectangle {
           id: brightnessPill
           width: 36

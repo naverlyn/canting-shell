@@ -47,14 +47,18 @@ PanelWindow {
         if (visible) {
             selectedIndex = 0;
             expandedSsid = "";
+            activeSsidProc.running = true;
             scanWifi();
             networkListView.forceActiveFocus();
+        } else {
+            networkList = [];
+            expandedSsid = "";
         }
     }
 
     onWifiEnabledChanged: {
         if (wifiEnabled) {
-            scanDelayTimer.restart();
+            if (root.visible) scanDelayTimer.restart();
         } else {
             root.networkList = [];
             root.expandedSsid = "";
@@ -66,7 +70,7 @@ PanelWindow {
         interval: 1000
         repeat: false
         onTriggered: {
-            if (root.wifiEnabled) {
+            if (root.visible && root.wifiEnabled) {
                 scanWifiProc.running = true;
             }
         }
@@ -118,7 +122,7 @@ PanelWindow {
     Process {
         id: activeSsidProc
         command: ["sh", "-c", "nmcli -t -f active,ssid dev wifi | grep '^yes' | cut -d':' -f2"]
-        running: true
+        running: false
         stdout: StdioCollector {
             onStreamFinished: root.currentSsid = text.trim()
         }

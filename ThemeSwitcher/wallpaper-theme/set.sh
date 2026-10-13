@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 # Generate a quickshell "wallpaper" theme from an image, using matugen or wallust.
 #
-# It only writes the palette to wallpaper-theme.json — it does NOT switch the
+# It only writes the palette to wallpaper-theme.json - it does NOT switch the
 # shell into wallpaper mode. quickshell live-reloads the file and, if you're in
 # wallpaper mode, repaints instantly.
 #

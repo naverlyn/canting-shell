@@ -27,16 +27,17 @@ Scope {
         searchInput.text = ""
         commandInput.text = ""
         selectedIndex = 0
+        loadUsageProc.running = true
         searchInput.forceActiveFocus()
       }
     }
   }
 
-  // Load saved app usage history on startup
+  // Load saved app usage history on demand
   Process {
     id: loadUsageProc
     command: ["sh", "-c", `cat "${root.usageCachePath}" 2>/dev/null || echo '{}'`]
-    running: true
+    running: false
     stdout: StdioCollector {
       onStreamFinished: {
         try {
@@ -123,6 +124,7 @@ Scope {
     id: filteredApps
     objectProp: "id"
     values: {
+      if (!launcherPanel.visible) return [];
       const usage = root.appUsage;
       const all = [...DesktopEntries.applications.values];
       const q = searchInput.text.trim().toLowerCase();

@@ -1,32 +1,97 @@
 {
   "barVisible": true,
-  "position": "top",
+  "position": "bottom",
   "barHeight": 32,
   "floating": false,
-  "barOpacity": 0.23,
+  "barOpacity": 0.41,
   "allMonitors": true,
+  "bars": [
+    {
+      "id": "bar_1",
+      "name": "Primary Bar",
+      "enabled": true,
+      "position": "bottom",
+      "barHeight": 32,
+      "floating": false,
+      "barOpacity": 0.41,
+      "allMonitors": true,
+      "panels": [
+        [
+          "appGrid",
+          "cpu",
+          "temp",
+          "memory",
+          "disk",
+          "network"
+        ],
+        [
+          "windowTitle"
+        ],
+        [
+          "clock",
+          "workspaces",
+          "weather",
+          "controlCenter"
+        ]
+      ]
+    }
+  ],
+  "panels": [
+    [
+      "appGrid",
+      "cpu",
+      "temp",
+      "memory",
+      "disk",
+      "network"
+    ],
+    [
+      "windowTitle"
+    ],
+    [
+      "clock",
+      "workspaces",
+      "weather",
+      "controlCenter"
+    ]
+  ],
   "leftWidgets": [
     "appGrid",
+    "cpu",
     "temp",
     "memory",
-    "cpu",
-    "disk"
+    "disk",
+    "network"
   ],
   "centerWidgets": [
     "windowTitle"
   ],
   "rightWidgets": [
-    "tray",
     "clock",
-    "weather",
     "workspaces",
+    "weather",
     "controlCenter"
+  ],
+  "removedWidgets": [
+    "media",
+    "@hidden:bar_1791822602885:clock",
+    "cpu",
+    "workspaces",
+    "clock",
+    "volume",
+    "battery",
+    "idleInhibitor",
+    "tray"
   ],
   "showAppGrid": true,
   "showCpu": true,
   "showMemory": true,
   "showTemp": true,
   "showDisk": true,
+  "showNetwork": true,
+  "showNetDown": true,
+  "showNetUp": true,
+  "netCompact": false,
   "showWindowTitle": true,
   "showWorkspaces": true,
   "showWeather": true,
@@ -34,5 +99,8 @@
   "showSeconds": true,
   "showDate": true,
   "showTray": true,
-  "showControlCenter": true
+  "showControlCenter": true,
+  "showBattery": true,
+  "showVolume": true,
+  "showMedia": true
 }

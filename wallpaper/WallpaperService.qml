@@ -198,7 +198,9 @@ Singleton {
     const nextStr = dirs.join("|");
     if (currentStr !== nextStr) {
       root.directories = dirs;
-      rescan();
+      if (root.wallpapers.length > 0) {
+        rescan();
+      }
     }
   }
 

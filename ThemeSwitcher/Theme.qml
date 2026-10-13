@@ -12,7 +12,7 @@ Singleton {
     property bool wallpaperFeatureEnabled: true
     property bool wallpaperMode: false
     property var wallpaperTheme: ({})
-    property string configFormat: "conf" // "conf" or "lua" — which hyprland.* is active
+    property string configFormat: "conf" // "conf" or "lua" - which hyprland.* is active
     property bool configFormatReady: false
     property bool themesReady: false
 
@@ -63,7 +63,7 @@ Singleton {
         colorSchemeProc.running = true;
     }
 
-    // Reactive color properties — same API as before
+    // Reactive color properties - same API as before
     readonly property color bgBase:       current.bgBase
     readonly property color bgSurface:    current.bgSurface
     readonly property color bgHover:      current.bgHover
@@ -250,7 +250,7 @@ Singleton {
     Process { id: colorSchemeProc; running: false }
     Process { id: hyprlandProc; running: false }
 
-    // Which hyprland.* is active — hyprland.lua wins exclusively if present, per
+    // Which hyprland.* is active - hyprland.lua wins exclusively if present, per
     // Hyprland's own startup precedence (see monitor-manager/MonitorService.qml for the twin check).
     Process {
         id: configFormatCheck
@@ -278,7 +278,7 @@ Singleton {
                     if (root.wallpaperTheme && root.wallpaperTheme.bgBase)
                         root.applyTheme(root.wallpaperTheme);
                     else
-                        // wallpaper-theme.json missing/empty yet — show a visible
+                        // wallpaper-theme.json missing/empty yet - show a visible
                         // default until a wallpaper hook regenerates it (the FileView
                         // re-applies once wallpaperTheme populates).
                         root.applyTheme(root.themes[0]);
@@ -290,7 +290,7 @@ Singleton {
                     root.currentIndex = idx;
                     root.applyTheme(root.themes[idx]);
                 } else if (raw === "wallpaper") {
-                    // Persisted wallpaper choice but the feature is disabled —
+                    // Persisted wallpaper choice but the feature is disabled -
                     // fall back to the curated default.
                     root.wallpaperMode = false;
                     root.applyTheme(root.themes[root.currentIndex]);
@@ -306,7 +306,7 @@ Singleton {
         path: Quickshell.env("HOME") + "/.config/quickshell/ThemeSwitcher/wallpaper-theme.json"
         watchChanges: true
 
-        // True only for live, on-disk rewrites (set.sh executed) — not the initial
+        // True only for live, on-disk rewrites (set.sh executed) - not the initial
         // load at startup. A fresh palette means a new wallpaper was set, so we
         // switch the switcher into wallpaper mode rather than just repainting.
         property bool liveChange: false

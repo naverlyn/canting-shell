@@ -21,6 +21,14 @@ Scope {
   property var  _openSnapshot:   []
   property bool _isInitialLoad:  false
 
+  onIsOpenChanged: {
+    if (!isOpen) {
+      editState = [];
+      _openSnapshot = [];
+      selectedIndex = -1;
+    }
+  }
+
   function openEditor() {
     isOpen          = true;
     selectedIndex   = -1;
@@ -80,12 +88,12 @@ Scope {
       return;
     }
     if (root.hasOverlap) {
-      applyError = "Monitors are overlapping — drag them apart before applying.";
+      applyError = "Monitors are overlapping - drag them apart before applying.";
       return;
     }
     applyError = "";
     isApplying = true;
-    // persistToFile is called in onApplyDone success path — not here,
+    // persistToFile is called in onApplyDone success path - not here,
     // so we never write an invalid config to disk
     MonitorService.apply(editState);
   }
@@ -110,7 +118,7 @@ Scope {
     return false;
   }
 
-  // editState mutation helpers — all guarded against out-of-bounds selectedIndex
+  // editState mutation helpers - all guarded against out-of-bounds selectedIndex
   function onModeSelected(mode) {
     if (selectedIndex < 0 || selectedIndex >= editState.length) return;
     const parsed = MonitorUtils.parseMode(mode);
@@ -182,7 +190,7 @@ Scope {
       if (hasErrors) {
         root.applyError = errorText;
       } else {
-        // Only persist on confirmed success — never write an invalid config
+        // Only persist on confirmed success - never write an invalid config
         MonitorService.persistToFile(root.editState);
         root.initEditState();
         root.isOpen = false;
@@ -218,7 +226,7 @@ Scope {
 
     anchors { top: true; bottom: true; left: true; right: true }
 
-    // Poll for external hyprctl keyword changes — declared here so canvas id is in scope
+    // Poll for external hyprctl keyword changes - declared here so canvas id is in scope
     Timer {
       id: externalChangePollTimer
       interval: 3000
@@ -230,7 +238,7 @@ Scope {
       onTriggered: MonitorService.refresh()
     }
 
-    // Dark overlay backdrop — closes pickers; click outside card cancels
+    // Dark overlay backdrop - closes pickers; click outside card cancels
     MouseArea {
       anchors.fill: parent
       onClicked: {
@@ -360,7 +368,7 @@ Scope {
 
             Text {
               Layout.fillWidth: true
-              text: "Persistence disabled — add 'source = ~/.config/hypr/monitors.conf' to hyprland.conf."
+              text: "Persistence disabled - add 'source = ~/.config/hypr/monitors.conf' to hyprland.conf."
               color: root.theme.accentOrange
               font { pixelSize: 11; family: root.font }
               elide: Text.ElideRight

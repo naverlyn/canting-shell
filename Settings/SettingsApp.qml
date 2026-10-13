@@ -13,7 +13,7 @@ Scope {
     property var theme: Theme
     property string font: "Hack Nerd Font"
     
-    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About, 12: Lock Screen
+    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings (3 sub-tabs), 11: About, 12: Lock Screen
     property int currentTab: 0
     property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About", "Lock Screen"]
     property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", "", "󰌾"]
@@ -134,8 +134,8 @@ Scope {
         // Floating Draggable & Resizable Window Card
         Rectangle {
             id: winCard
-            width: 940
-            height: 640
+            width: 1180
+            height: 760
             x: Math.max(10, (settingsWindow.width - width) / 2)
             y: Math.max(10, (settingsWindow.height - height) / 2)
             radius: 14
@@ -149,8 +149,8 @@ Scope {
                 event.accepted = true;
             }
 
-            readonly property int minWidth: 780
-            readonly property int minHeight: 500
+            readonly property int minWidth: 880
+            readonly property int minHeight: 560
             property int sidebarWidth: 240
 
             // Absorb clicks on background
@@ -297,7 +297,7 @@ Scope {
                                 spacing: 2
 
                                 Repeater {
-                                    model: root.sections
+                                    model: settingsWindow.visible ? root.sections : []
                                     delegate: ColumnLayout {
                                         id: secCol
                                         required property var modelData
@@ -451,7 +451,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        WifiSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 0 || parent.opacity > 0)
+                            sourceComponent: WifiSettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 1: Bluetooth
@@ -468,7 +472,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        BluetoothSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 1 || parent.opacity > 0)
+                            sourceComponent: BluetoothSettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 2: Sound
@@ -485,7 +493,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        SoundSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 2 || parent.opacity > 0)
+                            sourceComponent: SoundSettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 3: Notifications
@@ -502,7 +514,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        NotificationSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 3 || parent.opacity > 0)
+                            sourceComponent: NotificationSettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 4: Power
@@ -519,7 +535,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        PowerSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 4 || parent.opacity > 0)
+                            sourceComponent: PowerSettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 5: Mouse & Touchpad
@@ -536,7 +556,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        MouseSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 5 || parent.opacity > 0)
+                            sourceComponent: MouseSettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 6: Keyboard
@@ -553,7 +577,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        KeyboardSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 6 || parent.opacity > 0)
+                            sourceComponent: KeyboardSettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 7: Default Applications
@@ -570,7 +598,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        DefaultAppsSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 7 || parent.opacity > 0)
+                            sourceComponent: DefaultAppsSettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 8: Display
@@ -587,7 +619,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        DisplaySettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 8 || parent.opacity > 0)
+                            sourceComponent: DisplaySettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 9: Appearance
@@ -604,7 +640,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        AppearanceSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 9 || parent.opacity > 0)
+                            sourceComponent: AppearanceSettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 10: Bar Settings
@@ -621,7 +661,15 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        BarSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            id: barSettingsPageLoader
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 10 || parent.opacity > 0)
+                            sourceComponent: BarSettings {
+                                theme: root.theme
+                                font: root.font
+                            }
+                        }
                     }
 
                     // 11: About
@@ -638,7 +686,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        AboutSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 11 || parent.opacity > 0)
+                            sourceComponent: AboutSettings { theme: root.theme; font: root.font }
+                        }
                     }
 
                     // 12: Lock Screen (Hyprlock)
@@ -655,7 +707,11 @@ Scope {
                         Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                         Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-                        HyprlockSettings { anchors.fill: parent; theme: root.theme; font: root.font }
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 12 || parent.opacity > 0)
+                            sourceComponent: HyprlockSettings { theme: root.theme; font: root.font }
+                        }
                     }
                 }
             }

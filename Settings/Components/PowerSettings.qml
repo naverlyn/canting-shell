@@ -16,6 +16,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import "../../bar"
 import ".."
 
 Item {
@@ -24,7 +25,7 @@ Item {
     property string font
 
     /* Wayland idle inhibitor state */
-    property bool keepAwake: false
+    readonly property bool keepAwake: SystemInfo.idleInhibited
 
     /* Power action processes */
     Process {
@@ -167,10 +168,7 @@ Item {
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            root.keepAwake = !root.keepAwake;
-                                            toggleIdleProc.running = true;
-                                        }
+                                        onClicked: SystemInfo.toggleIdleInhibitor()
                                     }
                                 }
                             }

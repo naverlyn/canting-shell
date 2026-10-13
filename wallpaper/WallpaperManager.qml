@@ -41,6 +41,7 @@ Scope {
   }
 
   property var filteredWallpapers: {
+    if (!wallpaperPanel.visible) return [];
     const q = searchText.toLowerCase();
     if (q === "") return WallpaperService.wallpapers;
     return WallpaperService.wallpapers.filter(p => {
@@ -595,7 +596,7 @@ Scope {
               id: dirListView
               anchors.fill: parent
               anchors.margins: 6
-              model: WallpaperService.browseEntries
+              model: wallpaperPanel.visible && root.browsingFolders ? WallpaperService.browseEntries : []
               clip: true
               boundsBehavior: Flickable.StopAtBounds
 
@@ -876,7 +877,7 @@ Scope {
             cellWidth: Math.floor(width / 4)
             cellHeight: cellWidth * 0.6 + 8
             clip: true
-            cacheBuffer: 160
+            cacheBuffer: 0
             boundsBehavior: Flickable.StopAtBounds
             model: root.filteredWallpapers
 

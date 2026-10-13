@@ -12,20 +12,84 @@ PanelWindow {
     property var theme: DefaultTheme {}
     property string font: "Hack Nerd Font"
     property var anchorTarget
+    property string barPosition: BarConfig.position
+    property int barThickness: BarConfig.barHeight
+    property bool barFloating: BarConfig.floating
+    property int barWindowWidth: 0
+    property int barWindowHeight: 0
 
     property bool viewNotifications: false
 
-    // Layer-shell panel in the top-right corner, below the bar.
+    property real anchorCenterX: 0
+    property real anchorCenterY: 0
+    property real targetWinWidth: 1920
+    property real targetWinHeight: 1080
+
+    function updateAnchorMetrics() {
+        if (!anchorTarget || !anchorTarget.QsWindow || !anchorTarget.QsWindow.window) return;
+        const win = anchorTarget.QsWindow.window;
+        targetWinWidth = win.width > 0 ? win.width : (screen ? screen.width : 1920);
+        targetWinHeight = win.height > 0 ? win.height : (screen ? screen.height : 1080);
+        const pt = anchorTarget.mapToItem(null, anchorTarget.width / 2, anchorTarget.height / 2);
+        anchorCenterX = pt.x;
+        anchorCenterY = pt.y;
+    }
+
+    function edgeBarClearance(edgePos) {
+        const list = BarConfig.bars || [];
+        let maxClearance = 0;
+        for (let i = 0; i < list.length; i++) {
+            const b = list[i];
+            if (!b || b.enabled === false || b.position !== edgePos) continue;
+            const h = b.barHeight !== undefined ? b.barHeight : 38;
+            const fl = b.floating !== undefined ? b.floating : false;
+            const isV = (edgePos === "left" || edgePos === "right");
+            const c = isV ? (h + 16 + (fl ? 12 : 0)) : (h + (fl ? 12 : 6));
+            if (c > maxClearance) maxClearance = c;
+        }
+        return maxClearance;
+    }
+
+    readonly property bool isVertBar: barPosition === "left" || barPosition === "right"
+    readonly property bool isHorizLeftPanel: !isVertBar && (anchorCenterX > 0 && anchorCenterX < targetWinWidth * 0.38)
+    readonly property bool isHorizCenterPanel: !isVertBar && (anchorCenterX >= targetWinWidth * 0.38 && anchorCenterX <= targetWinWidth * 0.62)
+    readonly property bool isVertBottomPanel: isVertBar && (anchorCenterY > targetWinHeight * 0.62)
+    readonly property bool isVertCenterPanel: isVertBar && (anchorCenterY >= targetWinHeight * 0.38 && anchorCenterY <= targetWinHeight * 0.62)
+
+    readonly property int ownHorizClearance: Math.max(barWindowHeight, barThickness + (barFloating ? 12 : 6)) + 6
+    readonly property int ownVertClearance: Math.max(barWindowWidth, barThickness + 16 + (barFloating ? 12 : 0)) + 8
+
     screen: (anchorTarget && anchorTarget.QsWindow.window) ? anchorTarget.QsWindow.window.screen : null
     anchors {
-        top: BarConfig.position === "top"
-        bottom: BarConfig.position === "bottom"
-        right: true
+        top: controlCenter.barPosition !== "bottom"
+        bottom: controlCenter.barPosition === "bottom"
+        left: controlCenter.barPosition === "left" || controlCenter.isHorizLeftPanel || controlCenter.isHorizCenterPanel
+        right: controlCenter.barPosition === "right" || (!controlCenter.isVertBar && !controlCenter.isHorizLeftPanel && !controlCenter.isHorizCenterPanel)
     }
     margins {
-        top: BarConfig.position === "top" ? (BarConfig.barHeight + (BarConfig.floating ? 12 : 6)) : 0
-        bottom: BarConfig.position === "bottom" ? (BarConfig.barHeight + (BarConfig.floating ? 12 : 6)) : 0
-        right: 10
+        top: controlCenter.barPosition === "top"
+            ? controlCenter.ownHorizClearance
+            : Math.max(10, controlCenter.edgeBarClearance("top") + 8)
+        bottom: controlCenter.barPosition === "bottom"
+            ? controlCenter.ownHorizClearance
+            : Math.max(10, controlCenter.edgeBarClearance("bottom") + 8)
+        left: {
+            if (controlCenter.barPosition === "left") return controlCenter.ownVertClearance;
+            if (controlCenter.isHorizCenterPanel) {
+                return Math.max(10, Math.round(controlCenter.anchorCenterX - (controlCenter.implicitWidth / 2)));
+            }
+            if (controlCenter.isHorizLeftPanel) {
+                return Math.max(10, controlCenter.edgeBarClearance("left") + 10);
+            }
+            return 0;
+        }
+        right: {
+            if (controlCenter.barPosition === "right") return controlCenter.ownVertClearance;
+            if (!controlCenter.isVertBar && !controlCenter.isHorizLeftPanel && !controlCenter.isHorizCenterPanel) {
+                return Math.max(10, controlCenter.edgeBarClearance("right") + 10);
+            }
+            return 0;
+        }
     }
     exclusionMode: ExclusionMode.Ignore
     focusable: true
@@ -33,12 +97,10 @@ PanelWindow {
 
     visible: false
     implicitWidth: 320
-    implicitHeight: (screen ? screen.height : 1080) - 48
+    implicitHeight: (screen ? screen.height : 1080) - margins.top - margins.bottom
     mask: Region { item: ccMainRect }
     color: "transparent"
 
-    // Grab keyboard/pointer: Esc and clicks outside close it. The bar window is included
-    // so clicking the bar's control center button still works as a toggle.
     HyprlandFocusGrab {
         windows: controlCenter.anchorTarget
             ? [controlCenter, controlCenter.anchorTarget.QsWindow.window]
@@ -47,7 +109,6 @@ PanelWindow {
         onCleared: controlCenter.visible = false
     }
 
-    // Esc handled at app level: whichever of our windows holds focus will trigger it
     Shortcut {
         sequence: "Escape"
         context: Qt.ApplicationShortcut
@@ -57,27 +118,36 @@ PanelWindow {
 
     onVisibleChanged: {
         if (visible) {
+            updateAnchorMetrics();
             brightnessSlider.refresh();
             quickSettings.refresh();
             ccMainRect.forceActiveFocus();
         }
     }
 
-    // Control Center Root Card
+    Component.onCompleted: updateAnchorMetrics()
+
     Rectangle {
         id: ccMainRect
         anchors {
-            top: BarConfig.position === "top" ? parent.top : undefined
-            bottom: BarConfig.position === "bottom" ? parent.bottom : undefined
+            top: (!controlCenter.isVertBar && controlCenter.barPosition !== "bottom") || (controlCenter.isVertBar && !controlCenter.isVertBottomPanel && !controlCenter.isVertCenterPanel)
+                ? parent.top
+                : undefined
+            bottom: (controlCenter.barPosition === "bottom") || (controlCenter.isVertBar && controlCenter.isVertBottomPanel)
+                ? parent.bottom
+                : undefined
             left: parent.left
             right: parent.right
         }
+        y: (controlCenter.isVertBar && controlCenter.isVertCenterPanel)
+            ? Math.max(0, Math.min(parent.height - height, Math.round(controlCenter.anchorCenterY - controlCenter.margins.top - (height / 2))))
+            : 0
         height: contentColumn.implicitHeight + 24
         radius: 12
         color: controlCenter.theme.bgSurface
         border.color: controlCenter.theme.bgBorder
         border.width: 1
-        
+
         focus: true
         Keys.onEscapePressed: controlCenter.visible = false
 

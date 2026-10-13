@@ -42,6 +42,7 @@ PanelWindow {
     property string searchText: ""
 
     property var filteredWallpapers: {
+        if (!root.visible) return [];
         const list = WallpaperService.wallpapers || [];
         const q = searchText.trim().toLowerCase();
         if (q === "") return list;
@@ -304,7 +305,7 @@ PanelWindow {
                                 source: "file://" + modelData
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
-                                cache: true
+                                cache: false
                                 sourceSize.width: 240
                                 sourceSize.height: 150
                             }

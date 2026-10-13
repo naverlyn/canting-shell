@@ -164,7 +164,7 @@ Item {
                                 color: root.theme.accentPrimary
                                 text: root.theme.wallpaperMode
                                       ? "Wallpaper Palette"
-                                      : ((root.theme.currentFamily || "") + " — " + (root.theme.currentName || ""))
+                                      : ((root.theme.currentFamily || "") + " - " + (root.theme.currentName || ""))
                             }
                         }
                     }

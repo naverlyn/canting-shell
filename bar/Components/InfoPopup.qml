@@ -18,6 +18,7 @@ PopupWindow {
   property string icon: ""
   property color accent: "#ffffff"
   property string script: ""
+  property string barPosition: BarConfig.position
 
   // Parsed rows: [{ header: bool, cells: [string] }]
   property var rows: []
@@ -43,15 +44,26 @@ PopupWindow {
   // Stay mapped until the fade-out finishes
   visible: hovered || box.opacity > 0
   color: "transparent"
-  implicitWidth: box.implicitWidth
+  implicitWidth: box.implicitWidth + 8
   implicitHeight: box.implicitHeight + 8
 
   anchor.window: target.QsWindow.window
-  anchor.edges: BarConfig.position === "bottom" ? Edges.Top : Edges.Bottom
-  anchor.gravity: BarConfig.position === "bottom" ? Edges.Top : Edges.Bottom
+  anchor.edges: {
+    if (popup.barPosition === "bottom") return Edges.Top;
+    if (popup.barPosition === "left") return Edges.Right;
+    if (popup.barPosition === "right") return Edges.Left;
+    return Edges.Bottom;
+  }
+  anchor.gravity: {
+    if (popup.barPosition === "bottom") return Edges.Top;
+    if (popup.barPosition === "left") return Edges.Right;
+    if (popup.barPosition === "right") return Edges.Left;
+    return Edges.Bottom;
+  }
   anchor.adjustment: PopupAdjustment.Slide | PopupAdjustment.Flip
   anchor.onAnchoring: {
     const win = target.QsWindow.window;
+    if (!win) return;
     anchor.rect = win.contentItem.mapFromItem(target, 0, 0, target.width, target.height);
   }
 
@@ -81,11 +93,18 @@ PopupWindow {
   Rectangle {
     id: box
     opacity: popup.hovered ? 1 : 0
-    y: popup.hovered ? (BarConfig.position === "bottom" ? -8 : 8) : 0
-    transformOrigin: BarConfig.position === "bottom" ? Item.Bottom : Item.Top
+    x: popup.hovered ? (popup.barPosition === "left" ? 8 : (popup.barPosition === "right" ? -8 : 0)) : 0
+    y: popup.hovered ? (popup.barPosition === "bottom" ? -8 : (popup.barPosition === "top" ? 8 : 0)) : 0
+    transformOrigin: {
+      if (popup.barPosition === "bottom") return Item.Bottom;
+      if (popup.barPosition === "left") return Item.Left;
+      if (popup.barPosition === "right") return Item.Right;
+      return Item.Top;
+    }
     scale: popup.hovered ? 1 : 0.96
 
     Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+    Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
     Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
     Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 

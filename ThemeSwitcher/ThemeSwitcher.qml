@@ -230,7 +230,7 @@ Scope {
                         ? root.filteredThemes.length + " of " + root.theme.count + " themes"
                         : root.theme.wallpaperMode
                             ? "Colors generated from current wallpaper"
-                            : root.theme.count + " themes — " + root.theme.currentFamily + " " + root.theme.currentName
+                            : root.theme.count + " themes - " + root.theme.currentFamily + " " + root.theme.currentName
                     color: root.theme.textMuted
                     font.pixelSize: 11
                     font.family: root.font
@@ -480,9 +480,10 @@ Scope {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
+                                const targetIndex = delegateRoot.modelData.originalIndex;
                                 root.theme.previewIndex = -1;
+                                root.theme.setTheme(targetIndex);
                                 themePanel.visible = false;
-                                root.theme.setTheme(delegateRoot.modelData.originalIndex);
                             }
                             onEntered: root.selectedIndex = delegateRoot.index
                         }
@@ -501,7 +502,7 @@ Scope {
                     }
                 }
 
-                // Wallpaper palette display — replaces the list when in wallpaper mode
+                // Wallpaper palette display - replaces the list when in wallpaper mode
                 Flickable {
                     id: paletteView
                     Layout.fillWidth: true

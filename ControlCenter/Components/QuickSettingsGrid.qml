@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
+import "../../bar"
 import ".."
 
 GridLayout {
@@ -39,7 +40,7 @@ GridLayout {
     Process {
         id: wifiStatusProc
         command: ["nmcli", "radio", "wifi"]
-        running: true
+        running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 root.wifiEnabled = (text.trim() === "enabled");
@@ -50,7 +51,7 @@ GridLayout {
     Process {
         id: activeSsidProc
         command: ["sh", "-c", "nmcli -t -f active,ssid dev wifi | grep '^yes' | cut -d':' -f2"]
-        running: true
+        running: false
         stdout: StdioCollector {
             onStreamFinished: root.currentSsid = text.trim()
         }
@@ -68,7 +69,7 @@ GridLayout {
             "sh", "-c",
             "if [ -z \"$(ls -A /sys/class/bluetooth 2>/dev/null)\" ]; then echo 'none'; elif bluetoothctl show 2>/dev/null | grep -q 'Powered: yes'; then echo 'on'; else echo 'off'; fi"
         ]
-        running: true
+        running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 const res = text.trim();
@@ -92,7 +93,7 @@ GridLayout {
     Process {
         id: dndStatusProc
         command: ["swaync-client", "-D"]
-        running: true
+        running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 root.dndEnabled = (text.trim() === "true");
@@ -103,7 +104,7 @@ GridLayout {
     Process {
         id: airplaneStatusProc
         command: ["sh", "-c", "rfkill list wifi | grep -o 'Soft blocked: yes'"]
-        running: true
+        running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 const blocked = text.trim() !== "";
@@ -325,6 +326,43 @@ GridLayout {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: root.togglednd()
+        }
+    }
+
+    // Idle Inhibitor (Caffeine / Keep Awake)
+    Rectangle {
+        Layout.columnSpan: 2
+        Layout.fillWidth: true
+        height: 40
+        radius: 8
+        color: SystemInfo.idleInhibited
+            ? root.theme.accentPrimary
+            : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06)
+        border.color: SystemInfo.idleInhibited ? "transparent" : root.theme.bgBorder
+        border.width: 1
+        Behavior on color { ColorAnimation { duration: 150 } }
+
+        RowLayout {
+            anchors.centerIn: parent
+            spacing: 8
+            Text {
+                text: SystemInfo.idleInhibited ? "" : ""
+                font.family: root.font
+                font.pixelSize: 16
+                color: SystemInfo.idleInhibited ? root.theme.bgBase : root.theme.textPrimary
+            }
+            Text {
+                text: SystemInfo.idleInhibited ? "Caffeine: On" : "Caffeine"
+                font.family: root.font
+                font.pixelSize: 12
+                color: SystemInfo.idleInhibited ? root.theme.bgBase : root.theme.textPrimary
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: SystemInfo.toggleIdleInhibitor()
         }
     }
 }

@@ -6,16 +6,16 @@ import ".."
 Item {
   id: panel
 
-  // Not required — intentionally null when no monitor is selected
+  // Not required - intentionally null when no monitor is selected
   property var monitor:     null
   property var allMonitors: []
   required property var theme
   required property string font
 
   signal modeSelected(string mode)
-  signal scaleSelected(real scale)      // not scaleChanged — conflicts with Item.scale built-in
+  signal scaleSelected(real scale)      // not scaleChanged - conflicts with Item.scale built-in
   signal transformChanged(int transform)
-  signal enableToggled(bool enabled)    // not enabledChanged — conflicts with Item.enabled built-in
+  signal enableToggled(bool enabled)    // not enabledChanged - conflicts with Item.enabled built-in
   signal mirrorChanged(string mirrorOf)
 
   property bool modePickerOpen:   false

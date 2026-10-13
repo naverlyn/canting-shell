@@ -22,7 +22,7 @@ Rectangle {
     Process {
         id: brightnessStatusProc
         command: ["sh", "-c", "brightnessctl -m | head -n 1 | awk -F, '{print $5}' | tr -d '%'"]
-        running: true
+        running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 let val = parseInt(text.trim());

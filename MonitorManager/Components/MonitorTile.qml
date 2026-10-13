@@ -112,7 +112,7 @@ Item {
       }
     }
 
-    // Rotation badge — bottom-right
+    // Rotation badge - bottom-right
     Text {
       anchors { bottom: parent.bottom; right: parent.right; margins: 6 }
       text: (["", "90°", "180°", "270°", "", "90°", "180°", "270°"])[root.monitor.transform] ?? ""

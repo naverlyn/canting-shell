@@ -22,7 +22,7 @@ QtObject {
 
     property bool hovered: false
 
-    readonly property int defaultTimeout: 5000  // ms — fallback auto-dismiss when app sends -1/0
+    readonly property int defaultTimeout: 5000  // ms - fallback auto-dismiss when app sends -1/0
 
     function _checkIsWhatsApp(n) {
         var sBody = ((n && n.body) || notificationData.body || "").toLowerCase();
@@ -102,6 +102,20 @@ QtObject {
         function onActionsChanged(): void {
             if (!notificationData.notification) return;
             notificationData.actions = notificationData._parseActions(notificationData.notification);
+        }
+        function onLastGenerationChanged(): void {
+            if (!notificationData.notification || notificationData.closed) return;
+            notificationData.summary = notificationData.notification.summary || "";
+            notificationData.body = notificationData.notification.body || "";
+            notificationData.appIcon = notificationData.notification.appIcon || "";
+            notificationData.appName = notificationData.notification.appName || "";
+            notificationData.image = notificationData.notification.image || "";
+            notificationData.urgency = notificationData.notification.urgency;
+            const rawTimeout = notificationData.notification.expireTimeout;
+            notificationData.expireTimeout = rawTimeout > 0 ? rawTimeout : notificationData.defaultTimeout;
+            notificationData.actions = notificationData._parseActions(notificationData.notification);
+            notificationData._timer.restart();
+            NotificationService._bump(notificationData);
         }
     }
 
@@ -220,6 +234,10 @@ QtObject {
                     break;
                 }
             }
+        }
+
+        if (notification && (!invoked || notification.resident)) {
+            try { notification.dismiss(); } catch(e) {}
         }
 
         if (identifier === "reply" || identifier === "default") {
