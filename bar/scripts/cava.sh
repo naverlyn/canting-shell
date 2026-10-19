@@ -6,13 +6,41 @@ FRAMERATE="${2:-30}"
 MAX_VAL="${3:-100}"
 CHANNELS="${4:-mono}"
 
-METHOD="pipewire"
-if [ ! -e "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/pipewire-0" ]; then
-    METHOD="pulse"
+if ! command -v cava >/dev/null 2>&1; then
+    echo "cava: command not found. Please install cava." >&2
+    exit 1
+fi
+
+# Detect supported input methods compiled into the cava binary (portable across Arch, Fedora, etc.)
+SUPPORTED_METHODS=$(printf "[input]\nmethod = probe\n" | cava -p /dev/stdin 2>&1)
+RUN_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+METHOD=""
+
+# 1. Native PipeWire (e.g. Arch Linux with cava pipewire build)
+if [ -e "${RUN_DIR}/pipewire-0" ] && echo "$SUPPORTED_METHODS" | grep -qw "pipewire"; then
+    METHOD="pipewire"
+# 2. PulseAudio / PipeWire-Pulse (e.g. Fedora with pipewire-pulse, or standalone PulseAudio)
+elif [ -e "${RUN_DIR}/pulse/native" ] || [ -e "${RUN_DIR}/pipewire-0" ] || command -v pactl >/dev/null 2>&1; then
+    if echo "$SUPPORTED_METHODS" | grep -qw "pulse"; then
+        METHOD="pulse"
+    fi
+fi
+
+# 3. Fallbacks
+if [ -z "$METHOD" ]; then
+    if echo "$SUPPORTED_METHODS" | grep -qw "pulse"; then
+        METHOD="pulse"
+    elif echo "$SUPPORTED_METHODS" | grep -qw "alsa"; then
+        METHOD="alsa"
+    elif echo "$SUPPORTED_METHODS" | grep -qw "pipewire"; then
+        METHOD="pipewire"
+    else
+        METHOD="pulse"
+    fi
 fi
 
 PID=$$
-CFG_FILE="/tmp/quickshell_cava_${UID}_${PID}.conf"
+CFG_FILE="${RUN_DIR:-/tmp}/quickshell_cava_${UID:-1000}_${PID}.conf"
 
 cleanup() {
     rm -f "$CFG_FILE"

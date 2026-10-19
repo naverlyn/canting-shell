@@ -19,6 +19,15 @@ Singleton {
   // Active check: only run cava when it is enabled and placed in at least one bar
   readonly property bool shouldRun: Boolean(BarConfig.showCava) && BarConfig.isWidgetInAnyBar("cava")
 
+  onShouldRunChanged: {
+    if (root.shouldRun) {
+      root.restart();
+    } else {
+      cavaProc.running = false;
+      root.hasAudio = false;
+    }
+  }
+
   Process {
     id: cavaProc
     command: [
@@ -28,7 +37,14 @@ Singleton {
       "100",
       BarConfig.cavaStereo ? "stereo" : "mono"
     ]
-    running: root.shouldRun
+    running: false
+
+    onExited: (exitCode, exitStatus) => {
+      root.hasAudio = false;
+      if (root.shouldRun) {
+        restartTimer.restart();
+      }
+    }
 
     stdout: SplitParser {
       splitMarker: "\n"
@@ -66,23 +82,30 @@ Singleton {
     function onCavaFramerateChanged() { root.restart(); }
     function onCavaStereoChanged() { root.restart(); }
     function onShowCavaChanged() { root.restart(); }
+    function onBarsChanged() { root.restart(); }
   }
 
   function restart() {
-    if (cavaProc.running) {
-      cavaProc.running = false;
-      restartTimer.start();
+    cavaProc.running = false;
+    if (root.shouldRun) {
+      restartTimer.restart();
     }
   }
 
   Timer {
     id: restartTimer
-    interval: 160
+    interval: 200
     repeat: false
     onTriggered: {
       if (root.shouldRun) {
         cavaProc.running = true;
       }
+    }
+  }
+
+  Component.onCompleted: {
+    if (root.shouldRun) {
+      restartTimer.start();
     }
   }
 }
