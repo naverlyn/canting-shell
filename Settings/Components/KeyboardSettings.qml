@@ -32,6 +32,7 @@ Item {
     property string activeLayout: "us"
     property bool numlockByDefault: true
 
+    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_keybind.sh").toString().replace(/^file:\/\//, "")
 
     /* Keybindings State */
     property var rawBinds: []
@@ -42,6 +43,7 @@ Item {
     property int editingUid: -1
     property int confirmingUnbindUid: -1
     property var editingItem: null
+    property string editName: ""
     property string editDispatcher: "exec"
     property string editCustomDisp: ""
     property string editArg: ""
@@ -232,6 +234,7 @@ Item {
         root.editingUid = item.uid;
         root.editingItem = item;
         root.confirmingUnbindUid = -1;
+        root.editName = (item.description && item.description.length > 0) ? item.description : root.getFriendlyAction(item);
         const disp = item.dispatcher || "exec";
         root.editDispatcher = disp;
         root.editCustomDisp = disp;
@@ -300,7 +303,19 @@ Item {
             newArg = root.editArg.trim();
         }
 
-        const newDesc = root.formatTitle(newArg || newDisp);
+        const newDesc = root.editName.trim() || root.formatTitle(newArg || newDisp);
+
+        // Optimistically update in-memory item for instantaneous UI response
+        oldItem.description = newDesc;
+        oldItem.key = newKey;
+        oldItem.dispatcher = newDisp;
+        oldItem.arg = newArg;
+        let newMask = 0;
+        if (root.editSuper) newMask |= 64;
+        if (root.editCtrl) newMask |= 4;
+        if (root.editAlt) newMask |= 8;
+        if (root.editShift) newMask |= 1;
+        oldItem.modmask = newMask;
 
         root.editingUid = -1;
         root.editingItem = null;
@@ -309,7 +324,7 @@ Item {
 
         rebindProc.command = [
             "bash",
-            "/home/xeana/.config/quickshell/Settings/scripts/manage_keybind.sh",
+            root.scriptPath,
             "rebind",
             oldModStr,
             oldItem.key,
@@ -341,7 +356,7 @@ Item {
 
         rebindProc.command = [
             "bash",
-            "/home/xeana/.config/quickshell/Settings/scripts/manage_keybind.sh",
+            root.scriptPath,
             "delete",
             modStr,
             item.key,
@@ -377,7 +392,7 @@ Item {
 
         rebindProc.command = [
             "bash",
-            "/home/xeana/.config/quickshell/Settings/scripts/manage_keybind.sh",
+            root.scriptPath,
             "add",
             modStr,
             key,
@@ -573,10 +588,12 @@ Item {
 
     /* Main Scrollable View */
     Flickable {
+        id: kbFlickable
         anchors.fill: parent
         contentHeight: mainCol.implicitHeight + 32
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        interactive: !delayMouse.pressed && !rateMouse.pressed
 
         ColumnLayout {
             id: mainCol
@@ -660,33 +677,62 @@ Item {
                                         color: root.theme.accentPrimary
                                     }
 
+                                    // Outer halo ring on hover/press
                                     Rectangle {
-                                        width: delayMouse.containsMouse || delayMouse.pressed ? 16 : 14
+                                        anchors.centerIn: delayKnob
+                                        width: delayKnob.width + (delayMouse.pressed ? 8 : (delayMouse.containsMouse ? 6 : 0))
                                         height: width
                                         radius: width / 2
-                                        color: root.theme.accentPrimary
-                                        border.color: root.theme.bgBase
-                                        border.width: 2
+                                        color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, delayMouse.pressed ? 0.35 : (delayMouse.containsMouse ? 0.2 : 0))
+                                        z: 1
+
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                    }
+
+                                    // Tactile white knob
+                                    Rectangle {
+                                        id: delayKnob
+                                        width: delayMouse.containsMouse || delayMouse.pressed ? 17 : 15
+                                        height: width
+                                        radius: width / 2
+                                        color: "#ffffff"
+                                        border.color: root.theme.accentPrimary
+                                        border.width: 3
                                         anchors.verticalCenter: parent.verticalCenter
                                         x: Math.max(0, Math.min(delayTrack.width - width, (delayTrack.width * ((root.repeatDelay - 150) / 850)) - (width / 2)))
+                                        z: 2
 
-                                        Behavior on width { NumberAnimation { duration: 100 } }
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on x {
+                                            enabled: !delayMouse.pressed
+                                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                                        }
                                     }
 
                                     MouseArea {
                                         id: delayMouse
                                         anchors.fill: parent
                                         anchors.margins: -8
+                                        preventStealing: true
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
+                                        onPressed: (mouse) => {
+                                            mouse.accepted = true;
+                                            const frac = Math.max(0, Math.min(1.0, mouse.x / width));
+                                            root.repeatDelay = Math.round(150 + frac * 850);
+                                            root.applyHyprKeyword("input:repeat_delay", root.repeatDelay);
+                                        }
                                         onPositionChanged: (mouse) => {
                                             if (pressed) {
+                                                mouse.accepted = true;
                                                 const frac = Math.max(0, Math.min(1.0, mouse.x / width));
                                                 root.repeatDelay = Math.round(150 + frac * 850);
                                                 root.applyHyprKeyword("input:repeat_delay", root.repeatDelay);
                                             }
                                         }
                                         onClicked: (mouse) => {
+                                            mouse.accepted = true;
                                             const frac = Math.max(0, Math.min(1.0, mouse.x / width));
                                             root.repeatDelay = Math.round(150 + frac * 850);
                                             root.applyHyprKeyword("input:repeat_delay", root.repeatDelay);
@@ -752,33 +798,62 @@ Item {
                                         color: root.theme.accentPrimary
                                     }
 
+                                    // Outer halo ring on hover/press
                                     Rectangle {
-                                        width: rateMouse.containsMouse || rateMouse.pressed ? 16 : 14
+                                        anchors.centerIn: rateKnob
+                                        width: rateKnob.width + (rateMouse.pressed ? 8 : (rateMouse.containsMouse ? 6 : 0))
                                         height: width
                                         radius: width / 2
-                                        color: root.theme.accentPrimary
-                                        border.color: root.theme.bgBase
-                                        border.width: 2
+                                        color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, rateMouse.pressed ? 0.35 : (rateMouse.containsMouse ? 0.2 : 0))
+                                        z: 1
+
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                    }
+
+                                    // Tactile white knob
+                                    Rectangle {
+                                        id: rateKnob
+                                        width: rateMouse.containsMouse || rateMouse.pressed ? 17 : 15
+                                        height: width
+                                        radius: width / 2
+                                        color: "#ffffff"
+                                        border.color: root.theme.accentPrimary
+                                        border.width: 3
                                         anchors.verticalCenter: parent.verticalCenter
                                         x: Math.max(0, Math.min(rateTrack.width - width, (rateTrack.width * ((root.repeatRate - 10) / 90)) - (width / 2)))
+                                        z: 2
 
-                                        Behavior on width { NumberAnimation { duration: 100 } }
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on x {
+                                            enabled: !rateMouse.pressed
+                                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                                        }
                                     }
 
                                     MouseArea {
                                         id: rateMouse
                                         anchors.fill: parent
                                         anchors.margins: -8
+                                        preventStealing: true
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
+                                        onPressed: (mouse) => {
+                                            mouse.accepted = true;
+                                            const frac = Math.max(0, Math.min(1.0, mouse.x / width));
+                                            root.repeatRate = Math.round(10 + frac * 90);
+                                            root.applyHyprKeyword("input:repeat_rate", root.repeatRate);
+                                        }
                                         onPositionChanged: (mouse) => {
                                             if (pressed) {
+                                                mouse.accepted = true;
                                                 const frac = Math.max(0, Math.min(1.0, mouse.x / width));
                                                 root.repeatRate = Math.round(10 + frac * 90);
                                                 root.applyHyprKeyword("input:repeat_rate", root.repeatRate);
                                             }
                                         }
                                         onClicked: (mouse) => {
+                                            mouse.accepted = true;
                                             const frac = Math.max(0, Math.min(1.0, mouse.x / width));
                                             root.repeatRate = Math.round(10 + frac * 90);
                                             root.applyHyprKeyword("input:repeat_rate", root.repeatRate);
@@ -1081,39 +1156,33 @@ Item {
 
                     Item { Layout.fillWidth: true }
 
-                    /* Add Keybind Toggle Button */
+                    /* Add Keybind Toggle Button (Text-only, no icon) */
                     Rectangle {
                         implicitWidth: addBtnText.implicitWidth + 24
-                        height: 28
-                        radius: 6
-                        color: root.isAddingKeybind ? root.theme.accentPrimary : (addBtnMouse.containsMouse ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.1)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)))
-                        border.color: root.isAddingKeybind ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                        height: 30
+                        radius: 7
+                        color: addBtnHover.hovered
+                            ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08))
+                            : (root.isAddingKeybind ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.04)))
+                        border.color: root.isAddingKeybind || addBtnHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                         border.width: 1
 
-                        RowLayout {
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                        HoverHandler { id: addBtnHover }
+
+                        Text {
+                            id: addBtnText
                             anchors.centerIn: parent
-                            spacing: 6
-
-                            Text {
-                                text: root.isAddingKeybind ? "✕" : "󰐕"
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: true
-                                color: root.isAddingKeybind ? root.theme.bgBase : root.theme.accentPrimary
-                            }
-
-                            Text {
-                                id: addBtnText
-                                text: root.isAddingKeybind ? "Close Form" : "Add Keybind"
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: true
-                                color: root.isAddingKeybind ? root.theme.bgBase : root.theme.textPrimary
-                            }
+                            text: root.isAddingKeybind ? "Close Form" : "Add Keybind"
+                            font.family: root.font
+                            font.pixelSize: 12
+                            font.bold: true
+                            color: root.isAddingKeybind || addBtnHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
                         }
 
                         MouseArea {
-                            id: addBtnMouse
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
@@ -1149,10 +1218,12 @@ Item {
                         Item {
                             Layout.fillWidth: true
                             implicitHeight: root.isAddingKeybind ? (addDrawerRect.implicitHeight + 12) : 0
-                            visible: root.isAddingKeybind
+                            visible: implicitHeight > 0
+                            opacity: root.isAddingKeybind ? 1.0 : 0.0
                             clip: true
 
-                            Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                            Behavior on implicitHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                            Behavior on opacity { NumberAnimation { duration: 160 } }
 
                             Rectangle {
                                 id: addDrawerRect
@@ -1248,36 +1319,79 @@ Item {
                                             Layout.alignment: Qt.AlignVCenter
                                         }
 
-                                        // Dispatcher Chips
-                                        Flow {
-                                            Layout.fillWidth: true
-                                            spacing: 6
-                                            Repeater {
-                                                model: root.addDispatcherOptions
+                                        Rectangle {
+                                            id: addActionSegmentTrack
+                                            implicitWidth: 620
+                                            Layout.preferredWidth: 620
+                                            height: 32
+                                            radius: 7
+                                            color: root.theme.bgBase
+                                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                            border.width: 1
+                                            Layout.alignment: Qt.AlignVCenter
 
-                                                Rectangle {
-                                                    required property var modelData
-                                                    implicitWidth: dispChipText.implicitWidth + 14
-                                                    height: 26
-                                                    radius: 6
-                                                    color: root.addDispatcher === modelData.val ? root.theme.accentPrimary : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                                    border.color: root.addDispatcher === modelData.val ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                                    border.width: 1
+                                            readonly property var options: root.addDispatcherOptions
+                                            readonly property int activeIdx: {
+                                                for (let i = 0; i < options.length; i++) {
+                                                    if (options[i].val === root.addDispatcher) return i;
+                                                }
+                                                return 0;
+                                            }
+                                            readonly property real cellWidth: (width - 6 - ((options.length - 1) * 4)) / Math.max(1, options.length)
 
-                                                    Text {
-                                                        id: dispChipText
-                                                        anchors.centerIn: parent
-                                                        text: modelData.name
-                                                        font.family: root.font
-                                                        font.pixelSize: 10
-                                                        font.bold: true
-                                                        color: root.addDispatcher === modelData.val ? root.theme.bgBase : root.theme.textPrimary
-                                                    }
+                                            /* Sliding Pill */
+                                            Rectangle {
+                                                y: 3
+                                                height: parent.height - 6
+                                                width: addActionSegmentTrack.cellWidth
+                                                x: 3 + addActionSegmentTrack.activeIdx * (addActionSegmentTrack.cellWidth + 4)
+                                                radius: 5
+                                                color: root.theme.bgSelected
+                                                border.color: root.theme.accentPrimary
+                                                border.width: 1
 
-                                                    MouseArea {
-                                                        anchors.fill: parent
-                                                        cursorShape: Qt.PointingHandCursor
-                                                        onClicked: root.addDispatcher = modelData.val
+                                                Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                                            }
+
+                                            RowLayout {
+                                                anchors.fill: parent
+                                                anchors.margins: 3
+                                                spacing: 4
+
+                                                Repeater {
+                                                    model: addActionSegmentTrack.options
+
+                                                    delegate: Rectangle {
+                                                        id: aSegBtn
+                                                        required property var modelData
+                                                        required property int index
+                                                        readonly property bool isSel: addActionSegmentTrack.activeIdx === index
+
+                                                        Layout.fillWidth: true
+                                                        Layout.fillHeight: true
+                                                        radius: 5
+                                                        color: !isSel && aSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                                        Behavior on color { ColorAnimation { duration: 140 } }
+
+                                                        HoverHandler { id: aSegHover }
+
+                                                        Text {
+                                                            anchors.centerIn: parent
+                                                            text: aSegBtn.modelData.name
+                                                            font.family: root.font
+                                                            font.pixelSize: 11
+                                                            font.bold: aSegBtn.isSel
+                                                            color: aSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
+                                                            opacity: aSegBtn.isSel || aSegHover.hovered ? 1.0 : 0.75
+                                                            Behavior on color { ColorAnimation { duration: 140 } }
+                                                            Behavior on opacity { NumberAnimation { duration: 140 } }
+                                                        }
+
+                                                        MouseArea {
+                                                            anchors.fill: parent
+                                                            cursorShape: Qt.PointingHandCursor
+                                                            onClicked: root.addDispatcher = aSegBtn.modelData.val
+                                                        }
                                                     }
                                                 }
                                             }
@@ -1416,7 +1530,7 @@ Item {
                                     /* Form Row 3: Modifiers Selection */
                                     RowLayout {
                                         Layout.fillWidth: true
-                                        spacing: 8
+                                        spacing: 10
 
                                         Text {
                                             text: "Modifiers:"
@@ -1428,103 +1542,75 @@ Item {
                                             Layout.alignment: Qt.AlignVCenter
                                         }
 
-                                        // Super Chip
                                         Rectangle {
-                                            implicitWidth: 60
-                                            height: 26
-                                            radius: 6
-                                            color: root.addSuper ? root.theme.accentPrimary : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                            border.color: root.addSuper ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                                            implicitWidth: 280
+                                            height: 32
+                                            radius: 7
+                                            color: root.theme.bgBase
+                                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
                                             border.width: 1
+                                            Layout.alignment: Qt.AlignVCenter
 
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: "Super"
-                                                font.family: root.font
-                                                font.pixelSize: 11
-                                                font.bold: true
-                                                color: root.addSuper ? root.theme.bgBase : root.theme.textPrimary
-                                            }
-
-                                            MouseArea {
+                                            RowLayout {
                                                 anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.addSuper = !root.addSuper
-                                            }
-                                        }
+                                                anchors.margins: 3
+                                                spacing: 4
 
-                                        // Ctrl Chip
-                                        Rectangle {
-                                            implicitWidth: 50
-                                            height: 26
-                                            radius: 6
-                                            color: root.addCtrl ? root.theme.accentPrimary : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                            border.color: root.addCtrl ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                            border.width: 1
+                                                Repeater {
+                                                    model: [
+                                                        { label: "Super", id: "super" },
+                                                        { label: "Ctrl",  id: "ctrl" },
+                                                        { label: "Alt",   id: "alt" },
+                                                        { label: "Shift", id: "shift" }
+                                                    ]
 
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: "Ctrl"
-                                                font.family: root.font
-                                                font.pixelSize: 11
-                                                font.bold: true
-                                                color: root.addCtrl ? root.theme.bgBase : root.theme.textPrimary
-                                            }
+                                                    delegate: Rectangle {
+                                                        id: addModBtn
+                                                        required property var modelData
+                                                        readonly property bool isActive: {
+                                                            if (modelData.id === "super") return root.addSuper;
+                                                            if (modelData.id === "ctrl")  return root.addCtrl;
+                                                            if (modelData.id === "alt")   return root.addAlt;
+                                                            if (modelData.id === "shift") return root.addShift;
+                                                            return false;
+                                                        }
 
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.addCtrl = !root.addCtrl
-                                            }
-                                        }
+                                                        Layout.fillWidth: true
+                                                        Layout.fillHeight: true
+                                                        radius: 5
+                                                        color: isActive ? root.theme.bgSelected : (addModHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                                                        border.color: isActive ? root.theme.accentPrimary : "transparent"
+                                                        border.width: isActive ? 1 : 0
 
-                                        // Alt Chip
-                                        Rectangle {
-                                            implicitWidth: 50
-                                            height: 26
-                                            radius: 6
-                                            color: root.addAlt ? root.theme.accentPrimary : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                            border.color: root.addAlt ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                            border.width: 1
+                                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                                        Behavior on border.color { ColorAnimation { duration: 140 } }
 
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: "Alt"
-                                                font.family: root.font
-                                                font.pixelSize: 11
-                                                font.bold: true
-                                                color: root.addAlt ? root.theme.bgBase : root.theme.textPrimary
-                                            }
+                                                        HoverHandler { id: addModHover }
 
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.addAlt = !root.addAlt
-                                            }
-                                        }
+                                                        Text {
+                                                            anchors.centerIn: parent
+                                                            text: addModBtn.modelData.label
+                                                            font.family: root.font
+                                                            font.pixelSize: 11
+                                                            font.bold: addModBtn.isActive
+                                                            color: addModBtn.isActive ? root.theme.accentPrimary : root.theme.textPrimary
+                                                            opacity: addModBtn.isActive || addModHover.hovered ? 1.0 : 0.75
+                                                            Behavior on color { ColorAnimation { duration: 140 } }
+                                                            Behavior on opacity { NumberAnimation { duration: 140 } }
+                                                        }
 
-                                        // Shift Chip
-                                        Rectangle {
-                                            implicitWidth: 54
-                                            height: 26
-                                            radius: 6
-                                            color: root.addShift ? root.theme.accentPrimary : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                            border.color: root.addShift ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                            border.width: 1
-
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: "Shift"
-                                                font.family: root.font
-                                                font.pixelSize: 11
-                                                font.bold: true
-                                                color: root.addShift ? root.theme.bgBase : root.theme.textPrimary
-                                            }
-
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.addShift = !root.addShift
+                                                        MouseArea {
+                                                            anchors.fill: parent
+                                                            cursorShape: Qt.PointingHandCursor
+                                                            onClicked: {
+                                                                if (addModBtn.modelData.id === "super") root.addSuper = !root.addSuper;
+                                                                else if (addModBtn.modelData.id === "ctrl")  root.addCtrl = !root.addCtrl;
+                                                                else if (addModBtn.modelData.id === "alt")   root.addAlt = !root.addAlt;
+                                                                else if (addModBtn.modelData.id === "shift") root.addShift = !root.addShift;
+                                                            }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
 
@@ -1656,12 +1742,17 @@ Item {
 
                                         // Cancel
                                         Rectangle {
-                                            implicitWidth: cancelAddText.implicitWidth + 20
+                                            implicitWidth: cancelAddText.implicitWidth + 24
                                             height: 30
-                                            radius: 6
-                                            color: cancelAddMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.1)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                                            radius: 7
+                                            color: cancelAddHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase
+                                            border.color: cancelAddHover.hovered ? root.theme.textSecondary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                                             border.width: 1
+
+                                            Behavior on color { ColorAnimation { duration: 140 } }
+                                            Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                                            HoverHandler { id: cancelAddHover }
 
                                             Text {
                                                 id: cancelAddText
@@ -1669,11 +1760,11 @@ Item {
                                                 text: "Cancel"
                                                 font.family: root.font
                                                 font.pixelSize: 11
-                                                color: root.theme.textPrimary
+                                                font.bold: true
+                                                color: cancelAddHover.hovered ? root.theme.textPrimary : root.theme.textSecondary
                                             }
 
                                             MouseArea {
-                                                id: cancelAddMouse
                                                 anchors.fill: parent
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: {
@@ -1685,11 +1776,19 @@ Item {
 
                                         // Add & Save
                                         Rectangle {
-                                            implicitWidth: saveAddText.implicitWidth + 24
+                                            implicitWidth: saveAddText.implicitWidth + 28
                                             height: 30
-                                            radius: 6
-                                            color: saveAddMouse.containsMouse ? Qt.darker(root.theme.accentPrimary, 1.1) : root.theme.accentPrimary
-                                            opacity: root.addKey.trim().length > 0 ? 1 : 0.5
+                                            radius: 7
+                                            readonly property bool canSave: root.addKey.trim().length > 0
+                                            color: canSave
+                                                ? (saveAddHover.hovered ? Qt.lighter(root.theme.accentPrimary, 1.1) : root.theme.accentPrimary)
+                                                : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
+                                            opacity: canSave ? 1.0 : 0.5
+
+                                            Behavior on color { ColorAnimation { duration: 140 } }
+                                            Behavior on opacity { NumberAnimation { duration: 140 } }
+
+                                            HoverHandler { id: saveAddHover }
 
                                             Text {
                                                 id: saveAddText
@@ -1698,14 +1797,13 @@ Item {
                                                 font.family: root.font
                                                 font.pixelSize: 11
                                                 font.bold: true
-                                                color: root.theme.bgBase
+                                                color: parent.canSave ? root.theme.bgBase : root.theme.textMuted
                                             }
 
                                             MouseArea {
-                                                id: saveAddMouse
                                                 anchors.fill: parent
-                                                cursorShape: root.addKey.trim().length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                                enabled: root.addKey.trim().length > 0
+                                                cursorShape: parent.canSave ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                                enabled: parent.canSave
                                                 onClicked: root.saveNewKeybind()
                                             }
                                         }
@@ -1802,12 +1900,13 @@ Item {
                                 required property var modelData
                                 required property int index
                                 Layout.fillWidth: true
+                                clip: true
                                 readonly property bool isEditing: root.editingUid === modelData.uid && root.editingUid !== -1
                                 readonly property bool isConfirmingUnbind: root.confirmingUnbindUid === modelData.uid
 
                                 implicitHeight: isEditing ? (50 + editDrawer.implicitHeight + 8) : 50
 
-                                Behavior on implicitHeight { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                                Behavior on implicitHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
                                 /* Main Shortcut Row */
                                 Rectangle {
@@ -1937,12 +2036,17 @@ Item {
                                         rightMargin: 8
                                         topMargin: 2
                                     }
-                                    implicitHeight: drawerCol.implicitHeight + 20
-                                    visible: rowItem.isEditing
+                                    implicitHeight: rowItem.isEditing ? (drawerCol.implicitHeight + 20) : 0
+                                    visible: opacity > 0 || implicitHeight > 0
+                                    opacity: rowItem.isEditing ? 1.0 : 0.0
                                     radius: 8
                                     color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3)
                                     border.color: root.theme.accentPrimary
                                     border.width: 1
+                                    clip: true
+
+                                    Behavior on implicitHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                                    Behavior on opacity { NumberAnimation { duration: 160 } }
 
                                     ColumnLayout {
                                         id: drawerCol
@@ -1954,10 +2058,60 @@ Item {
                                         }
                                         spacing: 10
 
+                                        /* Row 0: Keybinding Name / Label */
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 10
+
+                                            Text {
+                                                text: "Name:"
+                                                font.family: root.font
+                                                font.pixelSize: 11
+                                                font.bold: true
+                                                color: root.theme.textSecondary
+                                                Layout.preferredWidth: 70
+                                                Layout.alignment: Qt.AlignVCenter
+                                            }
+
+                                            Rectangle {
+                                                Layout.fillWidth: true
+                                                height: 32
+                                                radius: 7
+                                                color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
+                                                border.color: editNameInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                                                border.width: editNameInput.activeFocus ? 2 : 1
+
+                                                TextInput {
+                                                    id: editNameInput
+                                                    anchors.fill: parent
+                                                    anchors.leftMargin: 8
+                                                    anchors.rightMargin: 8
+                                                    verticalAlignment: TextInput.AlignVCenter
+                                                    text: root.editName
+                                                    font.family: root.font
+                                                    font.pixelSize: 12
+                                                    color: root.theme.textPrimary
+                                                    clip: true
+                                                    onTextChanged: {
+                                                        if (text !== root.editName) root.editName = text;
+                                                    }
+
+                                                    Text {
+                                                        text: "Shortcut Name (e.g. Browser, Terminal, Screenshot)"
+                                                        font.family: root.font
+                                                        font.pixelSize: 11
+                                                        color: root.theme.textSecondary
+                                                        visible: !editNameInput.text && !editNameInput.activeFocus
+                                                        anchors.verticalCenter: parent.verticalCenter
+                                                    }
+                                                }
+                                            }
+                                        }
+
                                         /* Row 0a: Action Dispatcher Selection */
                                         RowLayout {
                                             Layout.fillWidth: true
-                                            spacing: 8
+                                            spacing: 10
 
                                             Text {
                                                 text: "Action:"
@@ -1965,55 +2119,100 @@ Item {
                                                 font.pixelSize: 11
                                                 font.bold: true
                                                 color: root.theme.textSecondary
-                                                Layout.preferredWidth: 64
+                                                Layout.preferredWidth: 70
                                                 Layout.alignment: Qt.AlignVCenter
                                             }
 
-                                            Flow {
-                                                Layout.fillWidth: true
-                                                spacing: 6
+                                            Rectangle {
+                                                id: editActionSegmentTrack
+                                                implicitWidth: 620
+                                                Layout.preferredWidth: 620
+                                                height: 32
+                                                radius: 7
+                                                color: root.theme.bgBase
+                                                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                                border.width: 1
+                                                Layout.alignment: Qt.AlignVCenter
 
-                                                Repeater {
-                                                    model: root.editDispatcherOptions
+                                                readonly property var options: root.editDispatcherOptions
+                                                readonly property int activeIdx: {
+                                                    for (let i = 0; i < options.length; i++) {
+                                                        if (options[i].val === root.editDispatcher) return i;
+                                                    }
+                                                    return 0;
+                                                }
+                                                readonly property real cellWidth: (width - 6 - ((options.length - 1) * 4)) / Math.max(1, options.length)
 
-                                                    Rectangle {
-                                                        required property var modelData
-                                                        implicitWidth: editDispChipText.implicitWidth + 14
-                                                        height: 26
-                                                        radius: 6
-                                                        color: root.editDispatcher === modelData.val ? root.theme.accentPrimary : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                                        border.color: root.editDispatcher === modelData.val ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                                        border.width: 1
+                                                /* Sliding Pill */
+                                                Rectangle {
+                                                    y: 3
+                                                    height: parent.height - 6
+                                                    width: editActionSegmentTrack.cellWidth
+                                                    x: 3 + editActionSegmentTrack.activeIdx * (editActionSegmentTrack.cellWidth + 4)
+                                                    radius: 5
+                                                    color: root.theme.bgSelected
+                                                    border.color: root.theme.accentPrimary
+                                                    border.width: 1
 
-                                                        Text {
-                                                            id: editDispChipText
-                                                            anchors.centerIn: parent
-                                                            text: modelData.name
-                                                            font.family: root.font
-                                                            font.pixelSize: 10
-                                                            font.bold: true
-                                                            color: root.editDispatcher === modelData.val ? root.theme.bgBase : root.theme.textPrimary
-                                                        }
+                                                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                                                }
 
-                                                        MouseArea {
-                                                            anchors.fill: parent
-                                                            cursorShape: Qt.PointingHandCursor
-                                                            onClicked: {
-                                                                root.editDispatcher = modelData.val;
-                                                                if (modelData.val === "custom" && !root.editCustomDisp) {
-                                                                    root.editCustomDisp = root.editingItem ? (root.editingItem.dispatcher || "") : "";
+                                                RowLayout {
+                                                    anchors.fill: parent
+                                                    anchors.margins: 3
+                                                    spacing: 4
+
+                                                    Repeater {
+                                                        model: editActionSegmentTrack.options
+
+                                                        delegate: Rectangle {
+                                                            id: eSegBtn
+                                                            required property var modelData
+                                                            required property int index
+                                                            readonly property bool isSel: editActionSegmentTrack.activeIdx === index
+
+                                                            Layout.fillWidth: true
+                                                            Layout.fillHeight: true
+                                                            radius: 5
+                                                            color: !isSel && eSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                                            Behavior on color { ColorAnimation { duration: 140 } }
+
+                                                            HoverHandler { id: eSegHover }
+
+                                                            Text {
+                                                                anchors.centerIn: parent
+                                                                text: eSegBtn.modelData.name
+                                                                font.family: root.font
+                                                                font.pixelSize: 11
+                                                                font.bold: eSegBtn.isSel
+                                                                color: eSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
+                                                                opacity: eSegBtn.isSel || eSegHover.hovered ? 1.0 : 0.75
+                                                                Behavior on color { ColorAnimation { duration: 140 } }
+                                                                Behavior on opacity { NumberAnimation { duration: 140 } }
+                                                            }
+
+                                                            MouseArea {
+                                                                anchors.fill: parent
+                                                                cursorShape: Qt.PointingHandCursor
+                                                                onClicked: {
+                                                                    root.editDispatcher = eSegBtn.modelData.val;
+                                                                    if (eSegBtn.modelData.val === "custom" && !root.editCustomDisp) {
+                                                                        root.editCustomDisp = root.editingItem ? (root.editingItem.dispatcher || "") : "";
+                                                                    }
                                                                 }
                                                             }
                                                         }
                                                     }
                                                 }
                                             }
+
+                                            Item { Layout.fillWidth: true }
                                         }
 
                                         /* Row 0b: Custom Dispatcher Name (if custom selected) */
                                         RowLayout {
                                             Layout.fillWidth: true
-                                            spacing: 8
+                                            spacing: 10
                                             visible: root.editDispatcher === "custom"
 
                                             Text {
@@ -2022,14 +2221,14 @@ Item {
                                                 font.pixelSize: 11
                                                 font.bold: true
                                                 color: root.theme.textSecondary
-                                                Layout.preferredWidth: 64
+                                                Layout.preferredWidth: 70
                                                 Layout.alignment: Qt.AlignVCenter
                                             }
 
                                             Rectangle {
                                                 Layout.fillWidth: true
-                                                height: 30
-                                                radius: 6
+                                                height: 32
+                                                radius: 7
                                                 color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
                                                 border.color: customDispEditInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
                                                 border.width: customDispEditInput.activeFocus ? 2 : 1
@@ -2064,7 +2263,7 @@ Item {
                                         /* Row 0c: Command / Argument / Parameter Input */
                                         RowLayout {
                                             Layout.fillWidth: true
-                                            spacing: 8
+                                            spacing: 10
                                             visible: root.editDispatcher !== "killactive" && root.editDispatcher !== "togglefloating"
 
                                             Text {
@@ -2076,14 +2275,14 @@ Item {
                                                 font.pixelSize: 11
                                                 font.bold: true
                                                 color: root.theme.textSecondary
-                                                Layout.preferredWidth: 64
+                                                Layout.preferredWidth: 70
                                                 Layout.alignment: Qt.AlignVCenter
                                             }
 
                                             Rectangle {
                                                 Layout.fillWidth: true
-                                                height: 30
-                                                radius: 6
+                                                height: 32
+                                                radius: 7
                                                 color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
                                                 border.color: cmdEditInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
                                                 border.width: cmdEditInput.activeFocus ? 2 : 1
@@ -2120,7 +2319,7 @@ Item {
                                         /* Row 0d: Static Dispatcher Info */
                                         RowLayout {
                                             Layout.fillWidth: true
-                                            spacing: 8
+                                            spacing: 10
                                             visible: root.editDispatcher === "killactive" || root.editDispatcher === "togglefloating"
 
                                             Text {
@@ -2129,7 +2328,7 @@ Item {
                                                 font.pixelSize: 11
                                                 font.bold: true
                                                 color: root.theme.textSecondary
-                                                Layout.preferredWidth: 64
+                                                Layout.preferredWidth: 70
                                                 Layout.alignment: Qt.AlignVCenter
                                             }
 
@@ -2144,10 +2343,10 @@ Item {
                                             }
                                         }
 
-                                        /* Row 1: Modifiers Toggle Chips */
+                                        /* Row 1: Modifiers Selection */
                                         RowLayout {
                                             Layout.fillWidth: true
-                                            spacing: 8
+                                            spacing: 10
 
                                             Text {
                                                 text: "Modifiers:"
@@ -2155,107 +2354,79 @@ Item {
                                                 font.pixelSize: 11
                                                 font.bold: true
                                                 color: root.theme.textSecondary
-                                                Layout.preferredWidth: 64
+                                                Layout.preferredWidth: 70
                                                 Layout.alignment: Qt.AlignVCenter
                                             }
 
-                                            // Super Chip
                                             Rectangle {
-                                                implicitWidth: 60
-                                                height: 26
-                                                radius: 6
-                                                color: root.editSuper ? root.theme.accentPrimary : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                                border.color: root.editSuper ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                                                implicitWidth: 280
+                                                height: 32
+                                                radius: 7
+                                                color: root.theme.bgBase
+                                                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
                                                 border.width: 1
+                                                Layout.alignment: Qt.AlignVCenter
 
-                                                Text {
-                                                    anchors.centerIn: parent
-                                                    text: "Super"
-                                                    font.family: root.font
-                                                    font.pixelSize: 11
-                                                    font.bold: true
-                                                    color: root.editSuper ? root.theme.bgBase : root.theme.textPrimary
-                                                }
-
-                                                MouseArea {
+                                                RowLayout {
                                                     anchors.fill: parent
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: root.editSuper = !root.editSuper
-                                                }
-                                            }
+                                                    anchors.margins: 3
+                                                    spacing: 4
 
-                                            // Ctrl Chip
-                                            Rectangle {
-                                                implicitWidth: 50
-                                                height: 26
-                                                radius: 6
-                                                color: root.editCtrl ? root.theme.accentPrimary : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                                border.color: root.editCtrl ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                                border.width: 1
+                                                    Repeater {
+                                                        model: [
+                                                            { label: "Super", id: "super" },
+                                                            { label: "Ctrl",  id: "ctrl" },
+                                                            { label: "Alt",   id: "alt" },
+                                                            { label: "Shift", id: "shift" }
+                                                        ]
 
-                                                Text {
-                                                    anchors.centerIn: parent
-                                                    text: "Ctrl"
-                                                    font.family: root.font
-                                                    font.pixelSize: 11
-                                                    font.bold: true
-                                                    color: root.editCtrl ? root.theme.bgBase : root.theme.textPrimary
-                                                }
+                                                        delegate: Rectangle {
+                                                            id: editModBtn
+                                                            required property var modelData
+                                                            readonly property bool isActive: {
+                                                                if (modelData.id === "super") return root.editSuper;
+                                                                if (modelData.id === "ctrl")  return root.editCtrl;
+                                                                if (modelData.id === "alt")   return root.editAlt;
+                                                                if (modelData.id === "shift") return root.editShift;
+                                                                return false;
+                                                            }
 
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: root.editCtrl = !root.editCtrl
-                                                }
-                                            }
+                                                            Layout.fillWidth: true
+                                                            Layout.fillHeight: true
+                                                            radius: 5
+                                                            color: isActive ? root.theme.bgSelected : (editModHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                                                            border.color: isActive ? root.theme.accentPrimary : "transparent"
+                                                            border.width: isActive ? 1 : 0
 
-                                            // Alt Chip
-                                            Rectangle {
-                                                implicitWidth: 50
-                                                height: 26
-                                                radius: 6
-                                                color: root.editAlt ? root.theme.accentPrimary : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                                border.color: root.editAlt ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                                border.width: 1
+                                                            Behavior on color { ColorAnimation { duration: 140 } }
+                                                            Behavior on border.color { ColorAnimation { duration: 140 } }
 
-                                                Text {
-                                                    anchors.centerIn: parent
-                                                    text: "Alt"
-                                                    font.family: root.font
-                                                    font.pixelSize: 11
-                                                    font.bold: true
-                                                    color: root.editAlt ? root.theme.bgBase : root.theme.textPrimary
-                                                }
+                                                            HoverHandler { id: editModHover }
 
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: root.editAlt = !root.editAlt
-                                                }
-                                            }
+                                                            Text {
+                                                                anchors.centerIn: parent
+                                                                text: editModBtn.modelData.label
+                                                                font.family: root.font
+                                                                font.pixelSize: 11
+                                                                font.bold: editModBtn.isActive
+                                                                color: editModBtn.isActive ? root.theme.accentPrimary : root.theme.textPrimary
+                                                                opacity: editModBtn.isActive || editModHover.hovered ? 1.0 : 0.75
+                                                                Behavior on color { ColorAnimation { duration: 140 } }
+                                                                Behavior on opacity { NumberAnimation { duration: 140 } }
+                                                            }
 
-                                            // Shift Chip
-                                            Rectangle {
-                                                implicitWidth: 54
-                                                height: 26
-                                                radius: 6
-                                                color: root.editShift ? root.theme.accentPrimary : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                                border.color: root.editShift ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                                border.width: 1
-
-                                                Text {
-                                                    anchors.centerIn: parent
-                                                    text: "Shift"
-                                                    font.family: root.font
-                                                    font.pixelSize: 11
-                                                    font.bold: true
-                                                    color: root.editShift ? root.theme.bgBase : root.theme.textPrimary
-                                                }
-
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: root.editShift = !root.editShift
+                                                            MouseArea {
+                                                                anchors.fill: parent
+                                                                cursorShape: Qt.PointingHandCursor
+                                                                onClicked: {
+                                                                    if (editModBtn.modelData.id === "super") root.editSuper = !root.editSuper;
+                                                                    else if (editModBtn.modelData.id === "ctrl")  root.editCtrl = !root.editCtrl;
+                                                                    else if (editModBtn.modelData.id === "alt")   root.editAlt = !root.editAlt;
+                                                                    else if (editModBtn.modelData.id === "shift") root.editShift = !root.editShift;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
 
@@ -2265,7 +2436,7 @@ Item {
                                         /* Row 2: Key Text Input + Record Key Button + Live Preview */
                                         RowLayout {
                                             Layout.fillWidth: true
-                                            spacing: 8
+                                            spacing: 10
 
                                             Text {
                                                 text: "Key:"
@@ -2273,14 +2444,14 @@ Item {
                                                 font.pixelSize: 11
                                                 font.bold: true
                                                 color: root.theme.textSecondary
-                                                Layout.preferredWidth: 64
+                                                Layout.preferredWidth: 70
                                                 Layout.alignment: Qt.AlignVCenter
                                             }
 
                                             Rectangle {
                                                 width: 110
-                                                height: 30
-                                                radius: 6
+                                                height: 32
+                                                radius: 7
                                                 color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
                                                 border.color: keyEditInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
                                                 border.width: keyEditInput.activeFocus ? 2 : 1
@@ -2305,29 +2476,33 @@ Item {
 
                                             /* Record Shortcut Button */
                                             Rectangle {
-                                                implicitWidth: recLabel.implicitWidth + 16
-                                                height: 30
-                                                radius: 6
-                                                color: root.isCapturingKey ? root.theme.accentPrimary : (recMouse.containsMouse ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)))
-                                                border.color: root.isCapturingKey ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                                                implicitWidth: recLabel.implicitWidth + 24
+                                                height: 32
+                                                radius: 7
+                                                color: root.isCapturingKey
+                                                    ? root.theme.accentPrimary
+                                                    : (recHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase)
+                                                border.color: root.isCapturingKey
+                                                    ? root.theme.accentPrimary
+                                                    : (recHover.hovered ? root.theme.textSecondary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
                                                 border.width: 1
 
-                                                RowLayout {
-                                                    anchors.centerIn: parent
-                                                    spacing: 6
+                                                Behavior on color { ColorAnimation { duration: 140 } }
+                                                Behavior on border.color { ColorAnimation { duration: 140 } }
 
-                                                    Text {
-                                                        id: recLabel
-                                                        text: root.isCapturingKey ? "Listening... Press keys (Esc cancels)" : "Record Key"
-                                                        font.family: root.font
-                                                        font.pixelSize: 11
-                                                        font.bold: true
-                                                        color: root.isCapturingKey ? root.theme.bgBase : root.theme.textPrimary
-                                                    }
+                                                HoverHandler { id: recHover }
+
+                                                Text {
+                                                    id: recLabel
+                                                    anchors.centerIn: parent
+                                                    text: root.isCapturingKey ? "Listening... (Esc cancels)" : "Record Key"
+                                                    font.family: root.font
+                                                    font.pixelSize: 11
+                                                    font.bold: true
+                                                    color: root.isCapturingKey ? root.theme.bgBase : (recHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
                                                 }
 
                                                 MouseArea {
-                                                    id: recMouse
                                                     anchors.fill: parent
                                                     cursorShape: Qt.PointingHandCursor
                                                     onClicked: {
@@ -2357,8 +2532,8 @@ Item {
                                                     model: root.getEditPreviewPills()
                                                     Rectangle {
                                                         required property var modelData
-                                                        implicitWidth: prevPillText.implicitWidth + 10
-                                                        height: 22
+                                                        implicitWidth: prevPillText.implicitWidth + 12
+                                                        height: 24
                                                         radius: 5
                                                         color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15)
                                                         border.color: root.theme.accentPrimary
@@ -2385,14 +2560,19 @@ Item {
                                             spacing: 8
                                             visible: !rowItem.isConfirmingUnbind
 
-                                            // Unbind Button (Clean text, No Icon)
+                                            // Unbind Button (Text-only, danger hover)
                                             Rectangle {
-                                                implicitWidth: delText.implicitWidth + 20
+                                                implicitWidth: delText.implicitWidth + 24
                                                 height: 30
-                                                radius: 6
-                                                color: delMouse.containsMouse ? Qt.rgba(0.9, 0.2, 0.2, 0.15) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                                border.color: delMouse.containsMouse ? Qt.rgba(0.9, 0.2, 0.2, 0.5) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                                                radius: 7
+                                                color: delHover.hovered ? Qt.rgba(0.9, 0.2, 0.2, 0.15) : root.theme.bgBase
+                                                border.color: delHover.hovered ? Qt.rgba(0.9, 0.2, 0.2, 0.5) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                                                 border.width: 1
+
+                                                Behavior on color { ColorAnimation { duration: 140 } }
+                                                Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                                                HoverHandler { id: delHover }
 
                                                 Text {
                                                     id: delText
@@ -2400,14 +2580,13 @@ Item {
                                                     text: "Unbind"
                                                     font.family: root.font
                                                     font.pixelSize: 11
-                                                    color: delMouse.containsMouse ? "#ff5555" : root.theme.textSecondary
+                                                    font.bold: true
+                                                    color: delHover.hovered ? "#ff5555" : root.theme.textSecondary
                                                 }
 
                                                 MouseArea {
-                                                    id: delMouse
                                                     anchors.fill: parent
                                                     cursorShape: Qt.PointingHandCursor
-                                                    hoverEnabled: true
                                                     onClicked: root.confirmingUnbindUid = rowItem.modelData.uid
                                                 }
                                             }
@@ -2416,12 +2595,17 @@ Item {
 
                                             // Cancel
                                             Rectangle {
-                                                implicitWidth: cancelText.implicitWidth + 20
+                                                implicitWidth: cancelText.implicitWidth + 24
                                                 height: 30
-                                                radius: 6
-                                                color: cancelMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.1)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-                                                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                                                radius: 7
+                                                color: cancelHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase
+                                                border.color: cancelHover.hovered ? root.theme.textSecondary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                                                 border.width: 1
+
+                                                Behavior on color { ColorAnimation { duration: 140 } }
+                                                Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                                                HoverHandler { id: cancelHover }
 
                                                 Text {
                                                     id: cancelText
@@ -2429,11 +2613,11 @@ Item {
                                                     text: "Cancel"
                                                     font.family: root.font
                                                     font.pixelSize: 11
-                                                    color: root.theme.textPrimary
+                                                    font.bold: true
+                                                    color: cancelHover.hovered ? root.theme.textPrimary : root.theme.textSecondary
                                                 }
 
                                                 MouseArea {
-                                                    id: cancelMouse
                                                     anchors.fill: parent
                                                     cursorShape: Qt.PointingHandCursor
                                                     onClicked: {
@@ -2447,11 +2631,19 @@ Item {
 
                                             // Save & Apply
                                             Rectangle {
-                                                implicitWidth: saveText.implicitWidth + 24
+                                                implicitWidth: saveText.implicitWidth + 28
                                                 height: 30
-                                                radius: 6
-                                                color: saveMouse.containsMouse ? Qt.darker(root.theme.accentPrimary, 1.1) : root.theme.accentPrimary
-                                                opacity: root.editKey.trim().length > 0 ? 1 : 0.5
+                                                radius: 7
+                                                readonly property bool canSave: root.editKey.trim().length > 0
+                                                color: canSave
+                                                    ? (saveHover.hovered ? Qt.lighter(root.theme.accentPrimary, 1.1) : root.theme.accentPrimary)
+                                                    : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
+                                                opacity: canSave ? 1.0 : 0.5
+
+                                                Behavior on color { ColorAnimation { duration: 140 } }
+                                                Behavior on opacity { NumberAnimation { duration: 140 } }
+
+                                                HoverHandler { id: saveHover }
 
                                                 Text {
                                                     id: saveText
@@ -2460,14 +2652,13 @@ Item {
                                                     font.family: root.font
                                                     font.pixelSize: 11
                                                     font.bold: true
-                                                    color: root.theme.bgBase
+                                                    color: parent.canSave ? root.theme.bgBase : root.theme.textMuted
                                                 }
 
                                                 MouseArea {
-                                                    id: saveMouse
                                                     anchors.fill: parent
-                                                    cursorShape: root.editKey.trim().length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
-                                                    enabled: root.editKey.trim().length > 0
+                                                    cursorShape: parent.canSave ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                                    enabled: parent.canSave
                                                     onClicked: root.applyEditedKeybind()
                                                 }
                                             }
@@ -2478,7 +2669,7 @@ Item {
                                             Layout.fillWidth: true
                                             Layout.preferredHeight: visible ? 34 : 0
                                             height: 34
-                                            radius: 6
+                                            radius: 7
                                             color: Qt.rgba(0.9, 0.2, 0.2, 0.1)
                                             border.color: Qt.rgba(0.9, 0.2, 0.2, 0.35)
                                             border.width: 1
@@ -2491,7 +2682,7 @@ Item {
                                                 spacing: 10
 
                                                 Text {
-                                                    text: "Are you sure to remove this keybind?"
+                                                    text: "Are you sure you want to remove this keybind?"
                                                     font.family: root.font
                                                     font.pixelSize: 11
                                                     font.bold: true
@@ -2501,71 +2692,18 @@ Item {
 
                                                 Item { Layout.fillWidth: true }
 
-                                                // Yes Button
-                                                Rectangle {
-                                                    implicitWidth: yesBtnText.implicitWidth + 20
-                                                    height: 26
-                                                    radius: 5
-                                                    color: yesBtnMouse.containsMouse ? "#ee3333" : "#ff5555"
-
-                                                    Text {
-                                                        id: yesBtnText
-                                                        anchors.centerIn: parent
-                                                        text: "Yes"
-                                                        font.family: root.font
-                                                        font.pixelSize: 11
-                                                        font.bold: true
-                                                        color: "#ffffff"
-                                                    }
-
-                                                    MouseArea {
-                                                        id: yesBtnMouse
-                                                        anchors.fill: parent
-                                                        cursorShape: Qt.PointingHandCursor
-                                                        hoverEnabled: true
-                                                        onClicked: {
-                                                            root.confirmingUnbindUid = -1;
-                                                            root.deleteKeybind(rowItem.modelData);
-                                                        }
-                                                    }
-                                                }
-
-                                                // No Button
-                                                Rectangle {
-                                                    implicitWidth: noBtnText.implicitWidth + 20
-                                                    height: 26
-                                                    radius: 5
-                                                    color: noBtnMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.14)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.08))
-                                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15)
-                                                    border.width: 1
-
-                                                    Text {
-                                                        id: noBtnText
-                                                        anchors.centerIn: parent
-                                                        text: "No"
-                                                        font.family: root.font
-                                                        font.pixelSize: 11
-                                                        font.bold: true
-                                                        color: root.theme.textPrimary
-                                                    }
-
-                                                    MouseArea {
-                                                        id: noBtnMouse
-                                                        anchors.fill: parent
-                                                        cursorShape: Qt.PointingHandCursor
-                                                        hoverEnabled: true
-                                                        onClicked: root.confirmingUnbindUid = -1
-                                                    }
-                                                }
-
                                                 // Cancel Button
                                                 Rectangle {
-                                                    implicitWidth: cancelPromptText.implicitWidth + 16
+                                                    implicitWidth: cancelPromptText.implicitWidth + 20
                                                     height: 26
-                                                    radius: 5
-                                                    color: cancelPromptMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                                    radius: 6
+                                                    color: confCancelHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.12)) : root.theme.bgBase
                                                     border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
                                                     border.width: 1
+
+                                                    Behavior on color { ColorAnimation { duration: 140 } }
+
+                                                    HoverHandler { id: confCancelHover }
 
                                                     Text {
                                                         id: cancelPromptText
@@ -2573,19 +2711,44 @@ Item {
                                                         text: "Cancel"
                                                         font.family: root.font
                                                         font.pixelSize: 11
-                                                        color: root.theme.textSecondary
+                                                        font.bold: true
+                                                        color: root.theme.textPrimary
                                                     }
 
                                                     MouseArea {
-                                                        id: cancelPromptMouse
                                                         anchors.fill: parent
                                                         cursorShape: Qt.PointingHandCursor
-                                                        hoverEnabled: true
+                                                        onClicked: root.confirmingUnbindUid = -1
+                                                    }
+                                                }
+
+                                                // Confirm Yes Button
+                                                Rectangle {
+                                                    implicitWidth: yesBtnText.implicitWidth + 20
+                                                    height: 26
+                                                    radius: 6
+                                                    color: confYesHover.hovered ? "#ee3333" : "#ff5555"
+
+                                                    Behavior on color { ColorAnimation { duration: 140 } }
+
+                                                    HoverHandler { id: confYesHover }
+
+                                                    Text {
+                                                        id: yesBtnText
+                                                        anchors.centerIn: parent
+                                                        text: "Yes, Unbind"
+                                                        font.family: root.font
+                                                        font.pixelSize: 11
+                                                        font.bold: true
+                                                        color: "#ffffff"
+                                                    }
+
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
                                                         onClicked: {
                                                             root.confirmingUnbindUid = -1;
-                                                            root.editingUid = -1;
-                                                            root.editingItem = null;
-                                                            root.isCapturingKey = false;
+                                                            root.deleteKeybind(rowItem.modelData);
                                                         }
                                                     }
                                                 }

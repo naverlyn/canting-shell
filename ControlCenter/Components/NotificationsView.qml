@@ -76,7 +76,11 @@ Column {
 
             Connections {
                 target: delegateBridge.notif
-                function onLastGenerationChanged() {
+                ignoreUnknownSignals: true
+                function onSummaryChanged() {
+                    extractTimer.restart();
+                }
+                function onBodyChanged() {
                     extractTimer.restart();
                 }
             }
@@ -253,6 +257,12 @@ Column {
         implicitHeight: height
         clip: true
         spacing: 12
+        interactive: contentHeight > height
+        boundsBehavior: Flickable.StopAtBounds
+
+        displaced: Transition {
+            NumberAnimation { properties: "y"; duration: 220; easing.type: Easing.OutCubic }
+        }
         
         model: root.visible ? root.notifGroups : []
         visible: root.historyModel.length > 0
@@ -335,18 +345,79 @@ Column {
                 spacing: 8
 
                 Repeater {
-                    model: groupDelegate.expanded ? groupDelegate.items : groupDelegate.items.slice(0, 1)
+                    model: groupDelegate.items
 
                     delegate: Item {
                         id: notifWrap
+                        required property var modelData
+                        required property int index
+
+                        readonly property bool isPrimary: index === 0
+                        readonly property bool isVisibleInStack: isPrimary || groupDelegate.expanded
+                        property bool isDismissing: false
+                        property real dismissTargetX: 0
+
                         width: parent.width
-                        height: notifDelegate.height + peekLayers.height
+                        readonly property real naturalHeight: notifDelegate.implicitHeight + (isPrimary ? peekLayers.height : 0)
+                        readonly property real targetHeight: (isVisibleInStack && !isDismissing) ? naturalHeight : 0
+
+                        height: targetHeight
                         implicitHeight: height
+                        visible: height > 0 || opacity > 0
+                        clip: true
+
+                        Behavior on height {
+                            enabled: !notifWrap.isDismissing
+                            NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
+                        }
+                        Behavior on opacity {
+                            enabled: !notifWrap.isDismissing && !dragArea.drag.active
+                            NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                        }
+
+                        opacity: (isVisibleInStack && !isDismissing)
+                            ? (1.0 - Math.min(0.65, Math.abs(notifDelegate.x) / (width * 0.75)))
+                            : 0
+
+                        function triggerDismiss(directionX) {
+                            if (isDismissing) return;
+                            isDismissing = true;
+                            dismissTargetX = directionX !== undefined ? directionX : (width + 40);
+                            dismissAnim.start();
+                        }
+
+                        ParallelAnimation {
+                            id: dismissAnim
+                            NumberAnimation {
+                                target: notifDelegate
+                                property: "x"
+                                to: notifWrap.dismissTargetX
+                                duration: 220
+                                easing.type: Easing.OutCubic
+                            }
+                            NumberAnimation {
+                                target: notifWrap
+                                property: "opacity"
+                                to: 0
+                                duration: 180
+                                easing.type: Easing.OutCubic
+                            }
+                            NumberAnimation {
+                                target: notifWrap
+                                property: "height"
+                                to: 0
+                                duration: 220
+                                easing.type: Easing.OutCubic
+                            }
+                            onFinished: {
+                                root.dismissNotif(notifDelegate.currentNotifId);
+                            }
+                        }
 
                         Rectangle {
                             id: notifDelegate
-                            property var notif: modelData
-                            property int currentNotifId: modelData.notifId
+                            property var notif: notifWrap.modelData
+                            property int currentNotifId: notifWrap.modelData.notifId
 
                             width: parent.width
                             height: notifCardCol.implicitHeight + 24
@@ -356,6 +427,39 @@ Column {
                             border.color: root.theme.bgBorder
                             border.width: 1
                             clip: true
+
+                            transform: Translate {
+                                y: (!notifWrap.isPrimary && !groupDelegate.expanded) ? -12 : 0
+                                Behavior on y { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                            }
+
+                            Behavior on x {
+                                enabled: !dragArea.drag.active && !notifWrap.isDismissing
+                                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                            }
+
+                            MouseArea {
+                                id: dragArea
+                                anchors.fill: parent
+                                drag.target: notifDelegate
+                                drag.axis: Drag.XAxis
+                                drag.minimumX: -notifWrap.width * 1.2
+                                drag.maximumX: notifWrap.width * 1.2
+                                cursorShape: drag.active ? Qt.ClosedHandCursor : Qt.ArrowCursor
+                                z: 0
+
+                                onReleased: {
+                                    if (notifWrap.isDismissing) return;
+                                    const threshold = 80;
+                                    if (notifDelegate.x > threshold) {
+                                        notifWrap.triggerDismiss(notifWrap.width + 40);
+                                    } else if (notifDelegate.x < -threshold) {
+                                        notifWrap.triggerDismiss(-notifWrap.width - 40);
+                                    } else {
+                                        notifDelegate.x = 0;
+                                    }
+                                }
+                            }
 
                             // Left vertical accent line
                             Rectangle {
@@ -370,6 +474,7 @@ Column {
 
                             ColumnLayout {
                                 id: notifCardCol
+                                z: 1
                                 anchors { left: parent.left; right: parent.right; top: parent.top; margins: 10 }
                                 anchors.leftMargin: 16
                                 spacing: 6
@@ -495,7 +600,7 @@ Column {
                                                     anchors.fill: parent
                                                     hoverEnabled: true
                                                     cursorShape: Qt.PointingHandCursor
-                                                    onClicked: root.dismissNotif(notifDelegate.currentNotifId)
+                                                    onClicked: notifWrap.triggerDismiss(notifWrap.width + 40)
                                                 }
                                             }
                                         }
@@ -533,7 +638,7 @@ Column {
                                 // Stack badge pill row (+N) if grouped stack & collapsed
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    visible: groupDelegate.multi && !groupDelegate.expanded && index === 0
+                                    visible: groupDelegate.multi && !groupDelegate.expanded && notifWrap.isPrimary
 
                                     Item { Layout.fillWidth: true }
 
@@ -603,7 +708,7 @@ Column {
                                                         Quickshell.execDetached(["sh", "-c", modelData.customCmd]);
                                                     }
 
-                                                    root.dismissNotif(notifDelegate.currentNotifId);
+                                                    notifWrap.triggerDismiss(notifWrap.width + 40);
                                                 }
                                             }
                                         }
@@ -617,8 +722,13 @@ Column {
                             id: peekLayers
                             y: notifDelegate.height
                             width: parent.width
-                            height: (groupDelegate.multi && !groupDelegate.expanded && index === 0) ? 14 : 0
-                            visible: height > 0
+                            height: (groupDelegate.multi && !groupDelegate.expanded && notifWrap.isPrimary) ? 14 : 0
+                            visible: height > 0 || opacity > 0
+                            opacity: (groupDelegate.multi && !groupDelegate.expanded && notifWrap.isPrimary) ? 1.0 : 0.0
+
+                            Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                            Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
                             Rectangle {
                                 y: 2
                                 anchors.horizontalCenter: parent.horizontalCenter

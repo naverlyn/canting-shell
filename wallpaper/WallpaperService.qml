@@ -7,7 +7,7 @@ import Quickshell.Io
 Singleton {
   id: root
 
-  property list<string> wallpapers: []
+  property var wallpapers: []
   property string currentWallpaper: ""
   property string backend: "awww + wallust"
   property bool generatingTheme: false
@@ -155,10 +155,27 @@ Singleton {
     return (directories || []).includes(norm);
   }
 
+  readonly property string dirsConfigPath: Qt.resolvedUrl("../wallpaper_dirs.conf").toString().replace(/^file:\/\//, "")
+  readonly property string wallpaperConfPath: Qt.resolvedUrl("../wallpaper.conf").toString().replace(/^file:\/\//, "")
+  readonly property string syncConfPath: Qt.resolvedUrl("../wallpaper_sync.conf").toString().replace(/^file:\/\//, "")
+
+  property bool autoSyncPalette: false
+
+  // Load wallpaper palette auto-sync state
+  FileView {
+    id: syncConfigFile
+    path: root.syncConfPath
+    watchChanges: true
+    onTextChanged: {
+      const saved = syncConfigFile.text().trim();
+      root.autoSyncPalette = (saved === "true");
+    }
+  }
+
   // Load configured wallpaper directories
   FileView {
     id: dirsConfigFile
-    path: Quickshell.env("HOME") + "/.config/quickshell/wallpaper_dirs.conf"
+    path: root.dirsConfigPath
     watchChanges: true
     onTextChanged: root.loadDirectories()
   }
@@ -166,11 +183,29 @@ Singleton {
   // Load saved wallpaper path
   FileView {
     id: configFile
-    path: Quickshell.env("HOME") + "/.config/quickshell/wallpaper.conf"
+    path: root.wallpaperConfPath
     watchChanges: true
     onTextChanged: {
       const saved = configFile.text().trim();
       if (saved !== "") root.currentWallpaper = saved;
+    }
+  }
+
+  function setAutoSync(enabled) {
+    root.autoSyncPalette = enabled;
+    saveSyncProcess.command = [
+      "sh", "-c",
+      'printf "%s" "$1" > "$2"',
+      "saveSync", enabled ? "true" : "false", root.syncConfPath
+    ];
+    saveSyncProcess.running = true;
+    if (enabled && root.currentWallpaper) {
+      root.generatingTheme = true;
+      wallustProcess.command = [
+        "env", "WALLPAPER_THEME_TOOL=wallust",
+        "sh", Qt.resolvedUrl("../ThemeSwitcher/wallpaper-theme/set.sh").toString().replace(/^file:\/\//, ""), root.currentWallpaper
+      ];
+      wallustProcess.running = true;
     }
   }
 
@@ -208,8 +243,8 @@ Singleton {
     const content = (root.directories || []).map(d => displayPath(d)).join("\n");
     saveDirsProcess.command = [
       "sh", "-c",
-      'if [ -z "$1" ]; then : > "$HOME/.config/quickshell/wallpaper_dirs.conf"; else printf "%s\\n" "$1" > "$HOME/.config/quickshell/wallpaper_dirs.conf"; fi',
-      "saveDirs", content
+      'if [ -z "$1" ]; then : > "$2"; else printf "%s\\n" "$1" > "$2"; fi',
+      "saveDirs", content, root.dirsConfigPath
     ];
     saveDirsProcess.running = true;
   }
@@ -255,7 +290,7 @@ Singleton {
 
     scanner.command = [
       "sh", "-c",
-      'find "$@" -maxdepth 2 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \\) 2>/dev/null | sort -u | head -2000',
+      'find "$@" -maxdepth 2 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \\) 2>/dev/null | sort -u',
       "find",
       ...directories.map(d => normalizePath(d))
     ];
@@ -266,30 +301,44 @@ Singleton {
     if (!path || path === "") return;
     currentWallpaper = path;
 
-    // 1. Change wallpaper via awww
+    // 1. Change wallpaper via available daemon (awww, swww, or hyprpaper)
     setProcess.command = [
-      "awww", "img", path,
-      "--transition-type", "grow",
-      "--transition-pos", "center",
-      "--transition-duration", "1"
+      "sh", "-c",
+      'if command -v awww >/dev/null 2>&1; then ' +
+        'awww img "$1" --transition-type grow --transition-pos center --transition-duration 1; ' +
+      'elif command -v swww >/dev/null 2>&1; then ' +
+        'swww img "$1" --transition-type grow --transition-pos center --transition-duration 1; ' +
+      'elif command -v hyprpaper >/dev/null 2>&1 && command -v hyprctl >/dev/null 2>&1; then ' +
+        'hyprctl hyprpaper preload "$1" 2>/dev/null || true; ' +
+        'hyprctl hyprpaper wallpaper ",$1" 2>/dev/null || true; ' +
+      'fi',
+      "setWallpaper", path
     ];
     setProcess.running = true;
 
     // 2. Save current wallpaper path to config
     saveProcess.command = [
       "sh", "-c",
-      'printf "%s" "$1" > "$HOME/.config/quickshell/wallpaper.conf"',
-      "sh", path
+      'printf "%s" "$1" > "$2"',
+      "sh", path, root.wallpaperConfPath
     ];
     saveProcess.running = true;
 
-    // 3. Generate ~/.config/quickshell/ThemeSwitcher/wallpaper-theme.json via set.sh (wallust).
-    root.generatingTheme = true;
-    wallustProcess.command = [
-      "env", "WALLPAPER_THEME_TOOL=wallust",
-      "sh", Quickshell.env("HOME") + "/.config/quickshell/ThemeSwitcher/wallpaper-theme/set.sh", path
-    ];
-    wallustProcess.running = true;
+    // 3. Generate wallpaper-theme.json via set.sh only if autoSyncPalette is enabled
+    if (root.autoSyncPalette) {
+      root.generatingTheme = true;
+      wallustProcess.command = [
+        "env", "WALLPAPER_THEME_TOOL=wallust",
+        "sh", Qt.resolvedUrl("../ThemeSwitcher/wallpaper-theme/set.sh").toString().replace(/^file:\/\//, ""), path
+      ];
+      wallustProcess.running = true;
+    }
+  }
+
+  Process {
+    id: saveSyncProcess
+    command: []
+    running: false
   }
 
   Process {

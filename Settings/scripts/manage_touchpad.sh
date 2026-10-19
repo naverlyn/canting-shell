@@ -14,7 +14,7 @@ get_status_file() {
 
 get_touchpad_device() {
     local dev=""
-    for conf in "$HOME/.config/hypr/UserConfigs/Laptops.conf" "$HOME/.config/hypr/configs/Laptops.conf"; do
+    for conf in "$HOME/.config/hypr/UserConfigs/Laptops.conf" "$HOME/.config/hypr/configs/Laptops.conf" "$HOME/.config/hypr/hyprland.conf"; do
         if [[ -f "$conf" ]]; then
             dev="$(awk -F= '/^\$Touchpad_Device/ { gsub(/[[:space:]]*/, "", $1); gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2; exit }' "$conf" 2>/dev/null || true)"
             if [[ -n "$dev" ]]; then
@@ -24,8 +24,23 @@ get_touchpad_device() {
         fi
     done
 
-    if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-        dev="$(hyprctl devices -j 2>/dev/null | jq -r '.mice[]? | select(.name | test("touchpad|trackpad|synaptics|elan"; "i")) | .name' 2>/dev/null | head -n1 || true)"
+    if command -v hyprctl >/dev/null 2>&1; then
+        if command -v jq >/dev/null 2>&1; then
+            dev="$(hyprctl devices -j 2>/dev/null | jq -r '.mice[]? | select(.name | test("touchpad|trackpad|synaptics|elan"; "i")) | .name' 2>/dev/null | head -n1 || true)"
+        elif command -v python3 >/dev/null 2>&1; then
+            dev="$(hyprctl devices -j 2>/dev/null | python3 -c '
+import sys, json, re
+try:
+    data = json.load(sys.stdin)
+    for m in data.get("mice", []):
+        name = m.get("name", "")
+        if re.search(r"touchpad|trackpad|synaptics|elan", name, re.I):
+            print(name)
+            break
+except Exception:
+    pass
+' 2>/dev/null || true)"
+        fi
         if [[ -n "$dev" && "$dev" != "null" ]]; then
             echo "$dev"
             return 0
@@ -56,7 +71,9 @@ set_status() {
     dev="$(get_touchpad_device)"
     if [[ -n "$dev" ]]; then
         hyprctl keyword "device:${dev}:enabled" "$target" -r >/dev/null 2>&1 || true
+        hyprctl keyword "device[${dev}]:enabled" "$target" >/dev/null 2>&1 || true
     fi
+    hyprctl keyword 'input:touchpad:enabled' "$target" >/dev/null 2>&1 || true
     hyprctl keyword '$TOUCHPAD_ENABLED' "$target" >/dev/null 2>&1 || true
     echo "$target"
 }

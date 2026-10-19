@@ -1,37 +1,50 @@
 {
   "barVisible": true,
-  "position": "bottom",
+  "position": "top",
   "barHeight": 32,
   "floating": false,
-  "barOpacity": 0.41,
+  "barOpacity": 0.85,
+  "pillRadius": 10,
+  "pillOpacity": 1,
+  "hidePill": true,
+  "activeStyle": "underline",
   "allMonitors": true,
+  "innerCorners": true,
   "bars": [
     {
       "id": "bar_1",
       "name": "Primary Bar",
       "enabled": true,
-      "position": "bottom",
+      "position": "top",
       "barHeight": 32,
       "floating": false,
-      "barOpacity": 0.41,
+      "barOpacity": 0.85,
+      "pillRadius": 10,
+      "pillOpacity": 1,
+      "hidePill": true,
+      "activeStyle": "underline",
       "allMonitors": true,
+      "innerCorners": true,
       "panels": [
         [
           "appGrid",
-          "cpu",
+          "globalMenu",
+          "windowTitle",
+          "cava"
+        ],
+        [
+          "weather"
+        ],
+        [
           "temp",
           "memory",
           "disk",
-          "network"
-        ],
-        [
-          "windowTitle"
-        ],
-        [
-          "clock",
+          "cpu",
+          "network",
           "workspaces",
-          "weather",
-          "controlCenter"
+          "tray",
+          "controlCenter",
+          "clock"
         ]
       ]
     }
@@ -39,49 +52,55 @@
   "panels": [
     [
       "appGrid",
-      "cpu",
+      "globalMenu",
+      "windowTitle",
+      "cava"
+    ],
+    [
+      "weather"
+    ],
+    [
       "temp",
       "memory",
       "disk",
-      "network"
-    ],
-    [
-      "windowTitle"
-    ],
-    [
-      "clock",
+      "cpu",
+      "network",
       "workspaces",
-      "weather",
-      "controlCenter"
+      "tray",
+      "controlCenter",
+      "clock"
     ]
   ],
   "leftWidgets": [
     "appGrid",
-    "cpu",
+    "globalMenu",
+    "windowTitle",
+    "cava"
+  ],
+  "centerWidgets": [
+    "weather"
+  ],
+  "rightWidgets": [
     "temp",
     "memory",
     "disk",
-    "network"
-  ],
-  "centerWidgets": [
-    "windowTitle"
-  ],
-  "rightWidgets": [
-    "clock",
+    "cpu",
+    "network",
     "workspaces",
-    "weather",
-    "controlCenter"
+    "tray",
+    "controlCenter",
+    "clock"
   ],
   "removedWidgets": [
-    "media",
-    "@hidden:bar_1791822602885:clock",
-    "cpu",
-    "workspaces",
-    "clock",
+    "@color:bar_1:appGrid=textPrimary",
+    "globalMenu",
     "volume",
-    "battery",
+    "clock",
+    "workspaces",
+    "appGrid",
     "idleInhibitor",
-    "tray"
+    "media",
+    "battery"
   ],
   "showAppGrid": true,
   "showCpu": true,
@@ -93,14 +112,36 @@
   "showNetUp": true,
   "netCompact": false,
   "showWindowTitle": true,
+  "showGlobalMenu": true,
+  "showGlobalMenuIcon": false,
   "showWorkspaces": true,
+  "workspaceStyle": "index",
+  "workspaceScrollSwitch": true,
   "showWeather": true,
+  "weatherLocation": "Bekasi",
+  "weatherUnit": "m",
+  "weatherMode": "full",
+  "weatherIntervalMinutes": 15,
   "showTime": true,
   "showSeconds": true,
   "showDate": true,
   "showTray": true,
   "showControlCenter": true,
   "showBattery": true,
+  "batteryShowPercentage": true,
+  "batteryLowThreshold": 20,
   "showVolume": true,
-  "showMedia": true
+  "showMedia": true,
+  "showCava": true,
+  "cavaMode": "compact",
+  "cavaBars": 8,
+  "cavaFramerate": 30,
+  "cavaStyle": "line",
+  "cavaStereo": false,
+  "cavaAutoHide": false,
+  "cavaShowIcon": false,
+  "hwShowIcons": true,
+  "hwAlertEnabled": true,
+  "hwAlertThreshold": 85,
+  "hwPollInterval": 2
 }

@@ -43,6 +43,62 @@ Item {
     property string brightnessDevice: ""
     property bool hasBacklightDevice: false
 
+    /* Night Light state */
+    property bool nightLightEnabled: false
+    property int nightLightTemp: 4500
+    readonly property string nightLightScript: Qt.resolvedUrl("../../ControlCenter/scripts/nightlight.sh").toString().replace(/^file:\/\//, "")
+
+    function getNightLightLabel(temp) {
+        if (temp <= 3500) return "Very Warm · Ember glow";
+        if (temp <= 4200) return "Warm · Cozy candle tone";
+        if (temp <= 4800) return "Balanced · Warm sunlight";
+        if (temp <= 5400) return "Mild · Soft incandescent";
+        return "Cool · Subtle reduction";
+    }
+
+    Process {
+        id: nlStatusProc
+        command: [root.nightLightScript, "status"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: root.nightLightEnabled = (text.trim() === "on")
+        }
+    }
+
+    Process {
+        id: nlSetProc
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: root.nightLightEnabled = (text.trim() === "on")
+        }
+    }
+
+    Timer {
+        id: nlDebounceTimer
+        interval: 200
+        repeat: false
+        onTriggered: {
+            if (root.nightLightEnabled) {
+                nlSetProc.command = [root.nightLightScript, "set", String(root.nightLightTemp)];
+                nlSetProc.running = true;
+            }
+        }
+    }
+
+    function setNightLight(enabled) {
+        root.nightLightEnabled = enabled;
+        nlSetProc.command = [root.nightLightScript, enabled ? "on" : "off", String(root.nightLightTemp)];
+        nlSetProc.running = true;
+    }
+
+    function setNightLightTemp(temp) {
+        const clamped = Math.max(3000, Math.min(6000, Math.round(Number(temp) || 4500)));
+        root.nightLightTemp = clamped;
+        if (root.nightLightEnabled) {
+            nlDebounceTimer.restart();
+        }
+    }
+
     /* Compositor display options state */
     property int vrrMode: 0          /* 0 = Off, 1 = On, 2 = Fullscreen only */
     property bool allowTearing: false
@@ -208,14 +264,17 @@ Item {
         const rawList = [];
         for (let i = 0; i < found.modes.length; i++) {
             const m = found.modes[i];
-            const label = Math.abs(m.rateNum - Math.round(m.rateNum)) < 0.04
+            const diffFromInt = Math.abs(m.rateNum - Math.round(m.rateNum));
+            const isNearInt = diffFromInt < 0.35;
+            const label = isNearInt
                 ? (Math.round(m.rateNum) + " Hz")
                 : (m.rateNum.toFixed(1) + " Hz");
             rawList.push({
                 mode: m.mode,
                 rate: m.rate,
                 rateNum: m.rateNum,
-                label: label
+                label: label,
+                isNearInt: isNearInt
             });
         }
         rawList.sort((a, b) => b.rateNum - a.rateNum);
@@ -229,6 +288,10 @@ Item {
                 byLabel[item.label] = item;
                 result.push(item);
             } else if (item.mode === activeMode) {
+                const idx = result.indexOf(byLabel[item.label]);
+                if (idx !== -1) result[idx] = item;
+                byLabel[item.label] = item;
+            } else if (!byLabel[item.label].isNearInt && item.isNearInt) {
                 const idx = result.indexOf(byLabel[item.label]);
                 if (idx !== -1) result[idx] = item;
                 byLabel[item.label] = item;
@@ -401,6 +464,7 @@ Item {
         target: MonitorService
 
         function onMonitorsLoaded() {
+            if (MonitorService._pendingVerify) return;
             if (root.editState.length === 0 || (!root.hasUnsavedChanges && !root.isApplying)) {
                 root.syncFromService();
             }
@@ -412,7 +476,7 @@ Item {
             if (hasErrors) {
                 root.applyError = errorText;
             } else {
-                MonitorService.persistToFile(root.editState);
+                MonitorService.persistToFile(MonitorService._lastEdits);
                 root.syncFromService();
                 root.showStatus("Display configuration applied & saved");
             }
@@ -515,12 +579,6 @@ Item {
         running: false
     }
 
-    Process {
-        id: dpmsOffProc
-        command: ["hyprctl", "dispatch", "dpms", "off"]
-        running: false
-    }
-
     onVisibleChanged: {
         if (visible) {
             if (MonitorService.monitors.length > 0 && root.editState.length === 0) {
@@ -553,10 +611,12 @@ Item {
 
     /* Main Scrollable View */
     Flickable {
+        id: dispFlickable
         anchors.fill: parent
         contentHeight: mainCol.implicitHeight + 36
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        interactive: !sliderMouse.pressed
 
         ScrollBar.vertical: ScrollBar {
             policy: ScrollBar.AsNeeded
@@ -648,39 +708,6 @@ Item {
                             brightProc.running = true;
                             root.showStatus("Refreshed display status");
                         }
-                    }
-                }
-
-                /* Open Full Floating Editor Button (Text-only) */
-                Rectangle {
-                    id: fullEditorHeaderBtn
-                    implicitWidth: fullEditorText.implicitWidth + 20
-                    height: 30
-                    radius: 7
-                    color: fullEditorHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgSurface
-                    border.color: fullEditorHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
-                    border.width: 1
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                    Behavior on border.color { ColorAnimation { duration: 140 } }
-
-                    HoverHandler { id: fullEditorHover }
-
-                    Text {
-                        id: fullEditorText
-                        anchors.centerIn: parent
-                        text: "Full Canvas"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        font.bold: true
-                        color: fullEditorHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: openMonitorsProc.running = true
                     }
                 }
             }
@@ -1424,7 +1451,7 @@ Item {
                         /* Row 3: Refresh Rate Selector */
                         Item {
                             Layout.fillWidth: true
-                            implicitHeight: Math.max(52, rateRowLayout.implicitHeight + 18)
+                            implicitHeight: 52
                             opacity: (root.selectedMonitor && root.selectedMonitor.disabled) ? 0.45 : 1.0
                             enabled: !(root.selectedMonitor && root.selectedMonitor.disabled)
 
@@ -1457,48 +1484,62 @@ Item {
 
                                 Item { Layout.fillWidth: true }
 
-                                Flow {
-                                    Layout.maximumWidth: 380
+                                /* Segmented Refresh Rate Control */
+                                Rectangle {
+                                    visible: root.availableRatesForCurrentRes.length > 0
+                                    width: 360
+                                    height: 32
+                                    radius: 7
+                                    color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
+                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                    border.width: 1
                                     Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                                    spacing: 6
 
-                                    Repeater {
-                                        model: root.availableRatesForCurrentRes
-                                        delegate: Rectangle {
-                                            required property var modelData
-                                            readonly property bool isSelected: root.selectedMonitor
-                                                && root.selectedMonitor.selectedMode === modelData.mode
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        spacing: 3
 
-                                            height: 28
-                                            implicitWidth: Math.max(58, ratePillText.implicitWidth + 18)
-                                            radius: 6
-                                            color: isSelected
-                                                ? root.theme.accentPrimary
-                                                : (rateHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase)
-                                            border.color: isSelected
-                                                ? root.theme.accentPrimary
-                                                : (rateHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
-                                            border.width: 1
+                                        Repeater {
+                                            model: root.availableRatesForCurrentRes
+                                            delegate: Rectangle {
+                                                required property var modelData
+                                                readonly property bool isSelected: {
+                                                    if (!root.selectedMonitor) return false;
+                                                    if (root.selectedMonitor.selectedMode === modelData.mode) return true;
+                                                    const curRate = parseFloat(root.currentRateString);
+                                                    return Math.abs(curRate - modelData.rateNum) < 0.35;
+                                                }
 
-                                            Behavior on color { ColorAnimation { duration: 130 } }
-                                            Behavior on border.color { ColorAnimation { duration: 130 } }
+                                                Layout.fillWidth: true
+                                                Layout.fillHeight: true
+                                                radius: 5
+                                                color: isSelected
+                                                    ? root.theme.accentPrimary
+                                                    : (rateHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                                                border.color: isSelected ? root.theme.accentPrimary : "transparent"
+                                                border.width: isSelected ? 1 : 0
 
-                                            HoverHandler { id: rateHover }
+                                                Behavior on color { ColorAnimation { duration: 120 } }
 
-                                            Text {
-                                                id: ratePillText
-                                                anchors.centerIn: parent
-                                                text: modelData.label
-                                                font.family: root.font
-                                                font.pixelSize: 11
-                                                font.bold: isSelected
-                                                color: isSelected ? root.theme.bgBase : root.theme.textPrimary
-                                            }
+                                                HoverHandler { id: rateHover }
 
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.selectMode(modelData.mode)
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: modelData.label
+                                                    font.family: root.font
+                                                    font.pixelSize: 11
+                                                    font.bold: isSelected
+                                                    color: isSelected
+                                                        ? (root.theme.bgBase ?? "#1a1b26")
+                                                        : (rateHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: root.selectMode(modelData.mode)
+                                                }
                                             }
                                         }
                                     }
@@ -1518,7 +1559,7 @@ Item {
                         /* Row 4: Scale Selector */
                         Item {
                             Layout.fillWidth: true
-                            implicitHeight: Math.max(54, scaleRowLayout.implicitHeight + 18)
+                            implicitHeight: 52
                             opacity: (root.selectedMonitor && root.selectedMonitor.disabled) ? 0.45 : 1.0
                             enabled: !(root.selectedMonitor && root.selectedMonitor.disabled)
 
@@ -1551,54 +1592,65 @@ Item {
 
                                 Item { Layout.fillWidth: true }
 
-                                Flow {
+                                /* Segmented Scale Control */
+                                Rectangle {
+                                    width: 360
+                                    height: 32
+                                    radius: 7
+                                    color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
+                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                    border.width: 1
                                     Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                                    spacing: 5
 
-                                    Repeater {
-                                        model: [
-                                            { val: 0.75, label: "75%" },
-                                            { val: 1.0,  label: "100%" },
-                                            { val: 1.25, label: "125%" },
-                                            { val: 1.5,  label: "150%" },
-                                            { val: 1.75, label: "175%" },
-                                            { val: 2.0,  label: "200%" }
-                                        ]
-                                        delegate: Rectangle {
-                                            required property var modelData
-                                            readonly property bool isSelected: root.selectedMonitor
-                                                && Math.abs(root.selectedMonitor.scale - modelData.val) < 0.02
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        spacing: 3
 
-                                            height: 28
-                                            implicitWidth: Math.max(48, scaleText.implicitWidth + 14)
-                                            radius: 6
-                                            color: isSelected
-                                                ? root.theme.accentPrimary
-                                                : (scalePillHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase)
-                                            border.color: isSelected
-                                                ? root.theme.accentPrimary
-                                                : (scalePillHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
-                                            border.width: 1
+                                        Repeater {
+                                            model: [
+                                                { val: 0.75, label: "75%" },
+                                                { val: 1.0,  label: "100%" },
+                                                { val: 1.25, label: "125%" },
+                                                { val: 1.5,  label: "150%" },
+                                                { val: 1.75, label: "175%" },
+                                                { val: 2.0,  label: "200%" }
+                                            ]
+                                            delegate: Rectangle {
+                                                required property var modelData
+                                                readonly property bool isSelected: root.selectedMonitor
+                                                    && Math.abs(root.selectedMonitor.scale - modelData.val) < 0.02
 
-                                            Behavior on color { ColorAnimation { duration: 130 } }
-                                            Behavior on border.color { ColorAnimation { duration: 130 } }
+                                                Layout.fillWidth: true
+                                                Layout.fillHeight: true
+                                                radius: 5
+                                                color: isSelected
+                                                    ? root.theme.accentPrimary
+                                                    : (scalePillHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                                                border.color: isSelected ? root.theme.accentPrimary : "transparent"
+                                                border.width: isSelected ? 1 : 0
 
-                                            HoverHandler { id: scalePillHover }
+                                                Behavior on color { ColorAnimation { duration: 120 } }
 
-                                            Text {
-                                                id: scaleText
-                                                anchors.centerIn: parent
-                                                text: modelData.label
-                                                font.family: root.font
-                                                font.pixelSize: 11
-                                                font.bold: isSelected
-                                                color: isSelected ? root.theme.bgBase : root.theme.textPrimary
-                                            }
+                                                HoverHandler { id: scalePillHover }
 
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.selectScale(modelData.val)
+                                                Text {
+                                                    id: scaleText
+                                                    anchors.centerIn: parent
+                                                    text: modelData.label
+                                                    font.family: root.font
+                                                    font.pixelSize: 11
+                                                    font.bold: isSelected
+                                                    color: isSelected
+                                                        ? (root.theme.bgBase ?? "#1a1b26")
+                                                        : (scalePillHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: root.selectScale(modelData.val)
+                                                }
                                             }
                                         }
                                     }
@@ -1615,10 +1667,10 @@ Item {
                             color: Qt.rgba(1, 1, 1, 0.05)
                         }
 
-                        /* Row 5: Orientation / Rotation (Text-only pills) */
+                        /* Row 5: Orientation / Rotation (Segmented control) */
                         Item {
                             Layout.fillWidth: true
-                            implicitHeight: 54
+                            implicitHeight: 52
                             opacity: (root.selectedMonitor && root.selectedMonitor.disabled) ? 0.45 : 1.0
                             enabled: !(root.selectedMonitor && root.selectedMonitor.disabled)
 
@@ -1650,52 +1702,63 @@ Item {
 
                                 Item { Layout.fillWidth: true }
 
-                                RowLayout {
-                                    spacing: 5
-                                    Layout.alignment: Qt.AlignVCenter
+                                /* Segmented Orientation Control */
+                                Rectangle {
+                                    width: 360
+                                    height: 32
+                                    radius: 7
+                                    color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
+                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                    border.width: 1
+                                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
 
-                                    Repeater {
-                                        model: [
-                                            { t: 0, label: "0°" },
-                                            { t: 1, label: "90°" },
-                                            { t: 2, label: "180°" },
-                                            { t: 3, label: "270°" }
-                                        ]
-                                        delegate: Rectangle {
-                                            required property var modelData
-                                            readonly property bool isSelected: root.selectedMonitor
-                                                && root.selectedMonitor.transform === modelData.t
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        spacing: 3
 
-                                            height: 28
-                                            implicitWidth: Math.max(48, rotText.implicitWidth + 18)
-                                            radius: 6
-                                            color: isSelected
-                                                ? root.theme.accentPrimary
-                                                : (rotPillHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase)
-                                            border.color: isSelected
-                                                ? root.theme.accentPrimary
-                                                : (rotPillHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
-                                            border.width: 1
+                                        Repeater {
+                                            model: [
+                                                { t: 0, label: "0°" },
+                                                { t: 1, label: "90°" },
+                                                { t: 2, label: "180°" },
+                                                { t: 3, label: "270°" }
+                                            ]
+                                            delegate: Rectangle {
+                                                required property var modelData
+                                                readonly property bool isSelected: root.selectedMonitor
+                                                    && root.selectedMonitor.transform === modelData.t
 
-                                            Behavior on color { ColorAnimation { duration: 130 } }
-                                            Behavior on border.color { ColorAnimation { duration: 130 } }
+                                                Layout.fillWidth: true
+                                                Layout.fillHeight: true
+                                                radius: 5
+                                                color: isSelected
+                                                    ? root.theme.accentPrimary
+                                                    : (rotPillHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                                                border.color: isSelected ? root.theme.accentPrimary : "transparent"
+                                                border.width: isSelected ? 1 : 0
 
-                                            HoverHandler { id: rotPillHover }
+                                                Behavior on color { ColorAnimation { duration: 120 } }
 
-                                            Text {
-                                                id: rotText
-                                                anchors.centerIn: parent
-                                                text: modelData.label
-                                                font.family: root.font
-                                                font.pixelSize: 11
-                                                font.bold: isSelected
-                                                color: isSelected ? root.theme.bgBase : root.theme.textPrimary
-                                            }
+                                                HoverHandler { id: rotPillHover }
 
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.selectTransform(modelData.t)
+                                                Text {
+                                                    id: rotText
+                                                    anchors.centerIn: parent
+                                                    text: modelData.label
+                                                    font.family: root.font
+                                                    font.pixelSize: 11
+                                                    font.bold: isSelected
+                                                    color: isSelected
+                                                        ? (root.theme.bgBase ?? "#1a1b26")
+                                                        : (rotPillHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: root.selectTransform(modelData.t)
+                                                }
                                             }
                                         }
                                     }
@@ -2022,15 +2085,25 @@ Item {
                                         id: sliderMouse
                                         anchors.fill: parent
                                         anchors.margins: -8
+                                        preventStealing: true
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
+                                        onPressed: (mouse) => {
+                                            mouse.accepted = true;
+                                            if (sliderTrack.width > 0) {
+                                                const pct = Math.max(1, Math.min(100, Math.round((mouse.x / sliderTrack.width) * 100)));
+                                                root.setBrightnessLevel(pct);
+                                            }
+                                        }
                                         onPositionChanged: (mouse) => {
                                             if (pressed && sliderTrack.width > 0) {
+                                                mouse.accepted = true;
                                                 const pct = Math.max(1, Math.min(100, Math.round((mouse.x / sliderTrack.width) * 100)));
                                                 root.setBrightnessLevel(pct);
                                             }
                                         }
                                         onClicked: (mouse) => {
+                                            mouse.accepted = true;
                                             if (sliderTrack.width > 0) {
                                                 const pct = Math.max(1, Math.min(100, Math.round((mouse.x / sliderTrack.width) * 100)));
                                                 root.setBrightnessLevel(pct);
@@ -2092,45 +2165,83 @@ Item {
 
                                 Item { Layout.fillWidth: true }
 
-                                RowLayout {
-                                    spacing: 6
+                                Rectangle {
+                                    id: brightPresetTrack
+                                    implicitWidth: 280
+                                    implicitHeight: 32
+                                    width: 280
+                                    height: 32
+                                    radius: 7
+                                    color: root.theme.bgBase
+                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                    border.width: 1
                                     Layout.alignment: Qt.AlignVCenter
 
-                                    Repeater {
-                                        model: [10, 25, 50, 75, 100]
-                                        delegate: Rectangle {
-                                            required property int modelData
-                                            readonly property bool isCurrent: Math.abs(root.brightness - modelData) <= 2
+                                    readonly property var presets: [10, 25, 50, 75, 100]
+                                    readonly property int activeIdx: {
+                                        for (let i = 0; i < presets.length; i++) {
+                                            if (Math.abs(root.brightness - presets[i]) <= 2) return i;
+                                        }
+                                        return -1;
+                                    }
+                                    readonly property real cellWidth: (width - 6 - 16) / 5
 
-                                            width: 48
-                                            height: 26
-                                            radius: 6
-                                            color: isCurrent
-                                                ? root.theme.accentPrimary
-                                                : (presetHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase)
-                                            border.color: isCurrent
-                                                ? root.theme.accentPrimary
-                                                : (presetHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
-                                            border.width: 1
+                                    /* Sliding Selection Pill */
+                                    Rectangle {
+                                        visible: opacity > 0
+                                        opacity: brightPresetTrack.activeIdx >= 0 ? 1.0 : 0.0
+                                        y: 3
+                                        height: parent.height - 6
+                                        width: brightPresetTrack.cellWidth
+                                        x: brightPresetTrack.activeIdx >= 0 ? (3 + brightPresetTrack.activeIdx * (brightPresetTrack.cellWidth + 4)) : 3
+                                        radius: 5
+                                        color: root.theme.bgSelected
+                                        border.color: root.theme.accentPrimary
+                                        border.width: 1
 
-                                            Behavior on color { ColorAnimation { duration: 130 } }
-                                            Behavior on border.color { ColorAnimation { duration: 130 } }
+                                        Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                                        Behavior on opacity { NumberAnimation { duration: 150 } }
+                                    }
 
-                                            HoverHandler { id: presetHover }
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        spacing: 4
 
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: modelData + "%"
-                                                font.family: root.font
-                                                font.pixelSize: 11
-                                                font.bold: isCurrent
-                                                color: isCurrent ? root.theme.bgBase : root.theme.textPrimary
-                                            }
+                                        Repeater {
+                                            model: brightPresetTrack.presets
 
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.setBrightnessLevel(modelData)
+                                            delegate: Rectangle {
+                                                id: bSegBtn
+                                                required property int modelData
+                                                required property int index
+                                                readonly property bool isSel: brightPresetTrack.activeIdx === bSegBtn.index
+
+                                                Layout.fillWidth: true
+                                                Layout.fillHeight: true
+                                                radius: 5
+                                                color: !isSel && bSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                                Behavior on color { ColorAnimation { duration: 140 } }
+
+                                                HoverHandler { id: bSegHover }
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: bSegBtn.modelData + "%"
+                                                    font.family: root.font
+                                                    font.pixelSize: 11
+                                                    font.bold: bSegBtn.isSel
+                                                    color: bSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
+                                                    opacity: bSegBtn.isSel || bSegHover.hovered ? 1.0 : 0.75
+                                                    Behavior on color { ColorAnimation { duration: 140 } }
+                                                    Behavior on opacity { NumberAnimation { duration: 140 } }
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: root.setBrightnessLevel(bSegBtn.modelData)
+                                                }
                                             }
                                         }
                                     }
@@ -2142,7 +2253,423 @@ Item {
             }
 
             /* ============================================================
-             * 4. Compositor & Power Group
+             * 4. Night Light (Color Temperature) Group
+             * ============================================================ */
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 4
+                    Layout.rightMargin: 4
+                    spacing: 8
+
+                    Text {
+                        text: "Night Light"
+                        font.family: root.font
+                        font.pixelSize: 13
+                        font.bold: true
+                        color: root.theme.textSecondary
+                    }
+
+                    Text {
+                        text: "· Warm blue-light filter to reduce eye strain"
+                        font.family: root.font
+                        font.pixelSize: 11
+                        color: root.theme.textMuted
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+
+                    Text {
+                        text: root.nightLightEnabled ? (root.nightLightTemp + " K · Active") : "Disabled"
+                        font.family: root.font
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: root.nightLightEnabled ? (root.theme.accentOrange ?? root.theme.accentPrimary) : root.theme.textMuted
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: nlGroupCol.implicitHeight + 16
+                    radius: 12
+                    color: root.theme.bgSurface
+                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.width: 1
+
+                    ColumnLayout {
+                        id: nlGroupCol
+                        anchors {
+                            left: parent.left
+                            right: parent.right
+                            top: parent.top
+                            margins: 8
+                        }
+                        spacing: 0
+
+                        /* Row 1: Enable Night Light Switch */
+                        Item {
+                            Layout.fillWidth: true
+                            height: 52
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 16
+
+                                ColumnLayout {
+                                    spacing: 2
+                                    Layout.fillWidth: true
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    Text {
+                                        text: "Night Light"
+                                        font.family: root.font
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        color: root.theme.textPrimary
+                                    }
+
+                                    Text {
+                                        text: "Apply warm color temperature filter to all connected displays"
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        color: root.theme.textSecondary
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+                                }
+
+                                /* Libadwaita Toggle Switch */
+                                Rectangle {
+                                    width: 44
+                                    height: 24
+                                    radius: 12
+                                    color: root.nightLightEnabled
+                                        ? root.theme.accentPrimary
+                                        : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3))
+                                    border.color: root.nightLightEnabled
+                                        ? root.theme.accentPrimary
+                                        : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15))
+                                    border.width: 1
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                                    Rectangle {
+                                        width: 18
+                                        height: 18
+                                        radius: 9
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        x: root.nightLightEnabled ? (parent.width - width - 3) : 3
+                                        color: root.nightLightEnabled
+                                            ? (root.theme.bgBase ?? "#ffffff")
+                                            : root.theme.textPrimary
+
+                                        Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        preventStealing: true
+                                        onClicked: root.setNightLight(!root.nightLightEnabled)
+                                    }
+                                }
+                            }
+                        }
+
+                        /* Row Divider */
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 12
+                            Layout.rightMargin: 12
+                            height: 1
+                            color: Qt.rgba(1, 1, 1, 0.05)
+                        }
+
+                        /* Row 2: Color Temperature Slider */
+                        Item {
+                            Layout.fillWidth: true
+                            height: 56
+                            opacity: root.nightLightEnabled ? 1.0 : 0.45
+                            Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 16
+
+                                ColumnLayout {
+                                    spacing: 2
+                                    Layout.preferredWidth: 165
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    Text {
+                                        text: "Color Temperature"
+                                        font.family: root.font
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        color: root.theme.textPrimary
+                                    }
+
+                                    Text {
+                                        text: root.getNightLightLabel(root.nightLightTemp)
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        color: root.theme.textSecondary
+                                    }
+                                }
+
+                                /* Interactive Temperature Slider Track */
+                                Rectangle {
+                                    id: nlSliderTrack
+                                    Layout.fillWidth: true
+                                    height: 8
+                                    radius: 4
+                                    color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.14)
+                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                    border.width: 1
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    readonly property real minK: 3000.0
+                                    readonly property real maxK: 6000.0
+                                    readonly property real frac: Math.max(0.0, Math.min(1.0, (root.nightLightTemp - minK) / (maxK - minK)))
+
+                                    Rectangle {
+                                        height: parent.height
+                                        radius: parent.radius
+                                        width: Math.max(0, Math.min(parent.width, parent.width * nlSliderTrack.frac))
+                                        color: root.theme.accentOrange ?? root.theme.accentPrimary
+
+                                        Behavior on width {
+                                            enabled: !nlSliderMouse.pressed
+                                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                                        }
+                                    }
+
+                                    /* Outer halo ring */
+                                    Rectangle {
+                                        anchors.centerIn: nlSliderBall
+                                        width: nlSliderBall.width + (nlSliderMouse.pressed ? 8 : (nlSliderMouse.containsMouse ? 6 : 0))
+                                        height: width
+                                        radius: width / 2
+                                        color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b,
+                                                       nlSliderMouse.pressed ? 0.35 : (nlSliderMouse.containsMouse ? 0.2 : 0))
+                                        z: 1
+
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                    }
+
+                                    /* Slider Knob */
+                                    Rectangle {
+                                        id: nlSliderBall
+                                        width: nlSliderMouse.containsMouse || nlSliderMouse.pressed ? 18 : 16
+                                        height: width
+                                        radius: width / 2
+                                        color: "#ffffff"
+                                        border.color: root.theme.accentOrange ?? root.theme.accentPrimary
+                                        border.width: 3
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        x: Math.max(0, Math.min(nlSliderTrack.width - width, (nlSliderTrack.width * nlSliderTrack.frac) - (width / 2)))
+                                        z: 2
+
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on x { NumberAnimation { duration: nlSliderMouse.pressed ? 0 : 80; easing.type: Easing.OutCubic } }
+                                    }
+
+                                    MouseArea {
+                                        id: nlSliderMouse
+                                        anchors.fill: parent
+                                        anchors.margins: -8
+                                        preventStealing: true
+                                        hoverEnabled: true
+                                        cursorShape: root.nightLightEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        enabled: root.nightLightEnabled
+
+                                        function updateTemp(mouseX) {
+                                            if (nlSliderTrack.width > 0) {
+                                                const ratio = Math.max(0.0, Math.min(1.0, mouseX / nlSliderTrack.width));
+                                                const k = Math.round(nlSliderTrack.minK + ratio * (nlSliderTrack.maxK - nlSliderTrack.minK));
+                                                root.setNightLightTemp(k);
+                                            }
+                                        }
+
+                                        onPressed: (mouse) => {
+                                            mouse.accepted = true;
+                                            dispFlickable.interactive = false;
+                                            updateTemp(mouse.x);
+                                        }
+                                        onPositionChanged: (mouse) => {
+                                            if (pressed) {
+                                                mouse.accepted = true;
+                                                updateTemp(mouse.x);
+                                            }
+                                        }
+                                        onReleased: dispFlickable.interactive = true
+                                        onCanceled: dispFlickable.interactive = true
+                                    }
+                                }
+
+                                /* Kelvin Badge */
+                                Rectangle {
+                                    width: 64
+                                    height: 26
+                                    radius: 6
+                                    color: root.theme.bgBase
+                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                    border.width: 1
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: root.nightLightTemp + " K"
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                        color: root.nightLightEnabled ? (root.theme.accentOrange ?? root.theme.accentPrimary) : root.theme.textMuted
+                                    }
+                                }
+                            }
+                        }
+
+                        /* Row Divider */
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 12
+                            Layout.rightMargin: 12
+                            height: 1
+                            color: Qt.rgba(1, 1, 1, 0.05)
+                        }
+
+                        /* Row 3: Temperature Presets */
+                        Item {
+                            Layout.fillWidth: true
+                            height: 48
+                            opacity: root.nightLightEnabled ? 1.0 : 0.45
+                            Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 12
+
+                                Text {
+                                    text: "Warmth Presets"
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    font.bold: true
+                                    color: root.theme.textSecondary
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+
+                                Item { Layout.fillWidth: true }
+
+                                Rectangle {
+                                    id: nlPresetTrack
+                                    implicitWidth: 320
+                                    implicitHeight: 32
+                                    width: 320
+                                    height: 32
+                                    radius: 7
+                                    color: root.theme.bgBase
+                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                    border.width: 1
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    readonly property var presets: [
+                                        { k: 3500, label: "3500K" },
+                                        { k: 4000, label: "4000K" },
+                                        { k: 4500, label: "4500K" },
+                                        { k: 5000, label: "5000K" },
+                                        { k: 5500, label: "5500K" }
+                                    ]
+                                    readonly property int activeIdx: {
+                                        for (let i = 0; i < presets.length; i++) {
+                                            if (Math.abs(root.nightLightTemp - presets[i].k) <= 100) return i;
+                                        }
+                                        return -1;
+                                    }
+                                    readonly property real cellWidth: (width - 6 - (4 * 4)) / 5
+
+                                    /* Sliding Selection Pill */
+                                    Rectangle {
+                                        visible: opacity > 0
+                                        opacity: nlPresetTrack.activeIdx >= 0 && root.nightLightEnabled ? 1.0 : 0.0
+                                        y: 3
+                                        height: parent.height - 6
+                                        width: nlPresetTrack.cellWidth
+                                        x: nlPresetTrack.activeIdx >= 0 ? (3 + nlPresetTrack.activeIdx * (nlPresetTrack.cellWidth + 4)) : 3
+                                        radius: 5
+                                        color: root.theme.bgSelected
+                                        border.color: root.theme.accentOrange ?? root.theme.accentPrimary
+                                        border.width: 1
+
+                                        Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                                        Behavior on opacity { NumberAnimation { duration: 150 } }
+                                    }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        spacing: 4
+
+                                        Repeater {
+                                            model: nlPresetTrack.presets
+
+                                            delegate: Rectangle {
+                                                id: nlSegBtn
+                                                required property var modelData
+                                                required property int index
+
+                                                readonly property bool isSel: nlPresetTrack.activeIdx === nlSegBtn.index && root.nightLightEnabled
+
+                                                Layout.fillWidth: true
+                                                Layout.fillHeight: true
+                                                radius: 5
+                                                color: !isSel && nlHover.hovered && root.nightLightEnabled ? root.theme.bgHover : "transparent"
+                                                Behavior on color { ColorAnimation { duration: 140 } }
+
+                                                HoverHandler { id: nlHover; enabled: root.nightLightEnabled }
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: nlSegBtn.modelData.label
+                                                    font.family: root.font
+                                                    font.pixelSize: 11
+                                                    font.bold: nlSegBtn.isSel
+                                                    color: nlSegBtn.isSel ? (root.theme.accentOrange ?? root.theme.accentPrimary) : root.theme.textPrimary
+                                                    opacity: !root.nightLightEnabled ? 0.45 : (nlSegBtn.isSel || nlHover.hovered ? 1.0 : 0.75)
+                                                    Behavior on color { ColorAnimation { duration: 140 } }
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: root.nightLightEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                                    enabled: root.nightLightEnabled
+                                                    preventStealing: true
+                                                    onClicked: root.setNightLightTemp(nlSegBtn.modelData.k)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            /* ============================================================
+             * 5. Compositor & Power Group
              * ============================================================ */
             ColumnLayout {
                 Layout.fillWidth: true
@@ -2209,50 +2736,61 @@ Item {
                                     }
                                 }
 
-                                RowLayout {
-                                    spacing: 5
-                                    Layout.alignment: Qt.AlignVCenter
+                                /* Segmented VRR Mode Control */
+                                Rectangle {
+                                    width: 260
+                                    height: 32
+                                    radius: 7
+                                    color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
+                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                    border.width: 1
+                                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
 
-                                    Repeater {
-                                        model: [
-                                            { val: 0, label: "Off" },
-                                            { val: 1, label: "Always" },
-                                            { val: 2, label: "Fullscreen" }
-                                        ]
-                                        delegate: Rectangle {
-                                            required property var modelData
-                                            readonly property bool isSelected: root.vrrMode === modelData.val
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        spacing: 3
 
-                                            height: 28
-                                            implicitWidth: vrrLabel.implicitWidth + 18
-                                            radius: 6
-                                            color: isSelected
-                                                ? root.theme.accentPrimary
-                                                : (vrrHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase)
-                                            border.color: isSelected
-                                                ? root.theme.accentPrimary
-                                                : (vrrHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
-                                            border.width: 1
+                                        Repeater {
+                                            model: [
+                                                { val: 0, label: "Off" },
+                                                { val: 1, label: "Always" },
+                                                { val: 2, label: "Fullscreen" }
+                                            ]
+                                            delegate: Rectangle {
+                                                required property var modelData
+                                                readonly property bool isSelected: root.vrrMode === modelData.val
 
-                                            Behavior on color { ColorAnimation { duration: 130 } }
-                                            Behavior on border.color { ColorAnimation { duration: 130 } }
+                                                Layout.fillWidth: true
+                                                Layout.fillHeight: true
+                                                radius: 5
+                                                color: isSelected
+                                                    ? root.theme.accentPrimary
+                                                    : (vrrHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                                                border.color: isSelected ? root.theme.accentPrimary : "transparent"
+                                                border.width: isSelected ? 1 : 0
 
-                                            HoverHandler { id: vrrHover }
+                                                Behavior on color { ColorAnimation { duration: 120 } }
 
-                                            Text {
-                                                id: vrrLabel
-                                                anchors.centerIn: parent
-                                                text: modelData.label
-                                                font.family: root.font
-                                                font.pixelSize: 11
-                                                font.bold: isSelected
-                                                color: isSelected ? root.theme.bgBase : root.theme.textPrimary
-                                            }
+                                                HoverHandler { id: vrrHover }
 
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
-                                                onClicked: root.setVrrMode(modelData.val)
+                                                Text {
+                                                    id: vrrLabel
+                                                    anchors.centerIn: parent
+                                                    text: modelData.label
+                                                    font.family: root.font
+                                                    font.pixelSize: 11
+                                                    font.bold: isSelected
+                                                    color: isSelected
+                                                        ? (root.theme.bgBase ?? "#1a1b26")
+                                                        : (vrrHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: root.setVrrMode(modelData.val)
+                                                }
                                             }
                                         }
                                     }
@@ -2327,82 +2865,6 @@ Item {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: root.setAllowTearing(!root.allowTearing)
-                                    }
-                                }
-                            }
-                        }
-
-                        /* Row Divider */
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 12
-                            Layout.rightMargin: 12
-                            height: 1
-                            color: Qt.rgba(1, 1, 1, 0.05)
-                        }
-
-                        /* Row 3: Turn Off Displays Now (DPMS) */
-                        Item {
-                            Layout.fillWidth: true
-                            height: 52
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 12
-                                anchors.rightMargin: 12
-                                spacing: 12
-
-                                ColumnLayout {
-                                    spacing: 2
-                                    Layout.alignment: Qt.AlignVCenter
-                                    Layout.fillWidth: true
-
-                                    Text {
-                                        text: "Turn Off Displays"
-                                        font.family: root.font
-                                        font.pixelSize: 13
-                                        font.bold: true
-                                        color: root.theme.textPrimary
-                                    }
-
-                                    Text {
-                                        text: "Immediately put all connected monitors into DPMS power-saving standby"
-                                        font.family: root.font
-                                        font.pixelSize: 11
-                                        color: root.theme.textSecondary
-                                        elide: Text.ElideRight
-                                        Layout.fillWidth: true
-                                    }
-                                }
-
-                                Rectangle {
-                                    implicitWidth: dpmsBtnText.implicitWidth + 22
-                                    height: 30
-                                    radius: 6
-                                    color: dpmsHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.12)) : root.theme.bgBase
-                                    border.color: dpmsHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                    border.width: 1
-                                    Layout.alignment: Qt.AlignVCenter
-
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                    Behavior on border.color { ColorAnimation { duration: 140 } }
-
-                                    HoverHandler { id: dpmsHover }
-
-                                    Text {
-                                        id: dpmsBtnText
-                                        anchors.centerIn: parent
-                                        text: "Sleep Screen"
-                                        font.family: root.font
-                                        font.pixelSize: 11
-                                        font.bold: true
-                                        color: root.theme.textPrimary
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: dpmsOffProc.running = true
                                     }
                                 }
                             }

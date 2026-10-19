@@ -73,12 +73,16 @@ QtObject {
             if (notificationData.notification) {
                 notificationData.summary = notificationData.notification.summary || "";
                 notificationData.actions = notificationData._parseActions(notificationData.notification);
+                notificationData._timer.restart();
+                NotificationService._bump(notificationData);
             }
         }
         function onBodyChanged(): void {
             if (notificationData.notification) {
                 notificationData.body = notificationData.notification.body || "";
                 notificationData.actions = notificationData._parseActions(notificationData.notification);
+                notificationData._timer.restart();
+                NotificationService._bump(notificationData);
             }
         }
         function onAppIconChanged(): void {
@@ -102,20 +106,6 @@ QtObject {
         function onActionsChanged(): void {
             if (!notificationData.notification) return;
             notificationData.actions = notificationData._parseActions(notificationData.notification);
-        }
-        function onLastGenerationChanged(): void {
-            if (!notificationData.notification || notificationData.closed) return;
-            notificationData.summary = notificationData.notification.summary || "";
-            notificationData.body = notificationData.notification.body || "";
-            notificationData.appIcon = notificationData.notification.appIcon || "";
-            notificationData.appName = notificationData.notification.appName || "";
-            notificationData.image = notificationData.notification.image || "";
-            notificationData.urgency = notificationData.notification.urgency;
-            const rawTimeout = notificationData.notification.expireTimeout;
-            notificationData.expireTimeout = rawTimeout > 0 ? rawTimeout : notificationData.defaultTimeout;
-            notificationData.actions = notificationData._parseActions(notificationData.notification);
-            notificationData._timer.restart();
-            NotificationService._bump(notificationData);
         }
     }
 

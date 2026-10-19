@@ -37,3 +37,8 @@ case "$tool" in
     fi ;;
   *) echo "set.sh: unknown WALLPAPER_THEME_TOOL=$tool" >&2; exit 1 ;;
 esac
+
+# Harmonize and soften palette for desktop UI
+if [ -f "$dir/harmonize_palette.py" ] && command -v python3 >/dev/null 2>&1; then
+  python3 "$dir/harmonize_palette.py" "$dir/../wallpaper-theme.json" "$img" 2>/dev/null || true
+fi

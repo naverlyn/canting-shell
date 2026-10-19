@@ -8,9 +8,9 @@ import Quickshell.Services.Notifications
 Singleton {
     id: root
 
-    readonly property string configPath: Quickshell.env("HOME") + "/.config/quickshell/notifications_config.json"
+    readonly property string configPath: Qt.resolvedUrl("../notifications_config.json").toString().replace(/^file:\/\//, "")
 
-    property list<var> notifications: []
+    property var notifications: []
     property bool doNotDisturb: false
     property string toastPosition: "top-right" // "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right"
     property int toastMarginX: 10
@@ -74,7 +74,8 @@ Singleton {
         root._lastSavedJson = jsonStr;
         saveProcess.command = [
             "python3", "-c",
-            "import os, sys; p = os.path.expanduser('~/.config/quickshell/notifications_config.json'); tmp = p + '.tmp'; open(tmp, 'w').write(sys.argv[1] + '\\n'); os.replace(tmp, p)",
+            "import os, sys; p = sys.argv[1]; tmp = p + '.tmp'; open(tmp, 'w').write(sys.argv[2] + '\\n'); os.replace(tmp, p)",
+            root.configPath,
             jsonStr
         ];
         saveProcess.running = true;
@@ -137,6 +138,38 @@ Singleton {
         NotificationData {}
     }
 
+    function isOsdNotification(notification) {
+        if (!notification) return false;
+        const app = String(notification.appName || "").toLowerCase();
+        const summary = String(notification.summary || "").toLowerCase();
+        const body = String(notification.body || "").toLowerCase();
+
+        // 1. Volume level or Volume: or Microphone: notifications
+        if (summary.includes("volume level") || summary.includes("volume:") || summary.includes("microphone:") || summary.includes("mic mute")) {
+            return true;
+        }
+        if (body.includes("volume level") || body.includes("volume:")) {
+            return true;
+        }
+
+        // 2. notify-send specifically sending volume or brightness
+        if (app.includes("notify-send") || app === "" || app === "volume") {
+            if (summary.includes("volume") || summary.includes("mute") || summary.includes("brightness") || summary.includes("microphone")) {
+                return true;
+            }
+            if (body.includes("volume") || body.includes("brightness") || body.includes("switched on") || body.includes("switched off")) {
+                return true;
+            }
+        }
+
+        // 3. Brightness level notifications
+        if (summary.includes("brightness level") || summary.includes("brightness:")) {
+            return true;
+        }
+
+        return false;
+    }
+
     NotificationServer {
         id: server
         actionsSupported:    true
@@ -150,6 +183,12 @@ Singleton {
 
             if (!notification.appName && !notification.summary
                 && !notification.body && !notification.image) return;
+
+            // Suppress volume and brightness notifications that duplicate Quickshell's OSD
+            if (root.isOsdNotification(notification)) {
+                try { notification.dismiss(); } catch(e) {}
+                return;
+            }
 
             notification.tracked = true;
 
@@ -180,13 +219,13 @@ Singleton {
         }
     }
 
-    function _remove(notifData): void {
+    function _remove(notifData) {
         root.notifications = root.notifications.filter(function(n) {
             return n !== notifData;
         });
     }
 
-    function _bump(notifData): void {
+    function _bump(notifData) {
         if (!notifData || notifData.closed) return;
         notifData.seqId = String(root._seqCounter++);
         const rest = root.notifications.filter(function(n) {
@@ -195,11 +234,11 @@ Singleton {
         root.notifications = [notifData, ...rest];
     }
 
-    function dismiss(notifData): void {
+    function dismiss(notifData) {
         if (notifData) notifData.dismiss();
     }
 
-    function dismissAll(): void {
+    function dismissAll() {
         const toRemove = [...root.notifications];
         root.notifications = [];
         for (const n of toRemove) {

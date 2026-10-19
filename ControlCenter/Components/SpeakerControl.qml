@@ -15,7 +15,7 @@ ColumnLayout {
 
     readonly property var audioSinks: {
         if (!Pipewire.ready) return [];
-        return Pipewire.nodes.values.filter(n => n.audio !== null && !n.isStream && n.isSink);
+        return Pipewire.nodes.values.filter(n => n && n.audio !== null && !n.isStream && n.isSink);
     }
 
     spacing: 6
@@ -27,6 +27,14 @@ ColumnLayout {
         font.bold: true
         color: root.theme.textSecondary
         Layout.fillWidth: true
+    }
+
+    function getSinkVolume(sink) {
+        if (!sink || !sink.audio) return 0.0;
+        if (sink.audio.volumes && sink.audio.volumes.length >= 2) {
+            return Math.max(sink.audio.volumes[0], sink.audio.volumes[1]);
+        }
+        return sink.audio.volume;
     }
 
     // Slider Row: Mute Button + Slider + Percentage
@@ -82,7 +90,7 @@ ColumnLayout {
                 width: {
                     const sink = Pipewire.defaultAudioSink;
                     if (!sink || !sink.audio) return 0;
-                    return Math.min(parent.width, parent.width * sink.audio.volume);
+                    return Math.min(parent.width, parent.width * root.getSinkVolume(sink));
                 }
                 color: root.theme.accentPrimary
 
@@ -112,9 +120,20 @@ ColumnLayout {
 
                 function updateVolume(mouseX, totalWidth) {
                     const sink = Pipewire.defaultAudioSink;
-                    if (sink && sink.audio) {
+                    if (sink && sink.audio && totalWidth > 0) {
                         const newVol = Math.max(0, Math.min(1.0, mouseX / totalWidth));
-                        sink.audio.volume = newVol;
+                        if (sink.audio.volumes && sink.audio.volumes.length >= 2) {
+                            const vl = sink.audio.volumes[0];
+                            const vr = sink.audio.volumes[1];
+                            const maxV = Math.max(vl, vr);
+                            if (maxV > 0.001) {
+                                sink.audio.volumes = [newVol * (vl / maxV), newVol * (vr / maxV)];
+                            } else {
+                                sink.audio.volumes = [newVol, newVol];
+                            }
+                        } else {
+                            sink.audio.volume = newVol;
+                        }
                         if (sink.audio.muted) sink.audio.muted = false;
                     }
                 }
@@ -125,7 +144,7 @@ ColumnLayout {
             text: {
                 const sink = Pipewire.defaultAudioSink;
                 if (!sink || !sink.audio) return "0%";
-                return sink.audio.muted ? "Muted" : Math.round(sink.audio.volume * 100) + "%";
+                return sink.audio.muted ? "Muted" : Math.round(root.getSinkVolume(sink) * 100) + "%";
             }
             font.family: root.font
             font.pixelSize: 11
@@ -225,7 +244,7 @@ ColumnLayout {
         Behavior on Layout.preferredHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.InOutQuad } }
 
-        ColumnLayout {
+        Column {
             id: sinkListCol
             anchors {
                 top: parent.top
@@ -241,7 +260,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: root.theme.textMuted
                 visible: root.audioSinks.length === 0
-                Layout.margins: 6
+                padding: 6
             }
 
             Repeater {
@@ -249,8 +268,8 @@ ColumnLayout {
 
                 delegate: Rectangle {
                     id: sinkItemRect
-                    readonly property bool isSelected: Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.id === modelData.id
-                    Layout.fillWidth: true
+                    readonly property bool isSelected: Boolean(modelData && Pipewire.defaultAudioSink && Pipewire.defaultAudioSink.id === modelData.id)
+                    width: parent ? parent.width : 0
                     height: 30
                     radius: 6
                     scale: sinkItemMouse.pressed ? 0.98 : 1.0
@@ -281,7 +300,7 @@ ColumnLayout {
                         }
 
                         Text {
-                            text: modelData.description || modelData.nickname || modelData.name || "Audio Output"
+                            text: modelData ? (modelData.description || modelData.nickname || modelData.name || "Audio Output") : "Audio Output"
                             font.family: root.font
                             font.pixelSize: 11
                             font.bold: sinkItemRect.isSelected
@@ -299,7 +318,7 @@ ColumnLayout {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            Pipewire.preferredDefaultAudioSink = modelData;
+                            if (modelData) Pipewire.preferredDefaultAudioSink = modelData;
                             root.dropdownOpen = false;
                             root.dropdownToggled(false);
                         }

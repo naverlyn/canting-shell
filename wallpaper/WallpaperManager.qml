@@ -3,6 +3,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 
 Scope {
   id: root
@@ -42,12 +43,19 @@ Scope {
 
   property var filteredWallpapers: {
     if (!wallpaperPanel.visible) return [];
-    const q = searchText.toLowerCase();
-    if (q === "") return WallpaperService.wallpapers;
-    return WallpaperService.wallpapers.filter(p => {
-      const name = p.split("/").pop().toLowerCase();
-      return name.includes(q);
-    });
+    const q = searchText.toLowerCase().trim();
+    let list = WallpaperService.wallpapers || [];
+    if (q !== "") {
+      list = list.filter(p => {
+        const name = p.split("/").pop().toLowerCase();
+        return name.includes(q);
+      });
+    }
+    const current = WallpaperService.currentWallpaper;
+    if (current && list.includes(current)) {
+      list = [current].concat(list.filter(p => p !== current));
+    }
+    return list;
   }
 
   PanelWindow {
@@ -120,20 +128,27 @@ Scope {
 
             Rectangle {
               visible: root.browsingFolders
-              width: 28
+              implicitWidth: backText.implicitWidth + 18
               height: 28
-              radius: 14
+              radius: 6
               color: backHover.containsMouse ? root.theme.bgHover : root.theme.bgSurface
               border.color: root.theme.bgBorder
               border.width: 1
+              scale: backHover.pressed ? 0.95 : (backHover.containsMouse ? 1.03 : 1.0)
               Accessible.role: Accessible.Button
               Accessible.name: "Back to wallpapers"
 
+              Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+              Behavior on color { ColorAnimation { duration: 150 } }
+              Behavior on border.color { ColorAnimation { duration: 150 } }
+
               Text {
+                id: backText
                 anchors.centerIn: parent
-                text: "󰁝"
+                text: "‹ Back"
                 color: root.theme.accentPrimary
-                font.pixelSize: 13
+                font.pixelSize: 11
+                font.bold: true
                 font.family: root.font
               }
 
@@ -150,7 +165,7 @@ Scope {
             }
 
             Text {
-              text: root.browsingFolders ? "󰉋  Browse Wallpaper Folders" : "󰸉  Wallpaper"
+              text: root.browsingFolders ? "Browse Folders" : "Wallpapers"
               color: root.theme.accentPrimary
               font.pixelSize: 15
               font.family: root.font
@@ -180,35 +195,30 @@ Scope {
 
           // Header action button (Folders toggle / Done)
           Rectangle {
-            width: btnFolderRow.implicitWidth + 18
+            implicitWidth: folderBtnText.implicitWidth + 24
             height: 28
-            radius: 14
-            color: root.browsingFolders || folderBtnHover.containsMouse ? root.theme.bgSelected : root.theme.bgSurface
+            radius: 6
+            color: root.browsingFolders
+              ? (folderBtnHover.containsMouse ? root.theme.bgHover : root.theme.bgSelected)
+              : (folderBtnHover.containsMouse ? root.theme.bgHover : root.theme.bgSurface)
             border.color: root.browsingFolders ? root.theme.accentPrimary : root.theme.bgBorder
             border.width: 1
+            scale: folderBtnHover.pressed ? 0.95 : (folderBtnHover.containsMouse ? 1.03 : 1.0)
             Accessible.role: Accessible.Button
             Accessible.name: root.browsingFolders ? "Return to wallpaper picker" : "Open built-in folder browser"
 
-            Row {
-              id: btnFolderRow
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on border.color { ColorAnimation { duration: 150 } }
+
+            Text {
+              id: folderBtnText
               anchors.centerIn: parent
-              spacing: 6
-
-              Text {
-                text: root.browsingFolders ? "󰄬" : "󰉋"
-                color: root.browsingFolders ? root.theme.accentGreen : root.theme.accentPrimary
-                font.pixelSize: 12
-                font.family: root.font
-                anchors.verticalCenter: parent.verticalCenter
-              }
-
-              Text {
-                text: root.browsingFolders ? "Done" : "Folders"
-                color: root.theme.textPrimary
-                font.pixelSize: 11
-                font.family: root.font
-                anchors.verticalCenter: parent.verticalCenter
-              }
+              text: root.browsingFolders ? "Done" : "Folders"
+              color: root.browsingFolders ? root.theme.accentPrimary : root.theme.textPrimary
+              font.pixelSize: 11
+              font.bold: true
+              font.family: root.font
             }
 
             MouseArea {
@@ -229,18 +239,27 @@ Scope {
 
           // Refresh button
           Rectangle {
-            width: 28
+            implicitWidth: refreshBtnText.implicitWidth + 20
             height: 28
-            radius: 14
-            color: refreshHover.containsMouse ? root.theme.bgHover : "transparent"
+            radius: 6
+            color: refreshHover.containsMouse ? root.theme.bgHover : root.theme.bgSurface
+            border.color: root.theme.bgBorder
+            border.width: 1
+            scale: refreshHover.pressed ? 0.95 : (refreshHover.containsMouse ? 1.03 : 1.0)
             Accessible.role: Accessible.Button
             Accessible.name: "Refresh wallpaper list"
 
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on border.color { ColorAnimation { duration: 150 } }
+
             Text {
+              id: refreshBtnText
               anchors.centerIn: parent
-              text: "󰑐"
-              color: root.theme.textMuted
-              font.pixelSize: 14
+              text: "Refresh"
+              color: refreshHover.containsMouse ? root.theme.textPrimary : root.theme.textMuted
+              font.pixelSize: 11
+              font.bold: true
               font.family: root.font
             }
 
@@ -274,6 +293,11 @@ Scope {
               color: homeHover.containsMouse ? root.theme.bgHover : root.theme.bgSurface
               border.color: root.theme.bgBorder
               border.width: 1
+              scale: homeHover.pressed ? 0.95 : (homeHover.containsMouse ? 1.04 : 1.0)
+
+              Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+              Behavior on color { ColorAnimation { duration: 150 } }
+              Behavior on border.color { ColorAnimation { duration: 150 } }
 
               Text {
                 id: homeText
@@ -302,6 +326,11 @@ Scope {
               color: picHover.containsMouse ? root.theme.bgHover : root.theme.bgSurface
               border.color: root.theme.bgBorder
               border.width: 1
+              scale: picHover.pressed ? 0.95 : (picHover.containsMouse ? 1.04 : 1.0)
+
+              Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+              Behavior on color { ColorAnimation { duration: 150 } }
+              Behavior on border.color { ColorAnimation { duration: 150 } }
 
               Text {
                 id: picText
@@ -330,6 +359,11 @@ Scope {
               color: dlHover.containsMouse ? root.theme.bgHover : root.theme.bgSurface
               border.color: root.theme.bgBorder
               border.width: 1
+              scale: dlHover.pressed ? 0.95 : (dlHover.containsMouse ? 1.04 : 1.0)
+
+              Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+              Behavior on color { ColorAnimation { duration: 150 } }
+              Behavior on border.color { ColorAnimation { duration: 150 } }
 
               Text {
                 id: dlText
@@ -358,6 +392,11 @@ Scope {
               color: upHover.containsMouse ? root.theme.bgHover : root.theme.bgSurface
               border.color: root.theme.bgBorder
               border.width: 1
+              scale: upHover.pressed ? 0.95 : (upHover.containsMouse ? 1.04 : 1.0)
+
+              Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+              Behavior on color { ColorAnimation { duration: 150 } }
+              Behavior on border.color { ColorAnimation { duration: 150 } }
 
               Text {
                 id: upText
@@ -386,6 +425,8 @@ Scope {
               color: root.theme.bgSurface
               border.color: jumpInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
               border.width: 1
+
+              Behavior on border.color { ColorAnimation { duration: 150 } }
 
               RowLayout {
                 anchors.fill: parent
@@ -424,7 +465,7 @@ Scope {
           // Combined Breadcrumbs & Current Folder Action Bar
           Rectangle {
             Layout.fillWidth: true
-            height: 48
+            height: 50
             radius: 10
             color: root.theme.bgSurface
             border.color: WallpaperService.isConfigured(WallpaperService.browsePath)
@@ -432,19 +473,13 @@ Scope {
               : root.theme.bgBorder
             border.width: 1
 
+            Behavior on border.color { ColorAnimation { duration: 150 } }
+
             RowLayout {
               anchors.fill: parent
-              anchors.leftMargin: 14
-              anchors.rightMargin: 14
+              anchors.leftMargin: 16
+              anchors.rightMargin: 16
               spacing: 12
-
-              Text {
-                text: "󰉋"
-                color: root.theme.accentPrimary
-                font.pixelSize: 18
-                font.family: root.font
-                Layout.alignment: Qt.AlignVCenter
-              }
 
               ColumnLayout {
                 spacing: 2
@@ -477,6 +512,10 @@ Scope {
                           width: crumbLabel.implicitWidth + 8
                           radius: 4
                           color: crumbMouse.containsMouse ? root.theme.bgHover : "transparent"
+                          scale: crumbMouse.pressed ? 0.95 : (crumbMouse.containsMouse ? 1.05 : 1.0)
+
+                          Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+                          Behavior on color { ColorAnimation { duration: 150 } }
 
                           Text {
                             id: crumbLabel
@@ -500,9 +539,9 @@ Scope {
                         }
 
                         Text {
-                          text: "›"
+                          text: "/"
                           color: root.theme.textMuted
-                          font.pixelSize: 12
+                          font.pixelSize: 11
                           font.family: root.font
                           anchors.verticalCenter: parent.verticalCenter
                           visible: index < WallpaperService.getBreadcrumbs(WallpaperService.browsePath).length - 1
@@ -523,46 +562,35 @@ Scope {
                 }
               }
 
-              // Add / Remove Action Button
+              // Add / Remove Action Button (Text Only)
               Rectangle {
-                width: toggleBtnText.implicitWidth + 24
-                height: 30
+                readonly property bool isAdded: WallpaperService.isConfigured(WallpaperService.browsePath)
+                implicitWidth: toggleBtnText.implicitWidth + 24
+                height: 32
                 radius: 6
-                color: WallpaperService.isConfigured(WallpaperService.browsePath)
+                color: isAdded
                   ? (currRemoveHover.containsMouse ? root.theme.accentRed : root.theme.bgSelected)
                   : root.theme.accentPrimary
-                border.color: WallpaperService.isConfigured(WallpaperService.browsePath) ? root.theme.accentGreen : "transparent"
+                border.color: isAdded ? root.theme.accentGreen : "transparent"
                 border.width: 1
+                scale: currRemoveHover.pressed ? 0.95 : (currRemoveHover.containsMouse ? 1.03 : 1.0)
 
-                Row {
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                Text {
+                  id: toggleBtnText
                   anchors.centerIn: parent
-                  spacing: 6
-
-                  Text {
-                    text: WallpaperService.isConfigured(WallpaperService.browsePath)
-                      ? (currRemoveHover.containsMouse ? "󰅖" : "󰄬")
-                      : "󰐕"
-                    color: WallpaperService.isConfigured(WallpaperService.browsePath)
-                      ? (currRemoveHover.containsMouse ? "#ffffff" : root.theme.accentGreen)
-                      : root.theme.bgBase
-                    font.pixelSize: 11
-                    font.family: root.font
-                    anchors.verticalCenter: parent.verticalCenter
-                  }
-
-                  Text {
-                    id: toggleBtnText
-                    text: WallpaperService.isConfigured(WallpaperService.browsePath)
-                      ? (currRemoveHover.containsMouse ? "Remove Folder" : "Added as Source")
-                      : "Add This Folder"
-                    color: WallpaperService.isConfigured(WallpaperService.browsePath)
-                      ? (currRemoveHover.containsMouse ? "#ffffff" : root.theme.textPrimary)
-                      : root.theme.bgBase
-                    font.pixelSize: 11
-                    font.family: root.font
-                    font.bold: true
-                    anchors.verticalCenter: parent.verticalCenter
-                  }
+                  text: parent.isAdded
+                    ? (currRemoveHover.containsMouse ? "Remove Folder" : "Added as Source")
+                    : "+ Add This Folder"
+                  color: parent.isAdded
+                    ? (currRemoveHover.containsMouse ? "#ffffff" : root.theme.textPrimary)
+                    : root.theme.bgBase
+                  font.pixelSize: 11
+                  font.family: root.font
+                  font.bold: true
                 }
 
                 MouseArea {
@@ -571,7 +599,7 @@ Scope {
                   hoverEnabled: true
                   cursorShape: Qt.PointingHandCursor
                   onClicked: {
-                    if (WallpaperService.isConfigured(WallpaperService.browsePath)) {
+                    if (parent.isAdded) {
                       WallpaperService.removeDirectory(WallpaperService.browsePath);
                     } else {
                       WallpaperService.addDirectory(WallpaperService.browsePath);
@@ -601,42 +629,47 @@ Scope {
               boundsBehavior: Flickable.StopAtBounds
 
               delegate: Rectangle {
+                id: dirRowItem
                 required property string modelData
                 required property int index
 
+                readonly property string fullSubPath: {
+                  const base = WallpaperService.browsePath;
+                  return base.endsWith("/") ? (base + modelData) : (base + "/" + modelData);
+                }
+                readonly property bool isSubAdded: WallpaperService.isConfigured(fullSubPath)
+
                 width: dirListView.width
-                height: 40
-                radius: 8
+                height: 38
+                radius: 6
                 color: itemHover.containsMouse ? root.theme.bgHover : "transparent"
+                scale: itemHover.pressed ? 0.99 : 1.0
+
+                Behavior on scale { NumberAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation { duration: 120 } }
 
                 RowLayout {
                   anchors.fill: parent
-                  anchors.leftMargin: 12
-                  anchors.rightMargin: 12
+                  anchors.leftMargin: 14
+                  anchors.rightMargin: 14
                   spacing: 12
 
                   Text {
-                    text: "󰉋"
-                    color: root.theme.accentPrimary
-                    font.pixelSize: 15
-                    font.family: root.font
-                  }
-
-                  Text {
-                    text: modelData
-                    color: root.theme.textPrimary
+                    text: dirRowItem.modelData
+                    color: dirRowItem.isSubAdded ? root.theme.accentPrimary : root.theme.textPrimary
                     font.pixelSize: 12
                     font.family: root.font
+                    font.bold: dirRowItem.isSubAdded
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                   }
 
-                  // Badge if added
+                  // Badge if added (Text only)
                   Rectangle {
-                    visible: WallpaperService.isConfigured(WallpaperService.browsePath + "/" + modelData)
-                    height: 22
-                    width: addedBadgeText.implicitWidth + 14
-                    radius: 5
+                    visible: dirRowItem.isSubAdded
+                    height: 20
+                    width: addedBadgeText.implicitWidth + 12
+                    radius: 4
                     color: Qt.rgba(root.theme.accentGreen.r, root.theme.accentGreen.g, root.theme.accentGreen.b, 0.2)
                     border.color: root.theme.accentGreen
                     border.width: 1
@@ -644,7 +677,7 @@ Scope {
                     Text {
                       id: addedBadgeText
                       anchors.centerIn: parent
-                      text: "󰄬 Added"
+                      text: "Added"
                       color: root.theme.accentGreen
                       font.pixelSize: 10
                       font.family: root.font
@@ -652,12 +685,14 @@ Scope {
                     }
                   }
 
-                  // Navigate Arrow
+                  // Navigate Arrow (plain text ›)
                   Text {
-                    text: "󰅂"
-                    color: root.theme.textMuted
+                    text: "›"
+                    color: itemHover.containsMouse ? root.theme.accentPrimary : root.theme.textMuted
                     font.pixelSize: 14
                     font.family: root.font
+
+                    Behavior on color { ColorAnimation { duration: 120 } }
                   }
                 }
 
@@ -666,12 +701,7 @@ Scope {
                   anchors.fill: parent
                   hoverEnabled: true
                   cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    const next = WallpaperService.browsePath.endsWith("/")
-                      ? WallpaperService.browsePath + modelData
-                      : WallpaperService.browsePath + "/" + modelData;
-                    WallpaperService.navigateTo(next);
-                  }
+                  onClicked: WallpaperService.navigateTo(dirRowItem.fullSubPath)
                 }
               }
 
@@ -684,7 +714,7 @@ Scope {
                 color: root.theme.textMuted
                 font.pixelSize: 12
                 font.family: root.font
-                visible: WallpaperService.browseEntries.length === 0
+                visible: !WallpaperService.browseEntries || WallpaperService.browseEntries.length === 0
               }
             }
           }
@@ -743,13 +773,6 @@ Scope {
                         spacing: 6
 
                         Text {
-                          text: "󰉋"
-                          color: root.theme.accentPrimary
-                          font.pixelSize: 11
-                          font.family: root.font
-                        }
-
-                        Text {
                           text: WallpaperService.displayPath(modelData)
                           color: root.theme.textPrimary
                           font.pixelSize: 11
@@ -761,12 +784,16 @@ Scope {
                           height: 14
                           radius: 7
                           color: chipRemHover.containsMouse ? root.theme.accentRed : "transparent"
+                          scale: chipRemHover.pressed ? 0.9 : (chipRemHover.containsMouse ? 1.15 : 1.0)
+
+                          Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+                          Behavior on color { ColorAnimation { duration: 120 } }
 
                           Text {
                             anchors.centerIn: parent
-                            text: "󰅖"
+                            text: "×"
                             color: chipRemHover.containsMouse ? "#ffffff" : root.theme.textMuted
-                            font.pixelSize: 9
+                            font.pixelSize: 11
                             font.family: root.font
                           }
 
@@ -791,6 +818,10 @@ Scope {
                 font.pixelSize: 11
                 font.family: root.font
                 font.underline: true
+                scale: resetHover.pressed ? 0.95 : (resetHover.containsMouse ? 1.05 : 1.0)
+
+                Behavior on scale { NumberAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: 150 } }
 
                 MouseArea {
                   id: resetHover
@@ -825,17 +856,9 @@ Scope {
 
             RowLayout {
               anchors.fill: parent
-              anchors.leftMargin: 12
-              anchors.rightMargin: 12
+              anchors.leftMargin: 14
+              anchors.rightMargin: 14
               spacing: 8
-
-              Text {
-                text: "󰍉"
-                color: root.theme.textMuted
-                font.pixelSize: 14
-                font.family: root.font
-                Layout.alignment: Qt.AlignVCenter
-              }
 
               TextInput {
                 id: searchInput
@@ -892,78 +915,99 @@ Scope {
               height: wallpaperGrid.cellHeight
 
               Rectangle {
+                id: cardRect
                 anchors.fill: parent
                 anchors.margins: 4
                 radius: 8
                 color: root.theme.bgSurface
                 border.color: WallpaperService.currentWallpaper === modelData ? root.theme.accentPrimary : (imgHover.containsMouse ? root.theme.bgBorder : "transparent")
                 border.width: WallpaperService.currentWallpaper === modelData ? 2 : 1
-                clip: true
+                scale: imgHover.pressed ? 0.96 : (imgHover.containsMouse ? 1.03 : 1.0)
 
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Behavior on border.color { ColorAnimation { duration: 150 } }
 
-                Image {
+                // Masked container so wallpaper image and filename bar curve smoothly to match the card radius
+                Item {
+                  id: imgContainer
                   anchors.fill: parent
-                  anchors.margins: 2
-                  source: "file://" + modelData
-                  fillMode: Image.PreserveAspectCrop
-                  sourceSize.width: 200
-                  sourceSize.height: 120
-                  asynchronous: true
-                  cache: false
+                  anchors.margins: WallpaperService.currentWallpaper === modelData ? 2 : 1
+                  layer.enabled: true
+                  layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskSource: cardMask
+                  }
 
-                  Rectangle {
+                  Image {
                     anchors.fill: parent
-                    color: root.theme.bgSurface
-                    visible: parent.status !== Image.Ready
+                    source: "file://" + modelData
+                    fillMode: Image.PreserveAspectCrop
+                    sourceSize.width: 200
+                    sourceSize.height: 120
+                    asynchronous: true
+                    cache: false
+
+                    Rectangle {
+                      anchors.fill: parent
+                      color: root.theme.bgSurface
+                      visible: parent.status !== Image.Ready
+                    }
+                  }
+
+                  // Filename label
+                  Rectangle {
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    height: 22
+                    color: Qt.rgba(0, 0, 0, 0.6)
 
                     Text {
                       anchors.centerIn: parent
-                      text: "󰋩"
-                      color: root.theme.textMuted
-                      font.pixelSize: 24
+                      text: modelData.split("/").pop()
+                      color: "#ffffff"
+                      font.pixelSize: 9
                       font.family: root.font
+                      elide: Text.ElideMiddle
+                      width: parent.width - 8
+                      horizontalAlignment: Text.AlignHCenter
                     }
                   }
                 }
 
-                // Filename label
-                Rectangle {
-                  anchors.bottom: parent.bottom
-                  anchors.left: parent.left
-                  anchors.right: parent.right
-                  height: 22
-                  color: Qt.rgba(0, 0, 0, 0.6)
+                // Mask item providing matching inner corner radius
+                Item {
+                  id: cardMask
+                  anchors.fill: imgContainer
+                  visible: false
+                  layer.enabled: true
 
-                  Text {
-                    anchors.centerIn: parent
-                    text: modelData.split("/").pop()
-                    color: "#ffffff"
-                    font.pixelSize: 9
-                    font.family: root.font
-                    elide: Text.ElideMiddle
-                    width: parent.width - 8
-                    horizontalAlignment: Text.AlignHCenter
+                  Rectangle {
+                    anchors.fill: parent
+                    radius: Math.max(2, cardRect.radius - (WallpaperService.currentWallpaper === modelData ? 2 : 1))
+                    color: "black"
                   }
                 }
 
-                // Active indicator
+                // Active indicator (Current badge at top)
                 Rectangle {
                   anchors.top: parent.top
                   anchors.right: parent.right
                   anchors.margins: 6
-                  width: 20
                   height: 20
-                  radius: 10
-                  color: root.theme.accentGreen
+                  width: currentBadgeText.implicitWidth + 14
+                  radius: 4
+                  color: root.theme.accentPrimary
                   visible: WallpaperService.currentWallpaper === modelData
 
                   Text {
+                    id: currentBadgeText
                     anchors.centerIn: parent
-                    text: "󰄬"
+                    text: "Current"
                     color: root.theme.bgBase
-                    font.pixelSize: 12
+                    font.pixelSize: 10
+                    font.bold: true
                     font.family: root.font
                   }
                 }
@@ -992,14 +1036,6 @@ Scope {
               visible: wallpaperGrid.count === 0
 
               Text {
-                text: "󰋩"
-                color: root.theme.textMuted
-                font.pixelSize: 36
-                font.family: root.font
-                Layout.alignment: Qt.AlignHCenter
-              }
-
-              Text {
                 text: root.searchText !== ""
                   ? "No wallpapers match \"" + root.searchText + "\""
                   : "No wallpapers found in configured folders"
@@ -1012,23 +1048,32 @@ Scope {
 
               Rectangle {
                 width: emptyBrowseText.implicitWidth + 24
-                height: 34
-                radius: 8
-                color: root.theme.accentPrimary
+                height: 32
+                radius: 6
+                color: emptyBrowseHover.containsMouse ? root.theme.bgHover : root.theme.accentPrimary
+                scale: emptyBrowseHover.pressed ? 0.95 : (emptyBrowseHover.containsMouse ? 1.04 : 1.0)
                 Accessible.role: Accessible.Button
                 Accessible.name: "Open folder browser"
                 Layout.alignment: Qt.AlignHCenter
                 visible: root.searchText === ""
 
-                Row {
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+
+                Text {
+                  id: emptyBrowseText
                   anchors.centerIn: parent
-                  spacing: 6
-                  Text { text: "󰉋"; color: root.theme.bgBase; font.pixelSize: 13; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-                  Text { id: emptyBrowseText; text: "Browse Folders"; color: root.theme.bgBase; font.pixelSize: 12; font.family: root.font; font.bold: true; anchors.verticalCenter: parent.verticalCenter }
+                  text: "Browse Folders"
+                  color: emptyBrowseHover.containsMouse ? root.theme.textPrimary : root.theme.bgBase
+                  font.pixelSize: 12
+                  font.family: root.font
+                  font.bold: true
                 }
 
                 MouseArea {
+                  id: emptyBrowseHover
                   anchors.fill: parent
+                  hoverEnabled: true
                   cursorShape: Qt.PointingHandCursor
                   onClicked: {
                     root.browsingFolders = true;
@@ -1098,37 +1143,34 @@ Scope {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottomMargin: 40
-        width: applyRow.width + 32
-        height: 40
-        radius: 20
-        color: root.theme.accentPrimary
+        width: applyText.implicitWidth + 36
+        height: 38
+        radius: 19
+        color: applyBtnHover.containsMouse ? root.theme.bgHover : root.theme.accentPrimary
+        border.color: root.theme.accentPrimary
+        border.width: 1
+        scale: applyBtnHover.pressed ? 0.95 : (applyBtnHover.containsMouse ? 1.04 : 1.0)
         Accessible.role: Accessible.Button
         Accessible.name: "Apply wallpaper"
 
-        Row {
-          id: applyRow
-          anchors.centerIn: parent
-          spacing: 8
+        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on border.color { ColorAnimation { duration: 150 } }
 
-          Text {
-            text: "󰄬"
-            color: root.theme.bgBase
-            font.pixelSize: 14
-            font.family: root.font
-            anchors.verticalCenter: parent.verticalCenter
-          }
-          Text {
-            text: "Apply Wallpaper"
-            color: root.theme.bgBase
-            font.pixelSize: 13
-            font.family: root.font
-            font.bold: true
-            anchors.verticalCenter: parent.verticalCenter
-          }
+        Text {
+          id: applyText
+          anchors.centerIn: parent
+          text: "Apply Wallpaper"
+          color: applyBtnHover.containsMouse ? root.theme.textPrimary : root.theme.bgBase
+          font.pixelSize: 13
+          font.family: root.font
+          font.bold: true
         }
 
         MouseArea {
+          id: applyBtnHover
           anchors.fill: parent
+          hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
           onClicked: {
             WallpaperService.setWallpaper(root.previewPath);

@@ -15,7 +15,7 @@ ColumnLayout {
 
     readonly property var audioSources: {
         if (!Pipewire.ready) return [];
-        return Pipewire.nodes.values.filter(n => n.audio !== null && !n.isStream && !n.isSink);
+        return Pipewire.nodes.values.filter(n => n && n.audio !== null && !n.isStream && !n.isSink);
     }
 
     spacing: 6
@@ -225,7 +225,7 @@ ColumnLayout {
         Behavior on Layout.preferredHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.InOutQuad } }
 
-        ColumnLayout {
+        Column {
             id: sourceListCol
             anchors {
                 top: parent.top
@@ -241,7 +241,7 @@ ColumnLayout {
                 font.pixelSize: 11
                 color: root.theme.textMuted
                 visible: root.audioSources.length === 0
-                Layout.margins: 6
+                padding: 6
             }
 
             Repeater {
@@ -249,8 +249,8 @@ ColumnLayout {
 
                 delegate: Rectangle {
                     id: sourceItemRect
-                    readonly property bool isSelected: Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.id === modelData.id
-                    Layout.fillWidth: true
+                    readonly property bool isSelected: Boolean(modelData && Pipewire.defaultAudioSource && Pipewire.defaultAudioSource.id === modelData.id)
+                    width: parent ? parent.width : 0
                     height: 30
                     radius: 6
                     scale: sourceItemMouse.pressed ? 0.98 : 1.0
@@ -281,7 +281,7 @@ ColumnLayout {
                         }
 
                         Text {
-                            text: modelData.description || modelData.nickname || modelData.name || "Microphone"
+                            text: modelData ? (modelData.description || modelData.nickname || modelData.name || "Microphone") : "Microphone"
                             font.family: root.font
                             font.pixelSize: 11
                             font.bold: sourceItemRect.isSelected
@@ -299,7 +299,7 @@ ColumnLayout {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            Pipewire.preferredDefaultAudioSource = modelData;
+                            if (modelData) Pipewire.preferredDefaultAudioSource = modelData;
                             root.dropdownOpen = false;
                             root.dropdownToggled(false);
                         }

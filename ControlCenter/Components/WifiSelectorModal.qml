@@ -368,9 +368,11 @@ PanelWindow {
 
                     height: isExpanded ? ((modelData.security && !isCurrent) ? 140 : 100) : 44
                     radius: 8
-                    color: (isSelected || hoverArea.containsMouse || isExpanded) 
+                    color: (isSelected || isExpanded) 
                         ? root.theme.bgSelected 
-                        : "transparent"
+                        : (hoverArea.containsMouse 
+                            ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.08) 
+                            : "transparent")
                     clip: true
                     
                     Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }

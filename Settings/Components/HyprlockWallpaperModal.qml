@@ -138,12 +138,15 @@ PanelWindow {
 
                 // Search Filter Input
                 Rectangle {
-                    width: 200
+                    width: 220
                     height: 32
-                    radius: 7
+                    radius: 8
                     color: root.theme.bgSurface ?? Qt.rgba(0, 0, 0, 0.25)
-                    border.color: searchField.activeFocus ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                    border.color: searchField.activeFocus ? (root.theme.accentPrimary ?? "#7aa2f7") : (searchHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
                     border.width: 1
+
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    HoverHandler { id: searchHover }
 
                     TextInput {
                         id: searchField
@@ -171,14 +174,20 @@ PanelWindow {
                     }
                 }
 
-                // Rescan Button
+                // Rescan Button (Modern secondary action button)
                 Rectangle {
-                    width: rescanText.implicitWidth + 20
+                    id: rescanBtn
+                    width: rescanText.implicitWidth + 22
                     height: 32
-                    radius: 7
-                    color: rescanHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.12)) : (root.theme.bgSurface ?? Qt.rgba(0, 0, 0, 0.25))
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                    radius: 8
+                    color: rescanHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
+                    border.color: rescanHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                     border.width: 1
+                    scale: rescanMouse.pressed ? 0.96 : 1.0
+
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 80 } }
 
                     HoverHandler { id: rescanHover }
 
@@ -189,24 +198,32 @@ PanelWindow {
                         font.family: root.font
                         font.pixelSize: 11
                         font.bold: true
-                        color: root.theme.textPrimary ?? "#ffffff"
+                        color: rescanHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                        Behavior on color { ColorAnimation { duration: 140 } }
                     }
 
                     MouseArea {
+                        id: rescanMouse
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: WallpaperService.rescan()
                     }
                 }
 
-                // Close Button
+                // Close Button (Modern secondary action button)
                 Rectangle {
-                    width: closeText.implicitWidth + 20
+                    id: closeBtn
+                    width: closeText.implicitWidth + 22
                     height: 32
-                    radius: 7
-                    color: closeHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.12)) : (root.theme.bgSurface ?? Qt.rgba(0, 0, 0, 0.25))
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                    radius: 8
+                    color: closeHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
+                    border.color: closeHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                     border.width: 1
+                    scale: closeMouse.pressed ? 0.96 : 1.0
+
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 80 } }
 
                     HoverHandler { id: closeHover }
 
@@ -217,10 +234,12 @@ PanelWindow {
                         font.family: root.font
                         font.pixelSize: 11
                         font.bold: true
-                        color: root.theme.textPrimary ?? "#ffffff"
+                        color: closeHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                        Behavior on color { ColorAnimation { duration: 140 } }
                     }
 
                     MouseArea {
+                        id: closeMouse
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.visible = false
@@ -295,6 +314,8 @@ PanelWindow {
                             border.color: delegateRoot.isCurrent ? (root.theme.accentPrimary ?? "#7aa2f7") : (cardHover.hovered ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.25)) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
                             border.width: delegateRoot.isCurrent ? 2 : 1
                             clip: true
+
+                            Behavior on border.color { ColorAnimation { duration: 140 } }
 
                             HoverHandler { id: cardHover }
 

@@ -191,7 +191,7 @@ Scope {
         root.applyError = errorText;
       } else {
         // Only persist on confirmed success - never write an invalid config
-        MonitorService.persistToFile(root.editState);
+        MonitorService.persistToFile(MonitorService._lastEdits);
         root.initEditState();
         root.isOpen = false;
       }

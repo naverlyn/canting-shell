@@ -27,6 +27,65 @@ Item {
     /* Wayland idle inhibitor state */
     readonly property bool keepAwake: SystemInfo.idleInhibited
 
+    /* Inactivity Screen Lock Management (hypridle) */
+    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_hypridle.sh").toString().replace(/^file:\/\//, "")
+    property int lockTimeoutMinutes: 10
+    property bool isLoadingLock: true
+
+    function setLockTimeout(mins) {
+        root.lockTimeoutMinutes = mins;
+        setLockTimeoutProc.command = [root.scriptPath, "set", String(mins)];
+        setLockTimeoutProc.running = true;
+    }
+
+    Timer {
+        id: lockDebounceTimer
+        interval: 350
+        repeat: false
+        onTriggered: {
+            setLockTimeoutProc.command = [root.scriptPath, "set", String(root.lockTimeoutMinutes)];
+            setLockTimeoutProc.running = true;
+        }
+    }
+
+    function queueLockTimeout(mins) {
+        root.lockTimeoutMinutes = mins;
+        lockDebounceTimer.restart();
+    }
+
+    Process {
+        id: loadLockTimeoutProc
+        command: [root.scriptPath, "get"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const data = JSON.parse(text.trim());
+                    if (data && data.timeout_minutes !== undefined) {
+                        root.lockTimeoutMinutes = data.timeout_minutes;
+                    }
+                } catch (e) {}
+                root.isLoadingLock = false;
+            }
+        }
+    }
+
+    Process {
+        id: setLockTimeoutProc
+        command: [root.scriptPath, "set", String(root.lockTimeoutMinutes)]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const data = JSON.parse(text.trim());
+                    if (data && data.timeout_minutes !== undefined) {
+                        root.lockTimeoutMinutes = data.timeout_minutes;
+                    }
+                } catch (e) {}
+            }
+        }
+    }
+
     /* Power action processes */
     Process {
         id: turnOffDisplaysProc
@@ -60,10 +119,12 @@ Item {
 
     /* Main Scrollable View */
     Flickable {
+        id: powerFlickable
         anchors.fill: parent
         contentHeight: mainCol.implicitHeight + 24
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        interactive: !lockMouse.pressed
 
         ColumnLayout {
             id: mainCol
@@ -183,46 +244,271 @@ Item {
                             color: Qt.rgba(1, 1, 1, 0.05)
                         }
 
-                        /* Row 2: Inactivity Lock Information */
+                        /* Row 2: Automatic Screen Lock */
                         Item {
-                            Layout.fillWidth: true
-                            height: 52
+                            id: lockItem
+                            property bool customActive: false
 
-                            RowLayout {
+                            Connections {
+                                target: root
+                                function onLockTimeoutMinutesChanged() {
+                                    const presets = [5, 10, 15, 30];
+                                    if (presets.indexOf(root.lockTimeoutMinutes) === -1) {
+                                        lockItem.customActive = true;
+                                    }
+                                }
+                            }
+
+                            Layout.fillWidth: true
+                            implicitHeight: lockCol.implicitHeight + (customActive ? 20 : 12)
+
+                            Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                            ColumnLayout {
+                                id: lockCol
                                 anchors.fill: parent
                                 anchors.leftMargin: 12
                                 anchors.rightMargin: 12
-                                spacing: 12
+                                anchors.topMargin: 6
+                                anchors.bottomMargin: 6
+                                spacing: 10
 
-                                ColumnLayout {
-                                    spacing: 2
-                                    Layout.alignment: Qt.AlignVCenter
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 12
 
-                                    Text {
-                                        text: "Automatic Screen Lock"
-                                        font.family: root.font
-                                        font.pixelSize: 13
-                                        font.bold: true
-                                        color: root.theme.textPrimary
+                                    ColumnLayout {
+                                        spacing: 2
+                                        Layout.alignment: Qt.AlignVCenter
+
+                                        Text {
+                                            text: "Automatic Screen Lock"
+                                            font.family: root.font
+                                            font.pixelSize: 13
+                                            font.bold: true
+                                            color: root.theme.textPrimary
+                                        }
+
+                                        Text {
+                                            text: "Lock session after inactivity via hypridle"
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            color: root.theme.textSecondary
+                                        }
                                     }
 
-                                    Text {
-                                        text: "Lock session after inactivity via hypridle"
-                                        font.family: root.font
-                                        font.pixelSize: 11
-                                        color: root.theme.textSecondary
+                                    Item { Layout.fillWidth: true }
+
+                                    /* Segmented Track */
+                                    Rectangle {
+                                        id: lockSegmentTrack
+                                        implicitWidth: 320
+                                        implicitHeight: 32
+                                        width: 320
+                                        height: 32
+                                        radius: 7
+                                        color: root.theme.bgBase
+                                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                        border.width: 1
+                                        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+                                        readonly property int activeIdx: {
+                                            if (lockItem.customActive) return 4;
+                                            const presets = [5, 10, 15, 30];
+                                            const idx = presets.indexOf(root.lockTimeoutMinutes);
+                                            return idx !== -1 ? idx : 4;
+                                        }
+                                        readonly property real cellWidth: (width - 6 - 16) / 5
+
+                                        /* Sliding Selection Pill */
+                                        Rectangle {
+                                            y: 3
+                                            height: parent.height - 6
+                                            width: lockSegmentTrack.cellWidth
+                                            x: 3 + lockSegmentTrack.activeIdx * (lockSegmentTrack.cellWidth + 4)
+                                            radius: 5
+                                            color: root.theme.bgSelected
+                                            border.color: root.theme.accentPrimary
+                                            border.width: 1
+
+                                            Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                                        }
+
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.margins: 3
+                                            spacing: 4
+
+                                            Repeater {
+                                                model: [
+                                                    { label: "5m", value: 5 },
+                                                    { label: "10m", value: 10 },
+                                                    { label: "15m", value: 15 },
+                                                    { label: "30m", value: 30 },
+                                                    { label: "Custom", value: "custom" }
+                                                ]
+
+                                                delegate: Rectangle {
+                                                    id: lSegBtn
+                                                    required property var modelData
+                                                    required property int index
+                                                    readonly property bool isSel: lockSegmentTrack.activeIdx === lSegBtn.index
+
+                                                    Layout.fillWidth: true
+                                                    Layout.fillHeight: true
+                                                    radius: 5
+                                                    color: !isSel && lSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                                    Behavior on color { ColorAnimation { duration: 140 } }
+
+                                                    HoverHandler { id: lSegHover }
+
+                                                    Text {
+                                                        anchors.centerIn: parent
+                                                        text: (lSegBtn.modelData.value === "custom")
+                                                            ? (lockItem.customActive ? (root.lockTimeoutMinutes + "m") : "Custom")
+                                                            : lSegBtn.modelData.label
+                                                        font.family: root.font
+                                                        font.pixelSize: 11
+                                                        font.bold: lSegBtn.isSel
+                                                        color: lSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
+                                                        opacity: lSegBtn.isSel || lSegHover.hovered ? 1.0 : 0.75
+                                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                                        Behavior on opacity { NumberAnimation { duration: 140 } }
+                                                    }
+
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: {
+                                                            if (lSegBtn.modelData.value === "custom") {
+                                                                lockItem.customActive = !lockItem.customActive;
+                                                            } else {
+                                                                lockItem.customActive = false;
+                                                                lockDebounceTimer.stop();
+                                                                root.setLockTimeout(lSegBtn.modelData.value);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
 
-                                Item { Layout.fillWidth: true }
+                                /* Custom Slider Row */
+                                RowLayout {
+                                    id: customLockSeekRow
+                                    visible: lockItem.customActive
+                                    opacity: lockItem.customActive ? 1.0 : 0.0
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 4
+                                    spacing: 12
 
-                                Text {
-                                    text: "10 minutes"
-                                    font.family: root.font
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                    color: root.theme.textSecondary
-                                    Layout.alignment: Qt.AlignVCenter
+                                    Behavior on opacity { NumberAnimation { duration: 160 } }
+
+                                    Text {
+                                        text: "Custom Inactivity Time:"
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                        color: root.theme.textSecondary
+                                        Layout.preferredWidth: 160
+                                        Layout.minimumWidth: 160
+                                        Layout.maximumWidth: 160
+                                    }
+
+                                    Rectangle {
+                                        id: lockSeekTrack
+                                        Layout.fillWidth: true
+                                        height: 6
+                                        radius: 3
+                                        color: root.theme.bgSelected
+                                        Layout.alignment: Qt.AlignVCenter
+
+                                        readonly property real minMins: 1.0
+                                        readonly property real maxMins: 60.0
+                                        readonly property real frac: Math.max(0.0, Math.min(1.0, (root.lockTimeoutMinutes - minMins) / (maxMins - minMins)))
+                                        readonly property bool isDragging: lockMouse.pressed
+
+                                        Rectangle {
+                                            height: parent.height
+                                            radius: parent.radius
+                                            width: Math.max(0, Math.min(parent.width, parent.width * lockSeekTrack.frac))
+                                            color: root.theme.accentPrimary
+
+                                            Behavior on width {
+                                                NumberAnimation {
+                                                    duration: lockSeekTrack.isDragging ? 0 : 140
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+                                        }
+
+                                        // Outer halo ring on hover/press
+                                        Rectangle {
+                                            anchors.centerIn: lockKnob
+                                            width: lockKnob.width + (lockMouse.pressed ? 8 : (lockMouse.containsMouse ? 6 : 0))
+                                            height: width
+                                            radius: width / 2
+                                            color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, lockMouse.pressed ? 0.35 : (lockMouse.containsMouse ? 0.2 : 0))
+                                            z: 1
+
+                                            Behavior on width { NumberAnimation { duration: 120 } }
+                                            Behavior on color { ColorAnimation { duration: 120 } }
+                                        }
+
+                                        // Tactile white knob
+                                        Rectangle {
+                                            id: lockKnob
+                                            width: lockMouse.containsMouse || lockMouse.pressed ? 17 : 15
+                                            height: width
+                                            radius: width / 2
+                                            color: "#ffffff"
+                                            border.color: root.theme.accentPrimary
+                                            border.width: 3
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            x: Math.max(0, Math.min(lockSeekTrack.width - width, (lockSeekTrack.width * lockSeekTrack.frac) - (width / 2)))
+                                            z: 2
+
+                                            Behavior on width { NumberAnimation { duration: 120 } }
+                                            Behavior on x {
+                                                NumberAnimation {
+                                                    duration: lockSeekTrack.isDragging ? 0 : 140
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            id: lockMouse
+                                            anchors.fill: parent
+                                            anchors.margins: -8
+                                            hoverEnabled: true
+                                            preventStealing: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            function updateFromPos(mouse) {
+                                                if (lockSeekTrack.width <= 0) return;
+                                                const trackX = mapToItem(lockSeekTrack, mouse.x, 0).x;
+                                                const f = Math.max(0.0, Math.min(1.0, trackX / lockSeekTrack.width));
+                                                const val = Math.max(1, Math.min(60, Math.round(lockSeekTrack.minMins + f * (lockSeekTrack.maxMins - lockSeekTrack.minMins))));
+                                                root.queueLockTimeout(val);
+                                            }
+                                            onPressed: (mouse) => { mouse.accepted = true; updateFromPos(mouse); }
+                                            onPositionChanged: (mouse) => { if (pressed) { mouse.accepted = true; updateFromPos(mouse); } }
+                                            onClicked: (mouse) => { mouse.accepted = true; updateFromPos(mouse); }
+                                        }
+                                    }
+
+                                    Text {
+                                        text: root.lockTimeoutMinutes + " min"
+                                        font.family: root.font
+                                        font.pixelSize: 12
+                                        font.bold: true
+                                        color: root.theme.accentPrimary
+                                        Layout.preferredWidth: 50
+                                        horizontalAlignment: Text.AlignRight
+                                        Layout.alignment: Qt.AlignVCenter
+                                    }
                                 }
                             }
                         }

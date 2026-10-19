@@ -33,7 +33,7 @@ Scope {
       const h = b.barHeight !== undefined ? b.barHeight : 38;
       const fl = b.floating !== undefined ? b.floating : false;
       const isV = (edgePos === "left" || edgePos === "right");
-      const c = isV ? (h + 16 + (fl ? 12 : 0)) : (h + (fl ? 12 : 6));
+      const c = isV ? (h + 16 + (fl ? 6 : 0)) : (h + (fl ? 6 : 0));
       if (c > maxClearance) maxClearance = c;
     }
     return maxClearance;

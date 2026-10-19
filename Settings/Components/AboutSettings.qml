@@ -20,9 +20,11 @@ Item {
     property string uptimeStr: "Unknown"
     property string sessionType: "Wayland"
 
+    readonly property string scriptPath: Qt.resolvedUrl("../scripts/get_about_info.sh").toString().replace(/^file:\/\//, "")
+
     Process {
         id: gnomeInfoProc
-        command: ["/home/xeana/.config/quickshell/Settings/scripts/get_about_info.sh"]
+        command: [root.scriptPath]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -76,6 +78,11 @@ Item {
                 height: 72
                 radius: 12
                 color: root.theme.bgSurface
+                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.width: 1
+
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
                 RowLayout {
                     anchors.fill: parent
@@ -109,6 +116,11 @@ Item {
                 implicitHeight: infoRows.implicitHeight + 16
                 radius: 12
                 color: root.theme.bgSurface
+                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.width: 1
+
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
                 ColumnLayout {
                     id: infoRows
@@ -121,13 +133,19 @@ Item {
                     spacing: 0
 
                     // Helper Row Component
-                    component InfoRow: Item {
+                    component InfoRow: Rectangle {
                         property string label
                         property string value
                         property bool showDivider: true
 
                         Layout.fillWidth: true
                         height: 38
+                        radius: 6
+                        color: rowHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.04)) : "transparent"
+
+                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                        HoverHandler { id: rowHover }
 
                         RowLayout {
                             anchors.fill: parent

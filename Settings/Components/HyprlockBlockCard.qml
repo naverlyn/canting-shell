@@ -32,12 +32,14 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: mainLayout.implicitHeight + 24
     radius: 10
+    clip: true
     color: cardHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.05)) : (root.theme.bgSurface ?? Qt.rgba(0, 0, 0, 0.2))
     border.color: isExpanded 
         ? (root.theme.accentPrimary ?? "#7aa2f7") 
         : (cardHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
     border.width: isExpanded ? 1.5 : 1
 
+    Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
     Behavior on border.color { ColorAnimation { duration: 150 } }
     Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -57,10 +59,34 @@ Rectangle {
     property int editPosY: blockData && blockData.position_y !== undefined ? blockData.position_y : 0
     property string editColor: blockData && blockData.color ? blockData.color : "$color8"
 
+    function resolveColor(colStr) {
+        if (!colStr) return "#ffffff";
+        let str = String(colStr).trim();
+        if (str.startsWith("#")) return str;
+        if (str.startsWith("rgb(") || str.startsWith("rgba(")) {
+            let m = str.match(/rgba?\(\s*([0-9a-fA-F]{6})\s*\)/);
+            if (m) return "#" + m[1];
+            let m2 = str.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+            if (m2) return Qt.rgba(parseInt(m2[1])/255, parseInt(m2[2])/255, parseInt(m2[3])/255, 1);
+        }
+        const wallustMap = {
+            "$color0": "#404145", "$color1": "#131B43", "$color2": "#464F58", "$color3": "#4D576B",
+            "$color4": "#6B777D", "$color5": "#A2B3B5", "$color6": "#A2B3B5", "$color7": "#E3EEF0",
+            "$color8": "#9FA7A8", "$color9": "#828bb8", "$color10": "#5E6A76", "$color11": "#67748F",
+            "$color12": "#8F9EA7", "$color13": "#D8EEF1", "$color14": "#D8EEF1", "$color15": "#E3EEF0",
+            "$foreground": "#F1F9FA", "$background": "#1A1A1E",
+            "$accentPrimary": (root.theme && root.theme.accentPrimary) ? String(root.theme.accentPrimary) : "#7aa2f7"
+        };
+        if (wallustMap[str]) return wallustMap[str];
+        return "#ffffff";
+    }
+
     property string testOutput: ""
     property bool isEvaluating: false
 
     onBlockDataChanged: {
+        editPosX = blockData && blockData.position_x !== undefined ? blockData.position_x : 0;
+        editPosY = blockData && blockData.position_y !== undefined ? blockData.position_y : 0;
         if (!isExpanded) {
             editEnabled = blockData && blockData.enabled !== undefined ? blockData.enabled : true;
             editName = blockData && blockData.name ? blockData.name : "Label";
@@ -71,17 +97,17 @@ Rectangle {
             editFontSize = blockData && blockData.font_size ? blockData.font_size : 14;
             editHalign = blockData && blockData.halign ? blockData.halign : "center";
             editValign = blockData && blockData.valign ? blockData.valign : "center";
-            editPosX = blockData && blockData.position_x !== undefined ? blockData.position_x : 0;
-            editPosY = blockData && blockData.position_y !== undefined ? blockData.position_y : 0;
             editColor = blockData && blockData.color ? blockData.color : "$color8";
         }
     }
+
+    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_hyprlock.sh").toString().replace(/^file:\/\//, "")
 
     // Shell script execution runner
     Process {
         id: evalProc
         property string cmdToRun: ""
-        command: ["/home/xeana/.config/quickshell/Settings/scripts/manage_hyprlock.sh", "eval", cmdToRun]
+        command: [cardRoot.scriptPath, "eval", cmdToRun]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
@@ -159,6 +185,17 @@ Rectangle {
                 Layout.alignment: Qt.AlignVCenter
             }
 
+            // Color Indicator Swatch
+            Rectangle {
+                width: 8
+                height: 8
+                radius: 4
+                color: cardRoot.resolveColor(cardRoot.editColor)
+                border.color: Qt.rgba(1, 1, 1, 0.25)
+                border.width: 1
+                Layout.alignment: Qt.AlignVCenter
+            }
+
             // Mode Badge Pill
             Rectangle {
                 height: 20
@@ -224,6 +261,7 @@ Rectangle {
                     color: cardRoot.editEnabled ? "#ffffff" : (root.theme.textPrimary ?? "#c0caf5")
 
                     Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 140 } }
                 }
 
                 MouseArea {
@@ -241,15 +279,21 @@ Rectangle {
                 }
             }
 
-            // Edit / Done Button (Clean Text)
+            // Edit / Done Button (Modern secondary action button)
             Rectangle {
+                id: editBtn
                 implicitWidth: editBtnText.implicitWidth + 20
                 height: 28
-                radius: 6
-                color: editHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.12)) : Qt.rgba(1, 1, 1, 0.06)
-                border.color: cardRoot.isExpanded ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                radius: 7
+                color: editHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
+                border.color: (cardRoot.isExpanded || editHover.hovered) ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                 border.width: 1
+                scale: editMouse.pressed ? 0.96 : 1.0
                 Layout.alignment: Qt.AlignVCenter
+
+                Behavior on color { ColorAnimation { duration: 140 } }
+                Behavior on border.color { ColorAnimation { duration: 140 } }
+                Behavior on scale { NumberAnimation { duration: 80 } }
 
                 HoverHandler { id: editHover }
 
@@ -260,10 +304,12 @@ Rectangle {
                     font.family: cardRoot.font
                     font.pixelSize: 11
                     font.bold: true
-                    color: cardRoot.isExpanded ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                    color: (cardRoot.isExpanded || editHover.hovered) ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                    Behavior on color { ColorAnimation { duration: 140 } }
                 }
 
                 MouseArea {
+                    id: editMouse
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: cardRoot.isExpanded = !cardRoot.isExpanded
@@ -321,17 +367,22 @@ Rectangle {
                 }
             }
 
-            // Compact "Run / Test" Button for Shell Commands
+            // Compact "Run / Test" Button for Shell Commands (Modern secondary action button)
             Rectangle {
+                id: runSummaryBtn
                 visible: cardRoot.editIsCmd
                 implicitWidth: runSummaryText.implicitWidth + 20
                 height: 30
-                radius: 6
-                color: runSummaryHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.15)
-                border.color: root.theme.accentPrimary ?? "#7aa2f7"
+                radius: 7
+                color: runSummaryHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
+                border.color: runSummaryHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                 border.width: 1
+                scale: runSummaryMouse.pressed ? 0.96 : 1.0
 
-                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: 140 } }
+                Behavior on border.color { ColorAnimation { duration: 140 } }
+                Behavior on scale { NumberAnimation { duration: 80 } }
+
                 HoverHandler { id: runSummaryHover }
 
                 Text {
@@ -341,10 +392,12 @@ Rectangle {
                     font.family: cardRoot.font
                     font.pixelSize: 10
                     font.bold: true
-                    color: runSummaryHover.hovered ? "#ffffff" : (root.theme.accentPrimary ?? "#7aa2f7")
+                    color: runSummaryHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                    Behavior on color { ColorAnimation { duration: 140 } }
                 }
 
                 MouseArea {
+                    id: runSummaryMouse
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     enabled: !cardRoot.isEvaluating
@@ -500,6 +553,9 @@ Rectangle {
                             border.color: !cardRoot.editIsCmd ? (root.theme.accentPrimary ?? "#7aa2f7") : "transparent"
                             border.width: !cardRoot.editIsCmd ? 1 : 0
 
+                            Behavior on color { ColorAnimation { duration: 140 } }
+                            Behavior on border.color { ColorAnimation { duration: 140 } }
+
                             Text {
                                 anchors.centerIn: parent
                                 text: "Plain Text / Variables ($USER)"
@@ -507,6 +563,8 @@ Rectangle {
                                 font.pixelSize: 11
                                 font.bold: !cardRoot.editIsCmd
                                 color: !cardRoot.editIsCmd ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textSecondary ?? "#9aa5ce")
+
+                                Behavior on color { ColorAnimation { duration: 140 } }
                             }
 
                             MouseArea {
@@ -525,6 +583,9 @@ Rectangle {
                             border.color: cardRoot.editIsCmd ? (root.theme.accentPrimary ?? "#7aa2f7") : "transparent"
                             border.width: cardRoot.editIsCmd ? 1 : 0
 
+                            Behavior on color { ColorAnimation { duration: 140 } }
+                            Behavior on border.color { ColorAnimation { duration: 140 } }
+
                             Text {
                                 anchors.centerIn: parent
                                 text: "Shell Script (cmd[update])"
@@ -532,6 +593,8 @@ Rectangle {
                                 font.pixelSize: 11
                                 font.bold: cardRoot.editIsCmd
                                 color: cardRoot.editIsCmd ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textSecondary ?? "#9aa5ce")
+
+                                Behavior on color { ColorAnimation { duration: 140 } }
                             }
 
                             MouseArea {
@@ -584,6 +647,9 @@ Rectangle {
                                 border.color: cardRoot.editCmdInterval === modelData.val ? root.theme.accentPrimary : Qt.rgba(1, 1, 1, 0.08)
                                 border.width: 1
 
+                                Behavior on color { ColorAnimation { duration: 140 } }
+                                Behavior on border.color { ColorAnimation { duration: 140 } }
+
                                 Text {
                                     id: intLabel
                                     anchors.centerIn: parent
@@ -592,6 +658,8 @@ Rectangle {
                                     font.pixelSize: 10
                                     font.bold: cardRoot.editCmdInterval === modelData.val
                                     color: cardRoot.editCmdInterval === modelData.val ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+
+                                    Behavior on color { ColorAnimation { duration: 140 } }
                                 }
 
                                 MouseArea {
@@ -656,12 +724,18 @@ Rectangle {
                     spacing: 10
 
                     Rectangle {
+                        id: runBtn
                         implicitWidth: runBtnText.implicitWidth + 24
                         height: 32
-                        radius: 6
-                        color: runBtnHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.2)
-                        border.color: root.theme.accentPrimary ?? "#7aa2f7"
+                        radius: 7
+                        color: runBtnHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
+                        border.color: runBtnHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                         border.width: 1
+                        scale: runBtnMouse.pressed ? 0.96 : 1.0
+
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        Behavior on border.color { ColorAnimation { duration: 140 } }
+                        Behavior on scale { NumberAnimation { duration: 80 } }
 
                         HoverHandler { id: runBtnHover }
 
@@ -672,10 +746,12 @@ Rectangle {
                             font.family: cardRoot.font
                             font.pixelSize: 11
                             font.bold: true
-                            color: runBtnHover.hovered ? "#ffffff" : (root.theme.accentPrimary ?? "#7aa2f7")
+                            color: runBtnHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                            Behavior on color { ColorAnimation { duration: 140 } }
                         }
 
                         MouseArea {
+                            id: runBtnMouse
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             enabled: !cardRoot.isEvaluating
@@ -774,6 +850,8 @@ Rectangle {
                             border.color: Qt.rgba(1,1,1,0.1)
                             border.width: 1
 
+                            Behavior on color { ColorAnimation { duration: 120 } }
+
                             HoverHandler { id: pillHover }
 
                             Text {
@@ -845,6 +923,9 @@ Rectangle {
                                     border.color: cardRoot.editHalign === modelData ? root.theme.accentPrimary : "transparent"
                                     border.width: cardRoot.editHalign === modelData ? 1 : 0
 
+                                    Behavior on color { ColorAnimation { duration: 140 } }
+                                    Behavior on border.color { ColorAnimation { duration: 140 } }
+
                                     Text {
                                         anchors.centerIn: parent
                                         text: modelData.charAt(0).toUpperCase() + modelData.slice(1)
@@ -852,6 +933,8 @@ Rectangle {
                                         font.pixelSize: 10
                                         font.bold: cardRoot.editHalign === modelData
                                         color: cardRoot.editHalign === modelData ? (root.theme.accentPrimary ?? "#7aa2f7") : root.theme.textSecondary
+
+                                        Behavior on color { ColorAnimation { duration: 140 } }
                                     }
 
                                     MouseArea {
@@ -901,6 +984,9 @@ Rectangle {
                                     border.color: cardRoot.editValign === modelData ? root.theme.accentPrimary : "transparent"
                                     border.width: cardRoot.editValign === modelData ? 1 : 0
 
+                                    Behavior on color { ColorAnimation { duration: 140 } }
+                                    Behavior on border.color { ColorAnimation { duration: 140 } }
+
                                     Text {
                                         anchors.centerIn: parent
                                         text: modelData.charAt(0).toUpperCase() + modelData.slice(1)
@@ -908,6 +994,8 @@ Rectangle {
                                         font.pixelSize: 10
                                         font.bold: cardRoot.editValign === modelData
                                         color: cardRoot.editValign === modelData ? (root.theme.accentPrimary ?? "#7aa2f7") : root.theme.textSecondary
+
+                                        Behavior on color { ColorAnimation { duration: 140 } }
                                     }
 
                                     MouseArea {
@@ -1032,20 +1120,159 @@ Rectangle {
                 color: Qt.rgba(1, 1, 1, 0.08)
             }
 
+            // Color Configuration Section
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Text {
+                        text: "Color"
+                        font.family: cardRoot.font
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: root.theme.textSecondary
+                    }
+
+                    // Live Color Preview Chip
+                    Rectangle {
+                        width: 18
+                        height: 18
+                        radius: 9
+                        color: cardRoot.resolveColor(cardRoot.editColor)
+                        border.color: Qt.rgba(1, 1, 1, 0.25)
+                        border.width: 1
+                    }
+
+                    Text {
+                        text: cardRoot.editColor
+                        font.family: cardRoot.font
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: cardRoot.resolveColor(cardRoot.editColor)
+                    }
+
+                    Item { Layout.fillWidth: true }
+
+                    // Custom Color Input Field
+                    Rectangle {
+                        width: 140
+                        height: 28
+                        radius: 6
+                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
+                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        border.width: 1
+
+                        TextInput {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            verticalAlignment: TextInput.AlignVCenter
+                            text: cardRoot.editColor
+                            font.family: cardRoot.font
+                            font.pixelSize: 11
+                            color: root.theme.textPrimary
+                            selectByMouse: true
+                            onTextChanged: {
+                                if (text.trim().length > 0 && cardRoot.editColor !== text.trim()) {
+                                    cardRoot.editColor = text.trim();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Preset Palette Chips
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: [
+                            { name: "Default", val: "$color8", color: "#9FA7A8" },
+                            { name: "Accent", val: "$color13", color: "#D8EEF1" },
+                            { name: "Purple", val: "$color9", color: "#828bb8" },
+                            { name: "Highlight", val: "$color11", color: "#67748F" },
+                            { name: "Blue", val: "$color12", color: "#8F9EA7" },
+                            { name: "Bright", val: "$color7", color: "#E3EEF0" },
+                            { name: "White", val: "#ffffff", color: "#ffffff" },
+                            { name: "Primary", val: "$accentPrimary", color: (root.theme && root.theme.accentPrimary ? String(root.theme.accentPrimary) : "#7aa2f7") }
+                        ]
+
+                        Rectangle {
+                            readonly property bool isSelected: cardRoot.editColor === modelData.val
+                            implicitWidth: chipRow.implicitWidth + 14
+                            height: 24
+                            radius: 12
+                            color: isSelected ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.2) : (chipHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)))
+                            border.color: isSelected ? (root.theme.accentPrimary ?? "#7aa2f7") : Qt.rgba(1, 1, 1, 0.1)
+                            border.width: isSelected ? 1.5 : 1
+
+                            HoverHandler { id: chipHover }
+
+                            RowLayout {
+                                id: chipRow
+                                anchors.centerIn: parent
+                                spacing: 5
+
+                                Rectangle {
+                                    width: 10
+                                    height: 10
+                                    radius: 5
+                                    color: modelData.color
+                                    border.color: Qt.rgba(0, 0, 0, 0.3)
+                                    border.width: 1
+                                }
+
+                                Text {
+                                    text: modelData.name
+                                    font.family: cardRoot.font
+                                    font.pixelSize: 10
+                                    font.bold: isSelected
+                                    color: isSelected ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textSecondary ?? "#a6adc8")
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: cardRoot.editColor = modelData.val
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Divider
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: Qt.rgba(1, 1, 1, 0.08)
+            }
+
             // Footer Action Buttons
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 10
 
-                // Delete Button (for custom blocks)
+                // Delete Button (Modern danger action button)
                 Rectangle {
+                    id: delBtn
                     visible: cardRoot.blockData && cardRoot.blockData.is_custom
-                    implicitWidth: delText.implicitWidth + 20
+                    implicitWidth: delText.implicitWidth + 24
                     height: 32
-                    radius: 6
-                    color: delHover.hovered ? (root.theme.accentRed ?? "#f7768e") : Qt.rgba(0.9, 0.3, 0.3, 0.15)
-                    border.color: root.theme.accentRed ?? "#f7768e"
+                    radius: 8
+                    color: delHover.hovered ? Qt.rgba(0.97, 0.46, 0.56, 0.18) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
+                    border.color: delHover.hovered ? (root.theme.accentRed ?? "#f7768e") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                     border.width: 1
+                    scale: delMouse.pressed ? 0.96 : 1.0
+
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 80 } }
 
                     HoverHandler { id: delHover }
 
@@ -1056,10 +1283,12 @@ Rectangle {
                         font.family: cardRoot.font
                         font.pixelSize: 11
                         font.bold: true
-                        color: delHover.hovered ? "#ffffff" : (root.theme.accentRed ?? "#f7768e")
+                        color: delHover.hovered ? (root.theme.accentRed ?? "#f7768e") : (root.theme.textPrimary ?? "#ffffff")
+                        Behavior on color { ColorAnimation { duration: 140 } }
                     }
 
                     MouseArea {
+                        id: delMouse
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: cardRoot.blockDeleted(cardRoot.blockIndex)
@@ -1068,14 +1297,20 @@ Rectangle {
 
                 Item { Layout.fillWidth: true }
 
-                // Cancel / Close Button
+                // Cancel / Close Button (Modern secondary action button)
                 Rectangle {
-                    implicitWidth: cancelText.implicitWidth + 20
+                    id: cancelBtn
+                    implicitWidth: cancelText.implicitWidth + 22
                     height: 32
-                    radius: 6
-                    color: cancelHover.hovered ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.05)
-                    border.color: Qt.rgba(1, 1, 1, 0.1)
+                    radius: 8
+                    color: cancelHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
+                    border.color: cancelHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                     border.width: 1
+                    scale: cancelMouse.pressed ? 0.96 : 1.0
+
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 80 } }
 
                     HoverHandler { id: cancelHover }
 
@@ -1085,24 +1320,31 @@ Rectangle {
                         text: "Cancel"
                         font.family: cardRoot.font
                         font.pixelSize: 11
-                        color: root.theme.textPrimary
+                        font.bold: true
+                        color: cancelHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                        Behavior on color { ColorAnimation { duration: 140 } }
                     }
 
                     MouseArea {
+                        id: cancelMouse
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: cardRoot.isExpanded = false
                     }
                 }
 
-                // Save & Apply Button
+                // Save & Apply Button (Modern primary action button)
                 Rectangle {
-                    implicitWidth: saveText.implicitWidth + 24
+                    id: saveBtn
+                    implicitWidth: saveText.implicitWidth + 26
                     height: 32
-                    radius: 6
-                    color: saveHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.85)
+                    radius: 8
+                    color: saveHover.hovered ? Qt.darker(root.theme.accentPrimary ?? "#7aa2f7", 1.1) : (root.theme.accentPrimary ?? "#7aa2f7")
+                    scale: saveMouse.pressed ? 0.96 : 1.0
 
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 80 } }
+
                     HoverHandler { id: saveHover }
 
                     Text {
@@ -1116,6 +1358,7 @@ Rectangle {
                     }
 
                     MouseArea {
+                        id: saveMouse
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: cardRoot.saveChanges()

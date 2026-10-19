@@ -1,6 +1,6 @@
 {
   "doNotDisturb": false,
-  "toastPosition": "top-right",
+  "toastPosition": "bottom-right",
   "toastMarginX": 10,
   "toastMarginY": 10
 }

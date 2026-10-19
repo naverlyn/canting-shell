@@ -1,0 +1,87 @@
+{
+  "width": 320,
+  "panelLayout": "vertical",
+  "groupTilesEnabled": true,
+  "groupedTileIds": [
+    "wifi",
+    "bluetooth",
+    "dnd",
+    "airplane"
+  ],
+  "mediaWidgetStyle": "full",
+  "cards": {
+    "header": true,
+    "viewSwitcher": true,
+    "quickSettings": true,
+    "brightness": false,
+    "audio": true,
+    "media": true,
+    "systemInfo": false
+  },
+  "mediaAutoHide": false,
+  "cardOrder": [
+    "quickSettings",
+    "brightness",
+    "audio",
+    "media",
+    "systemInfo"
+  ],
+  "tiles": [
+    {
+      "id": "wifi",
+      "enabled": true
+    },
+    {
+      "id": "nightlight",
+      "enabled": true
+    },
+    {
+      "id": "caffeine",
+      "enabled": true
+    },
+    {
+      "id": "dnd",
+      "enabled": true
+    },
+    {
+      "id": "mic",
+      "enabled": true
+    },
+    {
+      "id": "screenshot",
+      "enabled": true
+    },
+    {
+      "id": "lock",
+      "enabled": true
+    },
+    {
+      "id": "mute",
+      "enabled": false
+    },
+    {
+      "id": "gamemode",
+      "enabled": false
+    },
+    {
+      "id": "clipboard",
+      "enabled": false
+    },
+    {
+      "id": "darkmode",
+      "enabled": false
+    },
+    {
+      "id": "emoji",
+      "enabled": false
+    },
+    {
+      "id": "bluetooth",
+      "enabled": false
+    },
+    {
+      "id": "airplane",
+      "enabled": false
+    }
+  ]
+}

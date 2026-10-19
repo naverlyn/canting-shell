@@ -60,12 +60,24 @@ Singleton {
       "head -n 1 /proc/stat; " +
       "awk '/^MemTotal:/ {t=$2} /^MemAvailable:/ {a=$2} END {if (t>0) printf \"MEM:%.1f%%\\n\", ((t-a)/t)*100.0; else print \"MEM:0%\"}' /proc/meminfo; " +
       "awk 'NR>2 {sub(/:/, \"\", $1); if ($1 != \"lo\") {rx += $2; tx += $10}} END {printf \"NETBW:%.0f:%.0f\\n\", rx, tx}' /proc/net/dev; " +
-      "eth=$(nmcli -t -f type,state dev 2>/dev/null | grep '^ethernet:connected'); " +
-      "if [ -n \"$eth\" ]; then echo 'NET:ethernet:Ethernet'; else " +
-      "wifi=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | grep '^yes' | cut -d: -f2); " +
-      "if [ -n \"$wifi\" ]; then echo \"NET:wifi:$wifi\"; else echo 'NET:disconnected:'; fi; fi; " +
+      "net_t=\"disconnected\"; net_i=\"\"; " +
+      "for dev in /sys/class/net/*; do " +
+      "[ \"$(basename \"$dev\")\" = \"lo\" ] && continue; " +
+      "if [ -f \"$dev/carrier\" ] && [ \"$(cat \"$dev/carrier\" 2>/dev/null)\" = \"1\" ]; then " +
+      "n=\"$(basename \"$dev\")\"; " +
+      "if [ -d \"$dev/wireless\" ] || [ -f \"$dev/phy80211/name\" ] || [ \"${n#wl}\" != \"$n\" ]; then " +
+      "net_t=\"wifi\"; net_i=\"$n\"; " +
+      "if command -v iwgetid >/dev/null 2>&1; then s=$(iwgetid -r \"$n\" 2>/dev/null || true); [ -n \"$s\" ] && net_i=\"$s\"; fi; " +
+      "break; " +
+      "else net_t=\"ethernet\"; net_i=\"Ethernet\"; break; fi; fi; done; " +
+      "if [ \"$net_t\" = \"wifi\" ] && [ \"$net_i\" = \"$n\" ] && command -v nmcli >/dev/null 2>&1; then " +
+      "s=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | awk -F: '$1==\"yes\"{print $2; exit}'); [ -n \"$s\" ] && net_i=\"$s\"; fi; " +
+      "echo \"NET:$net_t:$net_i\"; " +
       "printf 'BAT:%s:%s\\n' \"$(cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -n1 || echo '99')\" \"$(cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -n1 || echo 'Discharging')\"; " +
-      "t=$(sensors 2>/dev/null | grep -E 'Package id 0|Tctl' | head -1 | awk '{print $2}' | sed 's/+//'); echo \"TEMP:${t:-N/A}\""
+      "t=\"\"; for f in /sys/class/hwmon/hwmon*/temp1_input /sys/class/thermal/thermal_zone*/temp; do " +
+      "if [ -f \"$f\" ]; then v=$(cat \"$f\" 2>/dev/null || true); if [ -n \"$v\" ] && [ \"$v\" -gt 0 ] 2>/dev/null; then t=\"$((v / 1000))°C\"; break; fi; fi; done; " +
+      "if [ -z \"$t\" ]; then t=$(sensors 2>/dev/null | grep -E 'Package id 0|Tctl|Composite' | head -1 | awk '{print $2}' | sed 's/+//' || true); fi; " +
+      "echo \"TEMP:${t:-N/A}\""
     ]
     running: true
 
@@ -164,7 +176,7 @@ Singleton {
   // Weather Info
   Process {
     id: weatherProc
-    command: ["sh", "-c", "w=$(curl -s --connect-timeout 5 'wttr.in/Bekasi?format=4' 2>/dev/null | grep -v '<' | tr -d '\\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g'); [ -n \"$w\" ] && echo \"$w\" || echo '󰖐 N/A'"]
+    command: ["sh", "-c", "loc=\"" + (BarConfig.weatherLocation || "Bekasi") + "\"; w=$(curl -s --connect-timeout 5 \"wttr.in/${loc}?format=4\" 2>/dev/null | grep -v '<' | tr -d '\\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g'); [ -n \"$w\" ] && echo \"$w\" || echo '󰖐 N/A'"]
     running: true
 
     stdout: StdioCollector {
@@ -180,7 +192,10 @@ Singleton {
   }
 
   function refreshWeather() {
-    weatherProc.running = true
+    const loc = BarConfig.weatherLocation || "Bekasi";
+    const u = BarConfig.weatherUnit === "u" ? "u" : "m";
+    weatherProc.command = ["sh", "-c", "loc=\"" + loc + "\"; w=$(curl -s --connect-timeout 5 \"wttr.in/${loc}?format=4&" + u + "\" 2>/dev/null | grep -v '<' | tr -d '\\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g'); [ -n \"$w\" ] && echo \"$w\" || echo '󰖐 N/A'"];
+    weatherProc.running = true;
   }
 
   function refreshDisk() {
@@ -189,7 +204,7 @@ Singleton {
 
   // Update timer (fast polling for CPU, Mem, Net, Battery, Temp)
   Timer {
-    interval: 2000
+    interval: Math.max(1, (BarConfig.hwPollInterval || 2)) * 1000
     running: true
     repeat: true
     onTriggered: {
@@ -207,13 +222,13 @@ Singleton {
     }
   }
 
-  // Weather update timer (every 15 minutes)
+  // Weather update timer (configurable interval)
   Timer {
-    interval: 900000
+    interval: Math.max(5, (BarConfig.weatherIntervalMinutes || 15)) * 60 * 1000
     running: true
     repeat: true
     onTriggered: {
-      weatherProc.running = true
+      root.refreshWeather();
     }
   }
 }

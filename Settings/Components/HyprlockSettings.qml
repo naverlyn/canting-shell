@@ -21,6 +21,7 @@ Item {
 
     /* Internal state synced with hyprlock.conf */
     property bool isLoading: true
+    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_hyprlock.sh").toString().replace(/^file:\/\//, "")
 
     property int generalFractionalScaling: 2
     property bool generalImmediateRender: true
@@ -89,7 +90,7 @@ Item {
     /* Query configuration from manage_hyprlock.sh */
     Process {
         id: loadSettingsProc
-        command: ["/home/xeana/.config/quickshell/Settings/scripts/manage_hyprlock.sh", "get"]
+        command: [root.scriptPath, "get"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -167,11 +168,44 @@ Item {
                 } catch(e) {}
             }
         }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text && text.trim().length > 0) {
+                    console.warn("updateBlock error:", text);
+                }
+            }
+        }
     }
 
     function updateBlock(index, payload) {
-        updateBlockProc.command = ["/home/xeana/.config/quickshell/Settings/scripts/manage_hyprlock.sh", "update-block", String(index), JSON.stringify(payload)];
+        updateBlockProc.running = false;
+        updateBlockProc.command = [root.scriptPath, "update-block", String(index), JSON.stringify(payload)];
         updateBlockProc.running = true;
+    }
+
+    /* Process to batch update building block positions */
+    Process {
+        id: updatePositionsProc
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    const res = JSON.parse(text);
+                    if (res && res.status === "ok") {
+                        if (res.blocks) {
+                            root.textBlocks = res.blocks;
+                        }
+                        showStatus("Applied lock screen layout positions");
+                    } else if (res && res.message) {
+                        showStatus(res.message);
+                    } else {
+                        showStatus("Applied lock screen layout positions");
+                    }
+                } catch(e) {
+                    showStatus("Applied lock screen layout positions");
+                }
+            }
+        }
     }
 
     /* Process to add a new custom building block */
@@ -203,7 +237,7 @@ Item {
             valign: "bottom",
             color: "$color8"
         };
-        addBlockProc.command = ["/home/xeana/.config/quickshell/Settings/scripts/manage_hyprlock.sh", "add-block", JSON.stringify(newPayload)];
+        addBlockProc.command = [root.scriptPath, "add-block", JSON.stringify(newPayload)];
         addBlockProc.running = true;
     }
 
@@ -225,7 +259,7 @@ Item {
     }
 
     function deleteBlock(index) {
-        deleteBlockProc.command = ["/home/xeana/.config/quickshell/Settings/scripts/manage_hyprlock.sh", "delete-block", String(index)];
+        deleteBlockProc.command = [root.scriptPath, "delete-block", String(index)];
         deleteBlockProc.running = true;
     }
 
@@ -259,7 +293,7 @@ Item {
             "input_hide_input": root.inputHideInput,
             "input_placeholder": root.inputPlaceholder
         };
-        saveSettingsProc.command = ["/home/xeana/.config/quickshell/Settings/scripts/manage_hyprlock.sh", "set", JSON.stringify(payload)];
+        saveSettingsProc.command = [root.scriptPath, "set", JSON.stringify(payload)];
         saveSettingsProc.running = true;
     }
 
@@ -284,14 +318,14 @@ Item {
 
     function generateCustomWallpaper(imagePath) {
         root.backgroundCustomPath = imagePath;
-        generateWallpaperProc.command = ["/home/xeana/.config/quickshell/Settings/scripts/manage_hyprlock.sh", "generate-wallpaper", imagePath];
+        generateWallpaperProc.command = [root.scriptPath, "generate-wallpaper", imagePath];
         generateWallpaperProc.running = true;
     }
 
     /* Test Lock Screen runner */
     Process {
         id: testLockProc
-        command: ["/home/xeana/.config/quickshell/Settings/scripts/manage_hyprlock.sh", "test"]
+        command: [root.scriptPath, "test"]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
@@ -310,7 +344,7 @@ Item {
     /* Restore Backup runner */
     Process {
         id: restoreProc
-        command: ["/home/xeana/.config/quickshell/Settings/scripts/manage_hyprlock.sh", "restore"]
+        command: [root.scriptPath, "restore"]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
@@ -435,9 +469,9 @@ Item {
 
             // Left Label Column (Fixed width: guarantees 100% vertical alignment of seekbars)
             Item {
-                Layout.preferredWidth: 320
-                Layout.minimumWidth: 320
-                Layout.maximumWidth: 320
+                Layout.preferredWidth: 260
+                Layout.minimumWidth: 260
+                Layout.maximumWidth: 260
                 Layout.fillHeight: true
 
                 Column {
@@ -465,13 +499,13 @@ Item {
                 }
             }
 
-            // Seekbar Track Area: Fills all remaining width across the card (matches SoundSettings)
+            // Seekbar Track Area: Fills all remaining width across the card
             Rectangle {
                 id: track
                 Layout.fillWidth: true
-                height: 7
-                radius: 3.5
-                color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.14)
+                height: 6
+                radius: 3
+                color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12)
                 border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
                 border.width: 1
                 Layout.alignment: Qt.AlignVCenter
@@ -490,30 +524,33 @@ Item {
                     }
                 }
 
-                // Soft glow halo ring around knob on hover / press
+                // Outer halo ring on hover/press
                 Rectangle {
                     anchors.centerIn: knob
                     width: knob.width + (sliderMouse.pressed ? 8 : (sliderMouse.containsMouse ? 6 : 0))
                     height: width
                     radius: width / 2
-                    color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, sliderMouse.pressed ? 0.35 : (sliderMouse.containsMouse ? 0.2 : 0))
+                    color: {
+                        const acc = Qt.color((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7");
+                        return Qt.rgba(acc.r, acc.g, acc.b, sliderMouse.pressed ? 0.35 : (sliderMouse.containsMouse ? 0.2 : 0));
+                    }
                     z: 1
 
                     Behavior on width { NumberAnimation { duration: 120 } }
                     Behavior on color { ColorAnimation { duration: 120 } }
                 }
 
-                // High-contrast, tactile knob handle
+                // Tactile white knob
                 Rectangle {
                     id: knob
                     width: sliderMouse.containsMouse || sliderMouse.pressed ? 17 : 15
                     height: width
                     radius: width / 2
+                    color: "#ffffff"
+                    border.color: (root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7"
+                    border.width: 3
                     anchors.verticalCenter: parent.verticalCenter
                     x: Math.max(0, Math.min(track.width - width, (track.width * ((ps.currentVal - ps.minVal) / Math.max(0.0001, ps.maxVal - ps.minVal))) - width / 2))
-                    color: "#ffffff"
-                    border.color: root.theme.accentPrimary ?? "#7aa2f7"
-                    border.width: 3
                     z: 2
 
                     Behavior on width { NumberAnimation { duration: 120 } }
@@ -527,6 +564,7 @@ Item {
                     id: sliderMouse
                     anchors.fill: parent
                     anchors.margins: -8
+                    preventStealing: true
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     z: 3
@@ -539,8 +577,8 @@ Item {
                         ps.valueChanged(val);
                     }
 
-                    onPressed: (m) => updateValue(m.x)
-                    onPositionChanged: (m) => { if (pressed) updateValue(m.x); }
+                    onPressed: (m) => { m.accepted = true; updateValue(m.x); }
+                    onPositionChanged: (m) => { if (pressed) { m.accepted = true; updateValue(m.x); } }
                 }
             }
 
@@ -617,16 +655,21 @@ Item {
 
                 Item { Layout.fillWidth: true }
 
-                // Restore Defaults Button (Clean Text)
+                // Restore Defaults Button (Modern secondary action button)
                 Rectangle {
                     id: restoreBtn
                     implicitWidth: restoreText.implicitWidth + 24
-                    implicitHeight: 32
-                    radius: 7
-                    color: restoreHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.12)) : (root.theme.bgSurface ?? Qt.rgba(0,0,0,0.25))
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)
+                    height: 32
+                    radius: 8
+                    color: restoreHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
+                    border.color: restoreHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                     border.width: 1
+                    scale: restoreMouse.pressed ? 0.96 : 1.0
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 80 } }
 
                     HoverHandler { id: restoreHover }
 
@@ -635,27 +678,33 @@ Item {
                         anchors.centerIn: parent
                         text: "Restore Defaults"
                         font.family: root.font
-                        font.pixelSize: 12
-                        color: root.theme.textPrimary
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: restoreHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                        Behavior on color { ColorAnimation { duration: 140 } }
                     }
 
                     MouseArea {
+                        id: restoreMouse
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: restoreProc.running = true
                     }
                 }
 
-                // Test Lock Screen Button (Clean Text)
+                // Test Lock Screen Button (Modern primary action button)
                 Rectangle {
                     id: testLockBtn
                     implicitWidth: testLockText.implicitWidth + 26
-                    implicitHeight: 32
-                    radius: 7
-                    color: testLockHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : Qt.rgba(0.48, 0.63, 0.97, 0.85)
+                    height: 32
+                    radius: 8
+                    color: testLockHover.hovered ? Qt.darker(root.theme.accentPrimary ?? "#7aa2f7", 1.1) : (root.theme.accentPrimary ?? "#7aa2f7")
+                    scale: testLockMouse.pressed ? 0.96 : 1.0
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
                     Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 80 } }
+
                     HoverHandler { id: testLockHover }
 
                     Text {
@@ -663,12 +712,13 @@ Item {
                         anchors.centerIn: parent
                         text: "Test Lock"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: 11
                         font.bold: true
                         color: "#ffffff"
                     }
 
                     MouseArea {
+                        id: testLockMouse
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: testLockProc.running = true
@@ -708,18 +758,48 @@ Item {
                         }
                         spacing: 0
 
-                        // Background Source Row (260px wide segmented picker)
+                        // Background Source Row (Segmented track with sliding pill)
                         PreferenceRow {
                             title: "Wallpaper Source"
                             subtitle: "Select background image rendering mode"
 
                             Rectangle {
-                                width: 260
+                                id: wpSourceTrack
+                                readonly property var modes: [
+                                    { id: "wallpaper_current", label: "Current" },
+                                    { id: "wallpaper_modified", label: "Effects" },
+                                    { id: "screenshot", label: "Screenshot" },
+                                    { id: "custom", label: "Custom" }
+                                ]
+                                readonly property int activeIdx: {
+                                    for (let i = 0; i < modes.length; i++) {
+                                        if (modes[i].id === root.backgroundSource) return i;
+                                    }
+                                    return 0;
+                                }
+                                readonly property int count: modes.length
+                                readonly property real cellWidth: count > 0 ? ((width - 6 - (count - 1) * 3) / count) : 0
+                                width: 280
                                 height: 32
                                 radius: 7
-                                color: root.theme.bgBase ?? Qt.rgba(0,0,0,0.25)
-                                border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.08)
+                                color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
+                                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
                                 border.width: 1
+                                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+                                /* Sliding Selection Pill */
+                                Rectangle {
+                                    y: 3
+                                    height: parent.height - 6
+                                    width: wpSourceTrack.cellWidth
+                                    x: 3 + Math.max(0, wpSourceTrack.activeIdx) * (wpSourceTrack.cellWidth + 3)
+                                    radius: 5
+                                    color: root.theme.bgSelected
+                                    border.color: root.theme.accentPrimary ?? "#7aa2f7"
+                                    border.width: 1
+
+                                    Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                                }
 
                                 RowLayout {
                                     anchors.fill: parent
@@ -727,37 +807,37 @@ Item {
                                     spacing: 3
 
                                     Repeater {
-                                        model: [
-                                            { id: "wallpaper_current", label: "Current" },
-                                            { id: "wallpaper_modified", label: "Effects" },
-                                            { id: "screenshot", label: "Screenshot" },
-                                            { id: "custom", label: "Custom" }
-                                        ]
+                                        model: wpSourceTrack.modes
                                         delegate: Rectangle {
+                                            id: wpModeBtn
+                                            required property var modelData
+                                            required property int index
+                                            readonly property bool isSel: wpSourceTrack.activeIdx === wpModeBtn.index
+
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
                                             radius: 5
-                                            color: root.backgroundSource === modelData.id ? root.theme.bgSelected : (segHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : "transparent")
-                                            border.color: root.backgroundSource === modelData.id ? root.theme.accentPrimary : "transparent"
-                                            border.width: root.backgroundSource === modelData.id ? 1 : 0
+                                            color: !isSel && segHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                            Behavior on color { ColorAnimation { duration: 140 } }
 
                                             HoverHandler { id: segHover }
 
                                             Text {
                                                 anchors.centerIn: parent
-                                                text: modelData.label
+                                                text: wpModeBtn.modelData.label
                                                 font.family: root.font
                                                 font.pixelSize: 11
-                                                font.bold: root.backgroundSource === modelData.id
-                                                color: root.backgroundSource === modelData.id ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                                                font.bold: wpModeBtn.isSel
+                                                color: wpModeBtn.isSel ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                                                Behavior on color { ColorAnimation { duration: 140 } }
                                             }
 
                                             MouseArea {
                                                 anchors.fill: parent
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: {
-                                                    root.backgroundSource = modelData.id;
-                                                    if (modelData.id === "custom" && root.backgroundCustomPath === "") {
+                                                    root.backgroundSource = wpModeBtn.modelData.id;
+                                                    if (wpModeBtn.modelData.id === "custom" && root.backgroundCustomPath === "") {
                                                         wallpaperModal.visible = true;
                                                     } else {
                                                         root.scheduleSave();
@@ -770,32 +850,42 @@ Item {
                             }
                         }
 
-                        // Custom Wallpaper Selector Row (Clean Libadwaita layout)
+                        // Custom Wallpaper Selector Row (Refined action button)
                         PreferenceRow {
                             visible: root.backgroundSource === "custom"
                             title: "Custom Wallpaper"
                             subtitle: root.backgroundCustomPath !== "" ? root.backgroundCustomPath.split("/").pop() : "Click to select a wallpaper"
 
                             Rectangle {
-                                width: 260
+                                id: chooseWpBtn
+                                implicitWidth: chooseWpTxt.implicitWidth + 24
                                 height: 32
                                 radius: 7
-                                color: chooseWpHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.12)) : (root.theme.bgBase ?? Qt.rgba(0,0,0,0.25))
-                                border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)
+                                color: chooseWpHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.12)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
+                                border.color: chooseWpHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
                                 border.width: 1
+                                scale: chooseWpMouse.pressed ? 0.96 : 1.0
+                                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+                                Behavior on color { ColorAnimation { duration: 140 } }
+                                Behavior on border.color { ColorAnimation { duration: 140 } }
+                                Behavior on scale { NumberAnimation { duration: 80 } }
 
                                 HoverHandler { id: chooseWpHover }
 
                                 Text {
+                                    id: chooseWpTxt
                                     anchors.centerIn: parent
                                     text: root.backgroundCustomPath !== "" ? "Change Wallpaper..." : "Choose Wallpaper..."
                                     font.family: root.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: 11
                                     font.bold: true
-                                    color: root.theme.accentPrimary ?? "#7aa2f7"
+                                    color: chooseWpHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                                    Behavior on color { ColorAnimation { duration: 140 } }
                                 }
 
                                 MouseArea {
+                                    id: chooseWpMouse
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: wallpaperModal.visible = true
@@ -917,80 +1007,80 @@ Item {
                         }
                         spacing: 0
 
-                        // Clock Time Format Row (200px wide segmented picker)
+                        // Clock Time Format Row (Segmented track with sliding pill)
                         PreferenceRow {
                             title: "Time Format"
                             subtitle: "12-Hour AM/PM or 24-Hour standard format"
 
                             Rectangle {
-                                width: 200
+                                id: timeFormatTrack
+                                readonly property var modes: [
+                                    { id: "12h", label: "12-Hour" },
+                                    { id: "24h", label: "24-Hour" }
+                                ]
+                                readonly property int activeIdx: root.clockFormat === "24h" ? 1 : 0
+                                readonly property int count: 2
+                                readonly property real cellWidth: (width - 6 - 3) / 2
+                                width: 220
                                 height: 32
                                 radius: 7
-                                color: root.theme.bgBase ?? Qt.rgba(0,0,0,0.25)
-                                border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.08)
+                                color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
+                                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
                                 border.width: 1
+                                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+                                /* Sliding Selection Pill */
+                                Rectangle {
+                                    y: 3
+                                    height: parent.height - 6
+                                    width: timeFormatTrack.cellWidth
+                                    x: 3 + timeFormatTrack.activeIdx * (timeFormatTrack.cellWidth + 3)
+                                    radius: 5
+                                    color: root.theme.bgSelected
+                                    border.color: root.theme.accentPrimary ?? "#7aa2f7"
+                                    border.width: 1
+
+                                    Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                                }
 
                                 RowLayout {
                                     anchors.fill: parent
                                     anchors.margins: 3
-                                    spacing: 4
+                                    spacing: 3
 
-                                    // 12-Hour
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: root.clockFormat === "12h" ? root.theme.bgSelected : (h12Hover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : "transparent")
-                                        border.color: root.clockFormat === "12h" ? root.theme.accentPrimary : "transparent"
-                                        border.width: root.clockFormat === "12h" ? 1 : 0
+                                    Repeater {
+                                        model: timeFormatTrack.modes
+                                        delegate: Rectangle {
+                                            id: tfBtn
+                                            required property var modelData
+                                            required property int index
+                                            readonly property bool isSel: timeFormatTrack.activeIdx === tfBtn.index
 
-                                        HoverHandler { id: h12Hover }
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            radius: 5
+                                            color: !isSel && tfHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                            Behavior on color { ColorAnimation { duration: 140 } }
 
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "12-Hour"
-                                            font.family: root.font
-                                            font.pixelSize: 11
-                                            font.bold: root.clockFormat === "12h"
-                                            color: root.clockFormat === "12h" ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
-                                        }
+                                            HoverHandler { id: tfHover }
 
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                root.clockFormat = "12h";
-                                                root.scheduleSave();
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: tfBtn.modelData.label
+                                                font.family: root.font
+                                                font.pixelSize: 11
+                                                font.bold: tfBtn.isSel
+                                                color: tfBtn.isSel ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                                                Behavior on color { ColorAnimation { duration: 140 } }
                                             }
-                                        }
-                                    }
 
-                                    // 24-Hour
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: root.clockFormat === "24h" ? root.theme.bgSelected : (h24Hover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : "transparent")
-                                        border.color: root.clockFormat === "24h" ? root.theme.accentPrimary : "transparent"
-                                        border.width: root.clockFormat === "24h" ? 1 : 0
-
-                                        HoverHandler { id: h24Hover }
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "24-Hour"
-                                            font.family: root.font
-                                            font.pixelSize: 11
-                                            font.bold: root.clockFormat === "24h"
-                                            color: root.clockFormat === "24h" ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                root.clockFormat = "24h";
-                                                root.scheduleSave();
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    root.clockFormat = tfBtn.modelData.id;
+                                                    root.scheduleSave();
+                                                }
                                             }
                                         }
                                     }
@@ -1081,18 +1171,21 @@ Item {
 
                         RowDivider {}
 
-                        // Placeholder Text Input (260px wide, NO icon)
+                        // Placeholder Text Input (Refined Libadwaita styling)
                         PreferenceRow {
                             title: "Placeholder Text"
                             subtitle: "Text shown inside empty password field"
 
                             Rectangle {
-                                width: 260
+                                width: 240
                                 height: 32
-                                radius: 6
-                                color: root.theme.bgBase ?? Qt.rgba(0,0,0,0.2)
-                                border.color: placeholderInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.08))
+                                radius: 7
+                                color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)
+                                border.color: placeholderInput.activeFocus ? (root.theme.accentPrimary ?? "#7aa2f7") : (phHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
                                 border.width: 1
+
+                                Behavior on border.color { ColorAnimation { duration: 140 } }
+                                HoverHandler { id: phHover }
 
                                 TextInput {
                                     id: placeholderInput
@@ -1102,7 +1195,7 @@ Item {
                                     verticalAlignment: TextInput.AlignVCenter
                                     text: root.inputPlaceholder
                                     font.family: root.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: 11
                                     color: root.theme.textPrimary
                                     selectByMouse: true
                                     onEditingFinished: {
@@ -1225,15 +1318,20 @@ Item {
 
                     Item { Layout.fillWidth: true }
 
-                    // Add Custom Block Button (Clean Text)
+                    // Add Custom Block Button (Modern secondary action button)
                     Rectangle {
                         implicitWidth: addBtnText.implicitWidth + 24
                         height: 30
-                        radius: 6
-                        color: addBtnHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.15)
-                        border.color: root.theme.accentPrimary ?? "#7aa2f7"
+                        radius: 7
+                        color: addBtnHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
+                        border.color: addBtnHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                         border.width: 1
+                        scale: addBtnMouse.pressed ? 0.96 : 1.0
                         Layout.alignment: Qt.AlignVCenter
+
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        Behavior on border.color { ColorAnimation { duration: 140 } }
+                        Behavior on scale { NumberAnimation { duration: 80 } }
 
                         HoverHandler { id: addBtnHover }
 
@@ -1244,14 +1342,60 @@ Item {
                             font.family: root.font
                             font.pixelSize: 11
                             font.bold: true
-                            color: addBtnHover.hovered ? "#ffffff" : (root.theme.accentPrimary ?? "#7aa2f7")
+                            color: addBtnHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                            Behavior on color { ColorAnimation { duration: 140 } }
                         }
 
                         MouseArea {
+                            id: addBtnMouse
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: root.addCustomBlock()
                         }
+                    }
+                }
+
+                // Interactive Visual Preview Canvas Stage
+                HyprlockStageSandbox {
+                    id: stageSandbox
+                    Layout.fillWidth: true
+                    theme: root.theme
+                    font: root.font
+                    textBlocks: root.textBlocks
+                    wallpaperPath: (root.backgroundSource === "custom" && root.backgroundCustomPath !== "") ? root.backgroundCustomPath : (WallpaperService.currentWallpaper ?? "")
+                    brightness: root.brightness
+                    contrast: root.contrast
+                    blurPasses: root.blurPasses
+                    inputWidth: root.inputWidth
+                    inputHeight: root.inputHeight
+                    inputPlaceholder: root.inputPlaceholder
+                    onBlockMoved: (idx, newX, newY) => {
+                        if (root.textBlocks && idx >= 0 && idx < root.textBlocks.length) {
+                            let blocksCopy = [...root.textBlocks];
+                            let b = Object.assign({}, blocksCopy[idx]);
+                            b.position_x = newX;
+                            b.position_y = newY;
+                            blocksCopy[idx] = b;
+                            root.textBlocks = blocksCopy;
+                        }
+                    }
+                    onApplyRequested: (blocks) => {
+                        let list = (blocks && blocks.length > 0) ? blocks : (root.textBlocks ?? []);
+                        let payload = [];
+                        for (let i = 0; i < list.length; i++) {
+                            let b = list[i];
+                            payload.push({
+                                index: b.index !== undefined ? b.index : i,
+                                position_x: b.position_x !== undefined ? b.position_x : 0,
+                                position_y: b.position_y !== undefined ? b.position_y : 0
+                            });
+                        }
+                        updatePositionsProc.running = false;
+                        updatePositionsProc.command = [root.scriptPath, "update-positions", JSON.stringify(payload)];
+                        updatePositionsProc.running = true;
+                    }
+                    onResetRequested: {
+                        loadSettingsProc.running = true;
                     }
                 }
 
@@ -1315,13 +1459,14 @@ Item {
         id: statusToast
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 16
-        implicitWidth: toastText.implicitWidth + 28
-        height: 34
-        radius: 17
-        color: root.theme.bgSelected ?? "#283457"
+        anchors.bottomMargin: 24
+        implicitWidth: toastText.implicitWidth + 32
+        height: 36
+        radius: 18
+        color: root.theme.bgSurface ?? "#1e1e2e"
         border.color: root.theme.accentPrimary ?? "#7aa2f7"
-        border.width: 1
+        border.width: 1.5
+        z: 9999
         opacity: root.statusVisible ? 1.0 : 0.0
         scale: root.statusVisible ? 1.0 : 0.92
 

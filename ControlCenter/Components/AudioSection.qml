@@ -13,16 +13,17 @@ Rectangle {
     // Track default devices safely
     PwObjectTracker {
         id: audioTracker
-        objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
+        objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource].filter(Boolean)
     }
 
     width: parent ? parent.width : 300
     height: audioCol.implicitHeight + 24
+    implicitHeight: audioCol.implicitHeight + 24
+    implicitWidth: width
     radius: 10
     color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05)
     border.color: root.theme.bgBorder
     border.width: 1
-    clip: true
 
     Behavior on height {
         NumberAnimation { duration: 200; easing.type: Easing.OutCubic }

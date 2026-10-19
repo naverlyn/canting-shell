@@ -13,10 +13,10 @@ Scope {
     property var theme: Theme
     property string font: "Hack Nerd Font"
     
-    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings (3 sub-tabs), 11: About, 12: Lock Screen
+    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About, 12: Lock Screen, 13: Animations, 14: Hyprland Settings, 15: Wallpaper
     property int currentTab: 0
-    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About", "Lock Screen"]
-    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", "", "󰌾"]
+    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About", "Lock Screen", "Animations", "Hyprland Settings", "Wallpaper"]
+    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", "", "󰌾", "󰑈", "", "󰸉"]
 
     property var sections: [
         {
@@ -25,8 +25,7 @@ Scope {
                 { id: "wifi", name: "Wi-Fi", icon: "󰖩", pageIndex: 0 },
                 { id: "bluetooth", name: "Bluetooth", icon: "󰂯", pageIndex: 1 },
                 { id: "sound", name: "Sound", icon: "󰕾", pageIndex: 2 },
-                { id: "power", name: "Power", icon: "󰐥", pageIndex: 4 },
-                { id: "hyprlock", name: "Lock Screen", icon: "󰌾", pageIndex: 12 }
+                { id: "power", name: "Power", icon: "󰐥", pageIndex: 4 }
             ]
         },
         {
@@ -39,11 +38,22 @@ Scope {
             ]
         },
         {
+            category: "Hyprland",
+            items: [
+                { id: "hyprland", name: "Hyprland Settings", icon: "", pageIndex: 14 },
+                { id: "animations", name: "Animations", icon: "󰑈", pageIndex: 13 },
+                { id: "hyprlock", name: "Lock Screen", icon: "󰌾", pageIndex: 12 }
+            ]
+        },
+        {
             category: "Quickshell",
             items: [
                 { id: "bar", name: "Bar Settings", icon: "󰮲", pageIndex: 10 },
+                { id: "controlcenter", name: "Control Center", icon: "󰕮", pageIndex: 17 },
                 { id: "appearance", name: "Appearance", icon: "󰏘", pageIndex: 9 },
-                { id: "notifications", name: "Notifications", icon: "󰂚", pageIndex: 3 }
+                { id: "wallpaper", name: "Wallpaper", icon: "󰸉", pageIndex: 15 },
+                { id: "notifications", name: "Notifications", icon: "󰂚", pageIndex: 3 },
+                { id: "osd", name: "On-Screen Display", icon: "󰍹", pageIndex: 16 }
             ]
         },
         {
@@ -61,10 +71,39 @@ Scope {
         }
     }
 
+    property bool windowActive: false
+
+    function openSettings() {
+        closeTimer.stop();
+        settingsWindow.visible = true;
+        Qt.callLater(() => {
+            root.windowActive = true;
+            winCard.forceActiveFocus();
+        });
+    }
+
+    function closeSettings() {
+        root.windowActive = false;
+        closeTimer.restart();
+    }
+
+    Timer {
+        id: closeTimer
+        interval: 180
+        repeat: false
+        onTriggered: {
+            settingsWindow.visible = false;
+        }
+    }
+
     IpcHandler {
         target: "settings"
         function toggle() {
-            settingsWindow.visible = !settingsWindow.visible;
+            if (settingsWindow.visible && root.windowActive) {
+                root.closeSettings();
+            } else {
+                root.openSettings();
+            }
         }
         function open(tabName: string) {
             if (tabName !== undefined && tabName !== "") {
@@ -74,13 +113,13 @@ Scope {
                         let item = root.sections[s].items[i];
                         if (item.name.toLowerCase().includes(target) || (item.id && item.id.toLowerCase() === target)) {
                             root.currentTab = item.pageIndex;
-                            settingsWindow.visible = true;
+                            root.openSettings();
                             return;
                         }
                     }
                 }
             }
-            settingsWindow.visible = true;
+            root.openSettings();
         }
     }
 
@@ -104,7 +143,7 @@ Scope {
             sequence: "Escape"
             context: Qt.WindowShortcut
             enabled: settingsWindow.visible
-            onActivated: settingsWindow.visible = false
+            onActivated: root.closeSettings()
         }
 
         WlrLayershell.layer: WlrLayer.Overlay
@@ -123,11 +162,13 @@ Scope {
         // Overlay backdrop
         MouseArea {
             anchors.fill: parent
-            onClicked: settingsWindow.visible = false
+            onClicked: root.closeSettings()
 
             Rectangle {
                 anchors.fill: parent
                 color: root.theme.bgOverlay ?? "#80000000"
+                opacity: root.windowActive ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
             }
         }
 
@@ -142,10 +183,15 @@ Scope {
             color: root.theme.bgBase
             border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)
             border.width: 1
+            opacity: root.windowActive ? 1.0 : 0.0
+            scale: root.windowActive ? 1.0 : 0.96
+
+            Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+            Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
             focus: true
             Keys.onEscapePressed: (event) => {
-                settingsWindow.visible = false;
+                root.closeSettings();
                 event.accepted = true;
             }
 
@@ -433,7 +479,7 @@ Scope {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: settingsWindow.visible = false
+                            onClicked: root.closeSettings()
                         }
                     }
 
@@ -711,6 +757,111 @@ Scope {
                             anchors.fill: parent
                             active: settingsWindow.visible && (root.currentTab === 12 || parent.opacity > 0)
                             sourceComponent: HyprlockSettings { theme: root.theme; font: root.font }
+                        }
+                    }
+
+                    // 13: Animations
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 13 ? 1 : 0
+                        scale: root.currentTab === 13 ? 1 : 0.98
+                        y: root.currentTab === 13 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 13 || parent.opacity > 0)
+                            sourceComponent: AnimationSettings { theme: root.theme; font: root.font }
+                        }
+                    }
+
+                    // 14: Hyprland Settings
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 14 ? 1 : 0
+                        scale: root.currentTab === 14 ? 1 : 0.98
+                        y: root.currentTab === 14 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 14 || parent.opacity > 0)
+                            sourceComponent: HyprlandSettings { theme: root.theme; font: root.font }
+                        }
+                    }
+
+                    // 15: Wallpaper
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 15 ? 1 : 0
+                        scale: root.currentTab === 15 ? 1 : 0.98
+                        y: root.currentTab === 15 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 15 || parent.opacity > 0)
+                            sourceComponent: WallpaperSettings { theme: root.theme; font: root.font }
+                        }
+                    }
+
+                    // 16: On-Screen Display (OSD)
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 16 ? 1 : 0
+                        scale: root.currentTab === 16 ? 1 : 0.98
+                        y: root.currentTab === 16 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 16 || parent.opacity > 0)
+                            sourceComponent: OSDSettings { theme: root.theme; font: root.font }
+                        }
+                    }
+
+                    // 17: Control Center
+                    Item {
+                        anchors.fill: parent
+                        anchors.margins: 24
+                        anchors.topMargin: 36
+                        visible: opacity > 0
+                        opacity: root.currentTab === 17 ? 1 : 0
+                        scale: root.currentTab === 17 ? 1 : 0.98
+                        y: root.currentTab === 17 ? 0 : 8
+
+                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                        Loader {
+                            anchors.fill: parent
+                            active: settingsWindow.visible && (root.currentTab === 17 || parent.opacity > 0)
+                            sourceComponent: ControlCenterSettings { theme: root.theme; font: root.font }
                         }
                     }
                 }

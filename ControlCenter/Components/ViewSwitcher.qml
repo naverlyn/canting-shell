@@ -10,6 +10,7 @@ Rectangle {
 
     width: parent ? parent.width : 300
     height: 34
+    implicitHeight: 34
     radius: 8
     color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05)
     border.color: root.theme.bgBorder
@@ -25,22 +26,26 @@ Rectangle {
             width: parent.width / 2
             height: parent.height
             radius: 6
-            color: !root.viewNotifications ? root.theme.bgSelected : "transparent"
-            Behavior on color { ColorAnimation { duration: 180 } }
+            color: !root.viewNotifications 
+                ? root.theme.bgSelected 
+                : (ccTabMouse.containsMouse ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.08) : "transparent")
+            Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
 
             Text {
                 anchors.centerIn: parent
                 text: "Control Center"
                 color: !root.viewNotifications 
                     ? root.theme.textPrimary 
-                    : root.theme.textSecondary
+                    : (ccTabMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary)
                 font.pixelSize: 11
                 font.family: root.font
                 font.bold: !root.viewNotifications
             }
             
             MouseArea {
+                id: ccTabMouse
                 anchors.fill: parent
+                hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.viewNotifications = false
             }
@@ -51,22 +56,26 @@ Rectangle {
             width: parent.width / 2
             height: parent.height
             radius: 6
-            color: root.viewNotifications ? root.theme.bgSelected : "transparent"
-            Behavior on color { ColorAnimation { duration: 180 } }
+            color: root.viewNotifications 
+                ? root.theme.bgSelected 
+                : (notifTabMouse.containsMouse ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.08) : "transparent")
+            Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
 
             Text {
                 anchors.centerIn: parent
                 text: "Notifications"
                 color: root.viewNotifications 
                     ? root.theme.textPrimary 
-                    : root.theme.textSecondary
+                    : (notifTabMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary)
                 font.pixelSize: 11
                 font.family: root.font
                 font.bold: root.viewNotifications
             }
 
             MouseArea {
+                id: notifTabMouse
                 anchors.fill: parent
+                hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.viewNotifications = true
             }

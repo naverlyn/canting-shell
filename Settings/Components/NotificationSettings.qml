@@ -67,10 +67,12 @@ Item {
 
     /* Main Scrollable View */
     Flickable {
+        id: notifFlickable
         anchors.fill: parent
         contentHeight: mainCol.implicitHeight + 24
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        interactive: !miniDragArea.pressed && !xMarginMouse.pressed && !yMarginMouse.pressed
 
         ScrollBar.vertical: ScrollBar {
             policy: ScrollBar.AsNeeded
@@ -509,6 +511,7 @@ Item {
                                     cursorShape: monitorPreview.draggingToast ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
                                     onPressed: (mouse) => {
+                                        mouse.accepted = true;
                                         const pt = miniDragArea.mapToItem(monitorPreview, mouse.x, mouse.y);
                                         monitorPreview.dragHoverPos = root.snapPreviewPointToPosition(pt.x, pt.y, monitorPreview.width, monitorPreview.height);
                                         monitorPreview.draggingToast = true;
@@ -516,6 +519,7 @@ Item {
 
                                     onPositionChanged: (mouse) => {
                                         if (!pressed) return;
+                                        mouse.accepted = true;
                                         const pt = miniDragArea.mapToItem(monitorPreview, mouse.x, mouse.y);
                                         monitorPreview.dragHoverPos = root.snapPreviewPointToPosition(pt.x, pt.y, monitorPreview.width, monitorPreview.height);
                                         miniToastCard.x = Math.max(8, Math.min(monitorPreview.width - miniToastCard.width - 8, pt.x - miniToastCard.width / 2));
@@ -600,21 +604,44 @@ Item {
                                         color: root.theme.accentPrimary
                                     }
 
+                                    // Outer halo ring on hover/press
                                     Rectangle {
-                                        width: xMarginMouse.containsMouse || xMarginMouse.pressed ? 16 : 14
+                                        anchors.centerIn: xMarginKnob
+                                        width: xMarginKnob.width + (xMarginMouse.pressed ? 8 : (xMarginMouse.containsMouse ? 6 : 0))
                                         height: width
                                         radius: width / 2
-                                        color: root.theme.accentPrimary
-                                        border.color: root.theme.bgBase
-                                        border.width: 2
+                                        color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, xMarginMouse.pressed ? 0.35 : (xMarginMouse.containsMouse ? 0.2 : 0))
+                                        z: 1
+
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                    }
+
+                                    // Tactile white knob
+                                    Rectangle {
+                                        id: xMarginKnob
+                                        width: xMarginMouse.containsMouse || xMarginMouse.pressed ? 17 : 15
+                                        height: width
+                                        radius: width / 2
+                                        color: "#ffffff"
+                                        border.color: root.theme.accentPrimary
+                                        border.width: 3
                                         anchors.verticalCenter: parent.verticalCenter
                                         x: Math.max(0, Math.min(xMarginTrack.width - width, (xMarginTrack.width * xMarginTrack.frac) - (width / 2)))
+                                        z: 2
+
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on x {
+                                            enabled: !xMarginMouse.pressed
+                                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                                        }
                                     }
 
                                     MouseArea {
                                         id: xMarginMouse
                                         anchors.fill: parent
                                         anchors.margins: -8
+                                        preventStealing: true
                                         enabled: !root.isCenterPos
                                         hoverEnabled: true
                                         cursorShape: !root.isCenterPos ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -622,8 +649,9 @@ Item {
                                             const f = Math.max(0, Math.min(1, mx / xMarginTrack.width));
                                             NotificationService.setToastMarginX(Math.round(f * 200));
                                         }
-                                        onPositionChanged: (mouse) => { if (pressed) updateVal(mouse.x); }
-                                        onClicked: (mouse) => updateVal(mouse.x)
+                                        onPressed: (mouse) => { mouse.accepted = true; updateVal(mouse.x); }
+                                        onPositionChanged: (mouse) => { if (pressed) { mouse.accepted = true; updateVal(mouse.x); } }
+                                        onClicked: (mouse) => { mouse.accepted = true; updateVal(mouse.x); }
                                     }
                                 }
 
@@ -689,29 +717,53 @@ Item {
                                         color: root.theme.accentPrimary
                                     }
 
+                                    // Outer halo ring on hover/press
                                     Rectangle {
-                                        width: yMarginMouse.containsMouse || yMarginMouse.pressed ? 16 : 14
+                                        anchors.centerIn: yMarginKnob
+                                        width: yMarginKnob.width + (yMarginMouse.pressed ? 8 : (yMarginMouse.containsMouse ? 6 : 0))
                                         height: width
                                         radius: width / 2
-                                        color: root.theme.accentPrimary
-                                        border.color: root.theme.bgBase
-                                        border.width: 2
+                                        color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, yMarginMouse.pressed ? 0.35 : (yMarginMouse.containsMouse ? 0.2 : 0))
+                                        z: 1
+
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                    }
+
+                                    // Tactile white knob
+                                    Rectangle {
+                                        id: yMarginKnob
+                                        width: yMarginMouse.containsMouse || yMarginMouse.pressed ? 17 : 15
+                                        height: width
+                                        radius: width / 2
+                                        color: "#ffffff"
+                                        border.color: root.theme.accentPrimary
+                                        border.width: 3
                                         anchors.verticalCenter: parent.verticalCenter
                                         x: Math.max(0, Math.min(yMarginTrack.width - width, (yMarginTrack.width * yMarginTrack.frac) - (width / 2)))
+                                        z: 2
+
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+                                        Behavior on x {
+                                            enabled: !yMarginMouse.pressed
+                                            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+                                        }
                                     }
 
                                     MouseArea {
                                         id: yMarginMouse
                                         anchors.fill: parent
                                         anchors.margins: -8
+                                        preventStealing: true
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
                                         function updateVal(mx) {
                                             const f = Math.max(0, Math.min(1, mx / yMarginTrack.width));
                                             NotificationService.setToastMarginY(Math.round(f * 200));
                                         }
-                                        onPositionChanged: (mouse) => { if (pressed) updateVal(mouse.x); }
-                                        onClicked: (mouse) => updateVal(mouse.x)
+                                        onPressed: (mouse) => { mouse.accepted = true; updateVal(mouse.x); }
+                                        onPositionChanged: (mouse) => { if (pressed) { mouse.accepted = true; updateVal(mouse.x); } }
+                                        onClicked: (mouse) => { mouse.accepted = true; updateVal(mouse.x); }
                                     }
                                 }
 

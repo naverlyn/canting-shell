@@ -127,9 +127,11 @@ Singleton {
             ? "hyprctl -r eval \"$(/bin/cat $HOME/.config/hypr/theme-borders.lua)\""
             : 'hyprctl keyword general:col.active_border "' + active + '" && hyprctl keyword general:col.inactive_border "' + inactive + '"';
 
+        var ensureSource = '[ -f "$HOME/.config/hypr/hyprland.conf" ] && ! grep -q "theme-borders" "$HOME/.config/hypr/hyprland.conf" 2>/dev/null && echo -e "\\nsource = ~/.config/hypr/theme-borders.' + (root.configFormat === "lua" ? "lua" : "conf") + '" >> "$HOME/.config/hypr/hyprland.conf" || true';
         hyprlandProc.command = ["sh", "-c",
             writeCmd + ' && ' +
-            applyCmd
+            applyCmd + ' ; ' +
+            ensureSource
         ];
         hyprlandProc.running = true;
     }
@@ -140,13 +142,15 @@ Singleton {
         applyHyprlandBorders(t);
     }
 
+    readonly property string themeConfPath: Qt.resolvedUrl("../theme.conf").toString().replace(/^file:\/\//, "")
+
     function setTheme(index) {
         if (index >= 0 && index < themes.length) {
             wallpaperMode = false;
             customAccent = "";
             previewAccent = "";
             currentIndex = index;
-            saveProc.command = ["sh", "-c", 'printf "%s" "$1" > "$HOME/.config/quickshell/theme.conf"', "sh", String(index)];
+            saveProc.command = ["sh", "-c", 'printf "%s" "$1" > "$2"', "sh", String(index), root.themeConfPath];
             saveProc.running = true;
             applyTheme(themes[index]);
         }
@@ -158,7 +162,7 @@ Singleton {
         wallpaperMode = true;
         customAccent = "";
         previewAccent = "";
-        saveProc.command = ["sh", "-c", 'printf "%s" wallpaper > "$HOME/.config/quickshell/theme.conf"'];
+        saveProc.command = ["sh", "-c", 'printf "%s" wallpaper > "$1"', "sh", root.themeConfPath];
         saveProc.running = true;
         if (wallpaperTheme && wallpaperTheme.bgBase)
             applyTheme(wallpaperTheme);
@@ -171,7 +175,7 @@ Singleton {
         if (!wallpaperFeatureEnabled)
             return;
         if (img && img.length > 0) {
-            generateProc.command = ["sh", Quickshell.env("HOME") + "/.config/quickshell/ThemeSwitcher/wallpaper-theme/set.sh", img];
+            generateProc.command = ["sh", Qt.resolvedUrl("wallpaper-theme/set.sh").toString().replace(/^file:\/\//, ""), img];
             generateProc.running = true;
         }
         setWallpaperMode();
@@ -268,7 +272,7 @@ Singleton {
 
     Process {
         id: loadProc
-        command: ["sh", "-c", "cat $HOME/.config/quickshell/theme.conf 2>/dev/null"]
+        command: ["sh", "-c", 'cat "$1" 2>/dev/null', "sh", root.themeConfPath]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
@@ -303,7 +307,7 @@ Singleton {
     // wallpaper (and a fresh wallpaper-theme.json) repaints the shell instantly.
     FileView {
         id: wallpaperThemeFile
-        path: Quickshell.env("HOME") + "/.config/quickshell/ThemeSwitcher/wallpaper-theme.json"
+        path: Qt.resolvedUrl("wallpaper-theme.json").toString().replace(/^file:\/\//, "")
         watchChanges: true
 
         // True only for live, on-disk rewrites (set.sh executed) - not the initial
@@ -331,7 +335,7 @@ Singleton {
 
     FileView {
         id: themesFile
-        path: Quickshell.env("HOME") + "/.config/quickshell/ThemeSwitcher/themes.json"
+        path: Qt.resolvedUrl("themes.json").toString().replace(/^file:\/\//, "")
         watchChanges: true
         onTextChanged: {
             const raw = themesFile.text();

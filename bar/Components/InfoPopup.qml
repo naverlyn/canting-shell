@@ -11,7 +11,9 @@ PopupWindow {
   id: popup
 
   required property Item target
+  property Item barItem: null
   property bool hovered: false
+  property bool pinned: false
   property var theme
   property string font: "Hack Nerd Font"
   property string title: ""
@@ -19,6 +21,8 @@ PopupWindow {
   property color accent: "#ffffff"
   property string script: ""
   property string barPosition: BarConfig.position
+
+  readonly property bool isDetailsActive: hovered || pinned
 
   // Parsed rows: [{ header: bool, cells: [string] }]
   property var rows: []
@@ -42,10 +46,10 @@ PopupWindow {
   }
 
   // Stay mapped until the fade-out finishes
-  visible: hovered || box.opacity > 0
+  visible: isDetailsActive || box.opacity > 0
   color: "transparent"
-  implicitWidth: box.implicitWidth + 8
-  implicitHeight: box.implicitHeight + 8
+  implicitWidth: box.implicitWidth + 12
+  implicitHeight: box.implicitHeight + 12
 
   anchor.window: target.QsWindow.window
   anchor.edges: {
@@ -64,7 +68,17 @@ PopupWindow {
   anchor.onAnchoring: {
     const win = target.QsWindow.window;
     if (!win) return;
-    anchor.rect = win.contentItem.mapFromItem(target, 0, 0, target.width, target.height);
+    const widgetRect = win.contentItem.mapFromItem(target, 0, 0, target.width, target.height);
+    if (popup.barItem) {
+      const bRect = win.contentItem.mapFromItem(popup.barItem, 0, 0, popup.barItem.width, popup.barItem.height);
+      if (popup.barPosition === "top" || popup.barPosition === "bottom") {
+        anchor.rect = Qt.rect(widgetRect.x, bRect.y, widgetRect.width, bRect.height);
+      } else {
+        anchor.rect = Qt.rect(bRect.x, widgetRect.y, bRect.width, widgetRect.height);
+      }
+    } else {
+      anchor.rect = widgetRect;
+    }
   }
 
   Process {
@@ -85,23 +99,27 @@ PopupWindow {
   Timer {
     interval: 2000
     repeat: true
-    running: popup.hovered
+    running: popup.isDetailsActive
     triggeredOnStart: true
     onTriggered: if (!proc.running) proc.running = true
   }
 
   Rectangle {
     id: box
-    opacity: popup.hovered ? 1 : 0
-    x: popup.hovered ? (popup.barPosition === "left" ? 8 : (popup.barPosition === "right" ? -8 : 0)) : 0
-    y: popup.hovered ? (popup.barPosition === "bottom" ? -8 : (popup.barPosition === "top" ? 8 : 0)) : 0
+    opacity: popup.isDetailsActive ? 1 : 0
+    x: popup.barPosition === "left"
+      ? (popup.isDetailsActive ? 6 : 0)
+      : (popup.barPosition === "right" ? (popup.isDetailsActive ? 6 : 12) : 6)
+    y: popup.barPosition === "top"
+      ? (popup.isDetailsActive ? 6 : 0)
+      : (popup.barPosition === "bottom" ? (popup.isDetailsActive ? 6 : 12) : 6)
     transformOrigin: {
       if (popup.barPosition === "bottom") return Item.Bottom;
       if (popup.barPosition === "left") return Item.Left;
       if (popup.barPosition === "right") return Item.Right;
       return Item.Top;
     }
-    scale: popup.hovered ? 1 : 0.96
+    scale: popup.isDetailsActive ? 1 : 0.96
 
     Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
     Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }

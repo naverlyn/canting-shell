@@ -37,8 +37,9 @@ Singleton {
     if (m.disabled) return `${prefix}${m.name},disable`;
     const parsed = MonitorUtils.parseMode(m.selectedMode);
     const res  = parsed ? `${parsed.w}x${parsed.h}` : `${m.width}x${m.height}`;
-    const rate = parsed ? parsed.rate : m.refreshRate.toFixed(2);
-    let line = `${prefix}${m.name},${res}@${rate},${m.x}x${m.y},${m.scale}`;
+    const rate = parsed ? parsed.rate : (m.refreshRate !== undefined ? m.refreshRate.toFixed(2) : "60.00");
+    const scaleVal = (m.scale !== undefined && m.scale !== null && !isNaN(Number(m.scale))) ? Number(m.scale) : 1;
+    let line = `${prefix}${m.name},${res}@${rate},${m.x}x${m.y},${scaleVal}`;
     if (m.transform !== 0) line += `,transform,${m.transform}`;
     if (m.mirrorOf  !== "") line += `,mirror,${m.mirrorOf}`;
     return line;
@@ -59,8 +60,9 @@ Singleton {
     if (m.disabled) return `hl.monitor({ output = "${m.name}", disabled = true })`;
     const parsed = MonitorUtils.parseMode(m.selectedMode);
     const res  = parsed ? `${parsed.w}x${parsed.h}` : `${m.width}x${m.height}`;
-    const rate = parsed ? parsed.rate : m.refreshRate.toFixed(2);
-    let fields = `output = "${m.name}", mode = "${res}@${rate}", position = "${m.x}x${m.y}", scale = ${m.scale}`;
+    const rate = parsed ? parsed.rate : (m.refreshRate !== undefined ? m.refreshRate.toFixed(2) : "60.00");
+    const scaleVal = (m.scale !== undefined && m.scale !== null && !isNaN(Number(m.scale))) ? Number(m.scale) : 1;
+    let fields = `output = "${m.name}", mode = "${res}@${rate}", position = "${m.x}x${m.y}", scale = ${scaleVal}`;
     if (m.transform !== 0) fields += `, transform = ${m.transform}`;
     if (m.mirrorOf  !== "") fields += `, mirror = "${m.mirrorOf}"`;
     return `hl.monitor({ ${fields} })`;
@@ -85,20 +87,25 @@ Singleton {
   function apply(edits) {
     // Guard against double-apply
     if (applyProc.running) return;
-    _lastEdits = edits;
-    const parts = edits.map(buildMonitorArg);
+    _lastEdits = edits.map(m => Object.assign({}, m));
+    const parts = _lastEdits.map(buildMonitorArg);
     applyProc.command = ["hyprctl", "--batch", parts.join(" ; ")];
     applyProc.running = true;
   }
 
   function persistToFile(edits) {
+    const toSave = (edits && edits.length > 0) ? edits : root._lastEdits;
+    if (!toSave || toSave.length === 0) return;
     const isLua  = root.configFormat === "lua";
-    const content = isLua ? buildFileContentLua(edits) : buildFileContent(edits);
-    const target  = isLua ? "~/.config/hypr/monitors.lua" : "~/.config/hypr/monitors.conf";
-    writeProc.command = [
-      "python3", "-c",
-      `import os; open(os.path.expanduser('${target}'), 'w').write(${JSON.stringify(content)})`
-    ];
+    const content = isLua ? buildFileContentLua(toSave) : buildFileContent(toSave);
+    const targetFile = isLua ? "$HOME/.config/hypr/monitors.lua" : "$HOME/.config/hypr/monitors.conf";
+    const hyprConf = isLua ? "$HOME/.config/hypr/hyprland.lua" : "$HOME/.config/hypr/hyprland.conf";
+
+    const script = isLua
+      ? `printf '%s' "$1" > "${targetFile}" && if [ -f "${hyprConf}" ] && ! grep -Eq 'require\\("monitors"\\)' "${hyprConf}"; then printf '\\nrequire("monitors")\\n' >> "${hyprConf}"; fi`
+      : `printf '%s' "$1" > "${targetFile}" && if [ -f "${hyprConf}" ] && ! grep -q 'monitors\\.conf' "${hyprConf}"; then printf '\\nsource = ~/.config/hypr/monitors.conf\\n' >> "${hyprConf}"; fi`;
+
+    writeProc.command = ["sh", "-c", script, "sh", content];
     writeProc.running = true;
   }
 
@@ -112,8 +119,10 @@ Singleton {
       }
       if (live.disabled !== edit.disabled)
         mismatches.push(`${edit.name}: enabled state did not apply`);
-      if (!edit.disabled && live.selectedMode !== edit.selectedMode)
+      if (!edit.disabled && edit.selectedMode && live.selectedMode !== edit.selectedMode)
         mismatches.push(`${edit.name}: mode ${edit.selectedMode} → got ${live.selectedMode}`);
+      if (!edit.disabled && edit.scale !== undefined && Math.abs(Number(live.scale) - Number(edit.scale)) > 0.02)
+        mismatches.push(`${edit.name}: scale ${edit.scale} → got ${live.scale}`);
     }
     _pendingVerify = false;
     applyDone(mismatches.length > 0, mismatches.join("; "));
@@ -129,6 +138,16 @@ Singleton {
     interval: 250
     repeat: false
     onTriggered: root._doRefresh()
+  }
+
+  // Verification delay timer - allows compositor to commit modeset/scale before querying live state
+  Timer {
+    id: verifyDelayTimer
+    interval: 200
+    repeat: false
+    onTriggered: {
+      if (!queryProc.running) queryProc.running = true;
+    }
   }
 
   // Check which config format is active (hyprland.lua wins exclusively if present, per
@@ -222,10 +241,7 @@ Singleton {
         } else {
           root._pendingVerify = true;
           root.loading = true;
-          // If queryProc is already running (poll timer race), it will finish
-          // and call monitorsLoaded → verifyApply via _pendingVerify.
-          // If it's idle, start it now.
-          if (!queryProc.running) queryProc.running = true;
+          verifyDelayTimer.restart();
         }
       }
     }

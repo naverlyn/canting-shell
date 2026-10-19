@@ -2,7 +2,8 @@
 # Used via `wallust run <img> -d this-dir`, so it never touches your own
 # wallust setup.
 backend = "fastresize"
-color_space = "labmixed"
+color_space = "lchansi"
+palette = "ansidark"
 
 [templates]
 quickshell.template = "quickshell.json"

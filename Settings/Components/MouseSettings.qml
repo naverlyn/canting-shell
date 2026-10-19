@@ -31,6 +31,8 @@ Item {
     property bool tapToClick: true
     property bool disableWhileTyping: true
 
+    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_touchpad.sh").toString().replace(/^file:\/\//, "")
+
     /* Dynamic Hyprland keyword process runner */
     Process {
         id: hyprcmd
@@ -50,14 +52,14 @@ Item {
 
     function setTouchpadState(enabled) {
         root.touchpadEnabled = enabled;
-        touchpadCmd.command = ["/home/xeana/.config/quickshell/Settings/scripts/manage_touchpad.sh", "set", enabled ? "true" : "false"];
+        touchpadCmd.command = [root.scriptPath, "set", enabled ? "true" : "false"];
         touchpadCmd.running = true;
     }
 
     /* Query initial touchpad status */
     Process {
         id: queryTouchpadProc
-        command: ["/home/xeana/.config/quickshell/Settings/scripts/manage_touchpad.sh", "status"]
+        command: [root.scriptPath, "status"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -70,10 +72,12 @@ Item {
 
     /* Main Scrollable View */
     Flickable {
+        id: mouseFlickable
         anchors.fill: parent
         contentHeight: mainCol.implicitHeight + 24
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        interactive: !speedMouse.pressed
 
         ColumnLayout {
             id: mainCol
@@ -279,16 +283,25 @@ Item {
                                         id: speedMouse
                                         anchors.fill: parent
                                         anchors.margins: -8
+                                        preventStealing: true
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
+                                        onPressed: (mouse) => {
+                                            mouse.accepted = true;
+                                            const frac = Math.max(0, Math.min(1.0, mouse.x / width));
+                                            root.pointerSensitivity = Math.round(((frac * 2.0) - 1.0) * 100) / 100;
+                                            root.applyHyprKeyword("input:sensitivity", root.pointerSensitivity);
+                                        }
                                         onPositionChanged: (mouse) => {
                                             if (pressed) {
+                                                mouse.accepted = true;
                                                 const frac = Math.max(0, Math.min(1.0, mouse.x / width));
                                                 root.pointerSensitivity = Math.round(((frac * 2.0) - 1.0) * 100) / 100;
                                                 root.applyHyprKeyword("input:sensitivity", root.pointerSensitivity);
                                             }
                                         }
                                         onClicked: (mouse) => {
+                                            mouse.accepted = true;
                                             const frac = Math.max(0, Math.min(1.0, mouse.x / width));
                                             root.pointerSensitivity = Math.round(((frac * 2.0) - 1.0) * 100) / 100;
                                             root.applyHyprKeyword("input:sensitivity", root.pointerSensitivity);

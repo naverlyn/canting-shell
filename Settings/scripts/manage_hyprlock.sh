@@ -7,11 +7,63 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONF_PATH="${HYPRLOCK_CONF:-$HOME/.config/hypr/hyprlock.conf}"
-BACKUP_DIR="$HOME/.config/quickshell/Settings/backups"
+CONF_PATH="${CONF_PATH:-${HYPRLOCK_CONF:-$HOME/.config/hypr/hyprlock.conf}}"
+BACKUP_DIR="$(cd "$SCRIPT_DIR/../backups" 2>/dev/null && pwd || echo "$SCRIPT_DIR/../backups")"
 BACKUP_FILE="$BACKUP_DIR/hyprlock.conf.bak"
 WALLPAPER_CURRENT="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
-QUICKSHELL_WALLPAPER_CONF="$HOME/.config/quickshell/wallpaper.conf"
+QUICKSHELL_WALLPAPER_CONF="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)/wallpaper.conf"
+
+ensure_hyprlock_conf() {
+    if [[ ! -f "$CONF_PATH" ]]; then
+        mkdir -p "$(dirname "$CONF_PATH")"
+        cat << 'EOF' > "$CONF_PATH"
+# Hyprlock configuration managed by Quickshell
+
+general {
+    grace = 0
+    disable_loading_bar = true
+    immediate_render = true
+}
+
+background {
+    monitor =
+    path = screenshot
+    blur_passes = 2
+    blur_size = 6
+    contrast = 1.0
+    brightness = 0.8
+    vibrancy = 0.2
+}
+
+input-field {
+    monitor =
+    size = 250, 50
+    outline_thickness = 2
+    dots_size = 0.2
+    dots_spacing = 0.2
+    dots_center = true
+    fade_on_empty = false
+    placeholder_text = <i>Input Password...</i>
+    hide_input = false
+    position = 0, -50
+    halign = center
+    valign = center
+}
+
+# [Block: Clock]
+label {
+    monitor =
+    text = cmd[update:1000] echo "$TIME"
+    color = rgba(240, 240, 240, 0.95)
+    font_size = 80
+    font_family = Hack Nerd Font
+    position = 0, 100
+    halign = center
+    valign = center
+}
+EOF
+    fi
+}
 
 ensure_hyprlock_wallust_config() {
     local toml="$SCRIPT_DIR/wallust-hyprlock.toml"
@@ -35,7 +87,7 @@ EOF
 }
 
 ensure_hyprlock_source() {
-    local target_source="source = \$HOME/.config/quickshell/Settings/scripts/wallust-hyprlock.conf"
+    local target_source="source = $SCRIPT_DIR/wallust-hyprlock.conf"
     if [[ -f "$CONF_PATH" ]] && ! grep -q "wallust-hyprlock.conf" "$CONF_PATH" 2>/dev/null; then
         sed -i 's|^source = .*/wallust/wallust-hyprland.conf|'"$target_source"'|' "$CONF_PATH" || true
     fi
@@ -81,7 +133,7 @@ sync_wallpaper_current() {
     src="${src/#\~/$HOME}"
     if [[ -n "$src" && -f "$src" ]]; then
         mkdir -p "$(dirname "$WALLPAPER_CURRENT")"
-        cp -f "$src" "$WALLPAPER_CURRENT"
+        cp -f "$src" "$WALLPAPER_CURRENT" 2>/dev/null || true
         return 0
     fi
     return 1
@@ -239,6 +291,12 @@ parse_blocks() {
 
 get_base_settings() {
     awk '
+    function clean_val(v) {
+        sub(/[[:space:]]*#.*$/, "", v);
+        gsub(/^[[:space:]]+|[[:space:]]+$/, "", v);
+        return v;
+    }
+
     BEGIN {
         gen_scale = 2; gen_imm = "true";
         bg_src = "wallpaper_current"; bg_custom = "";
@@ -263,10 +321,10 @@ get_base_settings() {
     /^[[:space:]]*general[[:space:]]*\{/ { in_gen = 1; next }
     in_gen && /^[[:space:]]*\}/ { in_gen = 0; next }
     in_gen && /^[[:space:]]*fractional_scaling[[:space:]]*=/ {
-        split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); gen_scale = a[2];
+        split($0, a, "="); gen_scale = clean_val(a[2]);
     }
     in_gen && /^[[:space:]]*immediate_render[[:space:]]*=/ {
-        split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); gen_imm = tolower(a[2]);
+        split($0, a, "="); gen_imm = tolower(clean_val(a[2]));
     }
 
     /^[[:space:]]*background[[:space:]]*\{/ { in_bg = 1; next }
@@ -288,38 +346,37 @@ get_base_settings() {
             bg_custom = p;
         }
     }
-    in_bg && /^[[:space:]]*blur_size[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); blur_size = a[2]; }
-    in_bg && /^[[:space:]]*blur_passes[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); blur_passes = a[2]; }
-    in_bg && /^[[:space:]]*contrast[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); contrast = a[2]; }
-    in_bg && /^[[:space:]]*brightness[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); brightness = a[2]; }
-    in_bg && /^[[:space:]]*vibrancy[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); vibrancy = a[2]; }
+    in_bg && /^[[:space:]]*blur_size[[:space:]]*=/ { split($0, a, "="); blur_size = clean_val(a[2]); }
+    in_bg && /^[[:space:]]*blur_passes[[:space:]]*=/ { split($0, a, "="); blur_passes = clean_val(a[2]); }
+    in_bg && /^[[:space:]]*contrast[[:space:]]*=/ { split($0, a, "="); contrast = clean_val(a[2]); }
+    in_bg && /^[[:space:]]*brightness[[:space:]]*=/ { split($0, a, "="); brightness = clean_val(a[2]); }
+    in_bg && /^[[:space:]]*vibrancy[[:space:]]*=/ { split($0, a, "="); vibrancy = clean_val(a[2]); }
 
     /^[[:space:]]*input-field[[:space:]]*\{/ { in_input = 1; next }
     in_input && /^[[:space:]]*\}/ { in_input = 0; next }
     in_input && /^[[:space:]]*size[[:space:]]*=/ {
         split($0, a, "="); split(a[2], s, ",");
-        gsub(/[[:space:]]/, "", s[1]); gsub(/[[:space:]]/, "", s[2]);
-        in_w = s[1]; in_h = s[2];
+        in_w = clean_val(s[1]); in_h = clean_val(s[2]);
     }
-    in_input && /^[[:space:]]*outline_thickness[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); in_thick = a[2]; }
-    in_input && /^[[:space:]]*dots_size[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); in_dsize = a[2]; }
-    in_input && /^[[:space:]]*dots_spacing[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); in_dspace = a[2]; }
-    in_input && /^[[:space:]]*dots_center[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); in_dcenter = tolower(a[2]); }
-    in_input && /^[[:space:]]*fade_on_empty[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); in_fade = tolower(a[2]); }
-    in_input && /^[[:space:]]*hide_input[[:space:]]*=/ { split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); in_hide = tolower(a[2]); }
+    in_input && /^[[:space:]]*outline_thickness[[:space:]]*=/ { split($0, a, "="); in_thick = clean_val(a[2]); }
+    in_input && /^[[:space:]]*dots_size[[:space:]]*=/ { split($0, a, "="); in_dsize = clean_val(a[2]); }
+    in_input && /^[[:space:]]*dots_spacing[[:space:]]*=/ { split($0, a, "="); in_dspace = clean_val(a[2]); }
+    in_input && /^[[:space:]]*dots_center[[:space:]]*=/ { split($0, a, "="); in_dcenter = tolower(clean_val(a[2])); }
+    in_input && /^[[:space:]]*fade_on_empty[[:space:]]*=/ { split($0, a, "="); in_fade = tolower(clean_val(a[2])); }
+    in_input && /^[[:space:]]*hide_input[[:space:]]*=/ { split($0, a, "="); in_hide = tolower(clean_val(a[2])); }
     in_input && /^[[:space:]]*placeholder_text[[:space:]]*=/ {
         p = $0;
         sub(/^[[:space:]]*placeholder_text[[:space:]]*=[[:space:]]*/, "", p);
         gsub(/<[^>]*>/, "", p);
         gsub(/^["'\''"]+|["'\''"]+$/, "", p);
-        in_holder = p;
+        in_holder = clean_val(p);
     }
 
     cur_section == "time" && /^[[:space:]]*text[[:space:]]*=/ {
         if ($0 ~ /%H/ && $0 !~ /%I/) clock_fmt = "24h"; else clock_fmt = "12h";
     }
     cur_section == "time" && /^[[:space:]]*font_size[[:space:]]*=/ {
-        split($0, a, "="); gsub(/[[:space:]]/, "", a[2]); clock_size = a[2];
+        split($0, a, "="); clock_size = clean_val(a[2]);
     }
 
     cur_section == "date" && /^[[:space:]]*#[[:space:]]*label[[:space:]]*\{/ { show_date = "false"; }
@@ -329,7 +386,7 @@ get_base_settings() {
     cur_section == "battery" && /^[[:space:]]*#[[:space:]]*label[[:space:]]*\{/ { show_batt = "false"; }
     cur_section == "weather" && /^[[:space:]]*#[[:space:]]*label[[:space:]]*\{/ { show_weather = "false"; }
 
-    /^[[:space:]]*\}/ && cur_section != "" { cur_section = ""; }
+    /^[[:space:]]*#?[[:space:]]*\}/ && cur_section != "" { cur_section = ""; }
 
     END {
         printf "{\n";
@@ -365,10 +422,7 @@ get_base_settings() {
 }
 
 cmd_get() {
-    if [[ ! -f "$CONF_PATH" ]]; then
-        echo "{}"
-        return 0
-    fi
+    ensure_hyprlock_conf
 
     local base_json blocks_json
     base_json="$(get_base_settings)"
@@ -649,24 +703,29 @@ cmd_set() {
 
     # Widget comment/uncomment handling
     cur_sec != "" && cur_sec != "time" {
-        should_enable = 1;
-        if (cur_sec == "date" && has_show_date == 1 && v_show_date == "false") should_enable = 0;
-        if (cur_sec == "user" && has_show_user == 1 && v_show_user == "false") should_enable = 0;
-        if (cur_sec == "layout" && has_show_layout == 1 && v_show_layout == "false") should_enable = 0;
-        if (cur_sec == "uptime" && has_show_uptime == 1 && v_show_uptime == "false") should_enable = 0;
-        if (cur_sec == "battery" && has_show_batt == 1 && v_show_batt == "false") should_enable = 0;
-        if (cur_sec == "weather" && has_show_weather == 1 && v_show_weather == "false") should_enable = 0;
+        sec_flag = 0;
+        sec_val = "";
+        if (cur_sec == "date" && has_show_date == 1) { sec_flag = 1; sec_val = v_show_date; }
+        if (cur_sec == "user" && has_show_user == 1) { sec_flag = 1; sec_val = v_show_user; }
+        if (cur_sec == "layout" && has_show_layout == 1) { sec_flag = 1; sec_val = v_show_layout; }
+        if (cur_sec == "uptime" && has_show_uptime == 1) { sec_flag = 1; sec_val = v_show_uptime; }
+        if (cur_sec == "battery" && has_show_batt == 1) { sec_flag = 1; sec_val = v_show_batt; }
+        if (cur_sec == "weather" && has_show_weather == 1) { sec_flag = 1; sec_val = v_show_weather; }
 
-        if (should_enable == 0) {
-            if ($0 ~ /^[[:space:]]*#/) {
-                print $0;
+        if (sec_flag == 1) {
+            if (sec_val == "false") {
+                if ($0 ~ /^[[:space:]]*#/) {
+                    print $0;
+                } else {
+                    print "# " $0;
+                }
             } else {
-                print "# " $0;
+                line = $0;
+                sub(/^[[:space:]]*#[[:space:]]?/, "", line);
+                print line;
             }
         } else {
-            line = $0;
-            sub(/^[[:space:]]*#[[:space:]]?/, "", line);
-            print line;
+            print $0;
         }
 
         if ($0 ~ /\}/) { cur_sec = ""; }
@@ -677,7 +736,7 @@ cmd_set() {
     { print $0; }
     ' "$CONF_PATH" > "$tmp_file"
 
-    cp -f "$tmp_file" "$CONF_PATH"
+    cp -f "$tmp_file" "$CONF_PATH" 2>/dev/null || cat "$tmp_file" > "$CONF_PATH" 2>/dev/null || true
     rm -f "$tmp_file"
 
     local new_data
@@ -696,142 +755,203 @@ cmd_update_block() {
     ensure_backups
 
     local tmp_file
-    tmp_file="$(mktemp /tmp/hyprlock_ublock.XXXXXX.conf)"
+    tmp_file="$(mktemp /tmp/hyprlock_ublock.XXXXXX.conf)" || tmp_file="/tmp/hyprlock_ublock.conf"
 
-    local has_enabled v_enabled
-    local has_name v_name
-    local has_raw_text v_raw_text
-    local has_font_size v_font_size
-    local has_font_family v_font_family
-    local has_pos_x v_pos_x has_pos_y v_pos_y
-    local has_halign v_halign
-    local has_valign v_valign
-    local has_color v_color
+    python3 -c '
+import sys, json, re
 
-    eval "$(echo "$payload" | jq -r '
-        def flag(key; val):
-            if val != null then
-                "has_\(key)=1\nv_\(key)=\(@sh "\(val)")\n"
-            else
-                "has_\(key)=0\n"
-            end;
-        flag("enabled"; .enabled),
-        flag("name"; .name),
-        flag("raw_text"; .raw_text),
-        flag("font_size"; .font_size),
-        flag("font_family"; .font_family),
-        flag("pos_x"; .position_x),
-        flag("pos_y"; .position_y),
-        flag("halign"; .halign),
-        flag("valign"; .valign),
-        flag("color"; .color)
-    ')"
+target_idx = int(sys.argv[1])
+payload = json.loads(sys.argv[2])
+conf_path = sys.argv[3]
+tmp_file = sys.argv[4]
 
-    awk \
-        -v target_idx="$target_idx" \
-        -v has_enabled="${has_enabled:-0}" -v v_enabled="${v_enabled:-}" \
-        -v has_name="${has_name:-0}" -v v_name="${v_name:-}" \
-        -v has_raw_text="${has_raw_text:-0}" -v v_raw_text="${v_raw_text:-}" \
-        -v has_font_size="${has_font_size:-0}" -v v_font_size="${v_font_size:-}" \
-        -v has_font_family="${has_font_family:-0}" -v v_font_family="${v_font_family:-}" \
-        -v has_pos_x="${has_pos_x:-0}" -v v_pos_x="${v_pos_x:-}" \
-        -v has_pos_y="${has_pos_y:-0}" -v v_pos_y="${v_pos_y:-}" \
-        -v has_halign="${has_halign:-0}" -v v_halign="${v_halign:-}" \
-        -v has_valign="${has_valign:-0}" -v v_valign="${v_valign:-}" \
-        -v has_color="${has_color:-0}" -v v_color="${v_color:-}" \
-    '
-    BEGIN {
-        b_idx = 0;
-        in_b = 0;
-        is_target = 0;
-    }
+with open(conf_path, "r", encoding="utf-8") as f:
+    lines = f.readlines()
 
-    # Match comment before label
-    /^[[:space:]]*#[[:space:]]*[A-Za-z0-9_\[\]: -]+/ && !in_b {
-        c = $0;
-        sub(/^[[:space:]]*#[[:space:]]*/, "", c);
-        sub(/^[[:space:]]*#[[:space:]]*/, "", c);
-        if (c !~ /^label/) {
-            if (b_idx == target_idx && has_name == 1) {
-                print "# " v_name;
-                next;
-            }
-        }
-        print $0;
-        next;
-    }
+out_lines = []
+in_b = False
+b_idx = -1
+is_target = False
 
-    /^[[:space:]]*#?[[:space:]]*label[[:space:]]*\{/ {
-        in_b = 1;
-        is_target = (b_idx == target_idx);
-        
-        if (is_target) {
-            target_should_enable = 1;
-            if (has_enabled == 1 && v_enabled == "false") target_should_enable = 0;
-            
-            if (target_should_enable == 0) {
-                print "# label {";
-            } else {
-                print "label {";
-            }
-            next;
-        }
-        print $0;
-        next;
-    }
+for line in lines:
+    # Match label start (either active or commented)
+    if not in_b and re.match(r"^\s*#?\s*label\s*\{", line):
+        in_b = True
+        b_idx += 1
+        is_target = (b_idx == target_idx)
+        if is_target and "enabled" in payload:
+            if payload["enabled"]:
+                out_lines.append(re.sub(r"^\s*#\s*label\s*\{", "label {", line))
+            else:
+                if not line.strip().startswith("#"):
+                    out_lines.append("# " + line)
+                else:
+                    out_lines.append(line)
+            continue
+        out_lines.append(line)
+        continue
 
-    in_b && /^[[:space:]]*#?[[:space:]]*\}/ {
-        in_b = 0;
-        if (is_target) {
-            if (target_should_enable == 0) {
-                print "# }";
-            } else {
-                print "}";
-            }
-            b_idx++;
-            is_target = 0;
-            next;
-        }
-        b_idx++;
-        print $0;
-        next;
-    }
+    if in_b and re.match(r"^\s*#?\s*\}", line):
+        in_b = False
+        if is_target and "enabled" in payload:
+            if payload["enabled"]:
+                out_lines.append(re.sub(r"^\s*#\s*\}", "}", line))
+            else:
+                if not line.strip().startswith("#"):
+                    out_lines.append("# " + line)
+                else:
+                    out_lines.append(line)
+            is_target = False
+            continue
+        is_target = False
+        out_lines.append(line)
+        continue
 
-    in_b && is_target {
-        indent = "    ";
-        line = $0;
-        sub(/^[[:space:]]*#[[:space:]]*/, "", line);
-        sub(/^[[:space:]]+/, "", line);
-        sub(/[[:space:]]+$/, "", line);
-        
-        if (has_raw_text == 1 && line ~ /^text[[:space:]]*=/) {
-            line = "text = " v_raw_text;
-        } else if (has_font_size == 1 && line ~ /^font_size[[:space:]]*=/) {
-            line = "font_size = " v_font_size;
-        } else if (has_font_family == 1 && line ~ /^font_family[[:space:]]*=/) {
-            line = "font_family = " v_font_family;
-        } else if (has_halign == 1 && line ~ /^halign[[:space:]]*=/) {
-            line = "halign = " v_halign;
-        } else if (has_valign == 1 && line ~ /^valign[[:space:]]*=/) {
-            line = "valign = " v_valign;
-        } else if (has_color == 1 && line ~ /^color[[:space:]]*=/) {
-            line = "color = " v_color;
-        } else if ((has_pos_x == 1 || has_pos_y == 1) && line ~ /^position[[:space:]]*=/) {
-            line = "position = " v_pos_x ", " v_pos_y;
-        }
-        
-        if (target_should_enable == 0) {
-            print "# " indent line;
-        } else {
-            print indent line;
-        }
-        next;
-    }
+    if in_b and is_target:
+        # Check enabled state toggle on body lines
+        if "enabled" in payload:
+            if payload["enabled"]:
+                line = re.sub(r"^\s*#\s?", "", line)
+            else:
+                if not line.strip().startswith("#"):
+                    line = "# " + line
 
-    { print $0; }
-    ' "$CONF_PATH" > "$tmp_file"
+        # If property updates
+        if "raw_text" in payload and re.search(r"text\s*=", line):
+            indent = re.match(r"^(\s*#?\s*)", line).group(1)
+            line = indent + "text = " + str(payload.get("raw_text")) + "\n"
+        elif "font_size" in payload and re.search(r"font_size\s*=", line):
+            indent = re.match(r"^(\s*#?\s*)", line).group(1)
+            line = indent + "font_size = " + str(payload.get("font_size")) + "\n"
+        elif "font_family" in payload and re.search(r"font_family\s*=", line):
+            indent = re.match(r"^(\s*#?\s*)", line).group(1)
+            line = indent + "font_family = " + str(payload.get("font_family")) + "\n"
+        elif "color" in payload and re.search(r"color\s*=", line):
+            indent = re.match(r"^(\s*#?\s*)", line).group(1)
+            line = indent + "color = " + str(payload.get("color")) + "\n"
+        elif "halign" in payload and re.search(r"halign\s*=", line):
+            indent = re.match(r"^(\s*#?\s*)", line).group(1)
+            line = indent + "halign = " + str(payload.get("halign")) + "\n"
+        elif "valign" in payload and re.search(r"valign\s*=", line):
+            indent = re.match(r"^(\s*#?\s*)", line).group(1)
+            line = indent + "valign = " + str(payload.get("valign")) + "\n"
+        elif ("position_x" in payload or "position_y" in payload) and re.search(r"position\s*=", line):
+            indent = re.match(r"^(\s*#?\s*)", line).group(1)
+            px = int(round(float(payload.get("position_x", 0))))
+            py = int(round(float(payload.get("position_y", 0))))
+            line = indent + "position = " + str(px) + ", " + str(py) + "\n"
 
-    cp -f "$tmp_file" "$CONF_PATH"
+        out_lines.append(line)
+        continue
+
+    # Update comment header name if specified
+    if not in_b and "name" in payload and (b_idx + 1) == target_idx and re.match(r"^\s*#\s*[A-Za-z0-9_\[\]: -]+", line):
+        if not re.match(r"^\s*#\s*label", line):
+            out_lines.append("# " + str(payload.get("name")) + "\n")
+            continue
+
+    out_lines.append(line)
+
+with open(tmp_file, "w", encoding="utf-8") as f:
+    f.writelines(out_lines)
+' "$target_idx" "$payload" "$CONF_PATH" "$tmp_file"
+
+    if ! cp -f "$tmp_file" "$CONF_PATH" 2>/dev/null && ! cat "$tmp_file" > "$CONF_PATH" 2>/dev/null; then
+        rm -f "$tmp_file"
+        echo '{"status":"error","message":"Failed to write hyprlock.conf"}'
+        return 1
+    fi
+    rm -f "$tmp_file"
+
+    local updated_blocks
+    updated_blocks="$(parse_blocks "$CONF_PATH")"
+    jq -n --argjson blocks "$updated_blocks" '{"status":"ok", "blocks": $blocks}'
+}
+
+cmd_update_positions() {
+    local payload="${1:-}"
+    if [[ -z "$payload" ]]; then
+        echo '{"status":"error","message":"Missing payload"}'
+        return 1
+    fi
+
+    ensure_backups
+
+    local tmp_file
+    tmp_file="$(mktemp /tmp/hyprlock_upos.XXXXXX.conf)" || tmp_file="/tmp/hyprlock_upos.conf"
+
+    python3 -c '
+import sys, json, re
+
+payload_str = sys.argv[1]
+conf_path = sys.argv[2]
+tmp_file = sys.argv[3]
+
+try:
+    updates = json.loads(payload_str)
+except Exception as e:
+    print(json.dumps({"status": "error", "message": f"Invalid JSON: {e}"}))
+    sys.exit(1)
+
+update_map = {}
+for item in updates:
+    if "index" in item:
+        update_map[int(item["index"])] = item
+
+with open(conf_path, "r", encoding="utf-8") as f:
+    lines = f.readlines()
+
+out_lines = []
+in_label = False
+label_idx = -1
+target_update = None
+
+for line in lines:
+    if not in_label and re.match(r"^\s*#?\s*label\s*\{", line):
+        in_label = True
+        label_idx += 1
+        target_update = update_map.get(label_idx)
+        out_lines.append(line)
+        continue
+
+    if in_label and re.match(r"^\s*#?\s*\}", line):
+        in_label = False
+        target_update = None
+        out_lines.append(line)
+        continue
+
+    if in_label and target_update:
+        if ("position_x" in target_update or "position_y" in target_update) and re.match(r"^\s*#?\s*position\s*=", line):
+            m = re.match(r"^(\s*#?\s*)position\s*=.*$", line)
+            prefix = m.group(1) if m else "    "
+            px = int(round(float(target_update.get("position_x", 0))))
+            py = int(round(float(target_update.get("position_y", 0))))
+            out_lines.append(f"{prefix}position = {px}, {py}\n")
+            continue
+        elif "halign" in target_update and re.match(r"^\s*#?\s*halign\s*=", line):
+            m = re.match(r"^(\s*#?\s*)halign\s*=.*$", line)
+            prefix = m.group(1) if m else "    "
+            ha = target_update["halign"]
+            out_lines.append(f"{prefix}halign = {ha}\n")
+            continue
+        elif "valign" in target_update and re.match(r"^\s*#?\s*valign\s*=", line):
+            m = re.match(r"^(\s*#?\s*)valign\s*=.*$", line)
+            prefix = m.group(1) if m else "    "
+            va = target_update["valign"]
+            out_lines.append(f"{prefix}valign = {va}\n")
+            continue
+
+    out_lines.append(line)
+
+with open(tmp_file, "w", encoding="utf-8") as f:
+    f.writelines(out_lines)
+' "$payload" "$CONF_PATH" "$tmp_file"
+
+    if ! cp -f "$tmp_file" "$CONF_PATH" 2>/dev/null && ! cat "$tmp_file" > "$CONF_PATH" 2>/dev/null; then
+        rm -f "$tmp_file"
+        echo '{"status":"error","message":"Failed to write hyprlock.conf"}'
+        return 1
+    fi
     rm -f "$tmp_file"
 
     local updated_blocks
@@ -1017,6 +1137,10 @@ main() {
         update-block|update_block)
             shift
             cmd_update_block "${1:-}" "${2:-}"
+            ;;
+        update-positions|update_positions|update-blocks|update_blocks)
+            shift
+            cmd_update_positions "${1:-}"
             ;;
         add-block|add_block)
             shift

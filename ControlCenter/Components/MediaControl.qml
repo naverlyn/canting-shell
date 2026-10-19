@@ -27,9 +27,13 @@ Rectangle {
     property real currentPos: player ? player.position : 0
     readonly property real trackLen: (player && player.length > 0) ? player.length : 0
 
-    visible: hasMedia
+    readonly property bool isCompact: ControlCenterConfig.mediaWidgetStyle === "compact"
+
+    visible: hasMedia || ControlCenterConfig.isLiveEdit
     width: parent ? parent.width : 300
-    height: mprisCol.implicitHeight + 28
+    height: root.isCompact ? (compactCol.implicitHeight + 20) : (mprisCol.implicitHeight + 28)
+    implicitHeight: root.isCompact ? (compactCol.implicitHeight + 20) : (mprisCol.implicitHeight + 28)
+    implicitWidth: width
     radius: 10
     color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05)
     border.color: root.theme.bgBorder
@@ -60,7 +64,7 @@ Rectangle {
     Connections {
         target: root.player
         function onPositionChanged() {
-            if (!seekMouse.pressed && root.player) {
+            if (!seekMouse.pressed && (!compactSeekMouse.pressed) && root.player) {
                 root.currentPos = root.player.position;
             }
         }
@@ -69,8 +73,224 @@ Rectangle {
         }
     }
 
+    /* ------------------------------------------------------------- */
+    /* COMPACT SQUARED MEDIA PLAYER (iOS / Android Control Center)   */
+    /* ------------------------------------------------------------- */
+    ColumnLayout {
+        id: compactCol
+        visible: root.isCompact
+        anchors {
+            top: parent.top
+            left: parent.left
+            right: parent.right
+            margins: 10
+        }
+        spacing: 8
+
+        // Top Row: Album Art + Track Title & Artist
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Rectangle {
+                width: 42
+                height: 42
+                radius: 8
+                color: root.theme.bgBase
+                border.color: root.theme.bgBorder
+                border.width: 1
+                clip: true
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰎈"
+                    font.family: root.font
+                    font.pixelSize: 20
+                    color: root.theme.accentPrimary
+                    visible: compactArtImg.status !== Image.Ready
+                }
+
+                Image {
+                    id: compactArtImg
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    source: (root.player && root.player.trackArtUrl) ? root.player.trackArtUrl : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    visible: status === Image.Ready
+                }
+            }
+
+            ColumnLayout {
+                spacing: 2
+                Layout.fillWidth: true
+
+                Text {
+                    text: root.player ? (root.player.trackTitle || "Unknown Title") : (ControlCenterConfig.isLiveEdit ? "Media Player" : "Unknown Title")
+                    font.family: root.font
+                    font.pixelSize: 12
+                    font.bold: true
+                    color: root.theme.textPrimary
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+
+                Text {
+                    text: root.player ? (root.player.trackArtist || (root.player.albumTitle || "Unknown Artist")) : "MPRIS Player"
+                    font.family: root.font
+                    font.pixelSize: 10
+                    color: root.theme.textSecondary
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+            }
+        }
+
+        // Center Transport Controls
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignHCenter
+            spacing: 20
+
+            // Previous
+            Item {
+                width: 28; height: 28
+                Layout.alignment: Qt.AlignVCenter
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰒮"
+                    font.family: root.font
+                    font.pixelSize: 18
+                    color: cPrevMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary
+                }
+                MouseArea {
+                    id: cPrevMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: if (root.player) root.player.previous()
+                }
+            }
+
+            // Play / Pause Circle
+            Rectangle {
+                width: 34
+                height: 34
+                radius: 17
+                Layout.alignment: Qt.AlignVCenter
+                color: cPlayMouse.containsMouse ? Qt.lighter(root.theme.accentPrimary, 1.12) : root.theme.accentPrimary
+
+                Text {
+                    anchors.centerIn: parent
+                    text: (root.player && root.player.isPlaying) ? "󰏤" : "󰐊"
+                    font.family: root.font
+                    font.pixelSize: 16
+                    color: root.theme.bgBase
+                }
+
+                MouseArea {
+                    id: cPlayMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: if (root.player) root.player.togglePlaying()
+                }
+            }
+
+            // Next
+            Item {
+                width: 28; height: 28
+                Layout.alignment: Qt.AlignVCenter
+                Text {
+                    anchors.centerIn: parent
+                    text: "󰒭"
+                    font.family: root.font
+                    font.pixelSize: 18
+                    color: cNextMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary
+                }
+                MouseArea {
+                    id: cNextMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: if (root.player) root.player.next()
+                }
+            }
+        }
+
+        // Bottom: Slim Progress Bar & Time
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 6
+
+            Text {
+                text: root.formatTime(root.currentPos)
+                font.family: root.font
+                font.pixelSize: 9
+                color: root.theme.textMuted
+            }
+
+            Item {
+                id: compactSeekContainer
+                Layout.fillWidth: true
+                height: 10
+
+                Rectangle {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width
+                    height: 3
+                    radius: 1.5
+                    color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.15)
+
+                    Rectangle {
+                        height: parent.height
+                        radius: parent.radius
+                        width: {
+                            if (root.trackLen <= 0) return 0;
+                            const ratio = Math.max(0, Math.min(1, root.currentPos / root.trackLen));
+                            return parent.width * ratio;
+                        }
+                        color: root.theme.accentPrimary
+                    }
+                }
+
+                MouseArea {
+                    id: compactSeekMouse
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    enabled: root.player !== null && root.trackLen > 0
+                    onPressed: (mouse) => seekCompact(mouse.x)
+                    onPositionChanged: (mouse) => {
+                        if (pressed) seekCompact(mouse.x);
+                    }
+                    function seekCompact(mouseX) {
+                        if (root.player && root.trackLen > 0) {
+                            const ratio = Math.max(0, Math.min(1, mouseX / compactSeekContainer.width));
+                            const targetPos = ratio * root.trackLen;
+                            root.currentPos = targetPos;
+                            if (root.player.canSeek) {
+                                root.player.position = targetPos;
+                            }
+                        }
+                    }
+                }
+            }
+
+            Text {
+                text: root.formatTime(root.trackLen)
+                font.family: root.font
+                font.pixelSize: 9
+                color: root.theme.textMuted
+            }
+        }
+    }
+
+    /* ------------------------------------------------------------- */
+    /* DETAILED FULL-WIDTH MEDIA PLAYER                              */
+    /* ------------------------------------------------------------- */
     ColumnLayout {
         id: mprisCol
+        visible: !root.isCompact
         anchors {
             top: parent.top
             left: parent.left
@@ -85,7 +305,7 @@ Rectangle {
             spacing: 2
 
             Text {
-                text: root.player ? (root.player.trackTitle || "Unknown Title") : "Unknown Title"
+                text: root.player ? (root.player.trackTitle || "Unknown Title") : (ControlCenterConfig.isLiveEdit ? "Media Player Preview" : "Unknown Title")
                 font.family: root.font
                 font.pixelSize: 14
                 font.bold: true
@@ -96,7 +316,7 @@ Rectangle {
             }
 
             Text {
-                text: root.player ? (root.player.trackArtist || "Unknown Artist") : "Unknown Artist"
+                text: root.player ? (root.player.trackArtist || "Unknown Artist") : (ControlCenterConfig.isLiveEdit ? "MPRIS Playback Controls" : "Unknown Artist")
                 font.family: root.font
                 font.pixelSize: 11
                 color: root.theme.textSecondary
@@ -282,9 +502,12 @@ Rectangle {
                 height: 42
                 radius: 21
                 Layout.alignment: Qt.AlignVCenter
+                scale: playMouse.pressed ? 0.94 : 1.0
                 color: playMouse.containsMouse
-                    ? root.theme.accentCyan
+                    ? Qt.lighter(root.theme.accentPrimary, 1.12)
                     : root.theme.accentPrimary
+                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
+                Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutQuad } }
 
                 Text {
                     anchors.centerIn: parent
