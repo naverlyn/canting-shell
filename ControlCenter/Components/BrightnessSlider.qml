@@ -10,6 +10,7 @@ Rectangle {
     property var theme: DefaultTheme {}
     property string font: "Hack Nerd Font"
     property int currentBrightness: 50
+    property bool hasBacklightDevice: true
 
     width: parent ? parent.width : 300
     height: brightnessCol.implicitHeight + 24
@@ -20,15 +21,43 @@ Rectangle {
     border.color: root.theme.bgBorder
     border.width: 1
 
+    // File watcher to sync live if brightness changes externally (e.g. Fn keys)
+    FileView {
+        id: brightnessWatchFile
+        path: ""
+        watchChanges: true
+        onFileChanged: root.refresh()
+    }
+
+    Process {
+        id: backlightDiscovery
+        command: ["sh", "-c", "ls -d /sys/class/backlight/*/brightness 2>/dev/null | head -n 1"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const p = text.trim();
+                if (p) brightnessWatchFile.path = p;
+            }
+        }
+    }
+
     // Read current brightness
     Process {
         id: brightnessStatusProc
-        command: ["sh", "-c", "brightnessctl -m | head -n 1 | awk -F, '{print $5}' | tr -d '%'"]
+        command: ["sh", "-c", "if [ -n \"$(ls -A /sys/class/backlight 2>/dev/null)\" ]; then brightnessctl -c backlight -m 2>/dev/null | head -n 1; else brightnessctl -m 2>/dev/null | head -n 1; fi"]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
-                let val = parseInt(text.trim());
-                if (!isNaN(val)) root.currentBrightness = val;
+                const line = text.trim();
+                if (!line) return;
+                const parts = line.split(",");
+                // brightnessctl -m format: device_name,class,current_value,percentage,max_value
+                if (parts.length >= 4) {
+                    root.hasBacklightDevice = (parts[1] === "backlight");
+                    const pctStr = parts[3].indexOf("%") !== -1 ? parts[3] : (parts[4] || "");
+                    const val = parseInt(pctStr.replace("%", "").trim());
+                    if (!isNaN(val)) root.currentBrightness = Math.max(0, Math.min(100, val));
+                }
             }
         }
     }
@@ -40,12 +69,22 @@ Rectangle {
     }
 
     function setBrightness(percent) {
-        setBrightnessProc.command = ["brightnessctl", "set", Math.round(percent) + "%"];
+        const clamped = Math.max(1, Math.min(100, Math.round(percent)));
+        root.currentBrightness = clamped;
+        if (root.hasBacklightDevice) {
+            setBrightnessProc.command = ["brightnessctl", "-c", "backlight", "set", clamped + "%"];
+        } else {
+            setBrightnessProc.command = ["brightnessctl", "set", clamped + "%"];
+        }
         setBrightnessProc.running = true;
     }
 
     function refresh() {
         brightnessStatusProc.running = true;
+    }
+
+    Component.onCompleted: {
+        root.refresh();
     }
 
     Connections {

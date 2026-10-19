@@ -113,7 +113,7 @@ Scope {
 
   Process {
     id: brightnessReadProc
-    command: ["brightnessctl", "get"]
+    command: ["brightnessctl", "-c", "backlight", "get"]
     running: false
     stdout: StdioCollector {
       onStreamFinished: {
