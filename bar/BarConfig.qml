@@ -19,6 +19,21 @@ Singleton {
   property real pillOpacity: 1.0
   property bool hidePill: false
   property bool allMonitors: true
+  property string displayTarget: "all" // "all" | "primary" | "secondary" | monitor name
+  property string secondaryPosition: "bottom" // "top" | "bottom" | "left" | "right"
+  property string secondaryMode: "custom" // "blank" | "custom" | "mirror"
+  property bool blankOnSecondary: false
+  readonly property var defaultSecondaryPanels: [
+    ["workspaces"],
+    ["windowTitle"],
+    ["weather", "clock"]
+  ]
+  property var secondaryPanels: [
+    ["workspaces"],
+    ["windowTitle"],
+    ["weather", "clock"]
+  ]
+  property string activeEditingDisplay: "primary" // "primary" | "secondary"
   property bool innerCorners: true
 
   // Panel capacity limit
@@ -33,7 +48,7 @@ Singleton {
   readonly property var defaultRightWidgets: ["tray", "clock", "workspaces", "weather", "idleInhibitor", "controlCenter"]
 
   // Multi-Bar Configurations array
-  // Each bar object: { id, name, enabled, position ("top"|"bottom"|"left"|"right"), barHeight, floating, barOpacity, pillRadius, pillOpacity, hidePill, allMonitors, innerCorners, panels }
+  // Each bar object: { id, name, enabled, position ("top"|"bottom"|"left"|"right"), barHeight, floating, barOpacity, pillRadius, pillOpacity, hidePill, allMonitors, displayTarget, secondaryMode, blankOnSecondary, secondaryPanels, innerCorners, panels }
   property var bars: [
     {
       id: "bar_1",
@@ -47,6 +62,15 @@ Singleton {
       pillOpacity: 1.0,
       hidePill: false,
       allMonitors: true,
+      displayTarget: "all",
+      secondaryPosition: "bottom",
+      secondaryMode: "custom",
+      blankOnSecondary: false,
+      secondaryPanels: [
+        ["workspaces"],
+        ["windowTitle"],
+        ["weather", "clock"]
+      ],
       innerCorners: true,
       panels: [
         ["appGrid", "globalMenu", "cpu", "temp", "memory", "disk", "network"],
@@ -58,19 +82,38 @@ Singleton {
 
   // Currently selected bar index in Bar Settings UI
   property int selectedBarIndex: 0
+  onSelectedBarIndexChanged: {
+    const tgt = (root.currentBar ? (root.currentBar.displayTarget || (root.currentBar.allMonitors ? "all" : "primary")) : "primary");
+    if (tgt === "secondary") {
+      root.activeEditingDisplay = "secondary";
+    } else if (tgt === "primary") {
+      root.activeEditingDisplay = "primary";
+    }
+  }
 
   readonly property var currentBar: {
     const idx = Math.max(0, Math.min((root.bars ? root.bars.length : 1) - 1, root.selectedBarIndex));
     return (root.bars && root.bars.length > 0) ? root.bars[idx] : {
       id: "bar_1", name: "Primary Bar", enabled: true, position: "top",
-      barHeight: 32, floating: false, barOpacity: 0.85, pillRadius: 10, pillOpacity: 1.0, hidePill: false, allMonitors: true,
+      barHeight: 32, floating: false, barOpacity: 0.85, pillRadius: 10, pillOpacity: 1.0, hidePill: false,
+      allMonitors: true, displayTarget: "all", secondaryPosition: (root.secondaryPosition || "top"), secondaryMode: "custom", blankOnSecondary: false,
+      secondaryPanels: root.defaultSecondaryPanels,
       innerCorners: root.innerCorners,
       panels: [root.defaultLeftWidgets, root.defaultCenterWidgets, root.defaultRightWidgets]
     };
   }
 
-  // Active section widget arrays (synced with selectedBarIndex for BarSettings editing)
-  readonly property var panels: currentBar ? currentBar.panels : [defaultLeftWidgets, defaultCenterWidgets, defaultRightWidgets]
+  // Active section widget arrays (synced with selectedBarIndex and activeEditingDisplay for BarSettings editing)
+  readonly property var panels: {
+    if (!currentBar) return [defaultLeftWidgets, defaultCenterWidgets, defaultRightWidgets];
+    const tgt = (currentBar.displayTarget || (currentBar.allMonitors ? "all" : "primary"));
+    if (tgt === "all" && root.activeEditingDisplay === "secondary") {
+      return (currentBar.secondaryPanels && currentBar.secondaryPanels.length > 0)
+        ? currentBar.secondaryPanels
+        : root.defaultSecondaryPanels;
+    }
+    return currentBar.panels;
+  }
 
   // Legacy aliases synced with panels for compatibility
   readonly property var leftWidgets: panels.length > 0 ? panels[0] : []
@@ -178,6 +221,9 @@ Singleton {
       if (i !== idx) return b;
       let copy = Object.assign({}, b);
       copy.panels = (b.panels || []).map(p => (p || []).slice());
+      if (b.secondaryPanels) {
+        copy.secondaryPanels = b.secondaryPanels.map(p => (p || []).slice());
+      }
       copy[propName] = val;
       return copy;
     });
@@ -193,13 +239,31 @@ Singleton {
       else if (propName === "hidePill") root.hidePill = Boolean(val);
       else if (propName === "activeStyle") root.activeStyle = String(val);
       else if (propName === "allMonitors") root.allMonitors = Boolean(val);
+      else if (propName === "displayTarget") {
+        root.displayTarget = String(val);
+        root.allMonitors = (String(val) === "all");
+      }
+      else if (propName === "secondaryPosition") {
+        root.secondaryPosition = String(val);
+      }
+      else if (propName === "secondaryMode") {
+        root.secondaryMode = String(val);
+        root.blankOnSecondary = (String(val) === "blank");
+      }
+      else if (propName === "blankOnSecondary") {
+        root.blankOnSecondary = Boolean(val);
+        root.secondaryMode = val ? "blank" : "custom";
+      }
+      else if (propName === "secondaryPanels") {
+        root.secondaryPanels = val;
+      }
       else if (propName === "innerCorners") root.innerCorners = Boolean(val);
     }
     saveConfig();
   }
 
   // Add a new Bar instance (up to 4 bars: Top, Bottom, Left, Right)
-  function addBar(preferredPosition) {
+  function addBar(preferredPosition, targetDisplay) {
     if (root.bars.length >= 4) return;
     let usedPositions = root.bars.map(b => b.position);
     let order = ["bottom", "left", "right", "top"];
@@ -213,6 +277,8 @@ Singleton {
       }
     }
     let newIdx = root.bars.length + 1;
+    let finalTarget = targetDisplay || (root.bars.length === 1 ? "secondary" : "all");
+    let isAll = (finalTarget === "all");
     let newBar = {
       id: "bar_" + Date.now(),
       name: "Bar " + newIdx,
@@ -224,7 +290,12 @@ Singleton {
       pillRadius: root.pillRadius,
       pillOpacity: root.pillOpacity,
       hidePill: root.hidePill,
-      allMonitors: root.allMonitors,
+      allMonitors: isAll,
+      displayTarget: finalTarget,
+      secondaryPosition: nextPos,
+      secondaryMode: "custom",
+      blankOnSecondary: false,
+      secondaryPanels: root.defaultSecondaryPanels.map(p => p.slice()),
       innerCorners: root.innerCorners,
       panels: [
         ["workspaces"],
@@ -236,6 +307,11 @@ Singleton {
     bList.push(newBar);
     root.bars = bList;
     root.selectedBarIndex = bList.length - 1;
+    if (finalTarget === "secondary") {
+      root.activeEditingDisplay = "secondary";
+    } else {
+      root.activeEditingDisplay = "primary";
+    }
     saveConfig();
   }
 
@@ -255,6 +331,9 @@ Singleton {
       root.floating = Boolean(bList[0].floating);
       root.barOpacity = Number(bList[0].barOpacity);
       root.allMonitors = Boolean(bList[0].allMonitors);
+      root.displayTarget = bList[0].displayTarget || (bList[0].allMonitors ? "all" : "primary");
+      root.secondaryMode = bList[0].secondaryMode || (bList[0].blankOnSecondary !== false ? "blank" : "mirror");
+      root.blankOnSecondary = bList[0].blankOnSecondary !== undefined ? Boolean(bList[0].blankOnSecondary) : (root.secondaryMode === "blank");
       root.innerCorners = bList[0].innerCorners !== undefined ? Boolean(bList[0].innerCorners) : root.innerCorners;
     }
     saveConfig();
@@ -334,7 +413,76 @@ Singleton {
   }
 
   function _setCurrentBarPanels(newPanels) {
-    updateBarProp("panels", newPanels, root.selectedBarIndex);
+    const tgt = (root.currentBar ? (root.currentBar.displayTarget || (root.currentBar.allMonitors ? "all" : "primary")) : "primary");
+    if (tgt === "all" && root.activeEditingDisplay === "secondary") {
+      updateBarProp("secondaryPanels", newPanels, root.selectedBarIndex);
+    } else {
+      updateBarProp("panels", newPanels, root.selectedBarIndex);
+    }
+    root.panelsRevision++;
+    root.panelsUpdated();
+  }
+
+  function isSecondaryWidgetActive(widgetId) {
+    const sPanels = (root.currentBar && root.currentBar.secondaryPanels)
+      ? root.currentBar.secondaryPanels
+      : root.defaultSecondaryPanels;
+    for (let p = 0; p < sPanels.length; p++) {
+      if ((sPanels[p] || []).indexOf(widgetId) !== -1) return true;
+    }
+    return false;
+  }
+
+  function toggleSecondaryWidget(widgetId) {
+    let pList = ((root.currentBar && root.currentBar.secondaryPanels && root.currentBar.secondaryPanels.length > 0)
+      ? root.currentBar.secondaryPanels
+      : root.defaultSecondaryPanels).map(arr => (arr || []).slice());
+
+    while (pList.length < 3) pList.push([]);
+
+    let exists = false;
+    for (let p = 0; p < pList.length; p++) {
+      const idx = pList[p].indexOf(widgetId);
+      if (idx !== -1) {
+        pList[p].splice(idx, 1);
+        exists = true;
+        break;
+      }
+    }
+
+    if (!exists) {
+      let targetIdx = 0;
+      if (["clock", "weather", "battery", "media", "tray", "controlCenter", "idleInhibitor"].indexOf(widgetId) !== -1) {
+        targetIdx = pList.length - 1;
+      } else if (["windowTitle", "cava"].indexOf(widgetId) !== -1) {
+        targetIdx = Math.floor(pList.length / 2);
+      } else {
+        targetIdx = 0;
+      }
+      pList[targetIdx].push(widgetId);
+    }
+
+    updateBarProp("secondaryPanels", pList, root.selectedBarIndex);
+    root.panelsRevision++;
+    root.panelsUpdated();
+  }
+
+  function applySecondaryPreset(presetName) {
+    let newPanels = [];
+    if (presetName === "minimal") {
+      newPanels = [["workspaces"], [], ["clock"]];
+    } else if (presetName === "media") {
+      newPanels = [["workspaces"], ["windowTitle", "cava"], ["media", "clock"]];
+    } else if (presetName === "sysinfo") {
+      newPanels = [["workspaces"], ["cpu", "temp", "memory"], ["clock"]];
+    } else if (presetName === "full") {
+      newPanels = [
+        ["appGrid", "workspaces"],
+        ["windowTitle", "cava"],
+        ["weather", "media", "clock"]
+      ];
+    }
+    updateBarProp("secondaryPanels", newPanels, root.selectedBarIndex);
     root.panelsRevision++;
     root.panelsUpdated();
   }
@@ -639,6 +787,11 @@ Singleton {
       hidePill: primary && primary.hidePill !== undefined ? Boolean(primary.hidePill) : root.hidePill,
       activeStyle: primary && primary.activeStyle !== undefined ? primary.activeStyle : root.activeStyle,
       allMonitors: primary ? primary.allMonitors : root.allMonitors,
+      displayTarget: primary && primary.displayTarget !== undefined ? primary.displayTarget : root.displayTarget,
+      secondaryPosition: primary && primary.secondaryPosition !== undefined ? primary.secondaryPosition : (root.secondaryPosition || "top"),
+      secondaryMode: primary && primary.secondaryMode !== undefined ? primary.secondaryMode : root.secondaryMode,
+      blankOnSecondary: primary && primary.blankOnSecondary !== undefined ? Boolean(primary.blankOnSecondary) : root.blankOnSecondary,
+      secondaryPanels: primary && primary.secondaryPanels ? primary.secondaryPanels : root.secondaryPanels,
       innerCorners: primary && primary.innerCorners !== undefined ? Boolean(primary.innerCorners) : root.innerCorners,
       bars: root.bars,
       panels: primaryPanels,
@@ -711,6 +864,17 @@ Singleton {
     if (cfg.pillOpacity !== undefined) root.pillOpacity = Number(cfg.pillOpacity);
     if (cfg.hidePill !== undefined) root.hidePill = Boolean(cfg.hidePill);
     if (cfg.allMonitors !== undefined) root.allMonitors = Boolean(cfg.allMonitors);
+    if (cfg.displayTarget !== undefined) {
+      root.displayTarget = String(cfg.displayTarget);
+    } else if (cfg.allMonitors !== undefined) {
+      root.displayTarget = cfg.allMonitors ? "all" : "primary";
+    }
+    if (cfg.secondaryPosition !== undefined) root.secondaryPosition = String(cfg.secondaryPosition);
+    if (cfg.secondaryMode !== undefined) root.secondaryMode = String(cfg.secondaryMode);
+    if (cfg.blankOnSecondary !== undefined) root.blankOnSecondary = Boolean(cfg.blankOnSecondary);
+    if (Array.isArray(cfg.secondaryPanels) && cfg.secondaryPanels.length > 0) {
+      root.secondaryPanels = cfg.secondaryPanels.map(arr => Array.isArray(arr) ? arr.slice() : []);
+    }
     if (cfg.innerCorners !== undefined) root.innerCorners = Boolean(cfg.innerCorners);
 
     let pList = [];
@@ -765,7 +929,16 @@ Singleton {
         pillOpacity: b.pillOpacity !== undefined ? Number(b.pillOpacity) : root.pillOpacity,
         hidePill: b.hidePill !== undefined ? Boolean(b.hidePill) : root.hidePill,
         activeStyle: b.activeStyle || cfg.activeStyle || root.activeStyle,
-        allMonitors: b.allMonitors !== undefined ? Boolean(b.allMonitors) : root.allMonitors,
+        allMonitors: b.allMonitors !== undefined ? Boolean(b.allMonitors) : (b.displayTarget ? b.displayTarget === "all" : root.allMonitors),
+        displayTarget: b.displayTarget || (b.allMonitors !== undefined ? (b.allMonitors ? "all" : "primary") : root.displayTarget),
+        secondaryPosition: b.secondaryPosition || root.secondaryPosition || "top",
+        secondaryMode: b.secondaryMode || root.secondaryMode,
+        blankOnSecondary: b.blankOnSecondary !== undefined ? Boolean(b.blankOnSecondary) : (b.secondaryMode === "blank"),
+        secondaryPanels: Array.isArray(b.secondaryPanels) && b.secondaryPanels.length > 0
+          ? b.secondaryPanels.map(arr => Array.isArray(arr) ? arr.slice() : [])
+          : (Array.isArray(root.secondaryPanels) && root.secondaryPanels.length > 0
+            ? root.secondaryPanels.map(arr => arr.slice())
+            : root.defaultSecondaryPanels.map(arr => arr.slice())),
         innerCorners: b.innerCorners !== undefined ? Boolean(b.innerCorners) : root.innerCorners,
         panels: ensureGlobalMenu(
           Array.isArray(b.panels) && b.panels.length > 0
@@ -787,6 +960,11 @@ Singleton {
         hidePill: root.hidePill,
         activeStyle: root.activeStyle,
         allMonitors: root.allMonitors,
+        displayTarget: root.displayTarget,
+        secondaryPosition: root.secondaryPosition || "top",
+        secondaryMode: root.secondaryMode,
+        blankOnSecondary: root.blankOnSecondary,
+        secondaryPanels: root.secondaryPanels,
         innerCorners: root.innerCorners,
         panels: pList
       }];
@@ -864,6 +1042,16 @@ Singleton {
     root.cavaAutoHide = false;
     root.cavaShowIcon = false;
     root.allMonitors = true;
+    root.displayTarget = "all";
+    root.secondaryPosition = "top";
+    root.secondaryMode = "custom";
+    root.blankOnSecondary = false;
+    root.secondaryPanels = [
+      ["workspaces"],
+      ["windowTitle"],
+      ["weather", "clock"]
+    ];
+    root.activeEditingDisplay = "primary";
     root.innerCorners = true;
 
     root.selectedBarIndex = 0;
@@ -880,6 +1068,15 @@ Singleton {
         pillOpacity: 1.0,
         hidePill: false,
         allMonitors: true,
+        displayTarget: "all",
+        secondaryPosition: "top",
+        secondaryMode: "custom",
+        blankOnSecondary: false,
+        secondaryPanels: [
+          ["workspaces"],
+          ["windowTitle"],
+          ["weather", "clock"]
+        ],
         innerCorners: true,
         panels: [
           root.defaultLeftWidgets.slice(),

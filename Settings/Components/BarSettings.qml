@@ -94,7 +94,189 @@ Item {
     }
 
     function cleanBarName(raw, fallback) {
-        return String(raw || fallback || "Primary Bar").replace(/\s*\((Top|Bottom|Left|Right)\)$/i, "");
+        const s = String(raw || fallback || "Primary Bar")
+            .replace(/[\uE000-\uF8FF]/g, "")
+            .replace(/\s*\((Top|Bottom|Left|Right)\)$/i, "")
+            .trim();
+        return s || (fallback || "Primary Bar");
+    }
+
+    function getMonitorNameForTarget(target) {
+        const screens = Quickshell.screens || [];
+        if (target === "primary") {
+            return (screens.length > 0 && screens[0] && screens[0].name) ? screens[0].name : "eDP-1";
+        }
+        if (target === "secondary") {
+            return (screens.length > 1 && screens[1] && screens[1].name) ? screens[1].name : "HDMI-A-1";
+        }
+        for (let i = 0; i < screens.length; i++) {
+            if (screens[i] && screens[i].name === target) return screens[i].name;
+        }
+        return target || "eDP-1";
+    }
+
+    readonly property string activeMonitorsSummary: {
+        const screens = Quickshell.screens || [];
+        if (screens.length === 0) return "eDP-1, HDMI-A-1";
+        return screens.map(s => s.name || "Display").join(", ");
+    }
+
+    /* Add Bar Confirmation Dialog State */
+    property bool addBarModalVisible: false
+    property string addBarChosenTarget: "primary"
+    property string addBarChosenPosition: "bottom"
+
+    readonly property bool hasMultipleMonitors: {
+        const screens = Quickshell.screens || [];
+        if (screens.length >= 2) return true;
+        if (screens.length === 0) return true; // dual-monitor fallback
+        return false;
+    }
+
+    readonly property var addBarTargetOptions: {
+        const screens = Quickshell.screens || [];
+        const primMon = root.getMonitorNameForTarget("primary");
+        const secMon = root.getMonitorNameForTarget("secondary");
+
+        const opts = [
+            {
+                id: "primary",
+                title: "Primary Display (" + primMon + ")",
+                desc: "Show this bar only on your main screen"
+            },
+            {
+                id: "secondary",
+                title: "Secondary Display (" + secMon + ")",
+                desc: "Show this bar only on your secondary screen"
+            },
+            {
+                id: "all",
+                title: "All Displays",
+                desc: "Show synchronized bar across all screens (" + root.activeMonitorsSummary + ")"
+            }
+        ];
+
+        if (screens.length > 2) {
+            for (let i = 2; i < screens.length; i++) {
+                const sName = screens[i] ? screens[i].name : ("Display " + (i + 1));
+                opts.push({
+                    id: sName,
+                    title: "Display " + (i + 1) + " (" + sName + ")",
+                    desc: "Show this bar only on " + sName
+                });
+            }
+        }
+        return opts;
+    }
+
+    function openAddBarConfirm() {
+        if (BarConfig.bars && BarConfig.bars.length >= 4) {
+            root.showToast("Maximum of 4 bars reached", true);
+            return;
+        }
+        const usedPos = (BarConfig.bars || []).map(b => b.position);
+        const order = ["bottom", "left", "right", "top"];
+        let defaultPos = "bottom";
+        for (let i = 0; i < order.length; i++) {
+            if (usedPos.indexOf(order[i]) === -1) {
+                defaultPos = order[i];
+                break;
+            }
+        }
+        root.addBarChosenPosition = defaultPos;
+        root.addBarChosenTarget = (BarConfig.bars && BarConfig.bars.length === 1) ? "secondary" : "primary";
+        root.addBarModalVisible = true;
+    }
+
+    function confirmAddBar() {
+        if (BarConfig.bars && BarConfig.bars.length >= 4) {
+            root.showToast("Maximum of 4 bars reached", true);
+            root.addBarModalVisible = false;
+            return;
+        }
+        BarConfig.addBar(root.addBarChosenPosition, root.addBarChosenTarget);
+        root.addBarModalVisible = false;
+        const targetLabel = (root.addBarChosenTarget === "all")
+            ? "All Displays"
+            : root.getMonitorNameForTarget(root.addBarChosenTarget);
+        const posLabel = root.addBarChosenPosition.charAt(0).toUpperCase() + root.addBarChosenPosition.slice(1);
+        root.showToast("Added Bar " + BarConfig.bars.length + " on " + targetLabel + " (" + posLabel + ")", false);
+    }
+
+    readonly property var desktopBarTabs: {
+        void BarConfig.bars;
+        void BarConfig.selectedBarIndex;
+        void BarConfig.position;
+        void BarConfig.secondaryPosition;
+        void BarConfig.displayTarget;
+        void BarConfig.panelsRevision;
+        if (Quickshell.screens) void Quickshell.screens.length;
+
+        const primMon = root.getMonitorNameForTarget("primary");
+        const secMon = root.getMonitorNameForTarget("secondary");
+
+        const list = [];
+        const rawBars = BarConfig.bars || [];
+        for (let i = 0; i < rawBars.length; ++i) {
+            const bar = rawBars[i];
+            if (!bar) continue;
+            const dispTarget = bar.displayTarget || (bar.allMonitors ? "all" : "primary");
+            const primPos = bar.position || "top";
+            const secPos = (dispTarget === "all") ? (bar.secondaryPosition || bar.position || "top") : (bar.position || "bottom");
+            const baseName = root.cleanBarName(bar.name, i === 0 ? "Primary Bar" : ("Bar " + (i + 1)));
+
+            if (dispTarget === "all") {
+                list.push({
+                    barIndex: i,
+                    display: "primary",
+                    name: (rawBars.length === 1 && i === 0) ? `Primary Bar (${primMon})` : `${baseName} (${primMon})`,
+                    pos: primPos,
+                    posLabel: primPos.charAt(0).toUpperCase() + primPos.slice(1),
+                    monitor: primMon,
+                    enabled: bar.enabled !== false,
+                    isSecondary: false,
+                    rawBar: bar
+                });
+                list.push({
+                    barIndex: i,
+                    display: "secondary",
+                    name: (rawBars.length === 1 && i === 0) ? `Secondary Bar (${secMon})` : `${baseName} (${secMon})`,
+                    pos: secPos,
+                    posLabel: secPos.charAt(0).toUpperCase() + secPos.slice(1),
+                    monitor: secMon,
+                    enabled: bar.enabled !== false,
+                    isSecondary: true,
+                    rawBar: bar
+                });
+            } else if (dispTarget === "secondary") {
+                const targetMon = secMon;
+                list.push({
+                    barIndex: i,
+                    display: "secondary",
+                    name: `${baseName} (${targetMon})`,
+                    pos: secPos,
+                    posLabel: secPos.charAt(0).toUpperCase() + secPos.slice(1),
+                    monitor: targetMon,
+                    enabled: bar.enabled !== false,
+                    isSecondary: true,
+                    rawBar: bar
+                });
+            } else {
+                const targetMon = (dispTarget === "primary") ? primMon : root.getMonitorNameForTarget(dispTarget);
+                list.push({
+                    barIndex: i,
+                    display: "primary",
+                    name: `${baseName} (${targetMon})`,
+                    pos: primPos,
+                    posLabel: primPos.charAt(0).toUpperCase() + primPos.slice(1),
+                    monitor: targetMon,
+                    enabled: bar.enabled !== false,
+                    isSecondary: false,
+                    rawBar: bar
+                });
+            }
+        }
+        return list;
     }
 
     function currentBarId() {
@@ -906,8 +1088,8 @@ Item {
             }
 
             SectionCard {
-                title: "Desktop Bars (" + BarConfig.bars.length + ")"
-                subtitle: "Select a bar to customize its panels, block colors, and dock position"
+                title: "Desktop Bars (" + root.desktopBarTabs.length + ")"
+                subtitle: "Select a bar to customize its panels and dock position · Active screens: " + root.activeMonitorsSummary
                 contentMargins: 10
 
                 RowLayout {
@@ -919,15 +1101,15 @@ Item {
                         spacing: 12
 
                         Repeater {
-                            model: BarConfig.bars
+                            model: root.desktopBarTabs
                             delegate: Rectangle {
                                 id: barTabBtn
                                 required property var modelData
                                 required property int index
-                                readonly property bool isCurrent: BarConfig.selectedBarIndex === index
-                                readonly property string barPos: modelData.position || "top"
-                                readonly property string posLabel: barPos.charAt(0).toUpperCase() + barPos.slice(1)
-                                readonly property string cleanName: root.cleanBarName(modelData.name, index === 0 ? "Primary Bar" : ("Bar " + (index + 1)))
+                                readonly property bool isCurrent: BarConfig.selectedBarIndex === modelData.barIndex && BarConfig.activeEditingDisplay === modelData.display
+                                readonly property string barPos: modelData.pos || "top"
+                                readonly property string posLabel: modelData.posLabel
+                                readonly property string tabName: modelData.name
 
                                 implicitWidth: barTabContent.implicitWidth + 16
                                 implicitHeight: 34
@@ -980,7 +1162,7 @@ Item {
 
                                     Text {
                                         anchors.verticalCenter: parent.verticalCenter
-                                        text: barTabBtn.cleanName
+                                        text: barTabBtn.tabName
                                         font.family: root.font
                                         font.pixelSize: 12
                                         font.bold: barTabBtn.isCurrent
@@ -1013,9 +1195,8 @@ Item {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        if (BarConfig.selectedBarIndex !== barTabBtn.index) {
-                                            BarConfig.selectedBarIndex = barTabBtn.index;
-                                        }
+                                        BarConfig.selectedBarIndex = barTabBtn.modelData.barIndex;
+                                        BarConfig.activeEditingDisplay = barTabBtn.modelData.display;
                                     }
                                 }
                             }
@@ -1036,7 +1217,13 @@ Item {
                         label: "Add Bar"
                         btnEnabled: BarConfig.bars.length < 4
                         btnHeight: 32
-                        onClicked: BarConfig.addBar()
+                        onClicked: {
+                            if (root.hasMultipleMonitors) {
+                                root.openAddBarConfirm();
+                            } else {
+                                BarConfig.addBar();
+                            }
+                        }
                     }
                 }
             }
@@ -1142,10 +1329,21 @@ Item {
 
                 SectionCard {
                     visible: root.currentSubTab === 0
-                    title: "Bar Layout & Building Blocks: " + root.cleanBarName(BarConfig.currentBar ? BarConfig.currentBar.name : "")
+                    title: {
+                        const cur = BarConfig.currentBar;
+                        const tgt = cur ? (cur.displayTarget || (cur.allMonitors ? "all" : "primary")) : "primary";
+                        if (tgt === "all") {
+                            const isSec = BarConfig.activeEditingDisplay === "secondary";
+                            const mName = root.getMonitorNameForTarget(isSec ? "secondary" : "primary");
+                            return "Bar Layout & Building Blocks: " + (isSec ? "Secondary Bar" : "Primary Bar") + " (" + mName + ")";
+                        }
+                        const mName = root.getMonitorNameForTarget(tgt);
+                        return "Bar Layout & Building Blocks: " + root.cleanBarName(cur ? cur.name : "") + " (" + mName + ")";
+                    }
                     subtitle: "Drag blocks to reorder or move between panels · Click block to color · ✕ to remove"
 
                     Rectangle {
+                        visible: BarConfig.activeEditingDisplay !== "secondary" || (BarConfig.currentBar ? (BarConfig.currentBar.secondaryMode || "custom") : BarConfig.secondaryMode) === "custom"
                         Layout.fillWidth: true
                         height: 44
                         radius: 9
@@ -1234,6 +1432,7 @@ Item {
 
                     GridLayout {
                         id: blockBuilderLayout
+                        visible: BarConfig.activeEditingDisplay !== "secondary" || (BarConfig.currentBar ? (BarConfig.currentBar.secondaryMode || "custom") : BarConfig.secondaryMode) === "custom"
                         columns: BarConfig.panels.length > 3 ? 2 : Math.max(1, BarConfig.panels.length)
                         columnSpacing: 12
                         rowSpacing: 12
@@ -1464,8 +1663,109 @@ Item {
                         }
                     }
 
+                    // Blank Bar Mode Graphic Preview Card
+                    Rectangle {
+                        visible: BarConfig.activeEditingDisplay === "secondary" && (BarConfig.currentBar ? (BarConfig.currentBar.secondaryMode || "custom") : BarConfig.secondaryMode) === "blank"
+                        Layout.fillWidth: true
+                        implicitHeight: 200
+                        radius: 10
+                        color: root.theme.bgBase
+                        border.color: root.theme.bgBorder
+                        border.width: 1
+
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 10
+
+                            Text {
+                                text: "󰌨"
+                                font.family: root.font
+                                font.pixelSize: 36
+                                color: root.theme.accentPrimary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Clean Blank Bar Active on Secondary Display"
+                                font.family: root.font
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: root.theme.textPrimary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+
+                            Text {
+                                text: "An empty status bar frame matching your bar's height, opacity, and corners is displayed on your secondary monitor.\nThis maintains window docking margins and desktop balance with zero widget overhead."
+                                font.family: root.font
+                                font.pixelSize: 11
+                                horizontalAlignment: Text.AlignHCenter
+                                color: root.theme.textSecondary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+
+                            ActionButton {
+                                Layout.alignment: Qt.AlignHCenter
+                                iconText: "󰒓"
+                                label: "Switch to Custom Layout"
+                                btnHeight: 30
+                                onClicked: BarConfig.updateBarProp("secondaryMode", "custom")
+                            }
+                        }
+                    }
+
+                    // Mirror Primary Graphic Preview Card
+                    Rectangle {
+                        visible: BarConfig.activeEditingDisplay === "secondary" && (BarConfig.currentBar ? (BarConfig.currentBar.secondaryMode || "custom") : BarConfig.secondaryMode) === "mirror"
+                        Layout.fillWidth: true
+                        implicitHeight: 200
+                        radius: 10
+                        color: root.theme.bgBase
+                        border.color: root.theme.bgBorder
+                        border.width: 1
+
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 10
+
+                            Text {
+                                text: "󰍹"
+                                font.family: root.font
+                                font.pixelSize: 36
+                                color: root.theme.accentPrimary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Mirroring Primary Display Layout"
+                                font.family: root.font
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: root.theme.textPrimary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+
+                            Text {
+                                text: "Your secondary monitor duplicates the exact panel layout and widgets configured on the Primary Display bar in real time."
+                                font.family: root.font
+                                font.pixelSize: 11
+                                horizontalAlignment: Text.AlignHCenter
+                                color: root.theme.textSecondary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+
+                            ActionButton {
+                                Layout.alignment: Qt.AlignHCenter
+                                iconText: "󰒓"
+                                label: "Customize Secondary Layout Independently"
+                                btnHeight: 30
+                                onClicked: BarConfig.updateBarProp("secondaryMode", "custom")
+                            }
+                        }
+                    }
+
                     Rectangle {
                         id: availPoolCard
+                        visible: BarConfig.activeEditingDisplay !== "secondary" || (BarConfig.currentBar ? (BarConfig.currentBar.secondaryMode || "custom") : BarConfig.secondaryMode) === "custom"
                         readonly property bool isPoolDropTarget: root.isDraggingBlock && root.dragHoverPanelIndex === -2 && root.dragSourcePanelIndex >= 0
                         Layout.fillWidth: true
                         implicitHeight: availPoolCol.implicitHeight + 20
@@ -2115,11 +2415,24 @@ Item {
                     readonly property string curActiveStyle: BarConfig.currentBar ? (BarConfig.currentBar.activeStyle || BarConfig.activeStyle || "pill") : (BarConfig.activeStyle || "pill")
                     readonly property string curBarColor: BarConfig.currentBar ? (BarConfig.currentBar.barColor || "") : (BarConfig.barColor || "")
                     readonly property bool curAllMonitors: BarConfig.currentBar ? Boolean(BarConfig.currentBar.allMonitors) : BarConfig.allMonitors
+                    readonly property string curDisplayTarget: BarConfig.currentBar ? (BarConfig.currentBar.displayTarget || (BarConfig.currentBar.allMonitors ? "all" : "primary")) : BarConfig.displayTarget
+                    readonly property string curSecondaryMode: BarConfig.currentBar ? (BarConfig.currentBar.secondaryMode || "custom") : BarConfig.secondaryMode
+                    readonly property bool curBlankOnSecondary: BarConfig.currentBar ? (BarConfig.currentBar.blankOnSecondary !== undefined ? Boolean(BarConfig.currentBar.blankOnSecondary) : false) : BarConfig.blankOnSecondary
                     readonly property bool curEnabled: BarConfig.currentBar ? (BarConfig.currentBar.enabled !== false) : BarConfig.barVisible
 
                     SectionCard {
                         id: generalSection
-                        title: "General Appearance: " + root.cleanBarName(BarConfig.currentBar ? BarConfig.currentBar.name : "")
+                        title: {
+                            const cur = BarConfig.currentBar;
+                            const tgt = cur ? (cur.displayTarget || (cur.allMonitors ? "all" : "primary")) : "primary";
+                            if (tgt === "all") {
+                                const isSec = BarConfig.activeEditingDisplay === "secondary";
+                                const mName = root.getMonitorNameForTarget(isSec ? "secondary" : "primary");
+                                return "General Appearance: " + (isSec ? "Secondary Bar" : "Primary Bar") + " (" + mName + ")";
+                            }
+                            const mName = root.getMonitorNameForTarget(tgt);
+                            return "General Appearance: " + root.cleanBarName(cur ? cur.name : "") + " (" + mName + ")";
+                        }
                         contentMargins: 8
                         contentSpacing: 0
 
@@ -2147,7 +2460,7 @@ Item {
                                     Layout.alignment: Qt.AlignVCenter
 
                                     Text {
-                                        text: "Bar Position"
+                                        text: generalTabCol.curDisplayTarget === "all" ? "Primary Bar Position" : "Bar Position"
                                         font.family: root.font
                                         font.pixelSize: 13
                                         font.bold: true
@@ -2155,7 +2468,9 @@ Item {
                                     }
 
                                     Text {
-                                        text: "Dock to Top, Bottom, Left, or Right edge of the display"
+                                        text: generalTabCol.curDisplayTarget === "all"
+                                            ? "Dock to Top, Bottom, Left, or Right edge on your primary display"
+                                            : "Dock to Top, Bottom, Left, or Right edge of the display"
                                         font.family: root.font
                                         font.pixelSize: 11
                                         color: root.theme.textSecondary
@@ -2224,7 +2539,7 @@ Item {
                                                     font.family: root.font
                                                     font.pixelSize: 11
                                                     font.bold: posSegBtn.isSel
-                                                    color: posSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
+                                                    color: posSegBtn.isSel ? root.theme.accentPrimary : root.theme.textSecondary
                                                     opacity: posSegBtn.isSel || posSegHover.hovered ? 1.0 : 0.75
                                                     Behavior on color { ColorAnimation { duration: 140 } }
                                                     Behavior on opacity { NumberAnimation { duration: 140 } }
@@ -2236,6 +2551,315 @@ Item {
                                                     onClicked: BarConfig.updateBarProp("position", posSegBtn.modelData.value)
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        RowDivider {
+                            visible: generalTabCol.curDisplayTarget === "all"
+                        }
+
+                        Item {
+                            visible: generalTabCol.curDisplayTarget === "all"
+                            Layout.fillWidth: true
+                            height: 52
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 12
+
+                                ColumnLayout {
+                                    spacing: 2
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    Text {
+                                        text: "Secondary Bar Position"
+                                        font.family: root.font
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        color: root.theme.textPrimary
+                                    }
+
+                                    Text {
+                                        text: "Dock to Top, Bottom, Left, or Right edge on your secondary display"
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        color: root.theme.textSecondary
+                                    }
+                                }
+
+                                Item { Layout.fillWidth: true }
+
+                                Rectangle {
+                                    id: secGenPosSegmentTrack
+                                    implicitWidth: 280
+                                    implicitHeight: 32
+                                    width: 280
+                                    height: 32
+                                    radius: 7
+                                    color: root.theme.bgBase
+                                    border.color: root.theme.bgBorder
+                                    border.width: 1
+
+                                    readonly property string activePos: BarConfig.currentBar ? (BarConfig.currentBar.secondaryPosition || BarConfig.currentBar.position || "top") : (BarConfig.secondaryPosition || BarConfig.position || "top")
+                                    readonly property int activePosIndex: activePos === "bottom" ? 1 : (activePos === "left" ? 2 : (activePos === "right" ? 3 : 0))
+                                    readonly property real cellWidth: (width - 6 - 12) / 4
+
+                                    Rectangle {
+                                        y: 3
+                                        height: parent.height - 6
+                                        width: secGenPosSegmentTrack.cellWidth
+                                        x: 3 + secGenPosSegmentTrack.activePosIndex * (secGenPosSegmentTrack.cellWidth + 4)
+                                        radius: 5
+                                        color: root.theme.bgSelected
+                                        border.color: root.theme.accentPrimary
+                                        border.width: 1
+
+                                        Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                                    }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        spacing: 4
+
+                                        Repeater {
+                                            model: [
+                                                { label: "Top", value: "top" },
+                                                { label: "Bottom", value: "bottom" },
+                                                { label: "Left", value: "left" },
+                                                { label: "Right", value: "right" }
+                                            ]
+
+                                            delegate: Rectangle {
+                                                id: secGenPosSegBtn
+                                                required property var modelData
+                                                readonly property bool isSel: secGenPosSegmentTrack.activePos === modelData.value
+
+                                                Layout.fillWidth: true
+                                                Layout.fillHeight: true
+                                                radius: 5
+                                                color: !isSel && secGenPosHover.hovered ? root.theme.bgHover : "transparent"
+                                                Behavior on color { ColorAnimation { duration: 140 } }
+
+                                                HoverHandler { id: secGenPosHover }
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: secGenPosSegBtn.modelData.label
+                                                    font.family: root.font
+                                                    font.pixelSize: 11
+                                                    font.bold: secGenPosSegBtn.isSel
+                                                    color: secGenPosSegBtn.isSel ? root.theme.accentPrimary : root.theme.textSecondary
+                                                    opacity: secGenPosSegBtn.isSel || secGenPosHover.hovered ? 1.0 : 0.75
+                                                    Behavior on color { ColorAnimation { duration: 140 } }
+                                                    Behavior on opacity { NumberAnimation { duration: 140 } }
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: BarConfig.updateBarProp("secondaryPosition", secGenPosSegBtn.modelData.value)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        RowDivider {}
+
+                        Item {
+                            Layout.fillWidth: true
+                            height: 52
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 12
+
+                                ColumnLayout {
+                                    spacing: 2
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    Text {
+                                        text: "Display Assignment"
+                                        font.family: root.font
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        color: root.theme.textPrimary
+                                    }
+
+                                    Text {
+                                        text: "Show on all connected monitors, or only primary / secondary display"
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        color: root.theme.textSecondary
+                                    }
+                                }
+
+                                Item { Layout.fillWidth: true }
+
+                                Rectangle {
+                                    id: dispSegmentTrack
+                                    Layout.preferredWidth: 380
+                                    Layout.preferredHeight: 32
+                                    radius: 7
+                                    color: root.theme.bgBase
+                                    border.color: root.theme.bgBorder
+                                    border.width: 1
+                                    clip: true
+
+                                    readonly property string activeTarget: generalTabCol.curDisplayTarget
+                                    readonly property real cellWidth: (width - 6 - 8) / 3
+
+                                    Rectangle {
+                                        id: dispSegmentThumb
+                                        readonly property var targetIdxMap: ({ "all": 0, "primary": 1, "secondary": 2 })
+                                        readonly property int activeIdx: targetIdxMap[dispSegmentTrack.activeTarget] !== undefined ? targetIdxMap[dispSegmentTrack.activeTarget] : 0
+
+                                        x: 3 + activeIdx * (dispSegmentTrack.cellWidth + 4)
+                                        y: 3
+                                        width: dispSegmentTrack.cellWidth
+                                        height: dispSegmentTrack.height - 6
+                                        radius: 5
+                                        color: root.theme.bgSelected
+                                        border.color: root.theme.accentPrimary
+                                        border.width: 1
+
+                                        Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                                    }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        spacing: 4
+
+                                        Repeater {
+                                            model: [
+                                                { label: "All Displays", value: "all" },
+                                                { label: "Primary (" + root.getMonitorNameForTarget("primary") + ")", value: "primary" },
+                                                { label: "Secondary (" + root.getMonitorNameForTarget("secondary") + ")", value: "secondary" }
+                                            ]
+
+                                            delegate: Rectangle {
+                                                id: dispSegBtn
+                                                required property var modelData
+                                                readonly property bool isSel: dispSegmentTrack.activeTarget === modelData.value
+
+                                                Layout.fillWidth: true
+                                                Layout.fillHeight: true
+                                                radius: 5
+                                                color: !isSel && dispSegHover.hovered ? root.theme.bgHover : "transparent"
+                                                Behavior on color { ColorAnimation { duration: 140 } }
+
+                                                HoverHandler { id: dispSegHover }
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: dispSegBtn.modelData.label
+                                                    font.family: root.font
+                                                    font.pixelSize: 11
+                                                    font.bold: dispSegBtn.isSel
+                                                    color: dispSegBtn.isSel ? root.theme.accentPrimary : root.theme.textSecondary
+                                                    opacity: dispSegBtn.isSel || dispSegHover.hovered ? 1.0 : 0.75
+                                                    Behavior on color { ColorAnimation { duration: 140 } }
+                                                    Behavior on opacity { NumberAnimation { duration: 140 } }
+                                                }
+
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: BarConfig.updateBarProp("displayTarget", dispSegBtn.modelData.value)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        RowDivider {
+                            visible: generalTabCol.curDisplayTarget === "all"
+                        }
+
+                        Rectangle {
+                            visible: generalTabCol.curDisplayTarget === "all"
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 12
+                            Layout.rightMargin: 12
+                            height: 42
+                            radius: 7
+                            color: root.theme.bgBase
+                            border.color: root.theme.bgBorder
+                            border.width: 1
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 12
+                                anchors.rightMargin: 12
+                                spacing: 10
+
+                                Text {
+                                    text: "󰍺"
+                                    font.family: root.font
+                                    font.pixelSize: 14
+                                    color: root.theme.accentPrimary
+                                }
+
+                                Text {
+                                    text: "Secondary display layout (Custom Layout, Blank Bar, or Mirror) is configured in the Layout & Panels tab."
+                                    font.family: root.font
+                                    font.pixelSize: 11
+                                    color: root.theme.textSecondary
+                                    Layout.fillWidth: true
+                                }
+
+                                Rectangle {
+                                    height: 26
+                                    implicitWidth: jumpPanelsTxt.implicitWidth + 24
+                                    radius: 5
+                                    color: jumpPanelsHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+                                    border.color: jumpPanelsHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
+                                    border.width: 1
+
+                                    HoverHandler { id: jumpPanelsHover }
+
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: 4
+
+                                        Text {
+                                            text: "󰕮"
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            color: jumpPanelsHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+
+                                        Text {
+                                            id: jumpPanelsTxt
+                                            text: "Layout & Panels"
+                                            font.family: root.font
+                                            font.pixelSize: 10
+                                            font.bold: true
+                                            color: jumpPanelsHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            BarConfig.activeEditingDisplay = "secondary";
+                                            root.currentSubTab = 0;
                                         }
                                     }
                                 }
@@ -3187,15 +3811,6 @@ Item {
                                     Layout.alignment: Qt.AlignVCenter
                                 }
                             }
-                        }
-
-                        RowDivider {}
-
-                        SettingToggleRow {
-                            title: "Show on All Displays"
-                            desc: "Display status bar across all connected monitors"
-                            checked: BarConfig.currentBar ? Boolean(BarConfig.currentBar.allMonitors) : BarConfig.allMonitors
-                            onToggled: (val) => BarConfig.updateBarProp("allMonitors", val)
                         }
                     }
 
@@ -4468,6 +5083,319 @@ Item {
                 font.pixelSize: 11
                 font.bold: true
                 color: (dragGhostCard.isRemoving || dragGhostCard.isTargetMaxed) ? root.theme.accentRed : root.theme.textPrimary
+            }
+        }
+    }
+
+    // Add Bar Confirmation Modal Overlay (for 2 or more monitors)
+    Rectangle {
+        id: addBarConfirmModal
+        anchors.fill: parent
+        z: 9000
+        visible: opacity > 0
+        opacity: root.addBarModalVisible ? 1.0 : 0.0
+        color: Qt.rgba(0, 0, 0, 0.72)
+
+        Behavior on opacity {
+            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+        }
+
+        // Dismiss when clicking backdrop
+        MouseArea {
+            anchors.fill: parent
+            onClicked: root.addBarModalVisible = false
+        }
+
+        // Modal Dialog Box
+        Rectangle {
+            id: addBarConfirmCard
+            anchors.centerIn: parent
+            width: Math.min(parent.width - 48, 520)
+            implicitHeight: modalCol.implicitHeight + 48
+            radius: 14
+            color: root.theme.bgSurface
+            border.color: root.theme.bgBorder
+            border.width: 1
+            scale: root.addBarModalVisible ? 1.0 : 0.94
+
+            Behavior on scale {
+                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+            }
+
+            // Consume clicks inside the card
+            MouseArea {
+                anchors.fill: parent
+            }
+
+            ColumnLayout {
+                id: modalCol
+                anchors.fill: parent
+                anchors.margins: 24
+                spacing: 18
+
+                // Header
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 12
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 4
+
+                        Text {
+                            text: "Add Desktop Bar"
+                            font.family: root.font
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: root.theme.textPrimary
+                        }
+
+                        Text {
+                            text: "Choose which monitor or display target this bar should appear on:"
+                            font.family: root.font
+                            font.pixelSize: 12
+                            color: root.theme.textMuted
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    // Close Button
+                    Rectangle {
+                        width: 28
+                        height: 28
+                        radius: 14
+                        color: closeBtnHover.hovered ? root.theme.bgSelected : "transparent"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "✕"
+                            font.family: root.font
+                            font.pixelSize: 12
+                            color: closeBtnHover.hovered ? root.theme.textPrimary : root.theme.textMuted
+                        }
+
+                        HoverHandler { id: closeBtnHover }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.addBarModalVisible = false
+                        }
+                    }
+                }
+
+                // Monitor / Display Target Choices
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Repeater {
+                        model: root.addBarTargetOptions
+                        delegate: Rectangle {
+                            id: targetOptCard
+                            required property var modelData
+                            readonly property bool isSelected: root.addBarChosenTarget === modelData.id
+                            readonly property bool isHovered: optHover.hovered
+
+                            Layout.fillWidth: true
+                            implicitHeight: optRow.implicitHeight + 20
+                            radius: 10
+                            color: isSelected
+                                ? (root.theme.bgSelected || root.withAlpha(root.theme.accentPrimary, 0.15))
+                                : (isHovered ? root.withAlpha(root.theme.accentPrimary, 0.06) : root.theme.bgBase)
+                            border.color: isSelected ? root.theme.accentPrimary : (isHovered ? root.theme.textMuted : root.theme.bgBorder)
+                            border.width: isSelected ? 1.5 : 1
+
+                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                            RowLayout {
+                                id: optRow
+                                anchors.fill: parent
+                                anchors.leftMargin: 16
+                                anchors.rightMargin: 16
+                                spacing: 14
+
+                                // Selection Indicator Circle
+                                Rectangle {
+                                    width: 18
+                                    height: 18
+                                    radius: 9
+                                    color: "transparent"
+                                    border.color: isSelected ? root.theme.accentPrimary : root.theme.textMuted
+                                    border.width: isSelected ? 2 : 1
+
+                                    Rectangle {
+                                        anchors.centerIn: parent
+                                        width: 8
+                                        height: 8
+                                        radius: 4
+                                        color: root.theme.accentPrimary
+                                        visible: isSelected
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 3
+
+                                    Text {
+                                        text: targetOptCard.modelData.title
+                                        font.family: root.font
+                                        font.pixelSize: 13
+                                        font.bold: isSelected
+                                        color: isSelected ? root.theme.textPrimary : root.theme.textSecondary
+                                    }
+
+                                    Text {
+                                        text: targetOptCard.modelData.desc
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        color: root.theme.textMuted
+                                    }
+                                }
+                            }
+
+                            HoverHandler { id: optHover }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.addBarChosenTarget = targetOptCard.modelData.id
+                            }
+                        }
+                    }
+                }
+
+                // Dock Edge Position Selector
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    Text {
+                        text: "Dock Edge Position"
+                        font.family: root.font
+                        font.pixelSize: 12
+                        font.bold: true
+                        color: root.theme.textSecondary
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 8
+
+                        Repeater {
+                            model: [
+                                { id: "top", label: "Top" },
+                                { id: "bottom", label: "Bottom" },
+                                { id: "left", label: "Left" },
+                                { id: "right", label: "Right" }
+                            ]
+                            delegate: Rectangle {
+                                id: posBtn
+                                required property var modelData
+                                readonly property bool isSelected: root.addBarChosenPosition === modelData.id
+                                readonly property bool isHovered: posHover.hovered
+
+                                Layout.fillWidth: true
+                                height: 34
+                                radius: 8
+                                color: isSelected
+                                    ? (root.theme.bgSelected || root.withAlpha(root.theme.accentPrimary, 0.2))
+                                    : (isHovered ? root.withAlpha(root.theme.accentPrimary, 0.08) : root.theme.bgBase)
+                                border.color: isSelected ? root.theme.accentPrimary : root.theme.bgBorder
+                                border.width: isSelected ? 1.5 : 1
+
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: posBtn.modelData.label
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    font.bold: isSelected
+                                    color: isSelected ? root.theme.textPrimary : root.theme.textSecondary
+                                }
+
+                                HoverHandler { id: posHover }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.addBarChosenPosition = posBtn.modelData.id
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Footer Actions
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: 4
+                    spacing: 12
+
+                    Item { Layout.fillWidth: true }
+
+                    // Cancel Button
+                    Rectangle {
+                        implicitWidth: cancelText.implicitWidth + 28
+                        height: 34
+                        radius: 8
+                        color: cancelHover.hovered ? root.theme.bgSelected : root.theme.bgBase
+                        border.color: root.theme.bgBorder
+                        border.width: 1
+
+                        Text {
+                            id: cancelText
+                            anchors.centerIn: parent
+                            text: "Cancel"
+                            font.family: root.font
+                            font.pixelSize: 12
+                            color: root.theme.textSecondary
+                        }
+
+                        HoverHandler { id: cancelHover }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.addBarModalVisible = false
+                        }
+                    }
+
+                    // Confirm & Add Bar Button
+                    Rectangle {
+                        implicitWidth: addConfirmText.implicitWidth + 32
+                        height: 34
+                        radius: 8
+                        color: addConfirmHover.hovered
+                            ? (root.theme.accentPrimary || "#7aa2f7")
+                            : (root.theme.bgSelected || root.withAlpha(root.theme.accentPrimary, 0.2))
+                        border.color: root.theme.accentPrimary
+                        border.width: 1
+
+                        Text {
+                            id: addConfirmText
+                            anchors.centerIn: parent
+                            text: "Add Bar"
+                            font.family: root.font
+                            font.pixelSize: 12
+                            font.bold: true
+                            color: addConfirmHover.hovered ? root.theme.bgBase : root.theme.textPrimary
+                        }
+
+                        HoverHandler { id: addConfirmHover }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.confirmAddBar()
+                        }
+                    }
+                }
             }
         }
     }
