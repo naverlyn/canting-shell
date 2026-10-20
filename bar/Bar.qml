@@ -257,24 +257,27 @@ Scope {
           readonly property int dockedLeftW: root.getDockedBarThickness("left", barInstanceScope.currentBarId, screenIndex)
           readonly property int dockedRightW: root.getDockedBarThickness("right", barInstanceScope.currentBarId, screenIndex)
 
-          readonly property int effectiveDockedLeft: (barWindow.screen && barWindow.width > 0 && barWindow.width < barWindow.screen.width)
-            ? 0
-            : (barWindow.hasDockedLeft ? barWindow.dockedLeftW : 0)
-          readonly property int effectiveDockedRight: (barWindow.screen && barWindow.width > 0 && barWindow.width < barWindow.screen.width)
-            ? 0
-            : (barWindow.hasDockedRight ? barWindow.dockedRightW : 0)
-          readonly property int effectiveDockedTop: (barWindow.screen && barWindow.height > 0 && barWindow.height < barWindow.screen.height)
-            ? 0
-            : (barWindow.hasDockedTop ? barWindow.dockedTopH : 0)
-          readonly property int effectiveDockedBottom: (barWindow.screen && barWindow.height > 0 && barWindow.height < barWindow.screen.height)
-            ? 0
-            : (barWindow.hasDockedBottom ? barWindow.dockedBottomH : 0)
+          readonly property int effectiveDockedLeft: barWindow.hasDockedLeft
+            ? barWindow.dockedLeftW
+            : (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0)
+          readonly property int effectiveDockedRight: barWindow.hasDockedRight
+            ? barWindow.dockedRightW
+            : (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0)
+          readonly property int effectiveDockedTop: barWindow.hasDockedTop
+            ? barWindow.dockedTopH
+            : (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0)
+          readonly property int effectiveDockedBottom: barWindow.hasDockedBottom
+            ? barWindow.dockedBottomH
+            : (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0)
 
-          readonly property bool hasEffectiveInnerCorners: barInstanceScope.hasInnerCorners && (
-            barWindow.windowIsVert
-              ? (!barWindow.hasDockedTop || !barWindow.hasDockedBottom)
-              : true
-          )
+          readonly property int horizontalShrink: (barWindow.screen && barWindow.width > 0 && barWindow.width < barWindow.screen.width)
+            ? Math.max(0, barWindow.screen.width - barWindow.width)
+            : 0
+          readonly property int verticalShrink: (barWindow.screen && barWindow.height > 0 && barWindow.height < barWindow.screen.height)
+            ? Math.max(0, barWindow.screen.height - barWindow.height)
+            : 0
+
+          readonly property bool hasEffectiveInnerCorners: false
 
           readonly property string target: barInstanceScope.displayTarget
           readonly property string secMode: barInstanceScope.secondaryMode
@@ -312,8 +315,8 @@ Scope {
 
           exclusiveZone: barInstanceScope.barThickness + (barInstanceScope.isFloating ? 12 : 0)
 
-          implicitHeight: barWindow.windowIsVert ? 0 : (barInstanceScope.barThickness + (barInstanceScope.isFloating ? 12 : (barWindow.hasEffectiveInnerCorners ? barInstanceScope.innerCornerRadius : 0)))
-          implicitWidth: barWindow.windowIsVert ? (barInstanceScope.barThickness + (barInstanceScope.isFloating ? 12 : (barWindow.hasEffectiveInnerCorners ? barInstanceScope.innerCornerRadius : 0))) : 0
+          implicitHeight: barWindow.windowIsVert ? 0 : (barInstanceScope.barThickness + (barInstanceScope.isFloating ? 12 : 0))
+          implicitWidth: barWindow.windowIsVert ? (barInstanceScope.barThickness + (barInstanceScope.isFloating ? 12 : 0)) : 0
           color: "transparent"
 
           property string lastPos: barWindow.windowBarPos
@@ -393,81 +396,21 @@ Scope {
             Behavior on color { ColorAnimation { duration: 180 } }
           }
 
-          InnerCorner {
-            id: corner1
-            visible: barInstanceScope.hasInnerCorners && (
-              barWindow.windowIsVert ? !barWindow.hasDockedTop : true
-            )
-            width: barInstanceScope.hasInnerCorners ? barInstanceScope.innerCornerRadius : 0
-            height: barInstanceScope.hasInnerCorners ? barInstanceScope.innerCornerRadius : 0
-            cornerColor: barBackground.color
-            opacity: barBackground.opacity
-            transform: Translate { x: barSlideTransform.x; y: barSlideTransform.y }
-
-            anchors.left: barWindow.windowIsVert
-              ? (barWindow.windowBarPos === "left" ? barBackground.right : undefined)
-              : barBackground.left
-            anchors.leftMargin: barWindow.windowIsVert ? 0 : barWindow.effectiveDockedLeft
-            anchors.right: barWindow.windowIsVert
-              ? (barWindow.windowBarPos === "right" ? barBackground.left : undefined)
-              : undefined
-            anchors.top: barWindow.windowIsVert
-              ? barBackground.top
-              : (barWindow.windowBarPos === "top" ? barBackground.bottom : undefined)
-            anchors.bottom: barWindow.windowIsVert
-              ? undefined
-              : (barWindow.windowBarPos === "bottom" ? barBackground.top : undefined)
-
-            cornerPosition: barWindow.windowIsVert
-              ? (barWindow.windowBarPos === "left" ? "top-left" : "top-right")
-              : (barWindow.windowBarPos === "top" ? "top-left" : "bottom-left")
-          }
-
-          InnerCorner {
-            id: corner2
-            visible: barInstanceScope.hasInnerCorners && (
-              barWindow.windowIsVert ? !barWindow.hasDockedBottom : true
-            )
-            width: barInstanceScope.hasInnerCorners ? barInstanceScope.innerCornerRadius : 0
-            height: barInstanceScope.hasInnerCorners ? barInstanceScope.innerCornerRadius : 0
-            cornerColor: barBackground.color
-            opacity: barBackground.opacity
-            transform: Translate { x: barSlideTransform.x; y: barSlideTransform.y }
-
-            anchors.left: barWindow.windowIsVert
-              ? (barWindow.windowBarPos === "left" ? barBackground.right : undefined)
-              : undefined
-            anchors.right: barWindow.windowIsVert
-              ? (barWindow.windowBarPos === "right" ? barBackground.left : undefined)
-              : barBackground.right
-            anchors.rightMargin: barWindow.windowIsVert ? 0 : barWindow.effectiveDockedRight
-            anchors.top: barWindow.windowIsVert
-              ? undefined
-              : (barWindow.windowBarPos === "top" ? barBackground.bottom : undefined)
-            anchors.bottom: barWindow.windowIsVert
-              ? barBackground.bottom
-              : (barWindow.windowBarPos === "bottom" ? barBackground.top : undefined)
-
-            cornerPosition: barWindow.windowIsVert
-              ? (barWindow.windowBarPos === "left" ? "bottom-left" : "bottom-right")
-              : (barWindow.windowBarPos === "top" ? "top-right" : "bottom-right")
-          }
-
           Item {
             id: barContentContainer
             anchors.fill: barBackground
-            visible: !barWindow.isBlankBar
+            visible: !barWindow.isBlankBar && barInstanceScope.barThickness >= 18
             anchors.leftMargin: barWindow.windowIsVert
               ? 4
-              : (barWindow.effectiveDockedLeft + (barInstanceScope.hasInnerCorners ? (barInstanceScope.innerCornerRadius + 6) : 10))
+              : (Math.max(0, barWindow.effectiveDockedLeft - Math.round(barWindow.horizontalShrink / 2)) + (barInstanceScope.hasInnerCorners ? (barInstanceScope.innerCornerRadius + 6) : 10))
             anchors.rightMargin: barWindow.windowIsVert
               ? 4
-              : (barWindow.effectiveDockedRight + (barInstanceScope.hasInnerCorners ? (barInstanceScope.innerCornerRadius + 6) : 10))
+              : (Math.max(0, barWindow.effectiveDockedRight - Math.round(barWindow.horizontalShrink / 2)) + (barInstanceScope.hasInnerCorners ? (barInstanceScope.innerCornerRadius + 6) : 10))
             anchors.topMargin: barWindow.windowIsVert
-              ? (barWindow.effectiveDockedTop + (barWindow.hasDockedTop ? 6 : (barInstanceScope.hasInnerCorners ? (barInstanceScope.innerCornerRadius + 6) : 10)))
+              ? (Math.max(0, barWindow.effectiveDockedTop - Math.round(barWindow.verticalShrink / 2)) + (barWindow.hasDockedTop ? 6 : (barInstanceScope.hasInnerCorners ? (barInstanceScope.innerCornerRadius + 6) : 10)))
               : 0
             anchors.bottomMargin: barWindow.windowIsVert
-              ? (barWindow.effectiveDockedBottom + (barWindow.hasDockedBottom ? 6 : (barInstanceScope.hasInnerCorners ? (barInstanceScope.innerCornerRadius + 6) : 10)))
+              ? (Math.max(0, barWindow.effectiveDockedBottom - Math.round(barWindow.verticalShrink / 2)) + (barWindow.hasDockedBottom ? 6 : (barInstanceScope.hasInnerCorners ? (barInstanceScope.innerCornerRadius + 6) : 10)))
               : 0
             transform: Translate { x: barSlideTransform.x; y: barSlideTransform.y }
 
@@ -480,6 +423,11 @@ Scope {
             readonly property bool hidePill: barInstanceScope.hidePill
             readonly property string activeStyle: barInstanceScope.activeStyle
             readonly property string barColorSpec: barInstanceScope.barColorSpec
+            readonly property int barThickness: barInstanceScope.barThickness
+            readonly property bool isFloating: barInstanceScope.isFloating
+            readonly property bool hasInnerCorners: barInstanceScope.hasInnerCorners
+            readonly property int innerCornerRadius: barInstanceScope.innerCornerRadius
+            readonly property color barColor: barBackground.color
             readonly property int vHitPadding: Math.max(0, Math.floor((barContentContainer.height - 24) / 2))
             readonly property int hHitPadding: barWindow.windowIsVert ? Math.max(0, Math.floor((barContentContainer.width - vertPillWidth) / 2)) : 4
 
@@ -891,6 +839,24 @@ Scope {
 
         }
       }
+    }
+  }
+
+  Variants {
+    model: Quickshell.screens
+
+    ScreenBorder {
+      required property var modelData
+      screen: modelData
+      screenIndex: {
+        const screens = Quickshell.screens || [];
+        if (!modelData) return 0;
+        for (let i = 0; i < screens.length; i++) {
+          if (screens[i] === modelData) return i;
+        }
+        return 0;
+      }
+      barRoot: root
     }
   }
 }

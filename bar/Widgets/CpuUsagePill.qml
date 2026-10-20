@@ -57,7 +57,7 @@ Rectangle {
   InfoPopup {
     target: cpuPill
     barItem: hostContainer
-    hovered: cpuHover.hovered
+    hovered: cpuHover.hovered || cpuMouse.containsMouse
     pinned: cpuPill.isPinned
     theme: hostRoot.theme
     font: hostRoot.font

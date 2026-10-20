@@ -1,21 +1,20 @@
 {
   "width": 320,
-  "panelLayout": "vertical",
+  "panelLayout": "horizontal",
   "panelCount": 3,
   "panel1": [
+    "audio",
     "connectivity",
     "quickSettings",
     "systemInfo",
     "quickSettings2"
   ],
   "panel2": [
-    "brightness",
     "media",
-    "audio"
+    "weather"
   ],
   "panel3": [
     "cava",
-    "weather",
     "quickApps"
   ],
   "groupTilesEnabled": true,
@@ -29,7 +28,7 @@
     "gamemode",
     "clipboard"
   ],
-  "quickAppsMaxCount": 5,
+  "quickAppsMaxCount": 8,
   "quickApps": [
     {
       "id": "terminal",
@@ -56,23 +55,25 @@
       "cmd": "codium || code || zeditor || kate || nvim"
     },
     {
+      "id": "vesktop",
+      "desktopId": "vesktop",
+      "label": "Vesktop",
+      "icon": "vesktop",
+      "cmd": ""
+    },
+    {
+      "id": "virt-manager",
+      "desktopId": "virt-manager",
+      "label": "Virtual Machine Manager",
+      "icon": "virt-manager",
+      "cmd": ""
+    },
+    {
       "id": "steam",
       "desktopId": "steam",
       "label": "Steam",
       "icon": "steam",
       "cmd": ""
-    },
-    {
-      "id": "music",
-      "label": "Music",
-      "icon": "󰝚",
-      "cmd": "spotify || Amberol || rhythmbox || Elisa"
-    },
-    {
-      "id": "monitor",
-      "label": "Monitor",
-      "icon": "󰍛",
-      "cmd": "missioncenter || gnome-system-monitor || kitty -e btop || alacritty -e btop"
     },
     {
       "id": "settings",
@@ -86,7 +87,7 @@
     "header": true,
     "viewSwitcher": true
   },
-  "mediaAutoHide": false,
+  "mediaAutoHide": true,
   "mediaShowCava": false,
   "tiles": [
     {

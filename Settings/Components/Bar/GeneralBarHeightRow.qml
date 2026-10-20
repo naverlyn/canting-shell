@@ -69,7 +69,7 @@ Item {
 
                 readonly property int activeIdx: {
                     if (barHeightItem.customActive) return 5;
-                    const presets = [28, 32, 36, 40, 46];
+                    const presets = [4, 8, 28, 32, 40];
                     const idx = presets.indexOf(barHeightItem.activeH);
                     return idx !== -1 ? idx : 5;
                 }
@@ -95,11 +95,11 @@ Item {
 
                     Repeater {
                         model: [
+                            { label: "4px", value: 4 },
+                            { label: "8px", value: 8 },
                             { label: "28px", value: 28 },
                             { label: "32px", value: 32 },
-                            { label: "36px", value: 36 },
                             { label: "40px", value: 40 },
-                            { label: "46px", value: 46 },
                             { label: "Custom", value: "custom" }
                         ]
 
@@ -182,7 +182,7 @@ Item {
                 color: root.theme.bgSelected
                 Layout.alignment: Qt.AlignVCenter
 
-                readonly property real minH: 20.0
+                readonly property real minH: 2.0
                 readonly property real maxH: 100.0
                 readonly property real frac: Math.max(0.0, Math.min(1.0, (barHeightItem.activeH - minH) / (maxH - minH)))
                 readonly property bool isDragging: heightMouse.pressed

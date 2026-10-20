@@ -105,9 +105,52 @@ Rectangle {
   PopupWindow {
     id: calendarPopup
     readonly property bool isCalActive: timeHover.hovered || timeMouse.containsMouse || timeWidget.calPinned
-    visible: isCalActive || calBox.opacity > 0
-    implicitWidth: 292
-    implicitHeight: 312
+
+    // Fluid card blending properties
+    readonly property bool isFloatingBar: hostContainer && hostContainer.isFloating !== undefined
+      ? hostContainer.isFloating
+      : Boolean(BarConfig.floating)
+    readonly property bool fluidEnabled: Boolean(BarConfig.fluidCards) && !isFloatingBar
+    readonly property int cornerRad: hostContainer && hostContainer.innerCornerRadius !== undefined
+      ? hostContainer.innerCornerRadius
+      : 16
+    readonly property color barColor: hostContainer && hostContainer.barColor !== undefined
+      ? hostContainer.barColor
+      : (hostRoot.theme
+        ? Qt.rgba(hostRoot.theme.bgBase.r, hostRoot.theme.bgBase.g, hostRoot.theme.bgBase.b, (BarConfig.barOpacity !== undefined ? BarConfig.barOpacity : 0.85))
+        : "#1a1b26")
+    readonly property color cardBorderColor: fluidEnabled
+      ? Qt.rgba(hostRoot.theme.textPrimary.r, hostRoot.theme.textPrimary.g, hostRoot.theme.textPrimary.b, 0.15)
+      : hostRoot.theme.bgBase
+    readonly property real cardBorderWidth: fluidEnabled ? 1 : 2
+
+    property bool instantClose: false
+
+    function dismissImmediate() {
+      instantClose = true;
+      cardContainer.opacity = 0.0;
+    }
+
+    onIsCalActiveChanged: {
+      if (isCalActive) {
+        instantClose = false;
+        BarConfig.notifyPopupActive(calendarPopup);
+      } else {
+        BarConfig.notifyPopupInactive(calendarPopup);
+      }
+    }
+
+    visible: (isCalActive && !instantClose) || cardContainer.opacity > 0.001
+    implicitWidth: {
+      if (!fluidEnabled) return 292;
+      if (hostContainer.barPos === "left" || hostContainer.barPos === "right") return 280;
+      return 280 + (2 * cornerRad);
+    }
+    implicitHeight: {
+      if (!fluidEnabled) return 312;
+      if (hostContainer.barPos === "top" || hostContainer.barPos === "bottom") return 300;
+      return 300 + (2 * cornerRad);
+    }
     color: "transparent"
 
     anchor.window: timeWidget.QsWindow.window
@@ -133,43 +176,69 @@ Rectangle {
       const bRect = win.contentItem.mapFromItem(
         hostContainer, 0, 0, hostContainer.width, hostContainer.height
       );
+      const scr = win.screen;
       if (hostContainer.barPos === "top" || hostContainer.barPos === "bottom") {
-        calendarPopup.anchor.rect = Qt.rect(widgetRect.x, bRect.y, widgetRect.width, bRect.height);
+        const widgetCenter = widgetRect.x + (widgetRect.width / 2);
+        const popupW = calendarPopup.implicitWidth;
+        const desiredX = Math.round(widgetCenter - (popupW / 2));
+        const scrW = scr ? scr.width : 1920;
+        const pad = 8;
+        const clampedX = Math.max(pad, Math.min(Math.max(pad, scrW - popupW - pad), desiredX));
+        calendarPopup.anchor.rect = Qt.rect(clampedX, bRect.y, popupW, bRect.height);
       } else {
-        calendarPopup.anchor.rect = Qt.rect(bRect.x, widgetRect.y, bRect.width, widgetRect.height);
+        const widgetCenter = widgetRect.y + (widgetRect.height / 2);
+        const popupH = calendarPopup.implicitHeight;
+        const desiredY = Math.round(widgetCenter - (popupH / 2));
+        const scrH = scr ? scr.height : 1080;
+        const pad = 8;
+        const clampedY = Math.max(pad, Math.min(Math.max(pad, scrH - popupH - pad), desiredY));
+        calendarPopup.anchor.rect = Qt.rect(bRect.x, clampedY, bRect.width, popupH);
       }
     }
 
-    Rectangle {
-      id: calBox
-      opacity: calendarPopup.isCalActive ? 1 : 0
-      x: hostContainer.barPos === "left"
-        ? (calendarPopup.isCalActive ? 6 : 0)
-        : (hostContainer.barPos === "right" ? (calendarPopup.isCalActive ? 6 : 12) : 6)
-      y: hostContainer.barPos === "top"
-        ? (calendarPopup.isCalActive ? 6 : 0)
-        : (hostContainer.barPos === "bottom" ? (calendarPopup.isCalActive ? 6 : 12) : 6)
-      transformOrigin: {
-        if (hostContainer.barPos === "bottom") return Item.Bottom;
-        if (hostContainer.barPos === "left") return Item.Left;
-        if (hostContainer.barPos === "right") return Item.Right;
-        return Item.Top;
+    Item {
+      id: cardContainer
+      opacity: (calendarPopup.isCalActive && !calendarPopup.instantClose) ? 1.0 : 0.0
+
+      Behavior on opacity {
+        NumberAnimation {
+          duration: calendarPopup.instantClose ? 0 : ((calendarPopup.isCalActive && BarConfig.isHoveringBarPills) ? 0 : 150)
+          easing.type: Easing.OutCubic
+        }
       }
-      scale: calendarPopup.isCalActive ? 1 : 0.96
-      Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-      Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-      Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-      Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-      width: 280
-      height: 300
-      color: hostRoot.theme.bgSurface
-      radius: 12
-      border.color: hostRoot.theme.bgBase
-      border.width: 2
+
+      x: calendarPopup.fluidEnabled ? 0 : 6
+      y: calendarPopup.fluidEnabled ? 0 : (
+        hostContainer.barPos === "top"
+          ? (calendarPopup.isCalActive ? 6 : 0)
+          : (hostContainer.barPos === "bottom" ? (calendarPopup.isCalActive ? 6 : 12) : 6)
+      )
+      width: calendarPopup.fluidEnabled ? calendarPopup.implicitWidth : 280
+      height: calendarPopup.fluidEnabled ? calendarPopup.implicitHeight : 300
+
+      Behavior on y {
+        NumberAnimation {
+          duration: (calendarPopup.instantClose || BarConfig.isHoveringBarPills) ? 0 : 160
+          easing.type: Easing.OutCubic
+        }
+      }
+
+      FluidCardBackground {
+        anchors.fill: parent
+        fluidEnabled: calendarPopup.fluidEnabled
+        barPosition: hostContainer.barPos
+        cornerRadius: calendarPopup.cornerRad
+        cardColor: calendarPopup.fluidEnabled ? calendarPopup.barColor : hostRoot.theme.bgSurface
+        borderColor: calendarPopup.cardBorderColor
+        borderWidth: calendarPopup.cardBorderWidth
+      }
 
       ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 16
+        anchors.leftMargin: calendarPopup.fluidEnabled && (hostContainer.barPos === "top" || hostContainer.barPos === "bottom") ? (calendarPopup.cornerRad + 16) : 16
+        anchors.rightMargin: calendarPopup.fluidEnabled && (hostContainer.barPos === "top" || hostContainer.barPos === "bottom") ? (calendarPopup.cornerRad + 16) : 16
+        anchors.topMargin: calendarPopup.fluidEnabled && (hostContainer.barPos === "left" || hostContainer.barPos === "right") ? (calendarPopup.cornerRad + 16) : 16
+        anchors.bottomMargin: calendarPopup.fluidEnabled && (hostContainer.barPos === "left" || hostContainer.barPos === "right") ? (calendarPopup.cornerRad + 16) : 16
         spacing: 12
 
         Text {

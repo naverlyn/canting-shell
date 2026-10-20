@@ -1,6 +1,6 @@
 {
   "barVisible": true,
-  "position": "top",
+  "position": "left",
   "barHeight": 32,
   "floating": false,
   "barOpacity": 0.85,
@@ -26,12 +26,22 @@
     ]
   ],
   "innerCorners": true,
+  "fluidCards": true,
+  "barBorder": true,
+  "barBorderWidth": 1,
+  "barBorderColor": "",
+  "screenBorder": true,
+  "screenBorderThickness": 8,
+  "screenBorderColor": "",
+  "screenBorderCorners": true,
+  "screenBorderShadow": true,
+  "screenBorderShadowSize": 12,
   "bars": [
     {
       "id": "bar_1",
       "name": "Primary Bar",
       "enabled": true,
-      "position": "top",
+      "position": "left",
       "barHeight": 32,
       "floating": false,
       "barOpacity": 0.85,
@@ -57,6 +67,10 @@
         ]
       ],
       "innerCorners": true,
+      "fluidCards": true,
+      "barBorder": true,
+      "barBorderWidth": 1,
+      "barBorderColor": "",
       "panels": [
         [
           "appGrid",
@@ -78,128 +92,6 @@
           "controlCenter",
           "clock"
         ]
-      ]
-    },
-    {
-      "id": "bar_1792427054128",
-      "name": "Bar 2",
-      "enabled": true,
-      "position": "bottom",
-      "barHeight": 32,
-      "floating": false,
-      "barOpacity": 0.85,
-      "pillRadius": 10,
-      "pillOpacity": 1,
-      "hidePill": true,
-      "activeStyle": "underline",
-      "allMonitors": false,
-      "displayTarget": "primary",
-      "secondaryPosition": "bottom",
-      "secondaryMode": "custom",
-      "blankOnSecondary": false,
-      "secondaryPanels": [
-        [
-          "workspaces"
-        ],
-        [
-          "windowTitle"
-        ],
-        [
-          "weather",
-          "clock"
-        ]
-      ],
-      "innerCorners": true,
-      "panels": [
-        [
-          "workspaces"
-        ],
-        [
-          "clock"
-        ],
-        [
-          "volume",
-          "battery"
-        ]
-      ]
-    },
-    {
-      "id": "bar_1792427054520",
-      "name": "Bar 3",
-      "enabled": true,
-      "position": "left",
-      "barHeight": 32,
-      "floating": false,
-      "barOpacity": 0.85,
-      "pillRadius": 10,
-      "pillOpacity": 1,
-      "hidePill": true,
-      "activeStyle": "underline",
-      "allMonitors": false,
-      "displayTarget": "primary",
-      "secondaryPosition": "left",
-      "secondaryMode": "custom",
-      "blankOnSecondary": false,
-      "secondaryPanels": [
-        [
-          "workspaces"
-        ],
-        [
-          "windowTitle"
-        ],
-        [
-          "weather",
-          "clock"
-        ]
-      ],
-      "innerCorners": true,
-      "panels": [
-        [
-          "workspaces"
-        ],
-        [
-          "clock"
-        ],
-        [
-          "volume",
-          "battery"
-        ]
-      ]
-    },
-    {
-      "id": "bar_1792427054908",
-      "name": "Bar 4",
-      "enabled": true,
-      "position": "right",
-      "barHeight": 32,
-      "floating": false,
-      "barOpacity": 0.85,
-      "pillRadius": 10,
-      "pillOpacity": 1,
-      "hidePill": true,
-      "activeStyle": "underline",
-      "allMonitors": false,
-      "displayTarget": "primary",
-      "secondaryPosition": "right",
-      "secondaryMode": "custom",
-      "blankOnSecondary": false,
-      "secondaryPanels": [
-        [
-          "workspaces"
-        ],
-        [
-          "windowTitle"
-        ],
-        [
-          "weather",
-          "clock"
-        ]
-      ],
-      "innerCorners": true,
-      "panels": [
-        [],
-        [],
-        []
       ]
     }
   ],
@@ -250,10 +142,10 @@
     "globalMenu",
     "idleInhibitor",
     "media",
-    "workspaces",
-    "clock",
     "volume",
-    "battery"
+    "battery",
+    "clock",
+    "workspaces"
   ],
   "showAppGrid": true,
   "showCpu": true,

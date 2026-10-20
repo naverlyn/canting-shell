@@ -12,7 +12,7 @@ Singleton {
     property int panelWidth: 320
     property bool showHeader: true
     property bool showViewSwitcher: true
-    property bool mediaAutoHide: false
+    property bool mediaAutoHide: true
     property bool mediaShowCava: false
     property string panelLayout: "horizontal"
     property int panelCount: 3
@@ -870,7 +870,7 @@ Singleton {
         root.mediaWidgetStyle = "auto";
         root.showHeader = true;
         root.showViewSwitcher = true;
-        root.mediaAutoHide = false;
+        root.mediaAutoHide = true;
         root.mediaShowCava = false;
         root.tiles = [
             { id: "wifi", enabled: true },

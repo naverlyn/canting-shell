@@ -37,6 +37,17 @@ Singleton {
   ]
   property string activeEditingDisplay: "primary" // "primary" | "secondary"
   property bool innerCorners: true
+  property bool fluidCards: true
+  property bool barBorder: true
+  property int barBorderWidth: 1
+  property string barBorderColor: ""
+  property bool screenBorder: false
+  property int screenBorderThickness: 4
+  property string screenBorderColor: ""
+  property bool screenBorderCorners: true
+  property bool screenBorderShadow: true
+  property int screenBorderShadowSize: 12
+  property real screenBorderShadowOpacity: 0.35
 
   // Panel capacity limit
   readonly property int maxPanelWidgets: 10
@@ -74,6 +85,10 @@ Singleton {
         ["weather", "clock"]
       ],
       innerCorners: true,
+      fluidCards: true,
+      barBorder: true,
+      barBorderWidth: 1,
+      barBorderColor: "",
       panels: [
         ["appGrid", "globalMenu", "cpu", "temp", "memory", "disk", "network"],
         ["windowTitle"],
@@ -101,6 +116,10 @@ Singleton {
       allMonitors: true, displayTarget: "all", secondaryPosition: (root.secondaryPosition || "top"), secondaryMode: "custom", blankOnSecondary: false,
       secondaryPanels: root.defaultSecondaryPanels,
       innerCorners: root.innerCorners,
+      fluidCards: root.fluidCards,
+      barBorder: root.barBorder,
+      barBorderWidth: root.barBorderWidth,
+      barBorderColor: root.barBorderColor,
       panels: [root.defaultLeftWidgets, root.defaultCenterWidgets, root.defaultRightWidgets]
     };
   }
@@ -260,6 +279,16 @@ Singleton {
         root.secondaryPanels = val;
       }
       else if (propName === "innerCorners") root.innerCorners = Boolean(val);
+      else if (propName === "fluidCards") root.fluidCards = Boolean(val);
+      else if (propName === "barBorder") root.barBorder = Boolean(val);
+      else if (propName === "barBorderWidth") root.barBorderWidth = Math.max(1, Math.min(10, Number(val)));
+      else if (propName === "barBorderColor") root.barBorderColor = String(val);
+      else if (propName === "screenBorder") root.screenBorder = Boolean(val);
+      else if (propName === "screenBorderThickness") root.screenBorderThickness = Math.max(1, Math.min(32, Math.round(Number(val))));
+      else if (propName === "screenBorderColor") root.screenBorderColor = String(val);
+      else if (propName === "screenBorderCorners") root.screenBorderCorners = Boolean(val);
+      else if (propName === "screenBorderShadow") root.screenBorderShadow = Boolean(val);
+      else if (propName === "screenBorderShadowSize") root.screenBorderShadowSize = Math.max(1, Math.min(64, Math.round(Number(val))));
     }
     saveConfig();
   }
@@ -301,6 +330,10 @@ Singleton {
       blankOnSecondary: false,
       secondaryPanels: root.defaultSecondaryPanels.map(p => p.slice()),
       innerCorners: root.innerCorners,
+      fluidCards: root.fluidCards,
+      barBorder: root.barBorder,
+      barBorderWidth: root.barBorderWidth,
+      barBorderColor: root.barBorderColor,
       panels: [
         ["workspaces"],
         ["clock"],
@@ -339,6 +372,10 @@ Singleton {
       root.secondaryMode = bList[0].secondaryMode || (bList[0].blankOnSecondary !== false ? "blank" : "mirror");
       root.blankOnSecondary = bList[0].blankOnSecondary !== undefined ? Boolean(bList[0].blankOnSecondary) : (root.secondaryMode === "blank");
       root.innerCorners = bList[0].innerCorners !== undefined ? Boolean(bList[0].innerCorners) : root.innerCorners;
+      root.fluidCards = bList[0].fluidCards !== undefined ? Boolean(bList[0].fluidCards) : root.fluidCards;
+      root.barBorder = bList[0].barBorder !== undefined ? Boolean(bList[0].barBorder) : root.barBorder;
+      root.barBorderWidth = bList[0].barBorderWidth !== undefined ? Number(bList[0].barBorderWidth) : root.barBorderWidth;
+      root.barBorderColor = bList[0].barBorderColor !== undefined ? String(bList[0].barBorderColor) : root.barBorderColor;
     }
     saveConfig();
   }
@@ -478,6 +515,36 @@ Singleton {
         root._loaded = true;
       }
     }
+  }
+
+  function setScreenBorder(val) {
+    root.screenBorder = Boolean(val);
+    root.saveConfig();
+  }
+
+  function setScreenBorderThickness(val) {
+    root.screenBorderThickness = Math.max(1, Math.min(32, Math.round(Number(val))));
+    root.saveConfig();
+  }
+
+  function setScreenBorderColor(val) {
+    root.screenBorderColor = String(val);
+    root.saveConfig();
+  }
+
+  function setScreenBorderCorners(val) {
+    root.screenBorderCorners = Boolean(val);
+    root.saveConfig();
+  }
+
+  function setScreenBorderShadow(val) {
+    root.screenBorderShadow = Boolean(val);
+    root.saveConfig();
+  }
+
+  function setScreenBorderShadowSize(val) {
+    root.screenBorderShadowSize = Math.max(1, Math.min(64, Math.round(Number(val))));
+    root.saveConfig();
   }
 
   Process {

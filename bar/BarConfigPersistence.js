@@ -23,6 +23,16 @@ function buildSaveData(root) {
     blankOnSecondary: primary && primary.blankOnSecondary !== undefined ? Boolean(primary.blankOnSecondary) : root.blankOnSecondary,
     secondaryPanels: primary && primary.secondaryPanels ? primary.secondaryPanels : root.secondaryPanels,
     innerCorners: primary && primary.innerCorners !== undefined ? Boolean(primary.innerCorners) : root.innerCorners,
+    fluidCards: primary && primary.fluidCards !== undefined ? Boolean(primary.fluidCards) : (root.fluidCards !== undefined ? Boolean(root.fluidCards) : true),
+    barBorder: primary && primary.barBorder !== undefined ? Boolean(primary.barBorder) : root.barBorder,
+    barBorderWidth: primary && primary.barBorderWidth !== undefined ? Number(primary.barBorderWidth) : root.barBorderWidth,
+    barBorderColor: primary && primary.barBorderColor !== undefined ? String(primary.barBorderColor) : root.barBorderColor,
+    screenBorder: root.screenBorder !== undefined ? Boolean(root.screenBorder) : false,
+    screenBorderThickness: root.screenBorderThickness !== undefined ? Number(root.screenBorderThickness) : 4,
+    screenBorderColor: root.screenBorderColor !== undefined ? String(root.screenBorderColor) : "",
+    screenBorderCorners: root.screenBorderCorners !== undefined ? Boolean(root.screenBorderCorners) : true,
+    screenBorderShadow: root.screenBorderShadow !== undefined ? Boolean(root.screenBorderShadow) : false,
+    screenBorderShadowSize: root.screenBorderShadowSize !== undefined ? Number(root.screenBorderShadowSize) : 12,
     bars: root.bars,
     panels: primaryPanels,
     leftWidgets: primaryPanels.length > 0 ? primaryPanels[0] : [],
@@ -98,6 +108,16 @@ function applyConfig(root, cfg) {
     root.secondaryPanels = cfg.secondaryPanels.map(arr => Array.isArray(arr) ? arr.slice() : []);
   }
   if (cfg.innerCorners !== undefined) root.innerCorners = Boolean(cfg.innerCorners);
+  if (cfg.fluidCards !== undefined) root.fluidCards = Boolean(cfg.fluidCards);
+  if (cfg.barBorder !== undefined) root.barBorder = Boolean(cfg.barBorder);
+  if (cfg.barBorderWidth !== undefined) root.barBorderWidth = Number(cfg.barBorderWidth);
+  if (cfg.barBorderColor !== undefined) root.barBorderColor = String(cfg.barBorderColor);
+  if (cfg.screenBorder !== undefined) root.screenBorder = Boolean(cfg.screenBorder);
+  if (cfg.screenBorderThickness !== undefined) root.screenBorderThickness = Math.max(1, Math.min(32, Math.round(Number(cfg.screenBorderThickness))));
+  if (cfg.screenBorderColor !== undefined) root.screenBorderColor = String(cfg.screenBorderColor);
+  if (cfg.screenBorderCorners !== undefined) root.screenBorderCorners = Boolean(cfg.screenBorderCorners);
+  if (cfg.screenBorderShadow !== undefined) root.screenBorderShadow = Boolean(cfg.screenBorderShadow);
+  if (cfg.screenBorderShadowSize !== undefined) root.screenBorderShadowSize = Math.max(1, Math.min(64, Math.round(Number(cfg.screenBorderShadowSize))));
 
   let pList = [];
   if (Array.isArray(cfg.panels) && cfg.panels.length > 0) {
@@ -162,6 +182,10 @@ function applyConfig(root, cfg) {
           ? root.secondaryPanels.map(arr => arr.slice())
           : root.defaultSecondaryPanels.map(arr => arr.slice())),
       innerCorners: b.innerCorners !== undefined ? Boolean(b.innerCorners) : root.innerCorners,
+      fluidCards: b.fluidCards !== undefined ? Boolean(b.fluidCards) : (root.fluidCards !== undefined ? Boolean(root.fluidCards) : true),
+      barBorder: b.barBorder !== undefined ? Boolean(b.barBorder) : (root.barBorder !== undefined ? Boolean(root.barBorder) : true),
+      barBorderWidth: b.barBorderWidth !== undefined ? Number(b.barBorderWidth) : (root.barBorderWidth !== undefined ? Number(root.barBorderWidth) : 1),
+      barBorderColor: b.barBorderColor !== undefined ? String(b.barBorderColor) : (root.barBorderColor || ""),
       panels: ensureGlobalMenu(
         Array.isArray(b.panels) && b.panels.length > 0
           ? b.panels.map(arr => Array.isArray(arr) ? arr.slice() : [])
@@ -188,6 +212,10 @@ function applyConfig(root, cfg) {
       blankOnSecondary: root.blankOnSecondary,
       secondaryPanels: root.secondaryPanels,
       innerCorners: root.innerCorners,
+      fluidCards: root.fluidCards !== undefined ? Boolean(root.fluidCards) : true,
+      barBorder: root.barBorder,
+      barBorderWidth: root.barBorderWidth,
+      barBorderColor: root.barBorderColor,
       panels: pList
     }];
   }
@@ -275,6 +303,13 @@ function resetDefaults(root) {
   ];
   root.activeEditingDisplay = "primary";
   root.innerCorners = true;
+  root.fluidCards = true;
+  root.screenBorder = false;
+  root.screenBorderThickness = 4;
+  root.screenBorderColor = "";
+  root.screenBorderCorners = true;
+  root.screenBorderShadow = false;
+  root.screenBorderShadowSize = 12;
 
   root.selectedBarIndex = 0;
   root.bars = [
@@ -300,6 +335,7 @@ function resetDefaults(root) {
         ["weather", "clock"]
       ],
       innerCorners: true,
+      fluidCards: true,
       panels: [
         root.defaultLeftWidgets.slice(),
         root.defaultCenterWidgets.slice(),

@@ -73,8 +73,9 @@ PanelWindow {
         return anchorCenterY > 0 ? anchorCenterY : 100;
     }
 
-    readonly property int ownHorizClearance: (barFloating ? 6 : 0) + barThickness + 6
-    readonly property int ownVertClearance: (barFloating ? 6 : 0) + barThickness + 6
+    readonly property bool fluidEnabled: (BarConfig.fluidCards !== false) && !barFloating && Boolean(BarConfig.innerCorners)
+    readonly property int ownHorizClearance: (barFloating ? 6 : 0) + barThickness + (fluidEnabled ? 0 : 6)
+    readonly property int ownVertClearance: (barFloating ? 6 : 0) + barThickness + (fluidEnabled ? 0 : 6)
 
     screen: (anchorTarget && anchorTarget.QsWindow.window) ? anchorTarget.QsWindow.window.screen : null
     anchors {
@@ -247,11 +248,32 @@ PanelWindow {
             right: parent.right
         }
         height: Math.min(controlCenter.maxCcHeight, contentColumn.height + 24)
-        radius: 12
-        color: controlCenter.theme.bgSurface
+        radius: controlCenter.fluidEnabled ? 16 : 12
+        color: controlCenter.fluidEnabled
+            ? Qt.rgba(controlCenter.theme.bgBase.r, controlCenter.theme.bgBase.g, controlCenter.theme.bgBase.b, (BarConfig.barOpacity !== undefined ? BarConfig.barOpacity : 0.85))
+            : controlCenter.theme.bgSurface
         border.color: controlCenter.theme.bgBorder
         border.width: 1
         clip: false
+
+        // Square off connection edge and remove border line touching the bar
+        Rectangle {
+            visible: controlCenter.fluidEnabled && (controlCenter.barPosition !== "bottom")
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 16
+            color: parent.color
+        }
+
+        Rectangle {
+            visible: controlCenter.fluidEnabled && (controlCenter.barPosition === "bottom")
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            height: 16
+            color: parent.color
+        }
 
         Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
@@ -472,10 +494,8 @@ PanelWindow {
                                                 return ControlCenterConfig.isLiveEdit || ControlCenterConfig.secondaryTiles.length > 0;
                                             }
                                             if (cardId === "media") {
-                                                if (ControlCenterConfig.mediaAutoHide && !ControlCenterConfig.isLiveEdit) {
-                                                    return cardLoader.item ? cardLoader.item.hasMedia : false;
-                                                }
-                                                return true;
+                                                if (ControlCenterConfig.isLiveEdit) return true;
+                                                return cardLoader.item ? cardLoader.item.hasMedia : false;
                                             }
                                             return true;
                                         }

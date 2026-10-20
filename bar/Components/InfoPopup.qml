@@ -20,9 +20,28 @@ PopupWindow {
   property string icon: ""
   property color accent: "#ffffff"
   property string script: ""
-  property string barPosition: BarConfig.position
+  property string barPosition: barItem && barItem.barPos !== undefined ? barItem.barPos : BarConfig.position
 
+  // Activated only by target hover or pin toggle (eliminates cross-widget jitter)
   readonly property bool isDetailsActive: hovered || pinned
+
+  // Fluid vs Flyout mode toggle
+  readonly property bool isFloatingBar: barItem && barItem.isFloating !== undefined
+    ? barItem.isFloating
+    : Boolean(BarConfig.floating)
+  readonly property bool fluidEnabled: Boolean(BarConfig.fluidCards) && !isFloatingBar
+  readonly property int cornerRad: barItem && barItem.innerCornerRadius !== undefined
+    ? barItem.innerCornerRadius
+    : 16
+  readonly property color barColor: barItem && barItem.barColor !== undefined
+    ? barItem.barColor
+    : (popup.theme
+      ? Qt.rgba(popup.theme.bgBase.r, popup.theme.bgBase.g, popup.theme.bgBase.b, (BarConfig.barOpacity !== undefined ? BarConfig.barOpacity : 0.85))
+      : "#1a1b26")
+  readonly property color cardBorderColor: fluidEnabled
+    ? Qt.rgba(popup.theme.textPrimary.r, popup.theme.textPrimary.g, popup.theme.textPrimary.b, 0.15)
+    : popup.theme.bgBase
+  readonly property real cardBorderWidth: fluidEnabled ? 1 : 2
 
   // Parsed rows: [{ header: bool, cells: [string] }]
   property var rows: []
@@ -46,10 +65,44 @@ PopupWindow {
   }
 
   // Stay mapped until the fade-out finishes
-  visible: isDetailsActive || box.opacity > 0
+  property bool instantClose: false
+
+  function dismissImmediate() {
+    instantClose = true;
+    cardContainer.opacity = 0.0;
+  }
+
+  onIsDetailsActiveChanged: {
+    if (isDetailsActive) {
+      instantClose = false;
+      BarConfig.notifyPopupActive(popup);
+    } else {
+      BarConfig.notifyPopupInactive(popup);
+    }
+  }
+
+  Component.onCompleted: {
+    if (!proc.running && popup.script) {
+      proc.running = true;
+    }
+  }
+
+  visible: (isDetailsActive && !instantClose) || cardContainer.opacity > 0.001
   color: "transparent"
-  implicitWidth: box.implicitWidth + 12
-  implicitHeight: box.implicitHeight + 12
+
+  readonly property int baseContentW: Math.max(content.implicitWidth + 32, 200)
+  readonly property int baseContentH: content.implicitHeight + 28
+
+  implicitWidth: {
+    if (!fluidEnabled) return baseContentW + 12;
+    if (popup.barPosition === "left" || popup.barPosition === "right") return baseContentW;
+    return baseContentW + (2 * cornerRad);
+  }
+  implicitHeight: {
+    if (!fluidEnabled) return baseContentH + 12;
+    if (popup.barPosition === "top" || popup.barPosition === "bottom") return baseContentH;
+    return baseContentH + (2 * cornerRad);
+  }
 
   anchor.window: target.QsWindow.window
   anchor.edges: {
@@ -71,10 +124,23 @@ PopupWindow {
     const widgetRect = win.contentItem.mapFromItem(target, 0, 0, target.width, target.height);
     if (popup.barItem) {
       const bRect = win.contentItem.mapFromItem(popup.barItem, 0, 0, popup.barItem.width, popup.barItem.height);
+      const scr = win.screen;
       if (popup.barPosition === "top" || popup.barPosition === "bottom") {
-        anchor.rect = Qt.rect(widgetRect.x, bRect.y, widgetRect.width, bRect.height);
+        const widgetCenter = widgetRect.x + (widgetRect.width / 2);
+        const popupW = popup.implicitWidth;
+        const desiredX = Math.round(widgetCenter - (popupW / 2));
+        const scrW = scr ? scr.width : 1920;
+        const pad = 8;
+        const clampedX = Math.max(pad, Math.min(Math.max(pad, scrW - popupW - pad), desiredX));
+        anchor.rect = Qt.rect(clampedX, bRect.y, popupW, bRect.height);
       } else {
-        anchor.rect = Qt.rect(bRect.x, widgetRect.y, bRect.width, widgetRect.height);
+        const widgetCenter = widgetRect.y + (widgetRect.height / 2);
+        const popupH = popup.implicitHeight;
+        const desiredY = Math.round(widgetCenter - (popupH / 2));
+        const scrH = scr ? scr.height : 1080;
+        const pad = 8;
+        const clampedY = Math.max(pad, Math.min(Math.max(pad, scrH - popupH - pad), desiredY));
+        anchor.rect = Qt.rect(bRect.x, clampedY, bRect.width, popupH);
       }
     } else {
       anchor.rect = widgetRect;
@@ -104,34 +170,44 @@ PopupWindow {
     onTriggered: if (!proc.running) proc.running = true
   }
 
-  Rectangle {
-    id: box
-    opacity: popup.isDetailsActive ? 1 : 0
-    x: popup.barPosition === "left"
-      ? (popup.isDetailsActive ? 6 : 0)
-      : (popup.barPosition === "right" ? (popup.isDetailsActive ? 6 : 12) : 6)
-    y: popup.barPosition === "top"
-      ? (popup.isDetailsActive ? 6 : 0)
-      : (popup.barPosition === "bottom" ? (popup.isDetailsActive ? 6 : 12) : 6)
-    transformOrigin: {
-      if (popup.barPosition === "bottom") return Item.Bottom;
-      if (popup.barPosition === "left") return Item.Left;
-      if (popup.barPosition === "right") return Item.Right;
-      return Item.Top;
+  Item {
+    id: cardContainer
+    opacity: (popup.isDetailsActive && !popup.instantClose) ? 1.0 : 0.0
+
+    // Smooth rock-solid opacity fade without scale distortion or inter-card jitter
+    Behavior on opacity {
+      NumberAnimation {
+        duration: popup.instantClose ? 0 : ((popup.isDetailsActive && BarConfig.isHoveringBarPills) ? 0 : 150)
+        easing.type: Easing.OutCubic
+      }
     }
-    scale: popup.isDetailsActive ? 1 : 0.96
 
-    Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-    Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-    Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+    x: popup.fluidEnabled ? 0 : 6
+    y: popup.fluidEnabled ? 0 : (
+      popup.barPosition === "top"
+        ? (popup.isDetailsActive ? 6 : 0)
+        : (popup.barPosition === "bottom" ? (popup.isDetailsActive ? 6 : 12) : 6)
+    )
+    width: popup.fluidEnabled ? popup.implicitWidth : popup.baseContentW
+    height: popup.fluidEnabled ? popup.implicitHeight : popup.baseContentH
 
-    implicitWidth: Math.max(content.implicitWidth + 32, 200)
-    implicitHeight: content.implicitHeight + 28
-    color: popup.theme.bgSurface
-    radius: 12
-    border.color: popup.theme.bgBase
-    border.width: 2
+    Behavior on y {
+      NumberAnimation {
+        duration: (popup.instantClose || BarConfig.isHoveringBarPills) ? 0 : 160
+        easing.type: Easing.OutCubic
+      }
+    }
+
+    FluidCardBackground {
+      id: cardBg
+      anchors.fill: parent
+      fluidEnabled: popup.fluidEnabled
+      barPosition: popup.barPosition
+      cornerRadius: popup.cornerRad
+      cardColor: popup.fluidEnabled ? popup.barColor : popup.theme.bgSurface
+      borderColor: popup.cardBorderColor
+      borderWidth: popup.cardBorderWidth
+    }
 
     ColumnLayout {
       id: content
@@ -159,7 +235,7 @@ PopupWindow {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: popup.theme.bgBase
+        color: Qt.rgba(popup.theme.textPrimary.r, popup.theme.textPrimary.g, popup.theme.textPrimary.b, 0.12)
       }
 
       Text {
