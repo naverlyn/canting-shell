@@ -19,7 +19,7 @@ Rectangle {
     width: parent ? parent.width : 300
     height: audioCol.implicitHeight + 24
     implicitHeight: audioCol.implicitHeight + 24
-    implicitWidth: width
+    implicitWidth: 300
     radius: 10
     color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05)
     border.color: root.theme.bgBorder

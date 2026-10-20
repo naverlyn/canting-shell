@@ -16,6 +16,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
+import "./Hyprlock"
 
 Rectangle {
     id: cardRoot
@@ -33,10 +34,10 @@ Rectangle {
     implicitHeight: mainLayout.implicitHeight + 24
     radius: 10
     clip: true
-    color: cardHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.05)) : (root.theme.bgSurface ?? Qt.rgba(0, 0, 0, 0.2))
+    color: cardHover.hovered ? (cardRoot.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.05)) : (cardRoot.theme.bgSurface ?? Qt.rgba(0, 0, 0, 0.2))
     border.color: isExpanded 
-        ? (root.theme.accentPrimary ?? "#7aa2f7") 
-        : (cardHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
+        ? (cardRoot.theme.accentPrimary ?? "#7aa2f7") 
+        : (cardHover.hovered ? Qt.rgba(cardRoot.theme.accentPrimary.r, cardRoot.theme.accentPrimary.g, cardRoot.theme.accentPrimary.b, 0.4) : (cardRoot.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
     border.width: isExpanded ? 1.5 : 1
 
     Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
@@ -75,7 +76,7 @@ Rectangle {
             "$color8": "#9FA7A8", "$color9": "#828bb8", "$color10": "#5E6A76", "$color11": "#67748F",
             "$color12": "#8F9EA7", "$color13": "#D8EEF1", "$color14": "#D8EEF1", "$color15": "#E3EEF0",
             "$foreground": "#F1F9FA", "$background": "#1A1A1E",
-            "$accentPrimary": (root.theme && root.theme.accentPrimary) ? String(root.theme.accentPrimary) : "#7aa2f7"
+            "$accentPrimary": (cardRoot.theme && cardRoot.theme.accentPrimary) ? String(cardRoot.theme.accentPrimary) : "#7aa2f7"
         };
         if (wallustMap[str]) return wallustMap[str];
         return "#ffffff";
@@ -171,298 +172,18 @@ Rectangle {
         spacing: 10
 
         /* --- Header Row --- */
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 10
-
-            // Block Name
-            Text {
-                text: cardRoot.editName
-                font.family: cardRoot.font
-                font.pixelSize: 13
-                font.bold: true
-                color: cardRoot.editEnabled ? (root.theme.textPrimary ?? "#ffffff") : (root.theme.textMuted ?? "#666666")
-                Layout.alignment: Qt.AlignVCenter
-            }
-
-            // Color Indicator Swatch
-            Rectangle {
-                width: 8
-                height: 8
-                radius: 4
-                color: cardRoot.resolveColor(cardRoot.editColor)
-                border.color: Qt.rgba(1, 1, 1, 0.25)
-                border.width: 1
-                Layout.alignment: Qt.AlignVCenter
-            }
-
-            // Mode Badge Pill
-            Rectangle {
-                height: 20
-                implicitWidth: badgeText.implicitWidth + 12
-                radius: 4
-                color: cardRoot.editIsCmd ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.14) : Qt.rgba(1, 1, 1, 0.06)
-                border.color: cardRoot.editIsCmd ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.3) : Qt.rgba(1, 1, 1, 0.1)
-                border.width: 1
-                Layout.alignment: Qt.AlignVCenter
-
-                Text {
-                    id: badgeText
-                    anchors.centerIn: parent
-                    text: cardRoot.editIsCmd ? ("cmd (" + (cardRoot.editCmdInterval >= 1000 ? ((cardRoot.editCmdInterval / 1000) + "s") : (cardRoot.editCmdInterval + "ms")) + ")") : "text"
-                    font.family: cardRoot.font
-                    font.pixelSize: 10
-                    font.bold: true
-                    color: cardRoot.editIsCmd ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textSecondary ?? "#9aa5ce")
-                }
-            }
-
-            // Custom block indicator
-            Rectangle {
-                visible: cardRoot.blockData && cardRoot.blockData.is_custom
-                height: 20
-                implicitWidth: customBadgeText.implicitWidth + 12
-                radius: 4
-                color: Qt.rgba(0.9, 0.7, 0.2, 0.15)
-                border.color: Qt.rgba(0.9, 0.7, 0.2, 0.35)
-                border.width: 1
-                Layout.alignment: Qt.AlignVCenter
-
-                Text {
-                    id: customBadgeText
-                    anchors.centerIn: parent
-                    text: "custom"
-                    font.family: cardRoot.font
-                    font.pixelSize: 10
-                    font.bold: true
-                    color: "#e0af68"
-                }
-            }
-
-            Item { Layout.fillWidth: true }
-
-            // Master Toggle Switch
-            Rectangle {
-                id: blockSwitchTrack
-                width: 44
-                height: 24
-                radius: 12
-                color: cardRoot.editEnabled ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
-                Layout.alignment: Qt.AlignVCenter
-
-                Behavior on color { ColorAnimation { duration: 140 } }
-
-                Rectangle {
-                    width: 18
-                    height: 18
-                    radius: 9
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: cardRoot.editEnabled ? parent.width - width - 3 : 3
-                    color: cardRoot.editEnabled ? "#ffffff" : (root.theme.textPrimary ?? "#c0caf5")
-
-                    Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        cardRoot.editEnabled = !cardRoot.editEnabled;
-                        let payload = {
-                            enabled: cardRoot.editEnabled,
-                            name: cardRoot.editName,
-                            raw_text: (cardRoot.blockData && cardRoot.blockData.raw_text) ? cardRoot.blockData.raw_text : cardRoot.editRawText
-                        };
-                        cardRoot.blockSaved(cardRoot.blockIndex, payload);
-                    }
-                }
-            }
-
-            // Edit / Done Button (Modern secondary action button)
-            Rectangle {
-                id: editBtn
-                implicitWidth: editBtnText.implicitWidth + 20
-                height: 28
-                radius: 7
-                color: editHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-                border.color: (cardRoot.isExpanded || editHover.hovered) ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
-                border.width: 1
-                scale: editMouse.pressed ? 0.96 : 1.0
-                Layout.alignment: Qt.AlignVCenter
-
-                Behavior on color { ColorAnimation { duration: 140 } }
-                Behavior on border.color { ColorAnimation { duration: 140 } }
-                Behavior on scale { NumberAnimation { duration: 80 } }
-
-                HoverHandler { id: editHover }
-
-                Text {
-                    id: editBtnText
-                    anchors.centerIn: parent
-                    text: cardRoot.isExpanded ? "Close" : "Edit"
-                    font.family: cardRoot.font
-                    font.pixelSize: 11
-                    font.bold: true
-                    color: (cardRoot.isExpanded || editHover.hovered) ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                }
-
-                MouseArea {
-                    id: editMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: cardRoot.isExpanded = !cardRoot.isExpanded
-                }
-            }
+        HyprlockBlockHeaderRow {
+            hostCard: cardRoot
         }
 
         /* --- Summary Row (Visible when collapsed) --- */
-        RowLayout {
-            visible: !cardRoot.isExpanded
-            Layout.fillWidth: true
-            spacing: 8
-
-            // Text / Command Monospace Box
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.minimumWidth: 100
-                height: 30
-                radius: 6
-                color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3)
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                border.width: 1
-
-                TextInput {
-                    id: summaryInput
-                    anchors {
-                        fill: parent
-                        leftMargin: 10
-                        rightMargin: 10
-                    }
-                    verticalAlignment: TextInput.AlignVCenter
-                    text: (cardRoot.blockData && cardRoot.blockData.raw_text) ? cardRoot.blockData.raw_text : cardRoot.editRawText
-                    font.family: cardRoot.font
-                    font.pixelSize: 11
-                    color: cardRoot.editEnabled ? (root.theme.textSecondary ?? "#9aa5ce") : (root.theme.textMuted ?? "#666666")
-                    selectByMouse: true
-                    onEditingFinished: {
-                        if (cardRoot.editIsCmd) {
-                            let m = text.match(/^cmd\[update:\d+\]\s*(.*)$/);
-                            if (m) {
-                                cardRoot.editCmdBody = m[1];
-                            } else {
-                                cardRoot.editCmdBody = text;
-                            }
-                        } else {
-                            cardRoot.editRawText = text;
-                        }
-                        let payload = {
-                            enabled: cardRoot.editEnabled,
-                            name: cardRoot.editName,
-                            raw_text: text
-                        };
-                        cardRoot.blockSaved(cardRoot.blockIndex, payload);
-                    }
-                }
-            }
-
-            // Compact "Run / Test" Button for Shell Commands (Modern secondary action button)
-            Rectangle {
-                id: runSummaryBtn
-                visible: cardRoot.editIsCmd
-                implicitWidth: runSummaryText.implicitWidth + 20
-                height: 30
-                radius: 7
-                color: runSummaryHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-                border.color: runSummaryHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
-                border.width: 1
-                scale: runSummaryMouse.pressed ? 0.96 : 1.0
-
-                Behavior on color { ColorAnimation { duration: 140 } }
-                Behavior on border.color { ColorAnimation { duration: 140 } }
-                Behavior on scale { NumberAnimation { duration: 80 } }
-
-                HoverHandler { id: runSummaryHover }
-
-                Text {
-                    id: runSummaryText
-                    anchors.centerIn: parent
-                    text: cardRoot.isEvaluating ? "Running..." : "Run Test"
-                    font.family: cardRoot.font
-                    font.pixelSize: 10
-                    font.bold: true
-                    color: runSummaryHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                }
-
-                MouseArea {
-                    id: runSummaryMouse
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    enabled: !cardRoot.isEvaluating
-                    onClicked: cardRoot.runTest()
-                }
-            }
+        HyprlockBlockCommandPreviewRow {
+            hostCard: cardRoot
         }
 
         // Compact execution output pill (if tested and collapsed)
-        Rectangle {
-            visible: !cardRoot.isExpanded && cardRoot.testOutput !== ""
-            Layout.fillWidth: true
-            implicitHeight: testOutRow.implicitHeight + 8
-            radius: 6
-            color: Qt.rgba(0, 0, 0, 0.45)
-            border.color: root.theme.accentPrimary ?? "#7aa2f7"
-            border.width: 1
-
-            RowLayout {
-                id: testOutRow
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    verticalCenter: parent.verticalCenter
-                    margins: 8
-                }
-                spacing: 8
-
-                Text {
-                    text: "Output:"
-                    font.family: cardRoot.font
-                    font.pixelSize: 11
-                    font.bold: true
-                    color: root.theme.accentPrimary ?? "#7aa2f7"
-                }
-
-                Text {
-                    text: cardRoot.testOutput
-                    font.family: cardRoot.font
-                    font.pixelSize: 11
-                    color: root.theme.textPrimary ?? "#ffffff"
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
-
-                Rectangle {
-                    width: 20
-                    height: 20
-                    radius: 4
-                    color: closeOutHover.hovered ? Qt.rgba(1,1,1,0.2) : "transparent"
-                    HoverHandler { id: closeOutHover }
-                    Text {
-                        anchors.centerIn: parent
-                        text: "x"
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        color: root.theme.textMuted ?? "#888888"
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: cardRoot.testOutput = ""
-                    }
-                }
-            }
+        HyprlockBlockOutputPill {
+            hostCard: cardRoot
         }
 
         /* --- Expanded Smart Editor Section --- */
@@ -488,7 +209,7 @@ Rectangle {
                     font.family: cardRoot.font
                     font.pixelSize: 12
                     font.bold: true
-                    color: root.theme.textPrimary
+                    color: cardRoot.theme.textPrimary
                     Layout.preferredWidth: 140
                 }
 
@@ -496,8 +217,8 @@ Rectangle {
                     Layout.fillWidth: true
                     height: 32
                     radius: 6
-                    color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                    color: cardRoot.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
+                    border.color: cardRoot.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
                     border.width: 1
 
                     TextInput {
@@ -510,7 +231,7 @@ Rectangle {
                         text: cardRoot.editName
                         font.family: cardRoot.font
                         font.pixelSize: 12
-                        color: root.theme.textPrimary
+                        color: cardRoot.theme.textPrimary
                         selectByMouse: true
                         onTextChanged: cardRoot.editName = text
                     }
@@ -527,7 +248,7 @@ Rectangle {
                     font.family: cardRoot.font
                     font.pixelSize: 12
                     font.bold: true
-                    color: root.theme.textPrimary
+                    color: cardRoot.theme.textPrimary
                     Layout.preferredWidth: 140
                 }
 
@@ -535,8 +256,8 @@ Rectangle {
                     Layout.fillWidth: true
                     height: 32
                     radius: 6
-                    color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                    color: cardRoot.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
+                    border.color: cardRoot.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
                     border.width: 1
 
                     RowLayout {
@@ -549,8 +270,8 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             radius: 4
-                            color: !cardRoot.editIsCmd ? root.theme.bgSelected : "transparent"
-                            border.color: !cardRoot.editIsCmd ? (root.theme.accentPrimary ?? "#7aa2f7") : "transparent"
+                            color: !cardRoot.editIsCmd ? cardRoot.theme.bgSelected : "transparent"
+                            border.color: !cardRoot.editIsCmd ? (cardRoot.theme.accentPrimary ?? "#7aa2f7") : "transparent"
                             border.width: !cardRoot.editIsCmd ? 1 : 0
 
                             Behavior on color { ColorAnimation { duration: 140 } }
@@ -562,7 +283,7 @@ Rectangle {
                                 font.family: cardRoot.font
                                 font.pixelSize: 11
                                 font.bold: !cardRoot.editIsCmd
-                                color: !cardRoot.editIsCmd ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textSecondary ?? "#9aa5ce")
+                                color: !cardRoot.editIsCmd ? (cardRoot.theme.accentPrimary ?? "#7aa2f7") : (cardRoot.theme.textSecondary ?? "#9aa5ce")
 
                                 Behavior on color { ColorAnimation { duration: 140 } }
                             }
@@ -579,8 +300,8 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             radius: 4
-                            color: cardRoot.editIsCmd ? root.theme.bgSelected : "transparent"
-                            border.color: cardRoot.editIsCmd ? (root.theme.accentPrimary ?? "#7aa2f7") : "transparent"
+                            color: cardRoot.editIsCmd ? cardRoot.theme.bgSelected : "transparent"
+                            border.color: cardRoot.editIsCmd ? (cardRoot.theme.accentPrimary ?? "#7aa2f7") : "transparent"
                             border.width: cardRoot.editIsCmd ? 1 : 0
 
                             Behavior on color { ColorAnimation { duration: 140 } }
@@ -592,7 +313,7 @@ Rectangle {
                                 font.family: cardRoot.font
                                 font.pixelSize: 11
                                 font.bold: cardRoot.editIsCmd
-                                color: cardRoot.editIsCmd ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textSecondary ?? "#9aa5ce")
+                                color: cardRoot.editIsCmd ? (cardRoot.theme.accentPrimary ?? "#7aa2f7") : (cardRoot.theme.textSecondary ?? "#9aa5ce")
 
                                 Behavior on color { ColorAnimation { duration: 140 } }
                             }
@@ -608,271 +329,13 @@ Rectangle {
             }
 
             // Shell Script Fields (when editIsCmd is true)
-            ColumnLayout {
-                visible: cardRoot.editIsCmd
-                Layout.fillWidth: true
-                spacing: 8
-
-                // Update Interval Selector
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 12
-
-                    Text {
-                        text: "Update Interval"
-                        font.family: cardRoot.font
-                        font.pixelSize: 12
-                        font.bold: true
-                        color: root.theme.textPrimary
-                        Layout.preferredWidth: 140
-                    }
-
-                    // Interval Presets
-                    RowLayout {
-                        spacing: 6
-                        Layout.fillWidth: true
-
-                        Repeater {
-                            model: [
-                                { label: "1s (1000ms)", val: 1000 },
-                                { label: "5s (5000ms)", val: 5000 },
-                                { label: "1m (60000ms)", val: 60000 },
-                                { label: "1h (3600000ms)", val: 3600000 }
-                            ]
-                            delegate: Rectangle {
-                                implicitWidth: intLabel.implicitWidth + 14
-                                height: 28
-                                radius: 5
-                                color: cardRoot.editCmdInterval === modelData.val ? root.theme.bgSelected : Qt.rgba(1, 1, 1, 0.04)
-                                border.color: cardRoot.editCmdInterval === modelData.val ? root.theme.accentPrimary : Qt.rgba(1, 1, 1, 0.08)
-                                border.width: 1
-
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                Behavior on border.color { ColorAnimation { duration: 140 } }
-
-                                Text {
-                                    id: intLabel
-                                    anchors.centerIn: parent
-                                    text: modelData.label
-                                    font.family: cardRoot.font
-                                    font.pixelSize: 10
-                                    font.bold: cardRoot.editCmdInterval === modelData.val
-                                    color: cardRoot.editCmdInterval === modelData.val ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
-
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: cardRoot.editCmdInterval = modelData.val
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Command / Script Input
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    Text {
-                        text: "Shell Script Command"
-                        font.family: cardRoot.font
-                        font.pixelSize: 12
-                        font.bold: true
-                        color: root.theme.textPrimary
-                    }
-
-                    Text {
-                        text: "Executed in bash. Can run system binaries, scripts ($HOME/.config/hypr/scripts), or pipe output."
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height: 38
-                        radius: 6
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
-                        border.width: 1
-
-                        TextInput {
-                            id: cmdInput
-                            anchors {
-                                fill: parent
-                                leftMargin: 10
-                                rightMargin: 10
-                            }
-                            verticalAlignment: TextInput.AlignVCenter
-                            text: cardRoot.editCmdBody
-                            font.family: cardRoot.font
-                            font.pixelSize: 12
-                            color: root.theme.textPrimary
-                            selectByMouse: true
-                            onTextChanged: cardRoot.editCmdBody = text
-                        }
-                    }
-                }
-
-                // Live Run / Test Command Box
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    Rectangle {
-                        id: runBtn
-                        implicitWidth: runBtnText.implicitWidth + 24
-                        height: 32
-                        radius: 7
-                        color: runBtnHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-                        border.color: runBtnHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
-                        border.width: 1
-                        scale: runBtnMouse.pressed ? 0.96 : 1.0
-
-                        Behavior on color { ColorAnimation { duration: 140 } }
-                        Behavior on border.color { ColorAnimation { duration: 140 } }
-                        Behavior on scale { NumberAnimation { duration: 80 } }
-
-                        HoverHandler { id: runBtnHover }
-
-                        Text {
-                            id: runBtnText
-                            anchors.centerIn: parent
-                            text: cardRoot.isEvaluating ? "Executing..." : "Execute & Test Output"
-                            font.family: cardRoot.font
-                            font.pixelSize: 11
-                            font.bold: true
-                            color: runBtnHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                        }
-
-                        MouseArea {
-                            id: runBtnMouse
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            enabled: !cardRoot.isEvaluating
-                            onClicked: cardRoot.runTest()
-                        }
-                    }
-
-                    Text {
-                        text: cardRoot.isEvaluating ? "Running in bash..." : (cardRoot.testOutput !== "" ? "Command finished" : "Click to test output live")
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        color: root.theme.textMuted ?? "#888888"
-                    }
-                }
-
-                // Live Execution Output Box
-                Rectangle {
-                    visible: cardRoot.testOutput !== ""
-                    Layout.fillWidth: true
-                    implicitHeight: Math.max(38, evalOutputText.implicitHeight + 16)
-                    radius: 6
-                    color: Qt.rgba(0, 0, 0, 0.45)
-                    border.color: root.theme.accentPrimary ?? "#7aa2f7"
-                    border.width: 1
-
-                    Text {
-                        id: evalOutputText
-                        anchors {
-                            fill: parent
-                            margins: 10
-                        }
-                        text: cardRoot.testOutput
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        color: root.theme.textPrimary ?? "#ffffff"
-                        wrapMode: Text.WrapAnywhere
-                    }
-                }
+            HyprlockBlockShellFields {
+                hostCard: cardRoot
             }
 
             // Plain Text / Variable Fields (when editIsCmd is false)
-            ColumnLayout {
-                visible: !cardRoot.editIsCmd
-                Layout.fillWidth: true
-                spacing: 6
-
-                Text {
-                    text: "Text / Variable Value"
-                    font.family: cardRoot.font
-                    font.pixelSize: 12
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 38
-                    radius: 6
-                    color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3)
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
-                    border.width: 1
-
-                    TextInput {
-                        anchors {
-                            fill: parent
-                            leftMargin: 10
-                            rightMargin: 10
-                        }
-                        verticalAlignment: TextInput.AlignVCenter
-                        text: cardRoot.editRawText
-                        font.family: cardRoot.font
-                        font.pixelSize: 12
-                        color: root.theme.textPrimary
-                        selectByMouse: true
-                        onTextChanged: cardRoot.editRawText = text
-                    }
-                }
-
-                // Quick Insert Variable Buttons
-                RowLayout {
-                    spacing: 6
-                    Text {
-                        text: "Quick Insert:"
-                        font.family: cardRoot.font
-                        font.pixelSize: 10
-                        color: root.theme.textMuted
-                    }
-
-                    Repeater {
-                        model: ["$USER", "$LAYOUT", "$TIME", "Locked"]
-                        delegate: Rectangle {
-                            implicitWidth: pillText.implicitWidth + 12
-                            height: 22
-                            radius: 4
-                            color: pillHover.hovered ? Qt.rgba(1,1,1,0.15) : Qt.rgba(1,1,1,0.06)
-                            border.color: Qt.rgba(1,1,1,0.1)
-                            border.width: 1
-
-                            Behavior on color { ColorAnimation { duration: 120 } }
-
-                            HoverHandler { id: pillHover }
-
-                            Text {
-                                id: pillText
-                                anchors.centerIn: parent
-                                text: modelData
-                                font.family: cardRoot.font
-                                font.pixelSize: 10
-                                color: root.theme.textSecondary
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    cardRoot.editRawText = modelData;
-                                }
-                            }
-                        }
-                    }
-                }
+            HyprlockBlockTextFields {
+                hostCard: cardRoot
             }
 
             // Divider
@@ -883,234 +346,8 @@ Rectangle {
             }
 
             // Position & Typography Controls
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 12
-
-                // Horizontal Alignment
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    Text {
-                        text: "Horizontal Align"
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        font.bold: true
-                        color: root.theme.textSecondary
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height: 28
-                        radius: 5
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                        border.width: 1
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 2
-                            spacing: 2
-
-                            Repeater {
-                                model: ["left", "center", "right"]
-                                delegate: Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    radius: 3
-                                    color: cardRoot.editHalign === modelData ? root.theme.bgSelected : "transparent"
-                                    border.color: cardRoot.editHalign === modelData ? root.theme.accentPrimary : "transparent"
-                                    border.width: cardRoot.editHalign === modelData ? 1 : 0
-
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                    Behavior on border.color { ColorAnimation { duration: 140 } }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: modelData.charAt(0).toUpperCase() + modelData.slice(1)
-                                        font.family: cardRoot.font
-                                        font.pixelSize: 10
-                                        font.bold: cardRoot.editHalign === modelData
-                                        color: cardRoot.editHalign === modelData ? (root.theme.accentPrimary ?? "#7aa2f7") : root.theme.textSecondary
-
-                                        Behavior on color { ColorAnimation { duration: 140 } }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: cardRoot.editHalign = modelData
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Vertical Alignment
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 4
-
-                    Text {
-                        text: "Vertical Align"
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        font.bold: true
-                        color: root.theme.textSecondary
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height: 28
-                        radius: 5
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                        border.width: 1
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 2
-                            spacing: 2
-
-                            Repeater {
-                                model: ["top", "center", "bottom"]
-                                delegate: Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    radius: 3
-                                    color: cardRoot.editValign === modelData ? root.theme.bgSelected : "transparent"
-                                    border.color: cardRoot.editValign === modelData ? root.theme.accentPrimary : "transparent"
-                                    border.width: cardRoot.editValign === modelData ? 1 : 0
-
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                    Behavior on border.color { ColorAnimation { duration: 140 } }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: modelData.charAt(0).toUpperCase() + modelData.slice(1)
-                                        font.family: cardRoot.font
-                                        font.pixelSize: 10
-                                        font.bold: cardRoot.editValign === modelData
-                                        color: cardRoot.editValign === modelData ? (root.theme.accentPrimary ?? "#7aa2f7") : root.theme.textSecondary
-
-                                        Behavior on color { ColorAnimation { duration: 140 } }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: cardRoot.editValign = modelData
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Coordinates (X, Y)
-                ColumnLayout {
-                    Layout.preferredWidth: 140
-                    spacing: 4
-
-                    Text {
-                        text: "Offset (X, Y)"
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        font.bold: true
-                        color: root.theme.textSecondary
-                    }
-
-                    RowLayout {
-                        spacing: 4
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 28
-                            radius: 5
-                            color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                            border.width: 1
-
-                            TextInput {
-                                anchors.fill: parent
-                                horizontalAlignment: TextInput.AlignHCenter
-                                verticalAlignment: TextInput.AlignVCenter
-                                text: String(cardRoot.editPosX)
-                                font.family: cardRoot.font
-                                font.pixelSize: 11
-                                color: root.theme.textPrimary
-                                selectByMouse: true
-                                onTextChanged: {
-                                    let v = parseInt(text);
-                                    if (!isNaN(v)) cardRoot.editPosX = v;
-                                }
-                            }
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 28
-                            radius: 5
-                            color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                            border.width: 1
-
-                            TextInput {
-                                anchors.fill: parent
-                                horizontalAlignment: TextInput.AlignHCenter
-                                verticalAlignment: TextInput.AlignVCenter
-                                text: String(cardRoot.editPosY)
-                                font.family: cardRoot.font
-                                font.pixelSize: 11
-                                color: root.theme.textPrimary
-                                selectByMouse: true
-                                onTextChanged: {
-                                    let v = parseInt(text);
-                                    if (!isNaN(v)) cardRoot.editPosY = v;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Font Size
-                ColumnLayout {
-                    Layout.preferredWidth: 80
-                    spacing: 4
-
-                    Text {
-                        text: "Font Size"
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        font.bold: true
-                        color: root.theme.textSecondary
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height: 28
-                        radius: 5
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                        border.width: 1
-
-                        TextInput {
-                            anchors.fill: parent
-                            horizontalAlignment: TextInput.AlignHCenter
-                            verticalAlignment: TextInput.AlignVCenter
-                            text: String(cardRoot.editFontSize)
-                            font.family: cardRoot.font
-                            font.pixelSize: 11
-                            color: root.theme.textPrimary
-                            selectByMouse: true
-                            onTextChanged: {
-                                let v = parseInt(text);
-                                if (!isNaN(v)) cardRoot.editFontSize = v;
-                            }
-                        }
-                    }
-                }
+            HyprlockBlockPositionTypographyRow {
+                hostCard: cardRoot
             }
 
             // Divider
@@ -1121,129 +358,8 @@ Rectangle {
             }
 
             // Color Configuration Section
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 8
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 8
-
-                    Text {
-                        text: "Color"
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        font.bold: true
-                        color: root.theme.textSecondary
-                    }
-
-                    // Live Color Preview Chip
-                    Rectangle {
-                        width: 18
-                        height: 18
-                        radius: 9
-                        color: cardRoot.resolveColor(cardRoot.editColor)
-                        border.color: Qt.rgba(1, 1, 1, 0.25)
-                        border.width: 1
-                    }
-
-                    Text {
-                        text: cardRoot.editColor
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        font.bold: true
-                        color: cardRoot.resolveColor(cardRoot.editColor)
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    // Custom Color Input Field
-                    Rectangle {
-                        width: 140
-                        height: 28
-                        radius: 6
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                        border.width: 1
-
-                        TextInput {
-                            anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
-                            verticalAlignment: TextInput.AlignVCenter
-                            text: cardRoot.editColor
-                            font.family: cardRoot.font
-                            font.pixelSize: 11
-                            color: root.theme.textPrimary
-                            selectByMouse: true
-                            onTextChanged: {
-                                if (text.trim().length > 0 && cardRoot.editColor !== text.trim()) {
-                                    cardRoot.editColor = text.trim();
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Preset Palette Chips
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    Repeater {
-                        model: [
-                            { name: "Default", val: "$color8", color: "#9FA7A8" },
-                            { name: "Accent", val: "$color13", color: "#D8EEF1" },
-                            { name: "Purple", val: "$color9", color: "#828bb8" },
-                            { name: "Highlight", val: "$color11", color: "#67748F" },
-                            { name: "Blue", val: "$color12", color: "#8F9EA7" },
-                            { name: "Bright", val: "$color7", color: "#E3EEF0" },
-                            { name: "White", val: "#ffffff", color: "#ffffff" },
-                            { name: "Primary", val: "$accentPrimary", color: (root.theme && root.theme.accentPrimary ? String(root.theme.accentPrimary) : "#7aa2f7") }
-                        ]
-
-                        Rectangle {
-                            readonly property bool isSelected: cardRoot.editColor === modelData.val
-                            implicitWidth: chipRow.implicitWidth + 14
-                            height: 24
-                            radius: 12
-                            color: isSelected ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.2) : (chipHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)))
-                            border.color: isSelected ? (root.theme.accentPrimary ?? "#7aa2f7") : Qt.rgba(1, 1, 1, 0.1)
-                            border.width: isSelected ? 1.5 : 1
-
-                            HoverHandler { id: chipHover }
-
-                            RowLayout {
-                                id: chipRow
-                                anchors.centerIn: parent
-                                spacing: 5
-
-                                Rectangle {
-                                    width: 10
-                                    height: 10
-                                    radius: 5
-                                    color: modelData.color
-                                    border.color: Qt.rgba(0, 0, 0, 0.3)
-                                    border.width: 1
-                                }
-
-                                Text {
-                                    text: modelData.name
-                                    font.family: cardRoot.font
-                                    font.pixelSize: 10
-                                    font.bold: isSelected
-                                    color: isSelected ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textSecondary ?? "#a6adc8")
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: cardRoot.editColor = modelData.val
-                            }
-                        }
-                    }
-                }
+            HyprlockBlockColorSection {
+                hostCard: cardRoot
             }
 
             // Divider
@@ -1254,116 +370,8 @@ Rectangle {
             }
 
             // Footer Action Buttons
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                // Delete Button (Modern danger action button)
-                Rectangle {
-                    id: delBtn
-                    visible: cardRoot.blockData && cardRoot.blockData.is_custom
-                    implicitWidth: delText.implicitWidth + 24
-                    height: 32
-                    radius: 8
-                    color: delHover.hovered ? Qt.rgba(0.97, 0.46, 0.56, 0.18) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-                    border.color: delHover.hovered ? (root.theme.accentRed ?? "#f7768e") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
-                    border.width: 1
-                    scale: delMouse.pressed ? 0.96 : 1.0
-
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                    Behavior on border.color { ColorAnimation { duration: 140 } }
-                    Behavior on scale { NumberAnimation { duration: 80 } }
-
-                    HoverHandler { id: delHover }
-
-                    Text {
-                        id: delText
-                        anchors.centerIn: parent
-                        text: "Delete Block"
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        font.bold: true
-                        color: delHover.hovered ? (root.theme.accentRed ?? "#f7768e") : (root.theme.textPrimary ?? "#ffffff")
-                        Behavior on color { ColorAnimation { duration: 140 } }
-                    }
-
-                    MouseArea {
-                        id: delMouse
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: cardRoot.blockDeleted(cardRoot.blockIndex)
-                    }
-                }
-
-                Item { Layout.fillWidth: true }
-
-                // Cancel / Close Button (Modern secondary action button)
-                Rectangle {
-                    id: cancelBtn
-                    implicitWidth: cancelText.implicitWidth + 22
-                    height: 32
-                    radius: 8
-                    color: cancelHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-                    border.color: cancelHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
-                    border.width: 1
-                    scale: cancelMouse.pressed ? 0.96 : 1.0
-
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                    Behavior on border.color { ColorAnimation { duration: 140 } }
-                    Behavior on scale { NumberAnimation { duration: 80 } }
-
-                    HoverHandler { id: cancelHover }
-
-                    Text {
-                        id: cancelText
-                        anchors.centerIn: parent
-                        text: "Cancel"
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        font.bold: true
-                        color: cancelHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
-                        Behavior on color { ColorAnimation { duration: 140 } }
-                    }
-
-                    MouseArea {
-                        id: cancelMouse
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: cardRoot.isExpanded = false
-                    }
-                }
-
-                // Save & Apply Button (Modern primary action button)
-                Rectangle {
-                    id: saveBtn
-                    implicitWidth: saveText.implicitWidth + 26
-                    height: 32
-                    radius: 8
-                    color: saveHover.hovered ? Qt.darker(root.theme.accentPrimary ?? "#7aa2f7", 1.1) : (root.theme.accentPrimary ?? "#7aa2f7")
-                    scale: saveMouse.pressed ? 0.96 : 1.0
-
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                    Behavior on scale { NumberAnimation { duration: 80 } }
-
-                    HoverHandler { id: saveHover }
-
-                    Text {
-                        id: saveText
-                        anchors.centerIn: parent
-                        text: "Apply Changes"
-                        font.family: cardRoot.font
-                        font.pixelSize: 11
-                        font.bold: true
-                        color: "#ffffff"
-                    }
-
-                    MouseArea {
-                        id: saveMouse
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: cardRoot.saveChanges()
-                    }
-                }
+            HyprlockBlockFooterActions {
+                hostCard: cardRoot
             }
         }
     }

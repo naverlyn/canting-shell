@@ -11,6 +11,7 @@ ColumnLayout {
 
     property var theme: DefaultTheme {}
     property string font: "Hack Nerd Font"
+    property string mode: "tiles" // "connectivity", "tiles", or "both"
 
     // Toggle states
     property bool wifiEnabled: true
@@ -70,6 +71,13 @@ ColumnLayout {
         }
     }
 
+    readonly property var activeTileModel: {
+        if (root.mode === "tiles2") return ControlCenterConfig.secondaryTiles;
+        return (ControlCenterConfig.isCardVisible("connectivity") || ControlCenterConfig.groupTilesEnabled)
+            ? ControlCenterConfig.ungroupedTiles
+            : ControlCenterConfig.enabledTiles;
+    }
+
     function finishTileDrag() {
         if (!isDragging) return;
         const srcIdx = dragSourceIndex;
@@ -79,7 +87,11 @@ ColumnLayout {
         dragHoverIndex = -1;
         dragSourceIndex = -1;
         if (srcIdx >= 0 && targetIdx >= 0 && srcIdx !== targetIdx) {
-            ControlCenterConfig.moveEnabledTile(srcIdx, targetIdx);
+            if (root.mode === "tiles2") {
+                ControlCenterConfig.moveSecondaryTile(srcIdx, targetIdx);
+            } else {
+                ControlCenterConfig.moveUngroupedTile(srcIdx, targetIdx);
+            }
         }
     }
 
@@ -439,7 +451,11 @@ ColumnLayout {
 
     // Empty state placeholder in live edit mode
     Rectangle {
-        visible: ControlCenterConfig.isLiveEdit && ControlCenterConfig.enabledTiles.length === 0
+        visible: ControlCenterConfig.isLiveEdit && (
+            root.mode === "connectivity"
+                ? ControlCenterConfig.groupedTiles.length === 0
+                : root.activeTileModel.length === 0
+        )
         Layout.fillWidth: true
         implicitHeight: 40
         radius: 8
@@ -449,7 +465,9 @@ ColumnLayout {
 
         Text {
             anchors.centerIn: parent
-            text: "No quick settings tiles enabled"
+            text: root.mode === "connectivity"
+                ? "No 2x2 connectivity tiles assigned"
+                : (root.mode === "tiles2" ? "No Quick Tiles 2 assigned (click + below)" : "No quick settings tiles enabled")
             font.family: root.font
             font.pixelSize: 11
             color: root.theme.textSecondary
@@ -457,496 +475,94 @@ ColumnLayout {
     }
 
     // 1. Grouped 2x2 Connectivity Card (iOS / Android Control Center)
-    Rectangle {
+    QuickSettingsConnectivityGroup {
         id: tileGroupCard
-        visible: ControlCenterConfig.groupTilesEnabled && ControlCenterConfig.groupedTiles.length > 0
-        Layout.fillWidth: true
-        implicitHeight: groupGrid.implicitHeight + 16
-        radius: 12
-        color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.04)
-        border.color: root.theme.bgBorder
-        border.width: 1
-
-        GridLayout {
-            id: groupGrid
-            anchors {
-                left: parent.left
-                right: parent.right
-                top: parent.top
-                margins: 8
-            }
-            columns: 2
-            rowSpacing: 8
-            columnSpacing: 8
-
-            Repeater {
-                model: ControlCenterConfig.groupedTiles
-                delegate: Rectangle {
-                    id: groupTileBtn
-                    required property var modelData
-                    required property int index
-                    readonly property string tid: modelData.id
-                    readonly property bool isActive: root.isTileActive(groupTileBtn.tid)
-                    readonly property bool isHovered: groupTileHover.hovered
-
-                    Layout.fillWidth: true
-                    height: 50
-                    radius: 10
-                    color: {
-                        if (groupTileBtn.tid === "mic" && root.micMuted) return Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.25);
-                        if (groupTileBtn.tid === "mute" && root.sinkMuted) return Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.25);
-                        if (isActive) return isHovered ? Qt.lighter(root.theme.accentPrimary, 1.12) : root.theme.accentPrimary;
-                        return isHovered ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.12) : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06);
-                    }
-                    border.color: isActive ? "transparent" : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
-                    border.width: 1
-
-                    Behavior on color { ColorAnimation { duration: 130 } }
-
-                    HoverHandler { id: groupTileHover }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-                        spacing: 8
-
-                        Rectangle {
-                            width: 32
-                            height: 32
-                            radius: 16
-                            color: groupTileBtn.isActive ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.10)
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Text {
-                                anchors.centerIn: parent
-                                font.family: root.font
-                                font.pixelSize: 14
-                                color: groupTileBtn.isActive ? (root.theme.bgBase ?? "#ffffff") : root.theme.textPrimary
-                                text: root.getTileIcon(groupTileBtn.tid)
-                            }
-                        }
-
-                        ColumnLayout {
-                            spacing: 1
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Text {
-                                text: groupTileBtn.modelData.label ?? ""
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: true
-                                color: groupTileBtn.isActive ? (root.theme.bgBase ?? "#ffffff") : root.theme.textPrimary
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-
-                            Text {
-                                text: {
-                                    if (groupTileBtn.tid === "wifi") return root.wifiEnabled ? (root.currentSsid || "On") : "Off";
-                                    if (groupTileBtn.tid === "bluetooth") return (root.btAvailable && root.btEnabled) ? "On" : "Off";
-                                    if (groupTileBtn.tid === "airplane") return root.airplaneEnabled ? "On" : "Off";
-                                    if (groupTileBtn.tid === "dnd") return root.dndEnabled ? "On" : "Off";
-                                    return groupTileBtn.isActive ? "On" : "Off";
-                                }
-                                font.family: root.font
-                                font.pixelSize: 9
-                                color: groupTileBtn.isActive ? Qt.rgba(1, 1, 1, 0.75) : root.theme.textMuted
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-                        }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        onClicked: (mouse) => root.triggerTileAction(groupTileBtn.tid, mouse.button === Qt.RightButton)
-                    }
-                }
-            }
-        }
+        hostGrid: root
+        visible: (root.mode === "connectivity" || (root.mode === "both" && ControlCenterConfig.groupTilesEnabled))
+            && ControlCenterConfig.groupedTiles.length > 0
     }
 
-    // 2. Ungrouped / Standalone Quick Tiles Grid
+    // 2. Ungrouped / Standalone Quick Tiles Grid (Primary "tiles" or Secondary "tiles2")
     GridLayout {
         Layout.fillWidth: true
         columns: 2
         rowSpacing: 8
         columnSpacing: 8
-        visible: (ControlCenterConfig.groupTilesEnabled ? ControlCenterConfig.ungroupedTiles.length : ControlCenterConfig.enabledTiles.length) > 0
+        uniformCellWidths: true
+        visible: (root.mode === "tiles" || root.mode === "tiles2" || root.mode === "both")
+            && root.activeTileModel.length > 0
 
         Repeater {
             id: tilesRepeater
-            model: ControlCenterConfig.groupTilesEnabled ? ControlCenterConfig.ungroupedTiles : ControlCenterConfig.enabledTiles
+            model: root.activeTileModel
 
+            delegate: QuickSettingsTileButton {
+                hostGrid: root
+            }
+        }
+    }
+
+    // Quick Add Tile row in Live Edit Mode when unassigned tiles exist
+    Flow {
+        visible: ControlCenterConfig.isLiveEdit
+            && (root.mode === "tiles" || root.mode === "tiles2")
+            && ControlCenterConfig.unassignedTiles.length > 0
+        Layout.fillWidth: true
+        spacing: 5
+
+        Repeater {
+            model: ControlCenterConfig.unassignedTiles
             delegate: Rectangle {
-                id: tileBtn
                 required property var modelData
-                required property int index
+                height: 24
+                implicitWidth: addTileRow.implicitWidth + 14
+                radius: 12
+                color: addTileMouse.containsMouse
+                    ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.18)
+                    : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05)
+                border.color: addTileMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgBorder
+                border.width: 1
 
-                readonly property string tid: modelData.id
-                readonly property bool isLastOdd: (tileBtn.index === ControlCenterConfig.enabledTiles.length - 1) && (ControlCenterConfig.enabledTiles.length % 2 === 1)
-                readonly property bool isBeingDragged: root.isDragging && root.draggedTileId === tileBtn.tid
-                readonly property bool isDropTarget: root.isDragging && root.dragHoverIndex === tileBtn.index && root.draggedTileId !== tileBtn.tid
-
-                Layout.fillWidth: true
-                Layout.columnSpan: isLastOdd ? 2 : 1
-                Layout.preferredHeight: 40
-                implicitHeight: 40
-                height: 40
-                radius: 8
-
-                scale: isBeingDragged ? 0.94 : (isDropTarget ? 1.04 : (tileClickArea.pressed ? 0.98 : 1.0))
-
-                // Determine active state per tile
-                readonly property bool isActive: {
-                    switch (tileBtn.tid) {
-                    case "wifi": return root.wifiEnabled;
-                    case "nightlight": return root.nightLightEnabled;
-                    case "caffeine": return SystemInfo.idleInhibited;
-                    case "dnd": return root.dndEnabled;
-                    case "mic": return root.micMuted;
-                    case "mute": return root.sinkMuted;
-                    case "gamemode": return root.gameModeEnabled;
-                    case "darkmode": return root.isDarkMode;
-                    case "bluetooth": return root.btAvailable && root.btEnabled;
-                    case "airplane": return root.airplaneEnabled;
-                    default: return false;
-                    }
-                }
-
-                readonly property bool isAvailable: {
-                    if (tileBtn.tid === "bluetooth") return root.btAvailable;
-                    return true;
-                }
-
-                readonly property bool isHovered: ControlCenterConfig.isLiveEdit ? editDragArea.containsMouse : tileClickArea.containsMouse
-
-                opacity: isBeingDragged ? 0.35 : (isAvailable ? 1.0 : 0.55)
-
-                // Tile background color
-                color: {
-                    if (tileBtn.tid === "mic" && root.micMuted) {
-                        return isHovered
-                            ? Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.30)
-                            : Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.22);
-                    }
-                    if (tileBtn.tid === "mute" && root.sinkMuted) {
-                        return isHovered
-                            ? Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.30)
-                            : Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.22);
-                    }
-                    if (isActive) {
-                        return isHovered
-                            ? Qt.lighter(root.theme.accentPrimary, 1.12)
-                            : root.theme.accentPrimary;
-                    }
-                    if (isHovered) {
-                        return Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.12);
-                    }
-                    return Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06);
-                }
-
-                border.color: {
-                    if (isDropTarget) {
-                        return root.theme.accentPrimary;
-                    }
-                    if (ControlCenterConfig.isLiveEdit) {
-                        return isHovered ? root.theme.accentPrimary : Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.45);
-                    }
-                    if ((tileBtn.tid === "mic" && root.micMuted) || (tileBtn.tid === "mute" && root.sinkMuted)) {
-                        return root.theme.accentRed;
-                    }
-                    if (isActive) return "transparent";
-                    return root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08);
-                }
-                border.width: (isDropTarget || ControlCenterConfig.isLiveEdit) ? 1.5 : 1
-
-                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
-                Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-
-                // Display icon & label
-                RowLayout {
+                Row {
+                    id: addTileRow
                     anchors.centerIn: parent
-                    spacing: 8
+                    spacing: 4
 
                     Text {
-                        id: tileIcon
+                        text: "+ " + (modelData.icon || "󰒓")
                         font.family: root.font
-                        font.pixelSize: 16
-                        color: {
-                            if ((tileBtn.tid === "mic" && root.micMuted) || (tileBtn.tid === "mute" && root.sinkMuted)) {
-                                return root.theme.accentRed;
-                            }
-                            return tileBtn.isActive ? root.theme.bgBase : root.theme.textPrimary;
-                        }
-                        text: {
-                            switch (tileBtn.tid) {
-                            case "wifi": return root.wifiEnabled ? "󰖩" : "󰖪";
-                            case "nightlight": return root.nightLightEnabled ? "󰛨" : "󰛩";
-                            case "caffeine": return SystemInfo.idleInhibited ? "" : "";
-                            case "dnd": return root.dndEnabled ? "󰂛" : "󰂚";
-                            case "mic": return root.micMuted ? "󰍭" : "󰍬";
-                            case "mute": return root.sinkMuted ? "󰝟" : "󰕾";
-                            case "gamemode": return "󰊴";
-                            case "clipboard": return "󰅍";
-                            case "darkmode": return root.isDarkMode ? "󰔎" : "󰃚";
-                            case "emoji": return "󰞅";
-                            case "screenshot": return "󰄄";
-                            case "lock": return "󰌾";
-                            case "bluetooth": return (root.btAvailable && root.btEnabled) ? "󰂯" : "󰂲";
-                            case "airplane": return root.airplaneEnabled ? "󰀝" : "󰀞";
-                            default: return tileBtn.modelData.icon ?? "󰅃";
-                            }
-                        }
+                        font.pixelSize: 10
+                        color: root.theme.accentPrimary
                     }
 
                     Text {
-                        id: tileLabel
+                        text: modelData.label || ""
                         font.family: root.font
-                        font.pixelSize: 12
-                        font.bold: tileBtn.isActive
-                        elide: Text.ElideRight
-                        Layout.maximumWidth: tileBtn.isLastOdd ? 200 : 100
-                        color: {
-                            if ((tileBtn.tid === "mic" && root.micMuted) || (tileBtn.tid === "mute" && root.sinkMuted)) {
-                                return root.theme.accentRed;
-                            }
-                            return tileBtn.isActive ? root.theme.bgBase : root.theme.textPrimary;
-                        }
-                        text: {
-                            switch (tileBtn.tid) {
-                            case "wifi":
-                                return (root.wifiEnabled && root.currentSsid !== "") ? root.currentSsid : "Wi-Fi";
-                            case "nightlight":
-                                return "Night Light";
-                            case "caffeine":
-                                return SystemInfo.idleInhibited ? "Awake: On" : "Keep Awake";
-                            case "dnd":
-                                return root.dndEnabled ? "DND: On" : "DND";
-                            case "mic":
-                                return root.micMuted ? "Mic Muted" : "Microphone";
-                            case "mute":
-                                return root.sinkMuted ? "Audio Muted" : "Mute Audio";
-                            case "gamemode":
-                                return root.gameModeEnabled ? "Game: On" : "Game Mode";
-                            case "clipboard":
-                                return "Clipboard";
-                            case "darkmode":
-                                return root.isDarkMode ? "Dark Mode" : "Light Mode";
-                            case "emoji":
-                                return "Emoji Picker";
-                            case "screenshot":
-                                return "Screenshot";
-                            case "lock":
-                                return "Lock";
-                            case "bluetooth":
-                                return root.btAvailable ? (root.btEnabled ? "Bluetooth" : "Bluetooth: Off") : "No BT";
-                            case "airplane":
-                                return root.airplaneEnabled ? "Airplane: On" : "Airplane";
-                            default:
-                                return tileBtn.modelData.label ?? "";
-                            }
-                        }
-                    }
-                }
-
-                // Drag-and-drop MouseArea in live edit mode
-                MouseArea {
-                    id: editDragArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    visible: ControlCenterConfig.isLiveEdit
-                    preventStealing: true
-                    cursorShape: root.isDragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-
-                    property real pressX: 0
-                    property real pressY: 0
-                    property bool dragStarted: false
-
-                    onPressed: (mouse) => {
-                        pressX = mouse.x;
-                        pressY = mouse.y;
-                        dragStarted = false;
-                    }
-
-                    onPositionChanged: (mouse) => {
-                        if (!pressed) return;
-                        const pt = editDragArea.mapToItem(root, mouse.x, mouse.y);
-                        if (!dragStarted && Math.hypot(mouse.x - pressX, mouse.y - pressY) > 5) {
-                            dragStarted = true;
-                            root.startTileDrag(tileBtn.tid, tileBtn.index, pt.x, pt.y);
-                        } else if (dragStarted) {
-                            root.updateTileDrag(pt.x, pt.y);
-                        }
-                    }
-
-                    onReleased: (mouse) => {
-                        if (dragStarted) {
-                            const pt = editDragArea.mapToItem(root, mouse.x, mouse.y);
-                            root.updateTileDrag(pt.x, pt.y);
-                            root.finishTileDrag();
-                            dragStarted = false;
-                        }
-                    }
-
-                    onCanceled: {
-                        if (dragStarted) {
-                            root.finishTileDrag();
-                            dragStarted = false;
-                        }
-                    }
-                }
-
-                // Remove ✕ badge in live edit mode
-                Rectangle {
-                    visible: ControlCenterConfig.isLiveEdit
-                    width: 18
-                    height: 18
-                    radius: 9
-                    anchors.top: parent.top
-                    anchors.right: parent.right
-                    anchors.topMargin: -4
-                    anchors.rightMargin: -4
-                    color: removeClickArea.containsMouse ? Qt.lighter(root.theme.accentRed ?? "#e05252", 1.15) : (root.theme.accentRed ?? "#e05252")
-                    border.color: "#ffffff"
-                    border.width: 1
-                    z: 15
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "✕"
-                        font.pixelSize: 9
-                        font.bold: true
-                        color: "#ffffff"
-                    }
-
-                    MouseArea {
-                        id: removeClickArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        preventStealing: true
-                        onClicked: ControlCenterConfig.removeTile(tileBtn.tid)
+                        font.pixelSize: 10
+                        color: root.theme.textPrimary
                     }
                 }
 
                 MouseArea {
-                    id: tileClickArea
+                    id: addTileMouse
                     anchors.fill: parent
                     hoverEnabled: true
-                    enabled: !ControlCenterConfig.isLiveEdit
-                    acceptedButtons: tileBtn.tid === "wifi" ? (Qt.LeftButton | Qt.RightButton) : Qt.LeftButton
-                    cursorShape: tileBtn.isAvailable ? Qt.PointingHandCursor : Qt.ForbiddenCursor
-                    preventStealing: true
-
-                    onClicked: (mouse) => {
-
-                        switch (tileBtn.tid) {
-                        case "wifi":
-                            if (mouse.button === Qt.RightButton) {
-                                root.toggleWifi();
-                            } else {
-                                root.openWifiRequested();
-                            }
-                            break;
-                        case "nightlight":
-                            root.toggleNightLight();
-                            break;
-                        case "caffeine":
-                            SystemInfo.toggleIdleInhibitor();
-                            break;
-                        case "dnd":
-                            root.togglednd();
-                            break;
-                        case "mic":
-                            root.toggleMic();
-                            break;
-                        case "mute":
-                            root.toggleSinkMute();
-                            break;
-                        case "gamemode":
-                            root.toggleGameMode();
-                            break;
-                        case "clipboard":
-                            root.openClipboard();
-                            break;
-                        case "darkmode":
-                            root.toggleDarkMode();
-                            break;
-                        case "emoji":
-                            root.openEmoji();
-                            break;
-                        case "screenshot":
-                            root.takeScreenshot();
-                            break;
-                        case "lock":
-                            root.lockSession();
-                            break;
-                        case "bluetooth":
-                            root.toggleBt();
-                            break;
-                        case "airplane":
-                            root.toggleAirplane();
-                            break;
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (root.mode === "tiles2") {
+                            ControlCenterConfig.addTileToSecondary(modelData.id);
+                        } else {
+                            ControlCenterConfig.setTileEnabled(modelData.id, true);
+                        }
                     }
                 }
             }
         }
     }
-}
 
     // Floating drag ghost for live edit mode
-    Rectangle {
+    QuickSettingsTileDragGhost {
         id: dragGhost
-        readonly property bool active: root.isDragging && root.draggedTileId !== ""
-        visible: opacity > 0.01
-        z: 9999
-        width: 140
-        height: 40
-        radius: 8
-        color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.22)
-        border.color: root.theme.accentPrimary
-        border.width: 1.5
-        scale: active ? 1.05 : 0.85
-        opacity: active ? 0.95 : 0.0
-        x: Math.max(0, Math.min(root.width - width, root.dragMouseX - (width / 2)))
-        y: Math.max(0, Math.min(root.height - height, root.dragMouseY - (height / 2)))
-
-        Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-        Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-
-        RowLayout {
-            anchors.centerIn: parent
-            spacing: 8
-
-            Text {
-                font.family: root.font
-                font.pixelSize: 15
-                color: root.theme.accentPrimary
-                text: {
-                    const def = ControlCenterConfig.getTileDef(root.draggedTileId);
-                    return def ? def.icon : "󰒓";
-                }
-            }
-
-            Text {
-                font.family: root.font
-                font.pixelSize: 12
-                font.bold: true
-                color: root.theme.textPrimary
-                text: {
-                    const def = ControlCenterConfig.getTileDef(root.draggedTileId);
-                    return def ? def.label : "";
-                }
-            }
-        }
+        hostGrid: root
     }
-
 }
-

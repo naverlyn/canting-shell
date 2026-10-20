@@ -306,6 +306,7 @@ get_base_settings() {
         show_uptime = "true"; show_batt = "true"; show_weather = "true";
         in_w = 260; in_h = 56; in_thick = 2; in_dsize = 0.2; in_dspace = 0.2;
         in_dcenter = "true"; in_fade = "false"; in_hide = "false"; in_holder = "Type Password";
+        in_px = 0; in_py = -85; in_halign = "center"; in_valign = "center";
 
         cur_section = ""; in_gen = 0; in_bg = 0; in_input = 0;
     }
@@ -371,6 +372,12 @@ get_base_settings() {
         gsub(/^["'\''"]+|["'\''"]+$/, "", p);
         in_holder = clean_val(p);
     }
+    in_input && /^[[:space:]]*position[[:space:]]*=/ {
+        split($0, a, "="); split(a[2], s, ",");
+        in_px = (clean_val(s[1]) + 0); in_py = (clean_val(s[2]) + 0);
+    }
+    in_input && /^[[:space:]]*halign[[:space:]]*=/ { split($0, a, "="); in_halign = clean_val(a[2]); }
+    in_input && /^[[:space:]]*valign[[:space:]]*=/ { split($0, a, "="); in_valign = clean_val(a[2]); }
 
     cur_section == "time" && /^[[:space:]]*text[[:space:]]*=/ {
         if ($0 ~ /%H/ && $0 !~ /%I/) clock_fmt = "24h"; else clock_fmt = "12h";
@@ -415,7 +422,11 @@ get_base_settings() {
         printf "  \"input_dots_center\": %s,\n", (in_dcenter == "true" ? "true" : "false");
         printf "  \"input_fade_on_empty\": %s,\n", (in_fade == "true" ? "true" : "false");
         printf "  \"input_hide_input\": %s,\n", (in_hide == "true" ? "true" : "false");
-        printf "  \"input_placeholder\": \"%s\"\n", in_holder;
+        printf "  \"input_placeholder\": \"%s\",\n", in_holder;
+        printf "  \"input_pos_x\": %d,\n", in_px;
+        printf "  \"input_pos_y\": %d,\n", in_py;
+        printf "  \"input_halign\": \"%s\",\n", in_halign;
+        printf "  \"input_valign\": \"%s\"\n", in_valign;
         printf "}\n";
     }
     ' "$CONF_PATH"
@@ -465,6 +476,7 @@ cmd_set() {
     local has_in_fade v_in_fade
     local has_in_hide v_in_hide
     local has_in_holder v_in_holder
+    local has_in_px v_in_px has_in_py v_in_py
     local has_show_date v_show_date
     local has_show_user v_show_user
     local has_show_layout v_show_layout
@@ -499,6 +511,8 @@ cmd_set() {
         flag("in_fade"; .input_fade_on_empty),
         flag("in_hide"; .input_hide_input),
         flag("in_holder"; .input_placeholder),
+        flag("in_px"; .input_pos_x),
+        flag("in_py"; .input_pos_y),
         flag("show_date"; .show_date),
         flag("show_user"; .show_user),
         flag("show_layout"; .show_layout),
@@ -553,6 +567,8 @@ cmd_set() {
         -v has_in_fade="${has_in_fade:-0}" -v v_in_fade="${v_in_fade:-}" \
         -v has_in_hide="${has_in_hide:-0}" -v v_in_hide="${v_in_hide:-}" \
         -v has_in_holder="${has_in_holder:-0}" -v v_in_holder="${v_in_holder:-}" \
+        -v has_in_px="${has_in_px:-0}" -v v_in_px="${v_in_px:-}" \
+        -v has_in_py="${has_in_py:-0}" -v v_in_py="${v_in_py:-}" \
         -v has_show_date="${has_show_date:-0}" -v v_show_date="${v_show_date:-}" \
         -v has_show_user="${has_show_user:-0}" -v v_show_user="${v_show_user:-}" \
         -v has_show_layout="${has_show_layout:-0}" -v v_show_layout="${v_show_layout:-}" \
@@ -675,6 +691,10 @@ cmd_set() {
         }
         if (has_in_holder == 1 && $0 ~ /^[[:space:]]*placeholder_text[[:space:]]*=/) {
             printf "%splaceholder_text = <i><span foreground=\"##ffffff99\">%s</span></i>\n", indent, v_in_holder;
+            next;
+        }
+        if (has_in_px == 1 && has_in_py == 1 && $0 ~ /^[[:space:]]*position[[:space:]]*=/) {
+            printf "%sposition = %d, %d\n", indent, v_in_px, v_in_py;
             next;
         }
         print $0;
@@ -903,10 +923,31 @@ with open(conf_path, "r", encoding="utf-8") as f:
 
 out_lines = []
 in_label = False
+in_input = False
 label_idx = -1
 target_update = None
+input_update = update_map.get(-1)
 
 for line in lines:
+    if not in_label and not in_input and re.match(r"^\s*input-field\s*\{", line):
+        in_input = True
+        out_lines.append(line)
+        continue
+
+    if in_input and re.match(r"^\s*\}", line):
+        in_input = False
+        out_lines.append(line)
+        continue
+
+    if in_input and input_update:
+        if ("position_x" in input_update or "position_y" in input_update) and re.match(r"^\s*position\s*=", line):
+            m = re.match(r"^(\s*)position\s*=.*$", line)
+            prefix = m.group(1) if m else "    "
+            px = int(round(float(input_update.get("position_x", 0))))
+            py = int(round(float(input_update.get("position_y", -85))))
+            out_lines.append(f"{prefix}position = {px}, {py}\n")
+            continue
+
     if not in_label and re.match(r"^\s*#?\s*label\s*\{", line):
         in_label = True
         label_idx += 1

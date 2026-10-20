@@ -12,7 +12,7 @@ Rectangle {
     width: parent ? parent.width : 300
     height: cavaCol.implicitHeight + 24
     implicitHeight: cavaCol.implicitHeight + 24
-    implicitWidth: width
+    implicitWidth: 300
     radius: 10
     color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05)
     border.color: root.theme.bgBorder
@@ -38,7 +38,7 @@ Rectangle {
             spacing: 8
 
             Text {
-                text: "󰝛 Cava Visualizer"
+                text: "Cava Visualizer"
                 font.family: root.font
                 font.pixelSize: 12
                 font.bold: true
@@ -74,14 +74,14 @@ Rectangle {
 
                 Repeater {
                     model: [
-                        { id: "bars", label: "󰝛 Bars" },
-                        { id: "glyphs", label: "󰘦 Glyphs" },
-                        { id: "line", label: "󰄲 Line" }
+                        { id: "bars", label: "Bars" },
+                        { id: "glyphs", label: "Glyphs" },
+                        { id: "line", label: "Line" }
                     ]
 
                     delegate: Rectangle {
                         required property var modelData
-                        implicitWidth: styleChipText.implicitWidth + 10
+                        implicitWidth: styleChipText.implicitWidth + 12
                         height: 22
                         radius: 4
                         readonly property bool isCur: BarConfig.cavaStyle === modelData.id
@@ -208,7 +208,7 @@ Rectangle {
                 Text {
                     id: stereoText
                     anchors.centerIn: parent
-                    text: BarConfig.cavaStereo ? "󰎈 Stereo" : "󰕾 Mono"
+                    text: BarConfig.cavaStereo ? "Stereo" : "Mono"
                     font.family: root.font
                     font.pixelSize: 9
                     font.bold: BarConfig.cavaStereo

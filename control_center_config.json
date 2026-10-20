@@ -1,6 +1,23 @@
 {
   "width": 320,
   "panelLayout": "vertical",
+  "panelCount": 3,
+  "panel1": [
+    "connectivity",
+    "quickSettings",
+    "systemInfo",
+    "quickSettings2"
+  ],
+  "panel2": [
+    "brightness",
+    "media",
+    "audio"
+  ],
+  "panel3": [
+    "cava",
+    "weather",
+    "quickApps"
+  ],
   "groupTilesEnabled": true,
   "groupedTileIds": [
     "wifi",
@@ -8,24 +25,69 @@
     "dnd",
     "airplane"
   ],
-  "mediaWidgetStyle": "full",
+  "secondaryTileIds": [
+    "gamemode",
+    "clipboard"
+  ],
+  "quickAppsMaxCount": 5,
+  "quickApps": [
+    {
+      "id": "terminal",
+      "label": "Terminal",
+      "icon": "󰆍",
+      "cmd": "kitty || alacritty || foot || wezterm || xdg-terminal-exec"
+    },
+    {
+      "id": "browser",
+      "label": "Browser",
+      "icon": "󰈹",
+      "cmd": "xdg-open https:// || firefox || brave || google-chrome-stable || chromium"
+    },
+    {
+      "id": "files",
+      "label": "Files",
+      "icon": "󰉋",
+      "cmd": "thunar || nautilus || dolphin || nemo || pcmanfm"
+    },
+    {
+      "id": "editor",
+      "label": "Code",
+      "icon": "󰨞",
+      "cmd": "codium || code || zeditor || kate || nvim"
+    },
+    {
+      "id": "steam",
+      "desktopId": "steam",
+      "label": "Steam",
+      "icon": "steam",
+      "cmd": ""
+    },
+    {
+      "id": "music",
+      "label": "Music",
+      "icon": "󰝚",
+      "cmd": "spotify || Amberol || rhythmbox || Elisa"
+    },
+    {
+      "id": "monitor",
+      "label": "Monitor",
+      "icon": "󰍛",
+      "cmd": "missioncenter || gnome-system-monitor || kitty -e btop || alacritty -e btop"
+    },
+    {
+      "id": "settings",
+      "label": "Settings",
+      "icon": "󰒓",
+      "cmd": "__settings__"
+    }
+  ],
+  "mediaWidgetStyle": "auto",
   "cards": {
     "header": true,
-    "viewSwitcher": true,
-    "quickSettings": true,
-    "brightness": false,
-    "audio": true,
-    "media": true,
-    "systemInfo": false
+    "viewSwitcher": true
   },
   "mediaAutoHide": false,
-  "cardOrder": [
-    "quickSettings",
-    "brightness",
-    "audio",
-    "media",
-    "systemInfo"
-  ],
+  "mediaShowCava": false,
   "tiles": [
     {
       "id": "wifi",
@@ -81,7 +143,7 @@
     },
     {
       "id": "airplane",
-      "enabled": false
+      "enabled": true
     }
   ]
 }

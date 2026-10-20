@@ -27,13 +27,13 @@ Rectangle {
     property real currentPos: player ? player.position : 0
     readonly property real trackLen: (player && player.length > 0) ? player.length : 0
 
-    readonly property bool isCompact: ControlCenterConfig.mediaWidgetStyle === "compact"
+    readonly property bool isCompact: ControlCenterConfig.isMediaEffectiveCompact
 
     visible: hasMedia || ControlCenterConfig.isLiveEdit
     width: parent ? parent.width : 300
     height: root.isCompact ? (compactCol.implicitHeight + 20) : (mprisCol.implicitHeight + 28)
     implicitHeight: root.isCompact ? (compactCol.implicitHeight + 20) : (mprisCol.implicitHeight + 28)
-    implicitWidth: width
+    implicitWidth: 300
     radius: 10
     color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.05)
     border.color: root.theme.bgBorder

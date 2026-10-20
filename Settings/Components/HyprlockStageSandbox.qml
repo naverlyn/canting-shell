@@ -31,8 +31,16 @@ Rectangle {
     property int inputWidth: 260
     property int inputHeight: 56
     property string inputPlaceholder: "Type Password"
+    property int inputPosX: 0
+    property int inputPosY: -85
+    property string inputHalign: "center"
+    property string inputValign: "center"
+
+    property int liveInputX: 0
+    property int liveInputY: -85
 
     signal blockMoved(int index, int newX, int newY)
+    signal inputMoved(int newX, int newY)
     signal applyRequested(var blocks)
     signal resetRequested()
 
@@ -70,30 +78,36 @@ Rectangle {
     }
 
     function syncBlocks() {
-        if (!stageRoot.hasUnsavedMoves && stageRoot.textBlocks) {
-            let arr = [];
-            for (let i = 0; i < stageRoot.textBlocks.length; i++) {
-                let b = stageRoot.textBlocks[i];
-                arr.push({
-                    index: b.index !== undefined ? b.index : i,
-                    name: b.name || ("Block " + (i + 1)),
-                    enabled: b.enabled !== undefined ? b.enabled : true,
-                    is_cmd: !!b.is_cmd,
-                    raw_text: b.raw_text || "",
-                    font_size: b.font_size || 14,
-                    font_family: b.font_family || "Victor Mono Bold Oblique",
-                    position_x: b.position_x !== undefined ? b.position_x : 0,
-                    position_y: b.position_y !== undefined ? b.position_y : 0,
-                    halign: b.halign || "center",
-                    valign: b.valign || "center",
-                    color: b.color || "$color8"
-                });
+        if (!stageRoot.hasUnsavedMoves) {
+            stageRoot.liveInputX = stageRoot.inputPosX;
+            stageRoot.liveInputY = stageRoot.inputPosY;
+            if (stageRoot.textBlocks) {
+                let arr = [];
+                for (let i = 0; i < stageRoot.textBlocks.length; i++) {
+                    let b = stageRoot.textBlocks[i];
+                    arr.push({
+                        index: b.index !== undefined ? b.index : i,
+                        name: b.name || ("Block " + (i + 1)),
+                        enabled: b.enabled !== undefined ? b.enabled : true,
+                        is_cmd: !!b.is_cmd,
+                        raw_text: b.raw_text || "",
+                        font_size: b.font_size || 14,
+                        font_family: b.font_family || "Victor Mono Bold Oblique",
+                        position_x: b.position_x !== undefined ? b.position_x : 0,
+                        position_y: b.position_y !== undefined ? b.position_y : 0,
+                        halign: b.halign || "center",
+                        valign: b.valign || "center",
+                        color: b.color || "$color8"
+                    });
+                }
+                stageRoot.liveBlocks = arr;
             }
-            stageRoot.liveBlocks = arr;
         }
     }
 
     onTextBlocksChanged: syncBlocks()
+    onInputPosXChanged: if (!stageRoot.hasUnsavedMoves) stageRoot.liveInputX = stageRoot.inputPosX
+    onInputPosYChanged: if (!stageRoot.hasUnsavedMoves) stageRoot.liveInputY = stageRoot.inputPosY
     Component.onCompleted: syncBlocks()
 
     ColumnLayout {
@@ -167,7 +181,7 @@ Rectangle {
 
                 // Snap Selected to Center
                 Rectangle {
-                    visible: stageRoot.selectedIndex >= 0 && stageRoot.selectedIndex < stageRoot.liveBlocks.length
+                    visible: (stageRoot.selectedIndex >= 0 && stageRoot.selectedIndex < stageRoot.liveBlocks.length) || stageRoot.selectedIndex === -2
                     implicitWidth: snapText.implicitWidth + 18
                     height: 28
                     radius: 7
@@ -197,7 +211,12 @@ Rectangle {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
-                            if (stageRoot.selectedIndex >= 0 && stageRoot.selectedIndex < stageRoot.liveBlocks.length) {
+                            if (stageRoot.selectedIndex === -2) {
+                                stageRoot.liveInputX = 0;
+                                stageRoot.hasUnsavedMoves = true;
+                                stageRoot.inputMoved(0, stageRoot.liveInputY);
+                                stageRoot.refreshTrigger++;
+                            } else if (stageRoot.selectedIndex >= 0 && stageRoot.selectedIndex < stageRoot.liveBlocks.length) {
                                 let b = stageRoot.liveBlocks[stageRoot.selectedIndex];
                                 b.position_x = 0;
                                 stageRoot.hasUnsavedMoves = true;
@@ -346,19 +365,75 @@ Rectangle {
                 color: Qt.rgba(1, 1, 1, 0.15)
             }
 
-            // 4. Simulated Password Input Field (Reference Box at 0, -85)
+            // 4. Interactive Draggable Password Input Field
             Rectangle {
                 id: simInputBox
                 readonly property real simW: Math.max(70, stageRoot.inputWidth * canvasBox.scaleFactor)
                 readonly property real simH: Math.max(16, stageRoot.inputHeight * canvasBox.scaleFactor)
+                readonly property bool isInputSelected: stageRoot.selectedIndex === -2
                 width: simW
                 height: simH
                 radius: simH / 2
-                x: (canvasBox.width / 2) - (width / 2)
-                y: (canvasBox.height / 2) - (-85 * canvasBox.scaleFactor) - (height / 2)
-                color: Qt.rgba(0, 0, 0, 0.5)
-                border.color: Qt.rgba(stageRoot.theme.accentPrimary.r, stageRoot.theme.accentPrimary.g, stageRoot.theme.accentPrimary.b, 0.5)
-                border.width: 1
+                z: isInputSelected || inputDragArea.drag.active ? 15 : 3
+
+                function updateInputCoords() {
+                    if (inputDragArea.drag.active) return;
+                    let sFactor = canvasBox.scaleFactor;
+                    let curX = stageRoot.liveInputX;
+                    let curY = stageRoot.liveInputY;
+
+                    let targetX = 0;
+                    if (stageRoot.inputHalign === "center") {
+                        targetX = (canvasBox.width / 2) + (curX * sFactor) - (width / 2);
+                    } else if (stageRoot.inputHalign === "right") {
+                        targetX = canvasBox.width + (curX * sFactor) - width;
+                    } else {
+                        targetX = curX * sFactor;
+                    }
+
+                    let targetY = 0;
+                    if (stageRoot.inputValign === "center") {
+                        targetY = (canvasBox.height / 2) - (curY * sFactor) - (height / 2);
+                    } else if (stageRoot.inputValign === "bottom") {
+                        targetY = canvasBox.height - (curY * sFactor) - height;
+                    } else {
+                        targetY = -(curY * sFactor);
+                    }
+
+                    x = Math.round(targetX);
+                    y = Math.round(targetY);
+                }
+
+                Component.onCompleted: updateInputCoords()
+                onWidthChanged: updateInputCoords()
+                onHeightChanged: updateInputCoords()
+
+                Connections {
+                    target: canvasBox
+                    function onScaleFactorChanged() { simInputBox.updateInputCoords(); }
+                }
+
+                Connections {
+                    target: stageRoot
+                    function onLiveInputXChanged() { simInputBox.updateInputCoords(); }
+                    function onLiveInputYChanged() { simInputBox.updateInputCoords(); }
+                    function onRefreshTriggerChanged() { simInputBox.updateInputCoords(); }
+                }
+
+                color: inputDragArea.drag.active
+                    ? Qt.rgba(stageRoot.theme.accentPrimary.r, stageRoot.theme.accentPrimary.g, stageRoot.theme.accentPrimary.b, 0.35)
+                    : (isInputSelected
+                        ? Qt.rgba(stageRoot.theme.accentPrimary.r, stageRoot.theme.accentPrimary.g, stageRoot.theme.accentPrimary.b, 0.22)
+                        : (inputBoxHover.hovered ? Qt.rgba(0, 0, 0, 0.7) : Qt.rgba(0, 0, 0, 0.5)))
+                border.color: (isInputSelected || inputDragArea.drag.active)
+                    ? (stageRoot.theme.accentPrimary ?? "#7aa2f7")
+                    : Qt.rgba(stageRoot.theme.accentPrimary.r, stageRoot.theme.accentPrimary.g, stageRoot.theme.accentPrimary.b, inputBoxHover.hovered ? 0.85 : 0.5)
+                border.width: (isInputSelected || inputDragArea.drag.active) ? 1.5 : 1
+
+                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                HoverHandler { id: inputBoxHover }
 
                 Row {
                     anchors.centerIn: parent
@@ -370,8 +445,100 @@ Rectangle {
                             height: 3
                             radius: 1.5
                             color: "#ffffff"
-                            opacity: 0.7
+                            opacity: 0.85
                         }
+                    }
+                }
+
+                // Floating Coordinates Badge for Password Input
+                Rectangle {
+                    visible: simInputBox.isInputSelected || inputDragArea.drag.active || inputBoxHover.hovered
+                    anchors.bottom: parent.top
+                    anchors.bottomMargin: 4
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    implicitWidth: inputBadgeTxt.implicitWidth + 14
+                    height: 18
+                    radius: 4
+                    color: "#1e1e2e"
+                    border.color: stageRoot.theme.accentPrimary ?? "#7aa2f7"
+                    border.width: 1
+                    z: 20
+
+                    Text {
+                        id: inputBadgeTxt
+                        anchors.centerIn: parent
+                        text: "Password Input (" + stageRoot.liveInputX + ", " + stageRoot.liveInputY + ")"
+                        font.family: stageRoot.font
+                        font.pixelSize: 9
+                        font.bold: true
+                        color: stageRoot.theme.accentPrimary ?? "#7aa2f7"
+                    }
+                }
+
+                MouseArea {
+                    id: inputDragArea
+                    anchors.fill: parent
+                    preventStealing: true
+                    drag.target: simInputBox
+                    drag.axis: Drag.XAndYAxis
+                    drag.minimumX: 0
+                    drag.maximumX: Math.max(0, canvasBox.width - simInputBox.width)
+                    drag.minimumY: 0
+                    drag.maximumY: Math.max(0, canvasBox.height - simInputBox.height)
+                    cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+
+                    onPressed: {
+                        stageRoot.selectedIndex = -2;
+                        dragGuides.targetCenterX = simInputBox.x + simInputBox.width / 2;
+                        dragGuides.targetCenterY = simInputBox.y + simInputBox.height / 2;
+                    }
+
+                    onPositionChanged: {
+                        if (drag.active) {
+                            let sFactor = canvasBox.scaleFactor;
+                            let curCenterX = simInputBox.x + simInputBox.width / 2;
+                            let curCenterY = simInputBox.y + simInputBox.height / 2;
+
+                            dragGuides.targetCenterX = curCenterX;
+                            dragGuides.targetCenterY = curCenterY;
+
+                            let rawX = 0;
+                            if (stageRoot.inputHalign === "center") {
+                                rawX = (curCenterX - (canvasBox.width / 2)) / sFactor;
+                            } else if (stageRoot.inputHalign === "right") {
+                                rawX = ((simInputBox.x + simInputBox.width) - canvasBox.width) / sFactor;
+                            } else {
+                                rawX = simInputBox.x / sFactor;
+                            }
+
+                            let rawY = 0;
+                            if (stageRoot.inputValign === "center") {
+                                rawY = ((canvasBox.height / 2) - curCenterY) / sFactor;
+                            } else if (stageRoot.inputValign === "bottom") {
+                                rawY = (canvasBox.height - (simInputBox.y + simInputBox.height)) / sFactor;
+                            } else {
+                                rawY = -(simInputBox.y) / sFactor;
+                            }
+
+                            if (stageRoot.inputHalign === "center" && Math.abs(rawX) < 14) rawX = 0;
+                            if (stageRoot.inputValign === "center" && Math.abs(rawY) < 14) rawY = 0;
+
+                            let finalX = Math.round(rawX);
+                            let finalY = Math.round(rawY);
+
+                            if (stageRoot.liveInputX !== finalX || stageRoot.liveInputY !== finalY) {
+                                stageRoot.liveInputX = finalX;
+                                stageRoot.liveInputY = finalY;
+                                stageRoot.hasUnsavedMoves = true;
+                                stageRoot.inputMoved(finalX, finalY);
+                            }
+                        }
+                    }
+
+                    onReleased: {
+                        dragGuides.targetCenterX = simInputBox.x + simInputBox.width / 2;
+                        dragGuides.targetCenterY = simInputBox.y + simInputBox.height / 2;
+                        simInputBox.updateInputCoords();
                     }
                 }
             }
@@ -380,7 +547,7 @@ Rectangle {
             Item {
                 id: dragGuides
                 anchors.fill: parent
-                visible: stageRoot.selectedIndex >= 0
+                visible: stageRoot.selectedIndex >= 0 || stageRoot.selectedIndex === -2
 
                 property real targetCenterX: 0
                 property real targetCenterY: 0

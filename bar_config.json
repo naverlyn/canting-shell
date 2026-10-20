@@ -9,6 +9,22 @@
   "hidePill": true,
   "activeStyle": "underline",
   "allMonitors": true,
+  "displayTarget": "all",
+  "secondaryPosition": "bottom",
+  "secondaryMode": "custom",
+  "blankOnSecondary": false,
+  "secondaryPanels": [
+    [
+      "workspaces"
+    ],
+    [
+      "windowTitle"
+    ],
+    [
+      "weather",
+      "clock"
+    ]
+  ],
   "innerCorners": true,
   "bars": [
     {
@@ -24,6 +40,22 @@
       "hidePill": true,
       "activeStyle": "underline",
       "allMonitors": true,
+      "displayTarget": "all",
+      "secondaryPosition": "bottom",
+      "secondaryMode": "custom",
+      "blankOnSecondary": false,
+      "secondaryPanels": [
+        [
+          "workspaces"
+        ],
+        [
+          "windowTitle"
+        ],
+        [
+          "weather",
+          "clock"
+        ]
+      ],
       "innerCorners": true,
       "panels": [
         [
@@ -36,9 +68,9 @@
           "weather"
         ],
         [
-          "temp",
-          "memory",
           "disk",
+          "memory",
+          "temp",
           "cpu",
           "network",
           "workspaces",
@@ -46,6 +78,128 @@
           "controlCenter",
           "clock"
         ]
+      ]
+    },
+    {
+      "id": "bar_1792427054128",
+      "name": "Bar 2",
+      "enabled": true,
+      "position": "bottom",
+      "barHeight": 32,
+      "floating": false,
+      "barOpacity": 0.85,
+      "pillRadius": 10,
+      "pillOpacity": 1,
+      "hidePill": true,
+      "activeStyle": "underline",
+      "allMonitors": false,
+      "displayTarget": "primary",
+      "secondaryPosition": "bottom",
+      "secondaryMode": "custom",
+      "blankOnSecondary": false,
+      "secondaryPanels": [
+        [
+          "workspaces"
+        ],
+        [
+          "windowTitle"
+        ],
+        [
+          "weather",
+          "clock"
+        ]
+      ],
+      "innerCorners": true,
+      "panels": [
+        [
+          "workspaces"
+        ],
+        [
+          "clock"
+        ],
+        [
+          "volume",
+          "battery"
+        ]
+      ]
+    },
+    {
+      "id": "bar_1792427054520",
+      "name": "Bar 3",
+      "enabled": true,
+      "position": "left",
+      "barHeight": 32,
+      "floating": false,
+      "barOpacity": 0.85,
+      "pillRadius": 10,
+      "pillOpacity": 1,
+      "hidePill": true,
+      "activeStyle": "underline",
+      "allMonitors": false,
+      "displayTarget": "primary",
+      "secondaryPosition": "left",
+      "secondaryMode": "custom",
+      "blankOnSecondary": false,
+      "secondaryPanels": [
+        [
+          "workspaces"
+        ],
+        [
+          "windowTitle"
+        ],
+        [
+          "weather",
+          "clock"
+        ]
+      ],
+      "innerCorners": true,
+      "panels": [
+        [
+          "workspaces"
+        ],
+        [
+          "clock"
+        ],
+        [
+          "volume",
+          "battery"
+        ]
+      ]
+    },
+    {
+      "id": "bar_1792427054908",
+      "name": "Bar 4",
+      "enabled": true,
+      "position": "right",
+      "barHeight": 32,
+      "floating": false,
+      "barOpacity": 0.85,
+      "pillRadius": 10,
+      "pillOpacity": 1,
+      "hidePill": true,
+      "activeStyle": "underline",
+      "allMonitors": false,
+      "displayTarget": "primary",
+      "secondaryPosition": "right",
+      "secondaryMode": "custom",
+      "blankOnSecondary": false,
+      "secondaryPanels": [
+        [
+          "workspaces"
+        ],
+        [
+          "windowTitle"
+        ],
+        [
+          "weather",
+          "clock"
+        ]
+      ],
+      "innerCorners": true,
+      "panels": [
+        [],
+        [],
+        []
       ]
     }
   ],
@@ -60,9 +214,9 @@
       "weather"
     ],
     [
-      "temp",
-      "memory",
       "disk",
+      "memory",
+      "temp",
       "cpu",
       "network",
       "workspaces",
@@ -81,9 +235,9 @@
     "weather"
   ],
   "rightWidgets": [
-    "temp",
-    "memory",
     "disk",
+    "memory",
+    "temp",
     "cpu",
     "network",
     "workspaces",
@@ -94,12 +248,11 @@
   "removedWidgets": [
     "@color:bar_1:appGrid=textPrimary",
     "globalMenu",
-    "volume",
-    "clock",
-    "workspaces",
-    "appGrid",
     "idleInhibitor",
     "media",
+    "workspaces",
+    "clock",
+    "volume",
     "battery"
   ],
   "showAppGrid": true,
@@ -138,7 +291,7 @@
   "cavaFramerate": 30,
   "cavaStyle": "line",
   "cavaStereo": false,
-  "cavaAutoHide": false,
+  "cavaAutoHide": true,
   "cavaShowIcon": false,
   "hwShowIcons": true,
   "hwAlertEnabled": true,

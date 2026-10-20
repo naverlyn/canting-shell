@@ -7,6 +7,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import "../ThemeSwitcher"
 import "./Components"
+import "./Components/Common"
 
 Scope {
     id: root
@@ -232,216 +233,12 @@ Scope {
                 spacing: 0
 
                 // Sidebar
-                Rectangle {
+                // Sidebar
+                SettingsSidebar {
                     id: sidebarRect
-                    Layout.fillHeight: true
-                    Layout.preferredWidth: winCard.sidebarWidth
-                    width: winCard.sidebarWidth
-                    color: root.theme.bgSurface
-                    radius: 12
-                    
-                    // Square off right corners adjacent to main content
-                    Rectangle {
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        width: 12
-                        color: parent.color
-                    }
-
-                    // Subtle vertical border dividing sidebar and content
-                    Rectangle {
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        width: 1
-                        color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                    }
-
-                    // Interactive horizontal splitter to resize sidebar
-                    MouseArea {
-                        id: sidebarSplitter
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        anchors.rightMargin: -4
-                        width: 9
-                        cursorShape: Qt.SplitHCursor
-                        z: 20
-
-                        property real startScreenX: 0
-                        property int startW: 0
-
-                        onPressed: (mouse) => {
-                            let pt = mapToItem(settingsWindow, mouse.x, 0);
-                            startScreenX = pt.x;
-                            startW = winCard.sidebarWidth;
-                        }
-                        onPositionChanged: (mouse) => {
-                            if (pressed) {
-                                let curPt = mapToItem(settingsWindow, mouse.x, 0);
-                                let delta = curPt.x - startScreenX;
-                                winCard.sidebarWidth = Math.max(190, Math.min(360, startW + delta));
-                            }
-                        }
-                    }
-
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.topMargin: 14
-                        anchors.bottomMargin: 14
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 6
-
-                        // Sidebar Header with Drag Handle indicator
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.leftMargin: 4
-                            Layout.rightMargin: 4
-                            Layout.bottomMargin: 2
-
-                            Text {
-                                text: "Settings"
-                                font.family: root.font
-                                font.pixelSize: 18
-                                font.bold: true
-                                color: root.theme.textPrimary
-                                Layout.fillWidth: true
-                                Layout.alignment: Qt.AlignVCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-
-                            Text {
-                                text: "󰓅"
-                                font.family: root.font
-                                font.pixelSize: 13
-                                color: root.theme.textMuted
-                                Layout.alignment: Qt.AlignVCenter
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                        }
-
-                        // Scrollable categorized sections
-                        Flickable {
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            contentHeight: sectionsCol.implicitHeight
-                            contentWidth: width
-                            flickableDirection: Flickable.VerticalFlick
-                            clip: true
-                            boundsBehavior: Flickable.StopAtBounds
-
-                            ScrollBar.vertical: ScrollBar {
-                                policy: ScrollBar.AlwaysOff
-                            }
-
-                            ColumnLayout {
-                                id: sectionsCol
-                                width: parent.width
-                                spacing: 2
-
-                                Repeater {
-                                    model: settingsWindow.visible ? root.sections : []
-                                    delegate: ColumnLayout {
-                                        id: secCol
-                                        required property var modelData
-                                        required property int index
-                                        Layout.fillWidth: true
-                                        spacing: 1
-
-                                        // Section Category Header
-                                        Item {
-                                            Layout.fillWidth: true
-                                            height: secCol.index === 0 ? 18 : 22
-
-                                            Text {
-                                                anchors.left: parent.left
-                                                anchors.leftMargin: 8
-                                                anchors.bottom: parent.bottom
-                                                anchors.bottomMargin: 3
-                                                text: secCol.modelData.category
-                                                font.family: root.font
-                                                font.pixelSize: 10
-                                                font.bold: true
-                                                font.capitalization: Font.AllUppercase
-                                                color: root.theme.textMuted ?? Qt.rgba(1,1,1,0.4)
-                                            }
-                                        }
-
-                                        // Section Items
-                                        Repeater {
-                                            model: secCol.modelData.items
-                                            delegate: Rectangle {
-                                                id: itemRect
-                                                required property var modelData
-                                                required property int index
-
-                                                Layout.fillWidth: true
-                                                height: 33
-                                                radius: 7
-                                                color: root.currentTab === itemRect.modelData.pageIndex
-                                                    ? root.theme.bgSelected
-                                                    : (tabMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.05)) : "transparent")
-
-                                                Behavior on color { ColorAnimation { duration: 150 } }
-
-                                                RowLayout {
-                                                    anchors.fill: parent
-                                                    anchors.leftMargin: 12
-                                                    anchors.rightMargin: 12
-                                                    spacing: 10
-
-                                                    Item {
-                                                        width: 18
-                                                        height: 18
-                                                        Layout.alignment: Qt.AlignVCenter
-
-                                                        Text {
-                                                            anchors.centerIn: parent
-                                                            text: itemRect.modelData.icon
-                                                            font.family: root.font
-                                                            font.pixelSize: 14
-                                                            color: root.currentTab === itemRect.modelData.pageIndex
-                                                                ? root.theme.accentPrimary
-                                                                : root.theme.textSecondary
-                                                            horizontalAlignment: Text.AlignHCenter
-                                                            verticalAlignment: Text.AlignVCenter
-                                                            Behavior on color { ColorAnimation { duration: 150 } }
-                                                        }
-                                                    }
-
-                                                    Text {
-                                                        text: itemRect.modelData.name
-                                                        font.family: root.font
-                                                        font.pixelSize: 13
-                                                        font.bold: root.currentTab === itemRect.modelData.pageIndex
-                                                        color: root.currentTab === itemRect.modelData.pageIndex
-                                                            ? root.theme.textPrimary
-                                                            : root.theme.textSecondary
-                                                        Layout.fillWidth: true
-                                                        Layout.alignment: Qt.AlignVCenter
-                                                        verticalAlignment: Text.AlignVCenter
-                                                        elide: Text.ElideRight
-                                                        Behavior on color { ColorAnimation { duration: 150 } }
-                                                    }
-                                                }
-
-                                                MouseArea {
-                                                    id: tabMouse
-                                                    anchors.fill: parent
-                                                    hoverEnabled: true
-                                                    cursorShape: Qt.PointingHandCursor
-                                                    onClicked: root.currentTab = itemRect.modelData.pageIndex
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    hostApp: root
+                    hostWindow: settingsWindow
+                    winCard: winCard
                 }
 
                 // Main Content Area with Close Button & Smooth Tab Animations
@@ -483,586 +280,157 @@ Scope {
                         }
                     }
 
+
                     // 0: Wi-Fi
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 0 ? 1 : 0
-                        scale: root.currentTab === 0 ? 1 : 0.98
-                        y: root.currentTab === 0 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 0 || parent.opacity > 0)
-                            sourceComponent: WifiSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 0
+                        pageComponent: WifiSettings { theme: root.theme; font: root.font }
                     }
 
                     // 1: Bluetooth
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 1 ? 1 : 0
-                        scale: root.currentTab === 1 ? 1 : 0.98
-                        y: root.currentTab === 1 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 1 || parent.opacity > 0)
-                            sourceComponent: BluetoothSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 1
+                        pageComponent: BluetoothSettings { theme: root.theme; font: root.font }
                     }
 
                     // 2: Sound
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 2 ? 1 : 0
-                        scale: root.currentTab === 2 ? 1 : 0.98
-                        y: root.currentTab === 2 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 2 || parent.opacity > 0)
-                            sourceComponent: SoundSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 2
+                        pageComponent: SoundSettings { theme: root.theme; font: root.font }
                     }
 
                     // 3: Notifications
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 3 ? 1 : 0
-                        scale: root.currentTab === 3 ? 1 : 0.98
-                        y: root.currentTab === 3 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 3 || parent.opacity > 0)
-                            sourceComponent: NotificationSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 3
+                        pageComponent: NotificationSettings { theme: root.theme; font: root.font }
                     }
 
                     // 4: Power
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 4 ? 1 : 0
-                        scale: root.currentTab === 4 ? 1 : 0.98
-                        y: root.currentTab === 4 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 4 || parent.opacity > 0)
-                            sourceComponent: PowerSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 4
+                        pageComponent: PowerSettings { theme: root.theme; font: root.font }
                     }
 
                     // 5: Mouse & Touchpad
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 5 ? 1 : 0
-                        scale: root.currentTab === 5 ? 1 : 0.98
-                        y: root.currentTab === 5 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 5 || parent.opacity > 0)
-                            sourceComponent: MouseSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 5
+                        pageComponent: MouseSettings { theme: root.theme; font: root.font }
                     }
 
                     // 6: Keyboard
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 6 ? 1 : 0
-                        scale: root.currentTab === 6 ? 1 : 0.98
-                        y: root.currentTab === 6 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 6 || parent.opacity > 0)
-                            sourceComponent: KeyboardSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 6
+                        pageComponent: KeyboardSettings { theme: root.theme; font: root.font }
                     }
 
                     // 7: Default Applications
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 7 ? 1 : 0
-                        scale: root.currentTab === 7 ? 1 : 0.98
-                        y: root.currentTab === 7 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 7 || parent.opacity > 0)
-                            sourceComponent: DefaultAppsSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 7
+                        pageComponent: DefaultAppsSettings { theme: root.theme; font: root.font }
                     }
 
                     // 8: Display
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 8 ? 1 : 0
-                        scale: root.currentTab === 8 ? 1 : 0.98
-                        y: root.currentTab === 8 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 8 || parent.opacity > 0)
-                            sourceComponent: DisplaySettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 8
+                        pageComponent: DisplaySettings { theme: root.theme; font: root.font }
                     }
 
                     // 9: Appearance
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 9 ? 1 : 0
-                        scale: root.currentTab === 9 ? 1 : 0.98
-                        y: root.currentTab === 9 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 9 || parent.opacity > 0)
-                            sourceComponent: AppearanceSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 9
+                        pageComponent: AppearanceSettings { theme: root.theme; font: root.font }
                     }
 
                     // 10: Bar Settings
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 10 ? 1 : 0
-                        scale: root.currentTab === 10 ? 1 : 0.98
-                        y: root.currentTab === 10 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            id: barSettingsPageLoader
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 10 || parent.opacity > 0)
-                            sourceComponent: BarSettings {
-                                theme: root.theme
-                                font: root.font
-                            }
-                        }
+                    SettingsPageContainer {
+                        id: barSettingsPageLoader
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 10
+                        pageComponent: BarSettings { theme: root.theme; font: root.font }
                     }
 
                     // 11: About
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 11 ? 1 : 0
-                        scale: root.currentTab === 11 ? 1 : 0.98
-                        y: root.currentTab === 11 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 11 || parent.opacity > 0)
-                            sourceComponent: AboutSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 11
+                        pageComponent: AboutSettings { theme: root.theme; font: root.font }
                     }
 
                     // 12: Lock Screen (Hyprlock)
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 12 ? 1 : 0
-                        scale: root.currentTab === 12 ? 1 : 0.98
-                        y: root.currentTab === 12 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 12 || parent.opacity > 0)
-                            sourceComponent: HyprlockSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 12
+                        pageComponent: HyprlockSettings { theme: root.theme; font: root.font }
                     }
 
                     // 13: Animations
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 13 ? 1 : 0
-                        scale: root.currentTab === 13 ? 1 : 0.98
-                        y: root.currentTab === 13 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 13 || parent.opacity > 0)
-                            sourceComponent: AnimationSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 13
+                        pageComponent: AnimationSettings { theme: root.theme; font: root.font }
                     }
 
                     // 14: Hyprland Settings
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 14 ? 1 : 0
-                        scale: root.currentTab === 14 ? 1 : 0.98
-                        y: root.currentTab === 14 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 14 || parent.opacity > 0)
-                            sourceComponent: HyprlandSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 14
+                        pageComponent: HyprlandSettings { theme: root.theme; font: root.font }
                     }
 
                     // 15: Wallpaper
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 15 ? 1 : 0
-                        scale: root.currentTab === 15 ? 1 : 0.98
-                        y: root.currentTab === 15 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 15 || parent.opacity > 0)
-                            sourceComponent: WallpaperSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 15
+                        pageComponent: WallpaperSettings { theme: root.theme; font: root.font }
                     }
 
                     // 16: On-Screen Display (OSD)
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 16 ? 1 : 0
-                        scale: root.currentTab === 16 ? 1 : 0.98
-                        y: root.currentTab === 16 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 16 || parent.opacity > 0)
-                            sourceComponent: OSDSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 16
+                        pageComponent: OSDSettings { theme: root.theme; font: root.font }
                     }
 
                     // 17: Control Center
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 24
-                        anchors.topMargin: 36
-                        visible: opacity > 0
-                        opacity: root.currentTab === 17 ? 1 : 0
-                        scale: root.currentTab === 17 ? 1 : 0.98
-                        y: root.currentTab === 17 ? 0 : 8
-
-                        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                        Behavior on y { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-                        Loader {
-                            anchors.fill: parent
-                            active: settingsWindow.visible && (root.currentTab === 17 || parent.opacity > 0)
-                            sourceComponent: ControlCenterSettings { theme: root.theme; font: root.font }
-                        }
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 17
+                        pageComponent: ControlCenterSettings { theme: root.theme; font: root.font }
                     }
                 }
             }
 
             // --- 8-Direction Window Resize Handles ---
-
-            // Right Edge
-            MouseArea {
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.margins: -4
-                width: 8
-                cursorShape: Qt.SizeHorCursor
-                property real startX
-                property real startW
-                onPressed: (mouse) => { startX = mouse.x; startW = winCard.width; }
-                onPositionChanged: (mouse) => {
-                    if (pressed) winCard.width = Math.max(winCard.minWidth, startW + (mouse.x - startX));
-                }
-            }
-
-            // Bottom Edge
-            MouseArea {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                anchors.margins: -4
-                height: 8
-                cursorShape: Qt.SizeVerCursor
-                property real startY
-                property real startH
-                onPressed: (mouse) => { startY = mouse.y; startH = winCard.height; }
-                onPositionChanged: (mouse) => {
-                    if (pressed) winCard.height = Math.max(winCard.minHeight, startH + (mouse.y - startY));
-                }
-            }
-
-            // Left Edge
-            MouseArea {
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.margins: -4
-                width: 8
-                cursorShape: Qt.SizeHorCursor
-                property real startMouseX
-                property real startWinX
-                property real startW
-                onPressed: (mouse) => {
-                    startMouseX = mouse.x;
-                    startWinX = winCard.x;
-                    startW = winCard.width;
-                }
-                onPositionChanged: (mouse) => {
-                    if (pressed) {
-                        let dx = mouse.x - startMouseX;
-                        let nw = Math.max(winCard.minWidth, startW - dx);
-                        winCard.x = startWinX + (startW - nw);
-                        winCard.width = nw;
-                    }
-                }
-            }
-
-            // Top Edge
-            MouseArea {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: -4
-                height: 8
-                cursorShape: Qt.SizeVerCursor
-                property real startMouseY
-                property real startWinY
-                property real startH
-                onPressed: (mouse) => {
-                    startMouseY = mouse.y;
-                    startWinY = winCard.y;
-                    startH = winCard.height;
-                }
-                onPositionChanged: (mouse) => {
-                    if (pressed) {
-                        let dy = mouse.y - startMouseY;
-                        let nh = Math.max(winCard.minHeight, startH - dy);
-                        winCard.y = startWinY + (startH - nh);
-                        winCard.height = nh;
-                    }
-                }
-            }
-
-            // Bottom-Right Corner
-            MouseArea {
-                anchors.right: parent.right
-                anchors.bottom: parent.bottom
-                width: 14; height: 14
-                anchors.margins: -4
-                cursorShape: Qt.SizeFDiagCursor
-                property point startMouse
-                property real startW
-                property real startH
-                onPressed: (mouse) => {
-                    startMouse = Qt.point(mouse.x, mouse.y);
-                    startW = winCard.width;
-                    startH = winCard.height;
-                }
-                onPositionChanged: (mouse) => {
-                    if (pressed) {
-                        winCard.width = Math.max(winCard.minWidth, startW + (mouse.x - startMouse.x));
-                        winCard.height = Math.max(winCard.minHeight, startH + (mouse.y - startMouse.y));
-                    }
-                }
-            }
-
-            // Top-Right Corner
-            MouseArea {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                width: 14; height: 14
-                anchors.margins: -4
-                cursorShape: Qt.SizeBDiagCursor
-                property point startMouse
-                property real startW
-                property real startH
-                property real startY
-                onPressed: (mouse) => {
-                    startMouse = Qt.point(mouse.x, mouse.y);
-                    startW = winCard.width;
-                    startH = winCard.height;
-                    startY = winCard.y;
-                }
-                onPositionChanged: (mouse) => {
-                    if (pressed) {
-                        winCard.width = Math.max(winCard.minWidth, startW + (mouse.x - startMouse.x));
-                        let dy = mouse.y - startMouse.y;
-                        let nh = Math.max(winCard.minHeight, startH - dy);
-                        winCard.y = startY + (startH - nh);
-                        winCard.height = nh;
-                    }
-                }
-            }
-
-            // Bottom-Left Corner
-            MouseArea {
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                width: 14; height: 14
-                anchors.margins: -4
-                cursorShape: Qt.SizeBDiagCursor
-                property point startMouse
-                property real startW
-                property real startH
-                property real startX
-                onPressed: (mouse) => {
-                    startMouse = Qt.point(mouse.x, mouse.y);
-                    startW = winCard.width;
-                    startH = winCard.height;
-                    startX = winCard.x;
-                }
-                onPositionChanged: (mouse) => {
-                    if (pressed) {
-                        let dx = mouse.x - startMouse.x;
-                        let nw = Math.max(winCard.minWidth, startW - dx);
-                        winCard.x = startX + (startW - nw);
-                        winCard.width = nw;
-                        winCard.height = Math.max(winCard.minHeight, startH + (mouse.y - startMouse.y));
-                    }
-                }
-            }
-
-            // Top-Left Corner
-            MouseArea {
-                anchors.left: parent.left
-                anchors.top: parent.top
-                width: 14; height: 14
-                anchors.margins: -4
-                cursorShape: Qt.SizeFDiagCursor
-                property point startMouse
-                property real startW
-                property real startH
-                property real startX
-                property real startY
-                onPressed: (mouse) => {
-                    startMouse = Qt.point(mouse.x, mouse.y);
-                    startW = winCard.width;
-                    startH = winCard.height;
-                    startX = winCard.x;
-                    startY = winCard.y;
-                }
-                onPositionChanged: (mouse) => {
-                    if (pressed) {
-                        let dx = mouse.x - startMouse.x;
-                        let dy = mouse.y - startMouse.y;
-                        let nw = Math.max(winCard.minWidth, startW - dx);
-                        let nh = Math.max(winCard.minHeight, startH - dy);
-                        winCard.x = startX + (startW - nw);
-                        winCard.y = startY + (startH - nh);
-                        winCard.width = nw;
-                        winCard.height = nh;
-                    }
-                }
+            SettingsResizeHandles {
+                winCard: winCard
             }
         }
     }

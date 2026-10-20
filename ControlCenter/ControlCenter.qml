@@ -109,10 +109,21 @@ PanelWindow {
     focusable: true
     WlrLayershell.layer: WlrLayer.Overlay
 
+    readonly property int activePanelCols: {
+        if (ControlCenterConfig.panelLayout !== "horizontal") return 1;
+        const maxP = Math.max(1, Math.min(3, ControlCenterConfig.panelCount));
+        if (ControlCenterConfig.isLiveEdit) return maxP;
+        let nonEmpty = 0;
+        for (let p = 0; p < maxP; p++) {
+            if (ControlCenterConfig.getPanelIds(p).length > 0) nonEmpty++;
+        }
+        return Math.max(1, nonEmpty);
+    }
+
     visible: false
     implicitWidth: {
         if (ControlCenterConfig.panelLayout === "horizontal") {
-            const cols = Math.max(1, Math.min(ControlCenterConfig.enabledCards.length, 3));
+            const cols = controlCenter.activePanelCols;
             const total = (ControlCenterConfig.panelWidth * cols) + (12 * (cols - 1)) + 24;
             const scrW = screen ? screen.width : 1920;
             return Math.min(scrW - 40, total);
@@ -148,11 +159,13 @@ PanelWindow {
     property var quickSettingsRef: null
     property var brightnessSliderRef: null
 
-    // Card Drag & Drop State for Live Edit Mode
+    // Card Drag & Drop State for Live Edit Mode (supports cross-panel drag & drop)
     property bool isDraggingCard: false
     property string draggedCardId: ""
     property int dragCardSourceIndex: -1
     property int dragCardHoverIndex: -1
+    property int dragCardTargetPanel: -1
+    property int dragCardTargetItemIdx: -1
     property real dragCardMouseX: 0
     property real dragCardMouseY: 0
 
@@ -160,6 +173,8 @@ PanelWindow {
         draggedCardId = cid;
         dragCardSourceIndex = srcIdx;
         dragCardHoverIndex = srcIdx;
+        dragCardTargetPanel = ControlCenterConfig.getCardPanelIndex(cid);
+        dragCardTargetItemIdx = -1;
         dragCardMouseX = mouseX;
         dragCardMouseY = mouseY;
         isDraggingCard = true;
@@ -169,29 +184,44 @@ PanelWindow {
         dragCardMouseX = mouseX;
         dragCardMouseY = mouseY;
         if (!isDraggingCard) return;
-        for (let i = 0; i < cardsRepeater.count; i++) {
-            const item = cardsRepeater.itemAt(i);
-            if (!item || !item.visible) continue;
-            const pt = item.mapFromItem(ccMainRect, mouseX, mouseY);
-            if (pt.x >= 0 && pt.x <= item.width && pt.y >= 0 && pt.y <= item.height) {
-                if (item.enabledIdx >= 0) {
-                    dragCardHoverIndex = item.enabledIdx;
-                    return;
+        for (let p = 0; p < panelsRepeater.count; p++) {
+            const panelCol = panelsRepeater.itemAt(p);
+            if (!panelCol || !panelCol.visible) continue;
+            const pPt = panelCol.mapFromItem(ccMainRect, mouseX, mouseY);
+            if (pPt.x >= -6 && pPt.x <= panelCol.width + 6 && pPt.y >= -10 && pPt.y <= panelCol.height + 40) {
+                dragCardTargetPanel = p;
+                const rep = panelCol.cardsRep;
+                if (rep) {
+                    for (let i = 0; i < rep.count; i++) {
+                        const item = rep.itemAt(i);
+                        if (!item || !item.visible) continue;
+                        const iPt = item.mapFromItem(ccMainRect, mouseX, mouseY);
+                        if (iPt.y >= -6 && iPt.y <= item.height + 6) {
+                            dragCardHoverIndex = item.enabledIdx;
+                            dragCardTargetItemIdx = i;
+                            return;
+                        }
+                    }
+                    dragCardTargetItemIdx = rep.count;
                 }
+                return;
             }
         }
     }
 
     function finishCardDrag() {
         if (!isDraggingCard) return;
-        const srcIdx = dragCardSourceIndex;
-        const targetIdx = dragCardHoverIndex;
+        const cid = draggedCardId;
+        const targetPanel = dragCardTargetPanel;
+        const targetItemIdx = dragCardTargetItemIdx;
         isDraggingCard = false;
         draggedCardId = "";
         dragCardHoverIndex = -1;
         dragCardSourceIndex = -1;
-        if (srcIdx >= 0 && targetIdx >= 0 && srcIdx !== targetIdx) {
-            ControlCenterConfig.moveEnabledCard(srcIdx, targetIdx);
+        dragCardTargetPanel = -1;
+        dragCardTargetItemIdx = -1;
+        if (cid !== "" && targetPanel >= 0) {
+            ControlCenterConfig.moveCardToPanelAt(cid, targetPanel, targetItemIdx);
         }
     }
 
@@ -319,481 +349,272 @@ PanelWindow {
                         bottomPadding: 6
 
                     // Top Banner for Live Edit Mode
-                    Rectangle {
+                    LiveEditBanner {
                         id: editBanner
-                        visible: ControlCenterConfig.isLiveEdit
-                        width: parent.width
-                        height: 36
-                        radius: 8
-                        color: Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.15)
-                        border.color: controlCenter.theme.accentPrimary
-                        border.width: 1
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 10
-                            anchors.rightMargin: 8
-                            spacing: 8
-
-                            Text {
-                                text: "󰏫"
-                                font.family: controlCenter.font
-                                font.pixelSize: 13
-                                color: controlCenter.theme.accentPrimary
-                            }
-
-                            Text {
-                                text: "Edit Mode"
-                                font.family: controlCenter.font
-                                font.pixelSize: 12
-                                font.bold: true
-                                color: controlCenter.theme.textPrimary
-                                Layout.fillWidth: true
-                            }
-
-                            // Reset to default button
-                            Rectangle {
-                                width: 50
-                                height: 24
-                                radius: 4
-                                color: resetMouse.containsMouse ? Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.14) : Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.06)
-                                border.color: controlCenter.theme.bgBorder
-                                border.width: 1
-                                scale: resetMouse.pressed ? 0.96 : 1.0
-                                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "Reset"
-                                    font.family: controlCenter.font
-                                    font.pixelSize: 11
-                                    color: controlCenter.theme.textSecondary
-                                }
-
-                                MouseArea {
-                                    id: resetMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    preventStealing: true
-                                    onClicked: ControlCenterConfig.resetDefaults()
-                                }
-                            }
-
-                            // Done button
-                            Rectangle {
-                                width: 50
-                                height: 24
-                                radius: 4
-                                color: doneMouse.containsMouse ? Qt.lighter(controlCenter.theme.accentPrimary, 1.12) : controlCenter.theme.accentPrimary
-                                scale: doneMouse.pressed ? 0.96 : 1.0
-                                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "Done"
-                                    font.family: controlCenter.font
-                                    font.pixelSize: 11
-                                    font.bold: true
-                                    color: controlCenter.theme.bgBase
-                                }
-
-                                MouseArea {
-                                    id: doneMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    preventStealing: true
-                                    onClicked: ControlCenterConfig.isLiveEdit = false
-                                }
-                            }
-                        }
+                        hostCenter: controlCenter
                     }
 
-                    // Dynamically ordered Cards
+                    // Multi-Panel Building-Block Columns
                     GridLayout {
                         id: cardsGridLayout
                         width: parent.width
-                        columns: ControlCenterConfig.panelLayout === "horizontal"
-                            ? Math.max(1, Math.min(ControlCenterConfig.enabledCards.length, 3))
-                            : 1
-                        columnSpacing: 10
-                        rowSpacing: 10
+                        columns: controlCenter.activePanelCols
+                        columnSpacing: 12
+                        rowSpacing: 12
+                        uniformCellWidths: true
 
                         Repeater {
-                            id: cardsRepeater
-                            model: ControlCenterConfig.cardOrder
+                            id: panelsRepeater
+                            model: ControlCenterConfig.panelLayout === "horizontal"
+                                ? ControlCenterConfig.panelCount
+                                : 3
 
                             delegate: Column {
-                                id: cardWrapper
-                                required property string modelData
+                                id: panelCol
                                 required property int index
+                                readonly property int panelIndex: index
+                                readonly property var panelIds: {
+                                    var _rev = ControlCenterConfig.cardsRevision;
+                                    return ControlCenterConfig.getPanelIds(panelIndex);
+                                }
+                                readonly property bool hasVisibleModules: {
+                                    var _rev = ControlCenterConfig.cardsRevision;
+                                    if (ControlCenterConfig.isLiveEdit) return true;
+                                    return panelIds.length > 0;
+                                }
+                                readonly property real cellWidth: ControlCenterConfig.panelLayout === "horizontal"
+                                    ? Math.max(200, Math.floor((cardsGridLayout.width - (cardsGridLayout.columns - 1) * cardsGridLayout.columnSpacing) / cardsGridLayout.columns))
+                                    : cardsGridLayout.width
 
-                                readonly property string cardId: modelData
-                                readonly property int enabledIdx: ControlCenterConfig.getEnabledCardIndex(cardId)
-                                readonly property bool isCardEnabled: ControlCenterConfig.isCardVisible(cardId)
-                                readonly property bool isBeingDragged: controlCenter.isDraggingCard && controlCenter.draggedCardId === cardId
-                                readonly property bool isDropTarget: controlCenter.isDraggingCard && controlCenter.dragCardHoverIndex === enabledIdx && controlCenter.draggedCardId !== cardId
+                                property alias cardsRep: panelCardsRepeater
 
+                                visible: hasVisibleModules
+                                width: cellWidth
                                 Layout.fillWidth: true
+                                Layout.preferredWidth: cellWidth
+                                Layout.minimumWidth: cellWidth
+                                Layout.maximumWidth: cellWidth
+                                Layout.preferredHeight: implicitHeight
                                 Layout.alignment: Qt.AlignTop
-                                width: parent.width
-                                spacing: 4
+                                spacing: 10
 
-                            scale: isBeingDragged ? 0.96 : (isDropTarget ? 1.02 : 1.0)
-                            opacity: isBeingDragged ? 0.35 : 1.0
-                            Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                            Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                                // Panel Header Badge in Live Edit Mode
+                                Rectangle {
+                                    visible: ControlCenterConfig.isLiveEdit
+                                    width: panelCol.cellWidth
+                                    height: 24
+                                    radius: 6
+                                    color: Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.1)
+                                    border.color: Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.35)
+                                    border.width: 1
 
-                            visible: {
-                                if (cardId === "quickSettings") {
-                                    return ControlCenterConfig.isLiveEdit || (isCardEnabled && ControlCenterConfig.enabledTiles.length > 0);
-                                }
-                                if (cardId === "media") {
-                                    if (!isCardEnabled) return false;
-                                    if (ControlCenterConfig.mediaAutoHide && !ControlCenterConfig.isLiveEdit) {
-                                        return cardLoader.item ? cardLoader.item.hasMedia : false;
-                                    }
-                                    return true;
-                                }
-                                return isCardEnabled;
-                            }
-
-                            // Card Edit Toolbar (shown only during Live Edit Mode)
-                            Rectangle {
-                                id: cardEditBar
-                                visible: ControlCenterConfig.isLiveEdit && cardWrapper.isCardEnabled
-                                width: parent.width
-                                height: 30
-                                radius: 6
-                                color: cardWrapper.isDropTarget
-                                    ? Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.22)
-                                    : (cardDragMouseArea.containsMouse
-                                        ? Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.12)
-                                        : Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.08))
-                                border.color: cardWrapper.isDropTarget ? controlCenter.theme.accentPrimary : controlCenter.theme.bgBorder
-                                border.width: cardWrapper.isDropTarget ? 1.5 : 1
-
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                Behavior on border.color { ColorAnimation { duration: 140 } }
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: 8
-                                    anchors.rightMargin: 6
-                                    spacing: 6
-
-                                    // Drag handle grip icon
-                                    Text {
-                                        text: "󰇘"
-                                        font.family: controlCenter.font
-                                        font.pixelSize: 14
-                                        color: cardWrapper.isDropTarget ? controlCenter.theme.accentPrimary : controlCenter.theme.textMuted
-                                    }
-
-                                    Text {
-                                        text: ControlCenterConfig.getCardDef(cardWrapper.cardId).icon
-                                        font.family: controlCenter.font
-                                        font.pixelSize: 12
-                                        color: controlCenter.theme.accentPrimary
-                                    }
-
-                                    Text {
-                                        text: ControlCenterConfig.getCardDef(cardWrapper.cardId).label
-                                        font.family: controlCenter.font
-                                        font.pixelSize: 11
-                                        font.bold: true
-                                        color: controlCenter.theme.textPrimary
-                                    }
-
-                                    Text {
-                                        text: cardWrapper.isDropTarget ? "Drop here" : (cardDragMouseArea.containsMouse ? "· Drag to reorder" : "")
-                                        font.family: controlCenter.font
-                                        font.pixelSize: 10
-                                        color: cardWrapper.isDropTarget ? controlCenter.theme.accentPrimary : controlCenter.theme.textMuted
-                                        Layout.fillWidth: true
-                                    }
-
-                                    // Remove Card Button
-                                    Rectangle {
-                                        implicitWidth: removeText.implicitWidth + 14
-                                        height: 22
-                                        radius: 4
-                                        z: 10
-                                        color: cRemoveMouse.containsMouse
-                                            ? (controlCenter.theme.accentRed ?? "#e05252")
-                                            : Qt.rgba(1, 1, 1, 0.08)
-                                        border.color: cRemoveMouse.containsMouse ? (controlCenter.theme.accentRed ?? "#e05252") : controlCenter.theme.bgBorder
-                                        border.width: 1
-
-                                        Behavior on color { ColorAnimation { duration: 120 } }
-                                        Behavior on border.color { ColorAnimation { duration: 120 } }
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 8
+                                        spacing: 6
 
                                         Text {
-                                            id: removeText
-                                            anchors.centerIn: parent
-                                            text: "Remove"
+                                            text: "󰕮 Panel " + (panelCol.panelIndex + 1)
                                             font.family: controlCenter.font
                                             font.pixelSize: 10
                                             font.bold: true
-                                            color: cRemoveMouse.containsMouse ? "#ffffff" : controlCenter.theme.textSecondary
+                                            color: controlCenter.theme.accentPrimary
+                                            Layout.fillWidth: true
                                         }
 
-                                        MouseArea {
-                                            id: cRemoveMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            preventStealing: true
-                                            onClicked: ControlCenterConfig.setCardVisible(cardWrapper.cardId, false)
+                                        Text {
+                                            text: panelCol.panelIds.length + (panelCol.panelIds.length === 1 ? " module" : " modules")
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 10
+                                            color: controlCenter.theme.textSecondary
                                         }
                                     }
                                 }
 
-                                // Drag MouseArea covering toolbar except right Remove button
-                                MouseArea {
-                                    id: cardDragMouseArea
-                                    anchors {
-                                        top: parent.top
-                                        bottom: parent.bottom
-                                        left: parent.left
-                                        right: parent.right
-                                        rightMargin: 72
-                                    }
-                                    hoverEnabled: true
-                                    cursorShape: controlCenter.isDraggingCard ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-                                    preventStealing: true
+                                // Modules inside this Panel
+                                Repeater {
+                                    id: panelCardsRepeater
+                                    model: panelCol.panelIds
 
-                                    property real pressX: 0
-                                    property real pressY: 0
-                                    property bool dragStarted: false
+                                    delegate: Column {
+                                        id: cardWrapper
+                                        required property string modelData
+                                        required property int index
 
-                                    onPressed: (mouse) => {
-                                        pressX = mouse.x;
-                                        pressY = mouse.y;
-                                        dragStarted = false;
-                                    }
+                                        readonly property string cardId: modelData
+                                        readonly property int panelIndex: panelCol.panelIndex
+                                        readonly property int itemIndex: index
+                                        readonly property int panelLength: panelCol.panelIds.length
+                                        readonly property int enabledIdx: ControlCenterConfig.getEnabledCardIndex(cardId)
+                                        readonly property bool isCardEnabled: true
+                                        readonly property bool isBeingDragged: controlCenter.isDraggingCard && controlCenter.draggedCardId === cardId
+                                        readonly property bool isDropTarget: controlCenter.isDraggingCard
+                                            && controlCenter.dragTargetPanel === panelCol.panelIndex
+                                            && controlCenter.dragTargetIndex === index
+                                            && controlCenter.draggedCardId !== cardId
 
-                                    onPositionChanged: (mouse) => {
-                                        if (!pressed) return;
-                                        const pt = cardDragMouseArea.mapToItem(ccMainRect, mouse.x, mouse.y);
-                                        if (!dragStarted && Math.hypot(mouse.x - pressX, mouse.y - pressY) > 5) {
-                                            dragStarted = true;
-                                            controlCenter.startCardDrag(cardWrapper.cardId, cardWrapper.enabledIdx, pt.x, pt.y);
-                                        } else if (dragStarted) {
-                                            controlCenter.updateCardDrag(pt.x, pt.y);
+                                        readonly property real cellWidth: panelCol.cellWidth
+
+                                        width: cellWidth
+                                        spacing: 4
+
+                                        scale: isBeingDragged ? 0.96 : (isDropTarget ? 1.02 : 1.0)
+                                        opacity: isBeingDragged ? 0.35 : 1.0
+                                        Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                                        Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+
+                                        visible: {
+                                            if (cardId === "quickSettings") {
+                                                return ControlCenterConfig.isLiveEdit || ControlCenterConfig.enabledTiles.length > 0;
+                                            }
+                                            if (cardId === "quickSettings2") {
+                                                return ControlCenterConfig.isLiveEdit || ControlCenterConfig.secondaryTiles.length > 0;
+                                            }
+                                            if (cardId === "media") {
+                                                if (ControlCenterConfig.mediaAutoHide && !ControlCenterConfig.isLiveEdit) {
+                                                    return cardLoader.item ? cardLoader.item.hasMedia : false;
+                                                }
+                                                return true;
+                                            }
+                                            return true;
+                                        }
+
+                                        // Card Edit Toolbar (shown only during Live Edit Mode)
+                                        ControlCenterCardEditBar {
+                                            id: cardEditBar
+                                            hostCenter: controlCenter
+                                            hostMainRect: ccMainRect
+                                            hostWrapper: cardWrapper
+                                        }
+
+                                        // Card Component Loader
+                                        Loader {
+                                            id: cardLoader
+                                            width: cardWrapper.cellWidth
+                                            sourceComponent: {
+                                                switch (cardWrapper.cardId) {
+                                                case "connectivity": return connectivityComp;
+                                                case "quickSettings": return quickSettingsComp;
+                                                case "quickSettings2": return quickSettings2Comp;
+                                                case "brightness": return brightnessComp;
+                                                case "audio": return audioComp;
+                                                case "media": return mediaComp;
+                                                case "systemInfo": return systemInfoComp;
+                                                case "cava": return cavaComp;
+                                                case "weather": return weatherComp;
+                                                case "quickApps": return quickAppsComp;
+                                                default: return null;
+                                                }
+                                            }
                                         }
                                     }
+                                }
 
-                                    onReleased: (mouse) => {
-                                        if (dragStarted) {
-                                            const pt = cardDragMouseArea.mapToItem(ccMainRect, mouse.x, mouse.y);
-                                            controlCenter.updateCardDrag(pt.x, pt.y);
-                                            controlCenter.finishCardDrag();
-                                            dragStarted = false;
+                                // Interactive Empty Panel Drop & Quick-Assign Zone in Live Edit Mode
+                                Rectangle {
+                                    visible: ControlCenterConfig.isLiveEdit && panelCol.panelIds.length === 0
+                                    width: panelCol.cellWidth
+                                    height: Math.max(110, emptyPanelContentCol.implicitHeight + 24)
+                                    radius: 10
+                                    color: (controlCenter.isDraggingCard && controlCenter.dragTargetPanel === panelCol.panelIndex)
+                                        ? Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.14)
+                                        : Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.03)
+                                    border.color: (controlCenter.isDraggingCard && controlCenter.dragTargetPanel === panelCol.panelIndex)
+                                        ? controlCenter.theme.accentPrimary
+                                        : controlCenter.theme.bgBorder
+                                    border.width: 1
+
+                                    Column {
+                                        id: emptyPanelContentCol
+                                        anchors {
+                                            left: parent.left
+                                            right: parent.right
+                                            top: parent.top
+                                            margins: 12
                                         }
-                                    }
+                                        spacing: 8
 
-                                    onCanceled: {
-                                        if (dragStarted) {
-                                            controlCenter.finishCardDrag();
-                                            dragStarted = false;
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: "Empty Panel " + (panelCol.panelIndex + 1)
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: controlCenter.theme.textSecondary
+                                        }
+
+                                        Text {
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            text: "Drag a module here, or click to assign:"
+                                            horizontalAlignment: Text.AlignHCenter
+                                            font.family: controlCenter.font
+                                            font.pixelSize: 10
+                                            color: controlCenter.theme.textTertiary
+                                        }
+
+                                        Flow {
+                                            width: parent.width
+                                            spacing: 5
+
+                                            // Unassigned Modules
+                                            Repeater {
+                                                model: ControlCenterConfig.unassignedCards
+                                                delegate: Rectangle {
+                                                    required property var modelData
+                                                    height: 24
+                                                    implicitWidth: empModRow.implicitWidth + 14
+                                                    radius: 12
+                                                    color: empModMouse.containsMouse
+                                                        ? Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.2)
+                                                        : Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.06)
+                                                    border.color: controlCenter.theme.accentPrimary
+                                                    border.width: 1
+
+                                                    Row {
+                                                        id: empModRow
+                                                        anchors.centerIn: parent
+                                                        spacing: 4
+
+                                                        Text {
+                                                            text: "+ " + (modelData.icon || "󰒓")
+                                                            font.family: controlCenter.font
+                                                            font.pixelSize: 10
+                                                            color: controlCenter.theme.accentPrimary
+                                                        }
+
+                                                        Text {
+                                                            text: modelData.label || ""
+                                                            font.family: controlCenter.font
+                                                            font.pixelSize: 10
+                                                            font.bold: true
+                                                            color: controlCenter.theme.textPrimary
+                                                        }
+                                                    }
+
+                                                    MouseArea {
+                                                        id: empModMouse
+                                                        anchors.fill: parent
+                                                        hoverEnabled: true
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: ControlCenterConfig.moveCardToPanelAt(modelData.id, panelCol.panelIndex, 0)
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
-
-                            // Card Component Loader
-                            Loader {
-                                id: cardLoader
-                                width: parent.width
-                                sourceComponent: {
-                                    switch (cardWrapper.cardId) {
-                                    case "quickSettings": return quickSettingsComp;
-                                    case "brightness": return brightnessComp;
-                                    case "audio": return audioComp;
-                                    case "media": return mediaComp;
-                                    case "systemInfo": return systemInfoComp;
-                                    default: return null;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                    Connections {
-                        target: ControlCenterConfig
-                        function onCardsUpdated() {
-                            const order = ControlCenterConfig.cardOrder;
-                            cardsRepeater.model = null;
-                            cardsRepeater.model = order;
                         }
                     }
 
                     // Available Pool Tray in Live Edit Mode
-                    Rectangle {
+                    LiveEditPoolTray {
                         id: poolTray
-                        visible: ControlCenterConfig.isLiveEdit && (ControlCenterConfig.unassignedCards.length > 0 || ControlCenterConfig.unassignedTiles.length > 0)
-                        width: parent.width
-                        implicitHeight: poolCol.implicitHeight + 20
-                        radius: 10
-                        color: Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.05)
-                        border.color: controlCenter.theme.bgBorder
-                        border.width: 1
-
-                        ColumnLayout {
-                            id: poolCol
-                            anchors {
-                                left: parent.left
-                                right: parent.right
-                                top: parent.top
-                                margins: 10
-                            }
-                            spacing: 10
-
-                            // Available Sections (Unassigned Cards)
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 6
-                                visible: ControlCenterConfig.unassignedCards.length > 0
-
-                                Text {
-                                    text: "Available Sections"
-                                    font.family: controlCenter.font
-                                    font.pixelSize: 11
-                                    font.bold: true
-                                    color: controlCenter.theme.textSecondary
-                                }
-
-                                Flow {
-                                    Layout.fillWidth: true
-                                    spacing: 6
-
-                                    Repeater {
-                                        model: ControlCenterConfig.unassignedCards
-
-                                        delegate: Rectangle {
-                                            required property var modelData
-                                            height: 28
-                                            implicitWidth: cChipRow.implicitWidth + 16
-                                            radius: 14
-                                            color: cChipMouse.containsMouse
-                                                ? Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.14)
-                                                : Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.06)
-                                            border.color: controlCenter.theme.accentPrimary
-                                            border.width: 1
-                                            scale: cChipMouse.pressed ? 0.96 : 1.0
-                                            Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                                            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
-
-                                            RowLayout {
-                                                id: cChipRow
-                                                anchors.centerIn: parent
-                                                spacing: 6
-
-                                                Text {
-                                                    text: "+ " + (modelData.icon || "󰒓")
-                                                    font.family: controlCenter.font
-                                                    font.pixelSize: 12
-                                                    color: controlCenter.theme.accentPrimary
-                                                }
-
-                                                Text {
-                                                    text: modelData.label || ""
-                                                    font.family: controlCenter.font
-                                                    font.pixelSize: 11
-                                                    font.bold: true
-                                                    color: controlCenter.theme.textPrimary
-                                                }
-                                            }
-
-                                            MouseArea {
-                                                id: cChipMouse
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                preventStealing: true
-                                                onClicked: ControlCenterConfig.setCardVisible(modelData.id, true)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Available Quick Settings Tiles (Unassigned Tiles)
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 6
-                                visible: ControlCenterConfig.unassignedTiles.length > 0
-
-                                Text {
-                                    text: "Available Quick Settings Tiles"
-                                    font.family: controlCenter.font
-                                    font.pixelSize: 11
-                                    font.bold: true
-                                    color: controlCenter.theme.textSecondary
-                                }
-
-                                Flow {
-                                    Layout.fillWidth: true
-                                    spacing: 6
-
-                                    Repeater {
-                                        model: ControlCenterConfig.unassignedTiles
-
-                                        delegate: Rectangle {
-                                            required property var modelData
-                                            height: 28
-                                            implicitWidth: tChipRow.implicitWidth + 16
-                                            radius: 14
-                                            color: tChipMouse.containsMouse
-                                                ? Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.14)
-                                                : Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.06)
-                                            border.color: controlCenter.theme.bgBorder
-                                            border.width: 1
-                                            scale: tChipMouse.pressed ? 0.96 : 1.0
-                                            Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                                            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
-
-                                            RowLayout {
-                                                id: tChipRow
-                                                anchors.centerIn: parent
-                                                spacing: 6
-
-                                                Text {
-                                                    text: "+ " + (modelData.icon || "󰒓")
-                                                    font.family: controlCenter.font
-                                                    font.pixelSize: 12
-                                                    color: controlCenter.theme.accentPrimary
-                                                }
-
-                                                Text {
-                                                    text: modelData.label || ""
-                                                    font.family: controlCenter.font
-                                                    font.pixelSize: 11
-                                                    color: controlCenter.theme.textPrimary
-                                                }
-                                            }
-
-                                            MouseArea {
-                                                id: tChipMouse
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                cursorShape: Qt.PointingHandCursor
-                                                preventStealing: true
-                                                onClicked: ControlCenterConfig.addTile(modelData.id)
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        hostCenter: controlCenter
+                    }
                     }
                 }
-            }
 
                 // 2. Notifications View
                 NotificationsView {
@@ -811,59 +632,19 @@ PanelWindow {
         }
 
         // Floating card drag ghost
-        Rectangle {
+        CardDragGhost {
             id: cardDragGhost
-            readonly property bool active: controlCenter.isDraggingCard && controlCenter.draggedCardId !== ""
-            visible: opacity > 0.01
-            z: 9999
-            width: 200
-            height: 36
-            radius: 8
-            color: controlCenter.theme.bgSurface
-            border.color: controlCenter.theme.accentPrimary
-            border.width: 1.5
-            scale: active ? 1.05 : 0.85
-            opacity: active ? 0.95 : 0.0
-            x: Math.max(10, Math.min(ccMainRect.width - width - 10, controlCenter.dragCardMouseX - (width / 2)))
-            y: Math.max(10, Math.min(ccMainRect.height - height - 10, controlCenter.dragCardMouseY - (height / 2)))
-
-            Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-            Behavior on opacity { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-
-            RowLayout {
-                anchors.centerIn: parent
-                spacing: 8
-
-                Text {
-                    font.family: controlCenter.font
-                    font.pixelSize: 14
-                    color: controlCenter.theme.accentPrimary
-                    text: ControlCenterConfig.getCardDef(controlCenter.draggedCardId).icon
-                }
-
-                Text {
-                    font.family: controlCenter.font
-                    font.pixelSize: 12
-                    font.bold: true
-                    color: controlCenter.theme.textPrimary
-                    text: ControlCenterConfig.getCardDef(controlCenter.draggedCardId).label
-                }
-
-                Text {
-                    font.family: controlCenter.font
-                    font.pixelSize: 10
-                    color: controlCenter.theme.accentPrimary
-                    text: "󰁝 Move"
-                }
-            }
+            hostCenter: controlCenter
+            hostMainRect: ccMainRect
         }
     }
 
     // Card Component Templates
     Component {
-        id: quickSettingsComp
+        id: connectivityComp
         QuickSettingsGrid {
-            id: qsGrid
+            id: connGrid
+            mode: "connectivity"
             theme: controlCenter.theme
             font: controlCenter.font
             onCloseParentRequested: controlCenter.visible = false
@@ -875,7 +656,51 @@ PanelWindow {
                     wifiModalLoader.item.visible = true;
                 }
             }
-            Component.onCompleted: controlCenter.quickSettingsRef = qsGrid
+            Component.onCompleted: controlCenter.quickSettingsRef = connGrid
+        }
+    }
+
+    Component {
+        id: quickSettingsComp
+        QuickSettingsGrid {
+            id: qsGrid
+            mode: "tiles"
+            theme: controlCenter.theme
+            font: controlCenter.font
+            onCloseParentRequested: controlCenter.visible = false
+            onOpenWifiRequested: {
+                controlCenter.visible = false;
+                if (!wifiModalLoader.active) {
+                    wifiModalLoader.active = true;
+                } else if (wifiModalLoader.item) {
+                    wifiModalLoader.item.visible = true;
+                }
+            }
+            Component.onCompleted: {
+                if (!controlCenter.quickSettingsRef) controlCenter.quickSettingsRef = qsGrid;
+            }
+        }
+    }
+
+    Component {
+        id: quickSettings2Comp
+        QuickSettingsGrid {
+            id: qs2Grid
+            mode: "tiles2"
+            theme: controlCenter.theme
+            font: controlCenter.font
+            onCloseParentRequested: controlCenter.visible = false
+            onOpenWifiRequested: {
+                controlCenter.visible = false;
+                if (!wifiModalLoader.active) {
+                    wifiModalLoader.active = true;
+                } else if (wifiModalLoader.item) {
+                    wifiModalLoader.item.visible = true;
+                }
+            }
+            Component.onCompleted: {
+                if (!controlCenter.quickSettingsRef) controlCenter.quickSettingsRef = qs2Grid;
+            }
         }
     }
 
@@ -910,6 +735,31 @@ PanelWindow {
         SystemInfoCard {
             theme: controlCenter.theme
             font: controlCenter.font
+        }
+    }
+
+    Component {
+        id: cavaComp
+        CavaCard {
+            theme: controlCenter.theme
+            font: controlCenter.font
+        }
+    }
+
+    Component {
+        id: weatherComp
+        WeatherCard {
+            theme: controlCenter.theme
+            font: controlCenter.font
+        }
+    }
+
+    Component {
+        id: quickAppsComp
+        QuickAppsCard {
+            theme: controlCenter.theme
+            font: controlCenter.font
+            onCloseParentRequested: controlCenter.visible = false
         }
     }
 
