@@ -37,10 +37,10 @@ Item {
   readonly property bool anyEdgeActive: topActive || bottomActive || leftActive || rightActive
 
   readonly property bool borderCornersEnabled: Boolean(BarConfig.screenBorder) && Boolean(BarConfig.screenBorderCorners)
-  readonly property bool showTopLeftCorner: Boolean(BarConfig.innerCorners) && (topActive || leftActive) && ((hasDockedTop || hasDockedLeft) ? true : borderCornersEnabled)
-  readonly property bool showTopRightCorner: Boolean(BarConfig.innerCorners) && (topActive || rightActive) && ((hasDockedTop || hasDockedRight) ? true : borderCornersEnabled)
-  readonly property bool showBottomLeftCorner: Boolean(BarConfig.innerCorners) && (bottomActive || leftActive) && ((hasDockedBottom || hasDockedLeft) ? true : borderCornersEnabled)
-  readonly property bool showBottomRightCorner: Boolean(BarConfig.innerCorners) && (bottomActive || rightActive) && ((hasDockedBottom || hasDockedRight) ? true : borderCornersEnabled)
+  readonly property bool showTopLeftCorner: Boolean(BarConfig.innerCorners) && (topActive && leftActive) && ((hasDockedTop || hasDockedLeft) ? true : borderCornersEnabled)
+  readonly property bool showTopRightCorner: Boolean(BarConfig.innerCorners) && (topActive && rightActive) && ((hasDockedTop || hasDockedRight) ? true : borderCornersEnabled)
+  readonly property bool showBottomLeftCorner: Boolean(BarConfig.innerCorners) && (bottomActive && leftActive) && ((hasDockedBottom || hasDockedLeft) ? true : borderCornersEnabled)
+  readonly property bool showBottomRightCorner: Boolean(BarConfig.innerCorners) && (bottomActive && rightActive) && ((hasDockedBottom || hasDockedRight) ? true : borderCornersEnabled)
   readonly property bool anyCornerVisible: showTopLeftCorner || showTopRightCorner || showBottomLeftCorner || showBottomRightCorner
 
   readonly property color resolvedBorderColor: {
@@ -51,7 +51,7 @@ Item {
     const cur = BarConfig.bars && BarConfig.bars.length > 0 ? BarConfig.bars[0] : null;
     const colSpec = cur && cur.barColor ? cur.barColor : BarConfig.barColor;
     const baseCol = barRoot.resolveThemeSpec(colSpec, barRoot.theme.bgBase);
-    const alpha = cur && cur.barOpacity !== undefined ? cur.barOpacity : BarConfig.barOpacity;
+    const alpha = BarConfig.barOpacity !== undefined ? BarConfig.barOpacity : (cur && cur.barOpacity !== undefined ? cur.barOpacity : 1.0);
     return Qt.rgba(baseCol.r, baseCol.g, baseCol.b, alpha);
   }
 

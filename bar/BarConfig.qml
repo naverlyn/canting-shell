@@ -36,6 +36,10 @@ Singleton {
     ["weather", "clock"]
   ]
   property string activeEditingDisplay: "primary" // "primary" | "secondary"
+  onActiveEditingDisplayChanged: {
+    root.panelsRevision++;
+    root.panelsUpdated();
+  }
   property bool innerCorners: true
   property bool fluidCards: true
   property bool barBorder: true
@@ -126,6 +130,7 @@ Singleton {
 
   // Active section widget arrays (synced with selectedBarIndex and activeEditingDisplay for BarSettings editing)
   readonly property var panels: {
+    void root.panelsRevision;
     if (!currentBar) return [defaultLeftWidgets, defaultCenterWidgets, defaultRightWidgets];
     const tgt = (currentBar.displayTarget || (currentBar.allMonitors ? "all" : "primary"));
     if (tgt === "all" && root.activeEditingDisplay === "secondary") {
@@ -240,6 +245,15 @@ Singleton {
   function updateBarProp(propName, val, barIdx) {
     const idx = barIdx !== undefined ? barIdx : Math.max(0, Math.min(root.bars.length - 1, root.selectedBarIndex));
     let bList = root.bars.map((b, i) => {
+      if (propName === "barOpacity") {
+        let copy = Object.assign({}, b);
+        copy.panels = (b.panels || []).map(p => (p || []).slice());
+        if (b.secondaryPanels) {
+          copy.secondaryPanels = b.secondaryPanels.map(p => (p || []).slice());
+        }
+        copy[propName] = Number(val);
+        return copy;
+      }
       if (i !== idx) return b;
       let copy = Object.assign({}, b);
       copy.panels = (b.panels || []).map(p => (p || []).slice());
@@ -250,6 +264,9 @@ Singleton {
       return copy;
     });
     root.bars = bList;
+    if (propName === "barOpacity") {
+      root.barOpacity = Number(val);
+    }
     if (idx === 0) {
       if (propName === "enabled") root.barVisible = Boolean(val);
       else if (propName === "position") root.position = String(val);

@@ -1,17 +1,17 @@
 {
   "name": "Wallpaper",
   "family": "Dynamic",
-  "bgBase": "#161314",
+  "bgBase": "#161313",
   "bgSurface": "#231f20",
-  "bgHover": "#312b2c",
-  "bgSelected": "#3f3638",
+  "bgHover": "#312b2b",
+  "bgSelected": "#3f3637",
   "bgBorder": "#322f2f",
   "textPrimary": "#ebeaea",
-  "textSecondary": "#bab5b6",
-  "textMuted": "#817477",
-  "accentPrimary": "#e689a0",
+  "textSecondary": "#bab5b5",
+  "textMuted": "#817475",
+  "accentPrimary": "#e68992",
   "accentCyan": "#5f99dd",
   "accentGreen": "#5fdda0",
   "accentOrange": "#deb67c",
-  "accentRed": "#e689a0"
+  "accentRed": "#e68992"
 }

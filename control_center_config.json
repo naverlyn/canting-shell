@@ -5,16 +5,15 @@
   "panel1": [
     "audio",
     "connectivity",
-    "quickSettings",
-    "systemInfo",
-    "quickSettings2"
+    "systemInfo"
   ],
   "panel2": [
     "media",
-    "weather"
+    "weather",
+    "quickSettings2"
   ],
   "panel3": [
-    "cava",
+    "quickSettings",
     "quickApps"
   ],
   "groupTilesEnabled": true,
@@ -79,7 +78,7 @@
       "id": "settings",
       "label": "Settings",
       "icon": "󰒓",
-      "cmd": "__settings__"
+      "cmd": "qs ipc call settings toggle"
     }
   ],
   "mediaWidgetStyle": "auto",

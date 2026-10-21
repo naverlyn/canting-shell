@@ -357,10 +357,19 @@ function isWidgetInAnyBar(root, widgetId) {
   if (!root.bars) return false;
   for (let i = 0; i < root.bars.length; i++) {
     const b = root.bars[i];
-    if (b && b.enabled !== false && b.panels) {
-      for (let p = 0; p < b.panels.length; p++) {
-        if (b.panels[p] && b.panels[p].indexOf(widgetId) !== -1) {
-          return true;
+    if (b && b.enabled !== false) {
+      if (b.panels) {
+        for (let p = 0; p < b.panels.length; p++) {
+          if (b.panels[p] && b.panels[p].indexOf(widgetId) !== -1) {
+            return true;
+          }
+        }
+      }
+      if (b.secondaryPanels) {
+        for (let p = 0; p < b.secondaryPanels.length; p++) {
+          if (b.secondaryPanels[p] && b.secondaryPanels[p].indexOf(widgetId) !== -1) {
+            return true;
+          }
         }
       }
     }

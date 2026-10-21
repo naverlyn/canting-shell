@@ -192,12 +192,23 @@ Scope {
     Scope {
       id: barInstanceScope
       required property var modelData
-      readonly property var barCfg: modelData
+      readonly property string currentBarId: (modelData && modelData.id !== undefined && modelData.id !== null) ? String(modelData.id) : ""
+      readonly property var currentBarData: {
+        void BarConfig.panelsRevision;
+        const bList = BarConfig.bars || [];
+        for (let i = 0; i < bList.length; i++) {
+          if (bList[i] && String(bList[i].id) === barInstanceScope.currentBarId) {
+            return bList[i];
+          }
+        }
+        return modelData || {};
+      }
+      readonly property var barCfg: currentBarData
       readonly property string barPos: barCfg.position || "top"
       readonly property bool isVert: barPos === "left" || barPos === "right"
       readonly property int barThickness: barCfg.barHeight || 32
       readonly property bool isFloating: Boolean(barCfg.floating)
-      readonly property real barAlpha: barCfg.barOpacity !== undefined ? barCfg.barOpacity : 0.85
+      readonly property real barAlpha: (barCfg.barOpacity !== undefined && barCfg.barOpacity !== null && barCfg.barOpacity !== 0.85) ? Number(barCfg.barOpacity) : BarConfig.barOpacity
       readonly property int pillRadius: (barCfg.pillRadius !== undefined) ? Number(barCfg.pillRadius) : BarConfig.pillRadius
       readonly property real pillOpacity: (barCfg.pillOpacity !== undefined) ? Number(barCfg.pillOpacity) : BarConfig.pillOpacity
       readonly property bool hidePill: (barCfg.hidePill !== undefined) ? Boolean(barCfg.hidePill) : BarConfig.hidePill
@@ -216,7 +227,6 @@ Scope {
       readonly property bool blankOnSecondary: (barCfg.blankOnSecondary !== undefined) ? Boolean(barCfg.blankOnSecondary) : (secondaryMode === "blank")
       readonly property var secondaryPanels: (barCfg.secondaryPanels && barCfg.secondaryPanels.length > 0) ? barCfg.secondaryPanels : BarConfig.defaultSecondaryPanels
 
-      readonly property string currentBarId: (barCfg.id !== undefined && barCfg.id !== null) ? String(barCfg.id) : ""
       readonly property bool hasDockedTop: root.isDockedBarActive("top", currentBarId)
       readonly property bool hasDockedBottom: root.isDockedBarActive("bottom", currentBarId)
       readonly property bool hasDockedLeft: root.isDockedBarActive("left", currentBarId)
@@ -295,9 +305,20 @@ Scope {
           }
 
           readonly property bool isBlankBar: isSecondaryScreen && (target === "all") && (secMode === "blank" || blankSec)
-          readonly property var effectivePanels: (isSecondaryScreen && target === "all" && secMode === "custom")
-            ? barInstanceScope.secondaryPanels
-            : barInstanceScope.barPanels
+          readonly property var effectivePanels: {
+            void BarConfig.panelsRevision;
+            if (isSecondaryScreen && target === "all") {
+              if (secMode === "custom") {
+                return (barInstanceScope.secondaryPanels && barInstanceScope.secondaryPanels.length > 0)
+                  ? barInstanceScope.secondaryPanels
+                  : BarConfig.defaultSecondaryPanels;
+              } else if (secMode === "blank" || blankSec) {
+                return [];
+              }
+              return barInstanceScope.barPanels || [];
+            }
+            return barInstanceScope.barPanels || [];
+          }
 
           readonly property string windowBarPos: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryPosition)
             ? barInstanceScope.barCfg.secondaryPosition
@@ -821,18 +842,8 @@ Scope {
             Connections {
               target: BarConfig
               function onPanelsUpdated() {
-                const bId = (barInstanceScope.barCfg && barInstanceScope.barCfg.id) ? String(barInstanceScope.barCfg.id) : "bar_1";
-                let matchedPanels = [];
-                if (BarConfig.bars) {
-                  for (let i = 0; i < BarConfig.bars.length; i++) {
-                    if (BarConfig.bars[i] && BarConfig.bars[i].id === bId) {
-                      matchedPanels = BarConfig.bars[i].panels || [];
-                      break;
-                    }
-                  }
-                }
                 panelsOuterRepeater.model = null;
-                panelsOuterRepeater.model = matchedPanels;
+                panelsOuterRepeater.model = Qt.binding(function() { return barWindow.effectivePanels; });
               }
             }
           }

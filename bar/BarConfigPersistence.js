@@ -11,7 +11,7 @@ function buildSaveData(root) {
     position: primary ? primary.position : root.position,
     barHeight: primary ? primary.barHeight : root.barHeight,
     floating: primary ? primary.floating : root.floating,
-    barOpacity: primary ? primary.barOpacity : root.barOpacity,
+    barOpacity: root.barOpacity !== undefined ? root.barOpacity : (primary ? primary.barOpacity : 1.0),
     pillRadius: primary && primary.pillRadius !== undefined ? primary.pillRadius : root.pillRadius,
     pillOpacity: primary && primary.pillOpacity !== undefined ? primary.pillOpacity : root.pillOpacity,
     hidePill: primary && primary.hidePill !== undefined ? Boolean(primary.hidePill) : root.hidePill,
@@ -160,6 +160,7 @@ function applyConfig(root, cfg) {
   pList = ensureGlobalMenu(pList);
 
   if (Array.isArray(cfg.bars) && cfg.bars.length > 0) {
+    const globalOpacity = (cfg.barOpacity !== undefined) ? Number(cfg.barOpacity) : root.barOpacity;
     root.bars = cfg.bars.map((b, idx) => ({
       id: b.id || ("bar_" + (idx + 1)),
       name: String(b.name || (idx === 0 ? "Primary Bar" : ("Bar " + (idx + 1)))).replace(/\s*\((Top|Bottom|Left|Right)\)$/i, ""),
@@ -167,7 +168,7 @@ function applyConfig(root, cfg) {
       position: b.position || "top",
       barHeight: b.barHeight !== undefined ? Number(b.barHeight) : 32,
       floating: b.floating !== undefined ? Boolean(b.floating) : false,
-      barOpacity: b.barOpacity !== undefined ? Number(b.barOpacity) : root.barOpacity,
+      barOpacity: (b.barOpacity !== undefined && b.barOpacity !== 0.85) ? Number(b.barOpacity) : globalOpacity,
       pillRadius: b.pillRadius !== undefined ? Number(b.pillRadius) : root.pillRadius,
       pillOpacity: b.pillOpacity !== undefined ? Number(b.pillOpacity) : root.pillOpacity,
       hidePill: b.hidePill !== undefined ? Boolean(b.hidePill) : root.hidePill,
@@ -261,6 +262,8 @@ function applyConfig(root, cfg) {
   if (cfg.cavaAutoHide !== undefined) root.cavaAutoHide = Boolean(cfg.cavaAutoHide);
   if (cfg.cavaShowIcon !== undefined) root.cavaShowIcon = Boolean(cfg.cavaShowIcon);
   root.widgetVisibilityChangeCounter++;
+  root.panelsRevision++;
+  root.panelsUpdated();
 }
 
 function resetDefaults(root) {

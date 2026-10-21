@@ -1,9 +1,9 @@
 {
   "barVisible": true,
   "position": "left",
-  "barHeight": 32,
+  "barHeight": 28,
   "floating": false,
-  "barOpacity": 0.85,
+  "barOpacity": 1,
   "pillRadius": 10,
   "pillOpacity": 1,
   "hidePill": true,
@@ -15,10 +15,11 @@
   "blankOnSecondary": false,
   "secondaryPanels": [
     [
-      "workspaces"
+      "workspaces",
+      "windowTitle"
     ],
     [
-      "windowTitle"
+      "cava"
     ],
     [
       "weather",
@@ -31,7 +32,7 @@
   "barBorderWidth": 1,
   "barBorderColor": "",
   "screenBorder": true,
-  "screenBorderThickness": 8,
+  "screenBorderThickness": 16,
   "screenBorderColor": "",
   "screenBorderCorners": true,
   "screenBorderShadow": true,
@@ -42,9 +43,9 @@
       "name": "Primary Bar",
       "enabled": true,
       "position": "left",
-      "barHeight": 32,
+      "barHeight": 28,
       "floating": false,
-      "barOpacity": 0.85,
+      "barOpacity": 1,
       "pillRadius": 10,
       "pillOpacity": 1,
       "hidePill": true,
@@ -56,10 +57,11 @@
       "blankOnSecondary": false,
       "secondaryPanels": [
         [
-          "workspaces"
+          "workspaces",
+          "windowTitle"
         ],
         [
-          "windowTitle"
+          "cava"
         ],
         [
           "weather",
@@ -94,7 +96,7 @@
       "position": "right",
       "barHeight": 32,
       "floating": false,
-      "barOpacity": 0.85,
+      "barOpacity": 1,
       "pillRadius": 10,
       "pillOpacity": 1,
       "hidePill": true,
@@ -167,8 +169,6 @@
     "idleInhibitor",
     "media",
     "globalMenu",
-    "workspaces",
-    "clock",
     "volume",
     "battery",
     "tray"
@@ -205,10 +205,10 @@
   "showVolume": true,
   "showMedia": true,
   "showCava": true,
-  "cavaMode": "compact",
-  "cavaBars": 8,
+  "cavaMode": "wide",
+  "cavaBars": 24,
   "cavaFramerate": 30,
-  "cavaStyle": "line",
+  "cavaStyle": "bars",
   "cavaStereo": false,
   "cavaAutoHide": true,
   "cavaShowIcon": false,
