@@ -38,4 +38,17 @@ SectionCard {
             root.showToast(val ? "Clock date visible" : "Clock date hidden");
         }
     }
+
+    RowDivider {}
+
+    SettingToggleRow {
+        title: "Show Year in Clock"
+        desc: "Display the year next to the date"
+        checked: BarConfig.showYear
+        onToggled: (val) => {
+            BarConfig.showYear = val;
+            BarConfig.saveConfig();
+            root.showToast(val ? "Clock year visible" : "Clock year hidden");
+        }
+    }
 }

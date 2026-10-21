@@ -74,23 +74,62 @@
       "panels": [
         [
           "appGrid",
-          "globalMenu",
           "windowTitle",
-          "cava"
-        ],
-        [
+          "cava",
           "weather"
         ],
+        [],
         [
-          "disk",
-          "memory",
-          "temp",
-          "cpu",
           "network",
           "workspaces",
-          "tray",
           "controlCenter",
           "clock"
+        ]
+      ]
+    },
+    {
+      "id": "bar_1792518566724",
+      "name": "Bar 2",
+      "enabled": true,
+      "position": "right",
+      "barHeight": 32,
+      "floating": false,
+      "barOpacity": 0.85,
+      "pillRadius": 10,
+      "pillOpacity": 1,
+      "hidePill": true,
+      "activeStyle": "underline",
+      "allMonitors": false,
+      "displayTarget": "primary",
+      "secondaryPosition": "bottom",
+      "secondaryMode": "custom",
+      "blankOnSecondary": false,
+      "secondaryPanels": [
+        [
+          "workspaces"
+        ],
+        [
+          "windowTitle"
+        ],
+        [
+          "weather",
+          "clock"
+        ]
+      ],
+      "innerCorners": true,
+      "fluidCards": true,
+      "barBorder": true,
+      "barBorderWidth": 1,
+      "barBorderColor": "",
+      "panels": [
+        [],
+        [],
+        [
+          "memory",
+          "disk",
+          "temp",
+          "cpu",
+          "tray"
         ]
       ]
     }
@@ -98,54 +137,41 @@
   "panels": [
     [
       "appGrid",
-      "globalMenu",
       "windowTitle",
-      "cava"
-    ],
-    [
+      "cava",
       "weather"
     ],
+    [],
     [
-      "disk",
-      "memory",
-      "temp",
-      "cpu",
       "network",
       "workspaces",
-      "tray",
       "controlCenter",
       "clock"
     ]
   ],
   "leftWidgets": [
     "appGrid",
-    "globalMenu",
     "windowTitle",
-    "cava"
-  ],
-  "centerWidgets": [
+    "cava",
     "weather"
   ],
+  "centerWidgets": [],
   "rightWidgets": [
-    "disk",
-    "memory",
-    "temp",
-    "cpu",
     "network",
     "workspaces",
-    "tray",
     "controlCenter",
     "clock"
   ],
   "removedWidgets": [
     "@color:bar_1:appGrid=textPrimary",
-    "globalMenu",
     "idleInhibitor",
     "media",
+    "globalMenu",
+    "workspaces",
+    "clock",
     "volume",
     "battery",
-    "clock",
-    "workspaces"
+    "tray"
   ],
   "showAppGrid": true,
   "showCpu": true,
@@ -170,6 +196,7 @@
   "showTime": true,
   "showSeconds": true,
   "showDate": true,
+  "showYear": true,
   "showTray": true,
   "showControlCenter": true,
   "showBattery": true,

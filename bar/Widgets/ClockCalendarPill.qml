@@ -56,15 +56,32 @@ Rectangle {
     anchors.centerIn: parent
     spacing: 8
 
-    Text {
+    Row {
       id: clockTimeText
       anchors.verticalCenter: parent.verticalCenter
-      text: Time.timeString
-      color: hostContainer.hasCustomColor("clock")
-        ? hostContainer.wAccent("clock", hostRoot.theme.textPrimary)
-        : hostRoot.theme.textPrimary
-      font.pixelSize: 12
-      font.family: hostRoot.font
+      spacing: 0
+
+      Text {
+        text: Time.timeString.split(":")[0] || "00"
+        color: hostRoot.theme.textPrimary
+        font.pixelSize: 12
+        font.bold: true
+        font.family: hostRoot.font
+      }
+      Text {
+        text: ":"
+        color: hostRoot.theme.textPrimary
+        font.pixelSize: 12
+        font.bold: true
+        font.family: hostRoot.font
+      }
+      Text {
+        text: Time.timeString.split(":").slice(1).join(":") || "00"
+        color: hostContainer.wAccent("clock", hostRoot.theme.accentPrimary)
+        font.pixelSize: 12
+        font.bold: true
+        font.family: hostRoot.font
+      }
     }
 
     Text {
@@ -74,6 +91,7 @@ Rectangle {
       visible: BarConfig.showDate
       color: hostRoot.theme.textSecondary
       font.pixelSize: 12
+      font.bold: true
       font.family: hostRoot.font
     }
   }
@@ -96,6 +114,15 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: Time.timeString.split(":")[1] || "00"
       color: hostContainer.wAccent("clock", hostRoot.theme.accentPrimary)
+      font.pixelSize: 11
+      font.bold: true
+      font.family: hostRoot.font
+    }
+    Text {
+      anchors.horizontalCenter: parent.horizontalCenter
+      visible: BarConfig.showDate && BarConfig.showYear
+      text: Qt.formatDateTime(new Date(), "yyyy")
+      color: hostRoot.theme.textSecondary
       font.pixelSize: 11
       font.bold: true
       font.family: hostRoot.font

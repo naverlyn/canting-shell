@@ -19,8 +19,12 @@ Rectangle {
   required property var hostContainer
   id: netPill
   property bool isPinned: false
-  implicitHeight: hostContainer.isVert ? (netVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (netRow.implicitWidth + 16)
+  implicitHeight: hostContainer.isVert
+    ? (netVertRow.implicitWidth + 20)
+    : (hostContainer.hidePill ? hostContainer.height : 24)
+  implicitWidth: hostContainer.isVert
+    ? hostContainer.vertPillWidth
+    : (netRow.implicitWidth + 16)
   height: implicitHeight
   width: implicitWidth
   scale: netMouse.pressed ? 0.93 : 1.0
@@ -119,27 +123,64 @@ Rectangle {
     }
   }
 
-  Column {
-    id: netVertCol
+  Item {
+    id: netVertContent
     visible: hostContainer.isVert
     anchors.centerIn: parent
-    spacing: 2
+    width: parent.height
+    height: parent.width
+    rotation: 90
 
-    Text {
-      visible: BarConfig.showNetDown || !BarConfig.showNetUp
-      anchors.horizontalCenter: parent.horizontalCenter
-      text: "↓" + SystemInfo.networkDownCompact
-      color: hostContainer.wAccent("network", hostRoot.theme.accentCyan ?? hostRoot.theme.accentGreen)
-      font.pixelSize: 9
-      font.family: hostRoot.font
-    }
-    Text {
-      visible: BarConfig.showNetUp
-      anchors.horizontalCenter: parent.horizontalCenter
-      text: "↑" + SystemInfo.networkUpCompact
-      color: hostContainer.wAccent("network", hostRoot.theme.accentOrange ?? hostRoot.theme.accentPrimary)
-      font.pixelSize: 9
-      font.family: hostRoot.font
+    Row {
+      id: netVertRow
+      anchors.centerIn: parent
+      spacing: 8
+
+      // Download Indicator
+      Row {
+        spacing: 4
+        visible: BarConfig.showNetDown || !BarConfig.showNetUp
+        anchors.verticalCenter: parent.verticalCenter
+
+        Text {
+          anchors.verticalCenter: parent.verticalCenter
+          text: "󰇚"
+          color: hostContainer.wAccent("network", hostRoot.theme.accentCyan ?? hostRoot.theme.accentGreen)
+          font.pixelSize: 12
+          font.family: hostRoot.font
+        }
+
+        Text {
+          anchors.verticalCenter: parent.verticalCenter
+          text: BarConfig.netCompact ? SystemInfo.networkDownCompact : SystemInfo.networkDownSpeed
+          color: hostRoot.theme.textPrimary
+          font.pixelSize: 10
+          font.family: hostRoot.font
+        }
+      }
+
+      // Upload Indicator
+      Row {
+        spacing: 4
+        visible: BarConfig.showNetUp
+        anchors.verticalCenter: parent.verticalCenter
+
+        Text {
+          anchors.verticalCenter: parent.verticalCenter
+          text: "󰕒"
+          color: hostContainer.wAccent("network", hostRoot.theme.accentOrange ?? hostRoot.theme.accentPrimary)
+          font.pixelSize: 12
+          font.family: hostRoot.font
+        }
+
+        Text {
+          anchors.verticalCenter: parent.verticalCenter
+          text: BarConfig.netCompact ? SystemInfo.networkUpCompact : SystemInfo.networkUpSpeed
+          color: hostRoot.theme.textPrimary
+          font.pixelSize: 10
+          font.family: hostRoot.font
+        }
+      }
     }
   }
 }

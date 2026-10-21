@@ -19,8 +19,12 @@ Rectangle {
   required property var hostContainer
   id: weatherWidget
   property bool isPinned: false
-  implicitHeight: hostContainer.isVert ? 28 : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (weatherContent.implicitWidth + 16)
+  implicitHeight: hostContainer.isVert
+    ? (weatherVertRow.implicitWidth + 24)
+    : (hostContainer.hidePill ? hostContainer.height : 24)
+  implicitWidth: hostContainer.isVert
+    ? hostContainer.vertPillWidth
+    : (weatherContent.implicitWidth + 16)
   height: implicitHeight
   width: implicitWidth
   scale: weatherMouse.pressed ? 0.92 : 1.0
@@ -62,13 +66,29 @@ Rectangle {
     }
   }
 
-  Text {
+  Item {
+    id: weatherVertContent
     visible: hostContainer.isVert
     anchors.centerIn: parent
-    text: "󰖐"
-    color: hostContainer.wAccent("weather", hostRoot.theme.accentCyan)
-    font.pixelSize: 14
-    font.family: hostRoot.font
+    width: parent.height
+    height: parent.width
+    rotation: 90
+
+    Row {
+      id: weatherVertRow
+      anchors.centerIn: parent
+      spacing: 6
+
+      Text {
+        anchors.verticalCenter: parent.verticalCenter
+        text: SystemInfo.weatherInfo
+        color: hostContainer.hasCustomColor("weather")
+          ? hostContainer.wAccent("weather", hostRoot.theme.textPrimary)
+          : hostRoot.theme.textPrimary
+        font.pixelSize: 11
+        font.family: hostRoot.font
+      }
+    }
   }
 
   MouseArea {

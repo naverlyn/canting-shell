@@ -107,7 +107,12 @@ import QtQuick.Layouts
                             boundsBehavior: Flickable.StopAtBounds
 
                             ScrollBar.vertical: ScrollBar {
-                                policy: ScrollBar.AlwaysOff
+                                policy: ScrollBar.AsNeeded
+                                contentItem: Rectangle {
+                                    implicitWidth: 3
+                                    radius: 2
+                                    color: hostApp.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15)
+                                }
                             }
 
                             ColumnLayout {

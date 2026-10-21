@@ -18,14 +18,18 @@ Rectangle {
   required property var hostRoot
   required property var hostContainer
   id: winTitleWidget
-  implicitHeight: hostContainer.isVert ? (titleText.text !== "" ? 28 : 0) : (hostContainer.hidePill ? hostContainer.height : 24)
+  readonly property int vertMaxHeight: 220
+  readonly property int vertCalcHeight: titleMeasureText.implicitWidth + 32
+  implicitHeight: hostContainer.isVert
+    ? (titleMeasureText.text !== "" ? Math.max(36, Math.min(vertMaxHeight, vertCalcHeight)) : 0)
+    : (hostContainer.hidePill ? hostContainer.height : 24)
   height: implicitHeight
   readonly property string curSec: BarConfig.getWidgetSection("windowTitle")
   readonly property real availableCenterSpace: curSec === "center"
     ? Math.max(60, Math.min(360, hostContainer.width / Math.max(2, hostContainer.effectivePanels.length) - 24))
     : 240
   implicitWidth: hostContainer.isVert
-    ? (titleText.text !== "" ? hostContainer.vertPillWidth : 0)
+    ? (titleMeasureText.text !== "" ? hostContainer.vertPillWidth : 0)
     : (curSec === "center"
       ? (titleText.text !== "" ? Math.max(40, Math.min(titleText.implicitWidth + 24, availableCenterSpace)) : 0)
       : (titleText.text !== "" ? Math.max(40, Math.min(titleText.implicitWidth + 24, 240)) : 0))
@@ -49,11 +53,19 @@ Rectangle {
   }
 
   Text {
+    id: titleMeasureText
+    visible: false
+    text: Hyprland.activeToplevel ? Hyprland.activeToplevel.title : ""
+    font.pixelSize: 11
+    font.family: hostRoot.font
+  }
+
+  Text {
     id: titleText
     visible: !hostContainer.isVert
     Accessible.role: Accessible.StaticText
     Accessible.name: "Active window: " + text
-    text: Hyprland.activeToplevel ? Hyprland.activeToplevel.title : ""
+    text: titleMeasureText.text
     color: hostContainer.hasCustomColor("windowTitle")
       ? hostContainer.wAccent("windowTitle", hostRoot.theme.textPrimary)
       : hostRoot.theme.textPrimary
@@ -64,12 +76,37 @@ Rectangle {
     anchors.centerIn: parent
   }
 
-  Text {
-    visible: hostContainer.isVert
+  Item {
+    id: vertContent
+    visible: hostContainer.isVert && titleMeasureText.text !== ""
     anchors.centerIn: parent
-    text: "🗔"
-    color: hostContainer.wAccent("windowTitle", hostRoot.theme.accentPrimary)
-    font.pixelSize: 13
-    font.family: hostRoot.font
+    width: parent.height
+    height: parent.width
+    rotation: 90
+
+    Row {
+      anchors.centerIn: parent
+      spacing: 6
+
+      Text {
+        anchors.verticalCenter: parent.verticalCenter
+        text: ""
+        color: hostContainer.wAccent("windowTitle", hostRoot.theme.accentPrimary)
+        font.pixelSize: 12
+        font.family: hostRoot.font
+      }
+
+      Text {
+        anchors.verticalCenter: parent.verticalCenter
+        text: titleMeasureText.text
+        color: hostContainer.hasCustomColor("windowTitle")
+          ? hostContainer.wAccent("windowTitle", hostRoot.theme.textPrimary)
+          : hostRoot.theme.textPrimary
+        font.pixelSize: 11
+        font.family: hostRoot.font
+        elide: Text.ElideRight
+        width: Math.max(20, vertContent.width - 28)
+      }
+    }
   }
 }

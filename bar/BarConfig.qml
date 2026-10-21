@@ -167,6 +167,7 @@ Singleton {
   property bool showTime: true
   property bool showSeconds: true
   property bool showDate: true
+  property bool showYear: true
   property bool showTray: true
   property bool showControlCenter: true
   property bool showBattery: true

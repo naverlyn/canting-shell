@@ -19,6 +19,7 @@ import Quickshell.Io
 import "../../notifications"
 import ".."
 import "./Notification"
+import "./Common"
 
 Item {
     id: root
@@ -90,13 +91,29 @@ Item {
             width: parent.width - 10
             spacing: 20
 
-            Text {
-                text: "Notifications"
-                font.family: root.font
-                font.pixelSize: 20
-                font.bold: true
-                color: root.theme.textPrimary
+            RowLayout {
                 Layout.fillWidth: true
+
+                Text {
+                    text: "Notifications"
+                    font.family: root.font
+                    font.pixelSize: 20
+                    font.bold: true
+                    color: root.theme.textPrimary
+                    Layout.fillWidth: true
+                }
+
+                Process {
+                    id: openBackupProc
+                    command: ["qs", "ipc", "call", "settings", "open", "backup"]
+                    running: false
+                }
+
+                ActionButton {
+                    iconText: "󰁯"
+                    label: "Backup & Restore"
+                    onClicked: openBackupProc.running = true
+                }
             }
 
             /* General Settings Group */

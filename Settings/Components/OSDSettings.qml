@@ -15,6 +15,7 @@ import Quickshell.Io
 import "../../osd"
 import ".."
 import "./OSD"
+import "./Common"
 
 Item {
     id: root
@@ -132,23 +133,40 @@ Item {
             spacing: 20
 
             /* Page Title & Subtitle */
-            ColumnLayout {
+            RowLayout {
                 Layout.fillWidth: true
                 spacing: 4
 
-                Text {
-                    text: "On-Screen Display"
-                    font.family: root.font
-                    font.pixelSize: 20
-                    font.bold: true
-                    color: root.theme.textPrimary
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Text {
+                        text: "On-Screen Display"
+                        font.family: root.font
+                        font.pixelSize: 20
+                        font.bold: true
+                        color: root.theme.textPrimary
+                    }
+
+                    Text {
+                        text: "Customize volume and brightness overlay positioning, adaptive orientation, live X/Y placement, and timing"
+                        font.family: root.font
+                        font.pixelSize: 12
+                        color: root.theme.textSecondary
+                    }
                 }
 
-                Text {
-                    text: "Customize volume and brightness overlay positioning, adaptive orientation, live X/Y placement, and timing"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    color: root.theme.textSecondary
+                Process {
+                    id: openBackupProc
+                    command: ["qs", "ipc", "call", "settings", "open", "backup"]
+                    running: false
+                }
+
+                ActionButton {
+                    iconText: "󰁯"
+                    label: "Backup & Restore"
+                    onClicked: openBackupProc.running = true
                 }
             }
 

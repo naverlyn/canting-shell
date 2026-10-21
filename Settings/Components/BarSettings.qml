@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
+import Quickshell.Io
 import "../../bar"
 import "../../MonitorManager"
 import ".."
@@ -689,6 +690,18 @@ Item {
                 }
 
                 Item { Layout.fillWidth: true }
+
+                Process {
+                    id: openBackupProc
+                    command: ["qs", "ipc", "call", "settings", "open", "backup"]
+                    running: false
+                }
+
+                ActionButton {
+                    iconText: "󰁯"
+                    label: "Backup & Restore"
+                    onClicked: openBackupProc.running = true
+                }
 
                 ActionButton {
                     iconText: "󰦛"

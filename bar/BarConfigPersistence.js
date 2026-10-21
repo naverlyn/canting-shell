@@ -62,6 +62,7 @@ function buildSaveData(root) {
     showTime: true,
     showSeconds: root.showSeconds,
     showDate: root.showDate,
+    showYear: root.showYear,
     showTray: true,
     showControlCenter: true,
     showBattery: true,
@@ -231,6 +232,7 @@ function applyConfig(root, cfg) {
   if (cfg.netCompact !== undefined) root.netCompact = Boolean(cfg.netCompact);
   if (cfg.showSeconds !== undefined) root.showSeconds = Boolean(cfg.showSeconds);
   if (cfg.showDate !== undefined) root.showDate = Boolean(cfg.showDate);
+  if (cfg.showYear !== undefined) root.showYear = Boolean(cfg.showYear);
   if (cfg.showGlobalMenuIcon !== undefined) root.showGlobalMenuIcon = Boolean(cfg.showGlobalMenuIcon);
   if (cfg.weatherLocation !== undefined) root.weatherLocation = String(cfg.weatherLocation);
   if (cfg.activeStyle !== undefined) root.activeStyle = String(cfg.activeStyle);
@@ -360,6 +362,7 @@ function resetDefaults(root) {
   root.showTime = true;
   root.showSeconds = true;
   root.showDate = true;
+  root.showYear = true;
   root.showTray = true;
   root.showControlCenter = true;
   root.showBattery = true;

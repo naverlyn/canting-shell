@@ -14,10 +14,10 @@ Scope {
     property var theme: Theme
     property string font: "Hack Nerd Font"
     
-    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About, 12: Lock Screen, 13: Animations, 14: Hyprland Settings, 15: Wallpaper
+    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About, 12: Lock Screen, 13: Animations, 14: Hyprland Settings, 15: Wallpaper, 16: OSD, 17: Control Center, 18: Backup & Restore
     property int currentTab: 0
-    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About", "Lock Screen", "Animations", "Hyprland Settings", "Wallpaper"]
-    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", "", "󰌾", "󰑈", "", "󰸉"]
+    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About", "Lock Screen", "Animations", "Hyprland Settings", "Wallpaper", "On-Screen Display", "Control Center", "Backup & Restore"]
+    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", "", "󰌾", "󰑈", "", "󰸉", "󰍹", "󰕮", "󰁯"]
 
     property var sections: [
         {
@@ -54,7 +54,8 @@ Scope {
                 { id: "appearance", name: "Appearance", icon: "󰏘", pageIndex: 9 },
                 { id: "wallpaper", name: "Wallpaper", icon: "󰸉", pageIndex: 15 },
                 { id: "notifications", name: "Notifications", icon: "󰂚", pageIndex: 3 },
-                { id: "osd", name: "On-Screen Display", icon: "󰍹", pageIndex: 16 }
+                { id: "osd", name: "On-Screen Display", icon: "󰍹", pageIndex: 16 },
+                { id: "backup", name: "Backup & Restore", icon: "󰁯", pageIndex: 18 }
             ]
         },
         {
@@ -424,6 +425,14 @@ Scope {
                         hostWindow: settingsWindow
                         pageIndex: 17
                         pageComponent: ControlCenterSettings { theme: root.theme; font: root.font }
+                    }
+
+                    // 18: Backup & Restore
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 18
+                        pageComponent: BackupRestoreSettings { theme: root.theme; font: root.font }
                     }
                 }
             }
