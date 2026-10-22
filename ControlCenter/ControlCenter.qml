@@ -29,11 +29,14 @@ PanelWindow {
     function updateAnchorMetrics() {
         if (!anchorTarget || !anchorTarget.QsWindow || !anchorTarget.QsWindow.window) return;
         const win = anchorTarget.QsWindow.window;
-        targetWinWidth = win.width > 0 ? win.width : (screen ? screen.width : 1920);
-        targetWinHeight = win.height > 0 ? win.height : (screen ? screen.height : 1080);
-        const pt = anchorTarget.mapToItem(null, anchorTarget.width / 2, anchorTarget.height / 2);
-        anchorCenterX = pt.x;
-        anchorCenterY = pt.y;
+        const scr = (win && win.screen) ? win.screen : (screen ? screen : null);
+        targetWinWidth = (scr && scr.width > 0) ? scr.width : 1920;
+        targetWinHeight = (scr && scr.height > 0) ? scr.height : 1080;
+        try {
+            const pt = anchorTarget.mapToItem(null, anchorTarget.width / 2, anchorTarget.height / 2);
+            if (pt && pt.x !== undefined && !isNaN(pt.x) && pt.x >= 0) anchorCenterX = pt.x;
+            if (pt && pt.y !== undefined && !isNaN(pt.y) && pt.y >= 0) anchorCenterY = pt.y;
+        } catch (e) {}
     }
 
     function edgeBarClearance(edgePos) {
@@ -55,9 +58,11 @@ PanelWindow {
 
     readonly property real computedAnchorCenterX: {
         if (anchorTarget && anchorTarget.QsWindow && anchorTarget.QsWindow.window) {
+            void anchorTarget.x;
+            void anchorTarget.width;
             try {
                 const pt = anchorTarget.mapToItem(null, anchorTarget.width / 2, anchorTarget.height / 2);
-                if (pt && pt.x > 0) return pt.x;
+                if (pt && pt.x !== undefined && !isNaN(pt.x) && pt.x >= 0) return pt.x;
             } catch (e) {}
         }
         return anchorCenterX > 0 ? anchorCenterX : (targetWinWidth - 170);
@@ -65,12 +70,29 @@ PanelWindow {
 
     readonly property real computedAnchorCenterY: {
         if (anchorTarget && anchorTarget.QsWindow && anchorTarget.QsWindow.window) {
+            void anchorTarget.y;
+            void anchorTarget.height;
             try {
                 const pt = anchorTarget.mapToItem(null, anchorTarget.width / 2, anchorTarget.height / 2);
-                if (pt && pt.y > 0) return pt.y;
+                if (pt && pt.y !== undefined && !isNaN(pt.y) && pt.y >= 0) return pt.y;
             } catch (e) {}
         }
         return anchorCenterY > 0 ? anchorCenterY : 100;
+    }
+
+    readonly property real vertTopLimit: Math.max(10, controlCenter.edgeBarClearance("top") + (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0) + 6)
+    readonly property real vertBottomLimit: Math.max(10, controlCenter.edgeBarClearance("bottom") + (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0) + 6)
+    readonly property real horizLeftLimit: Math.max(10, controlCenter.edgeBarClearance("left") + (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0) + 6)
+    readonly property real horizRightLimit: Math.max(10, controlCenter.edgeBarClearance("right") + (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0) + 6)
+
+    readonly property real clampedVertY: {
+        const scrH = (controlCenter.screen && controlCenter.screen.height > 0)
+            ? controlCenter.screen.height
+            : (controlCenter.targetWinHeight > 0 ? controlCenter.targetWinHeight : 1080);
+        const rectH = ccMainRect ? ccMainRect.height : 500;
+        const desiredY = Math.round(controlCenter.computedAnchorCenterY - (rectH / 2));
+        const maxY = Math.max(controlCenter.vertTopLimit, scrH - controlCenter.vertBottomLimit - rectH);
+        return Math.max(controlCenter.vertTopLimit, Math.min(maxY, desiredY));
     }
 
     readonly property bool fluidEnabled: (BarConfig.fluidCards !== false) && !barFloating && Boolean(BarConfig.innerCorners)
@@ -79,17 +101,19 @@ PanelWindow {
 
     screen: (anchorTarget && anchorTarget.QsWindow.window) ? anchorTarget.QsWindow.window.screen : null
     anchors {
-        top: controlCenter.barPosition !== "bottom"
-        bottom: controlCenter.barPosition === "bottom"
+        top: controlCenter.isVertBar ? true : (controlCenter.barPosition !== "bottom")
+        bottom: controlCenter.isVertBar ? true : (controlCenter.barPosition === "bottom")
         left: controlCenter.isVertBar ? (controlCenter.barPosition === "left") : false
         right: controlCenter.isVertBar ? (controlCenter.barPosition === "right") : true
     }
     margins {
         top: {
+            if (controlCenter.isVertBar) return 0;
             if (controlCenter.barPosition === "top") return controlCenter.ownHorizClearance;
             return 10;
         }
         bottom: {
+            if (controlCenter.isVertBar) return 0;
             if (controlCenter.barPosition === "bottom") return controlCenter.ownHorizClearance;
             return 10;
         }
@@ -103,7 +127,7 @@ PanelWindow {
                 : (controlCenter.targetWinWidth > 0 ? controlCenter.targetWinWidth : 1920);
             const panelWidth = controlCenter.implicitWidth;
             const desiredRight = Math.round(scrW - (controlCenter.computedAnchorCenterX + (panelWidth / 2)));
-            return Math.max(10, Math.min(scrW - panelWidth - 10, desiredRight));
+            return Math.max(controlCenter.horizRightLimit, Math.min(scrW - panelWidth - controlCenter.horizLeftLimit, desiredRight));
         }
     }
     exclusionMode: ExclusionMode.Ignore
@@ -152,7 +176,13 @@ PanelWindow {
 
     signal refreshRequested()
 
-    readonly property int maxCcHeight: Math.max(300, (screen ? screen.height : 1080) - margins.top - margins.bottom - 24)
+    readonly property int maxCcHeight: {
+        const scrH = (screen ? screen.height : 1080);
+        if (controlCenter.isVertBar) {
+            return Math.max(300, scrH - controlCenter.vertTopLimit - controlCenter.vertBottomLimit - 16);
+        }
+        return Math.max(300, scrH - margins.top - margins.bottom - 24);
+    }
     readonly property int maxContentAreaHeight: Math.max(160, maxCcHeight - 24
         - (header.visible ? (header.implicitHeight + 12) : 0)
         - (switcher.visible ? (switcher.implicitHeight + 12) : 0))
@@ -242,10 +272,17 @@ PanelWindow {
     Rectangle {
         id: ccMainRect
         anchors {
-            top: controlCenter.barPosition === "bottom" ? undefined : parent.top
+            top: controlCenter.isVertBar
+                ? undefined
+                : (controlCenter.barPosition === "bottom" ? undefined : parent.top)
             bottom: controlCenter.barPosition === "bottom" ? parent.bottom : undefined
             left: parent.left
             right: parent.right
+        }
+        y: controlCenter.isVertBar ? controlCenter.clampedVertY : 0
+        Behavior on y {
+            enabled: controlCenter.visible
+            NumberAnimation { duration: 250; easing.type: Easing.OutCubic }
         }
         height: Math.min(controlCenter.maxCcHeight, contentColumn.height + 24)
         radius: controlCenter.fluidEnabled ? 16 : 12
@@ -258,7 +295,7 @@ PanelWindow {
 
         // Square off connection edge and remove border line touching the bar
         Rectangle {
-            visible: controlCenter.fluidEnabled && (controlCenter.barPosition !== "bottom")
+            visible: controlCenter.fluidEnabled && (controlCenter.barPosition === "top")
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right
@@ -272,6 +309,24 @@ PanelWindow {
             anchors.left: parent.left
             anchors.right: parent.right
             height: 16
+            color: parent.color
+        }
+
+        Rectangle {
+            visible: controlCenter.fluidEnabled && (controlCenter.barPosition === "left")
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            width: 16
+            color: parent.color
+        }
+
+        Rectangle {
+            visible: controlCenter.fluidEnabled && (controlCenter.barPosition === "right")
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.right: parent.right
+            width: 16
             color: parent.color
         }
 

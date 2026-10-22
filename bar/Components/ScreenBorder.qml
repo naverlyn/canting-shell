@@ -66,6 +66,9 @@ Item {
   onEffectiveDockedLeftChanged: shadowCanvas.requestPaint()
   onEffectiveDockedRightChanged: shadowCanvas.requestPaint()
 
+  readonly property var activePopupData: (barRoot && barRoot.activePopupData) ? barRoot.activePopupData : null
+  onActivePopupDataChanged: shadowCanvas.requestPaint()
+
   // Top Border Strip (active when no docked top bar is present)
   PanelWindow {
     id: topBorderWindow
@@ -265,7 +268,117 @@ Item {
           ctx.save();
           ctx.beginPath();
           addRoundedRectCW(ctx, 0, 0, w, h, outTL, outTR, outBR, outBL);
-          ctx.clip();
+
+          // Omit the straight bar shadow along the exact contour of the fluid popup where it touches the bar,
+          // curving with the scoops, so the shadow never shines through the translucent card,
+          // nor abruptly cuts across the desktop wallpaper outside the scoop!
+          const ap = borderRoot.activePopupData;
+          if (ap && ap.active && ap.fluidEnabled) {
+            const sameScreen = !ap.screen || !borderRoot.screen || ap.screen === borderRoot.screen;
+            if (sameScreen) {
+              const r = ap.cornerRad || 16;
+              const depth = Math.max(s, r);
+              const joinTop = Boolean(ap.joinTop);
+              const joinBottom = Boolean(ap.joinBottom);
+              const joinLeft = Boolean(ap.joinLeft);
+              const joinRight = Boolean(ap.joinRight);
+
+              if (ap.barPos === "right" && borderRoot.rightActive) {
+                const startY = Math.max(0, ap.y - borderRoot.effectiveDockedTop);
+                const endY = startY + ap.height;
+                if (ap.height > 0) {
+                  ctx.moveTo(w, startY);
+                  if (joinTop) {
+                    ctx.lineTo(w - depth, startY);
+                  } else {
+                    ctx.arcTo(w, startY + r, w - r, startY + r, r);
+                    ctx.lineTo(w - depth, startY + r);
+                  }
+
+                  if (joinBottom) {
+                    ctx.lineTo(w - depth, endY);
+                    ctx.lineTo(w, endY);
+                  } else {
+                    ctx.lineTo(w - depth, endY - r);
+                    ctx.lineTo(w - r, endY - r);
+                    ctx.arcTo(w, endY - r, w, endY, r);
+                  }
+                  ctx.lineTo(w, startY);
+                  ctx.closePath();
+                }
+              } else if (ap.barPos === "left" && borderRoot.leftActive) {
+                const startY = Math.max(0, ap.y - borderRoot.effectiveDockedTop);
+                const endY = startY + ap.height;
+                if (ap.height > 0) {
+                  ctx.moveTo(0, startY);
+                  if (joinTop) {
+                    ctx.lineTo(depth, startY);
+                  } else {
+                    ctx.arcTo(0, startY + r, r, startY + r, r);
+                    ctx.lineTo(depth, startY + r);
+                  }
+
+                  if (joinBottom) {
+                    ctx.lineTo(depth, endY);
+                    ctx.lineTo(0, endY);
+                  } else {
+                    ctx.lineTo(depth, endY - r);
+                    ctx.lineTo(r, endY - r);
+                    ctx.arcTo(0, endY - r, 0, endY, r);
+                  }
+                  ctx.lineTo(0, startY);
+                  ctx.closePath();
+                }
+              } else if (ap.barPos === "top" && borderRoot.topActive) {
+                const startX = Math.max(0, ap.x - borderRoot.effectiveDockedLeft);
+                const endX = startX + ap.width;
+                if (ap.width > 0) {
+                  ctx.moveTo(startX, 0);
+                  if (joinLeft) {
+                    ctx.lineTo(startX, depth);
+                  } else {
+                    ctx.arcTo(startX + r, 0, startX + r, r, r);
+                    ctx.lineTo(startX + r, depth);
+                  }
+
+                  if (joinRight) {
+                    ctx.lineTo(endX, depth);
+                    ctx.lineTo(endX, 0);
+                  } else {
+                    ctx.lineTo(endX - r, depth);
+                    ctx.lineTo(endX - r, r);
+                    ctx.arcTo(endX - r, 0, endX, 0, r);
+                  }
+                  ctx.lineTo(startX, 0);
+                  ctx.closePath();
+                }
+              } else if (ap.barPos === "bottom" && borderRoot.bottomActive) {
+                const startX = Math.max(0, ap.x - borderRoot.effectiveDockedLeft);
+                const endX = startX + ap.width;
+                if (ap.width > 0) {
+                  ctx.moveTo(startX, h);
+                  if (joinLeft) {
+                    ctx.lineTo(startX, h - depth);
+                  } else {
+                    ctx.arcTo(startX + r, h, startX + r, h - r, r);
+                    ctx.lineTo(startX + r, h - depth);
+                  }
+
+                  if (joinRight) {
+                    ctx.lineTo(endX, h - depth);
+                    ctx.lineTo(endX, h);
+                  } else {
+                    ctx.lineTo(endX - r, h - depth);
+                    ctx.lineTo(endX - r, h - r);
+                    ctx.arcTo(endX - r, h, endX, h, r);
+                  }
+                  ctx.lineTo(startX, h);
+                  ctx.closePath();
+                }
+              }
+            }
+          }
+          ctx.clip("evenodd");
 
           const steps = Math.min(32, Math.max(16, s));
           for (let i = 1; i <= steps; i++) {

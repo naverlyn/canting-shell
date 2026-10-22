@@ -131,7 +131,25 @@ Rectangle {
 
   PopupWindow {
     id: calendarPopup
-    readonly property bool isCalActive: timeHover.hovered || timeMouse.containsMouse || timeWidget.calPinned
+    property bool effectiveHovered: false
+    readonly property bool isCalActive: effectiveHovered || timeWidget.calPinned
+
+    Timer {
+      id: calCloseGraceTimer
+      interval: 180
+      repeat: false
+      onTriggered: calendarPopup.effectiveHovered = false
+    }
+
+    readonly property bool pillHovered: timeHover.hovered || timeMouse.containsMouse
+    onPillHoveredChanged: {
+      if (pillHovered) {
+        calCloseGraceTimer.stop();
+        calendarPopup.effectiveHovered = true;
+      } else if (!calHoverHandler.hovered) {
+        calCloseGraceTimer.restart();
+      }
+    }
 
     // Fluid card blending properties
     readonly property bool isFloatingBar: hostContainer && hostContainer.isFloating !== undefined
@@ -152,30 +170,72 @@ Rectangle {
     readonly property real cardBorderWidth: fluidEnabled ? 1 : 2
 
     property bool instantClose: false
+    property int lastClampedX: 0
+    property int lastClampedY: 0
+    property bool joinTop: false
+    property bool joinBottom: false
+    property bool joinLeft: false
+    property bool joinRight: false
+
+    function syncActivePopupState(active) {
+      const hr = hostRoot;
+      if (!hr) return;
+      if (!active) {
+        if (hr.activePopupData && hr.activePopupData.target === calendarPopup) {
+          hr.activePopupData = null;
+        }
+        return;
+      }
+      const win = timeWidget ? timeWidget.QsWindow.window : null;
+      const scr = win ? win.screen : null;
+      hr.activePopupData = {
+        target: calendarPopup,
+        active: true,
+        fluidEnabled: calendarPopup.fluidEnabled,
+        barPos: hostContainer.barPos,
+        x: calendarPopup.lastClampedX,
+        y: calendarPopup.lastClampedY,
+        width: calendarPopup.implicitWidth,
+        height: calendarPopup.implicitHeight,
+        screen: scr,
+        joinTop: calendarPopup.joinTop,
+        joinBottom: calendarPopup.joinBottom,
+        joinLeft: calendarPopup.joinLeft,
+        joinRight: calendarPopup.joinRight,
+        cornerRad: calendarPopup.cornerRad
+      };
+    }
 
     function dismissImmediate() {
       instantClose = true;
+      effectiveHovered = false;
+      calCloseGraceTimer.stop();
       cardContainer.opacity = 0.0;
+      syncActivePopupState(false);
     }
 
     onIsCalActiveChanged: {
       if (isCalActive) {
         instantClose = false;
         BarConfig.notifyPopupActive(calendarPopup);
+        syncActivePopupState(true);
       } else {
         BarConfig.notifyPopupInactive(calendarPopup);
+        syncActivePopupState(false);
       }
     }
 
+    Component.onDestruction: syncActivePopupState(false)
+
     visible: (isCalActive && !instantClose) || cardContainer.opacity > 0.001
     implicitWidth: {
-      if (!fluidEnabled) return 292;
-      if (hostContainer.barPos === "left" || hostContainer.barPos === "right") return 280;
+      if (!fluidEnabled) return 296;
+      if (hostContainer.barPos === "left" || hostContainer.barPos === "right") return 288;
       return 280 + (2 * cornerRad);
     }
     implicitHeight: {
-      if (!fluidEnabled) return 312;
-      if (hostContainer.barPos === "top" || hostContainer.barPos === "bottom") return 300;
+      if (!fluidEnabled) return 316;
+      if (hostContainer.barPos === "top" || hostContainer.barPos === "bottom") return 308;
       return 300 + (2 * cornerRad);
     }
     color: "transparent"
@@ -204,22 +264,65 @@ Rectangle {
         hostContainer, 0, 0, hostContainer.width, hostContainer.height
       );
       const scr = win.screen;
+      const pad = 8;
+      const joinThreshold = 36;
+
       if (hostContainer.barPos === "top" || hostContainer.barPos === "bottom") {
         const widgetCenter = widgetRect.x + (widgetRect.width / 2);
         const popupW = calendarPopup.implicitWidth;
         const desiredX = Math.round(widgetCenter - (popupW / 2));
         const scrW = scr ? scr.width : 1920;
-        const pad = 8;
-        const clampedX = Math.max(pad, Math.min(Math.max(pad, scrW - popupW - pad), desiredX));
-        calendarPopup.anchor.rect = Qt.rect(clampedX, bRect.y, popupW, bRect.height);
+
+        if (calendarPopup.fluidEnabled && desiredX <= joinThreshold) {
+          calendarPopup.joinLeft = true;
+          calendarPopup.joinRight = false;
+          calendarPopup.lastClampedX = 0;
+        } else if (calendarPopup.fluidEnabled && (desiredX + popupW >= scrW - joinThreshold)) {
+          calendarPopup.joinRight = true;
+          calendarPopup.joinLeft = false;
+          calendarPopup.lastClampedX = scrW - popupW;
+        } else {
+          calendarPopup.joinLeft = false;
+          calendarPopup.joinRight = false;
+          calendarPopup.lastClampedX = Math.max(pad, Math.min(Math.max(pad, scrW - popupW - pad), desiredX));
+        }
+
+        calendarPopup.joinTop = false;
+        calendarPopup.joinBottom = false;
+        calendarPopup.lastClampedY = hostContainer.barPos === "top" ? win.height : 0;
+        const anchorY = calendarPopup.fluidEnabled ? (hostContainer.barPos === "top" ? win.height : 0) : bRect.y;
+        const anchorH = calendarPopup.fluidEnabled ? 0 : bRect.height;
+        calendarPopup.anchor.rect = Qt.rect(calendarPopup.lastClampedX, anchorY, popupW, anchorH);
       } else {
         const widgetCenter = widgetRect.y + (widgetRect.height / 2);
         const popupH = calendarPopup.implicitHeight;
         const desiredY = Math.round(widgetCenter - (popupH / 2));
         const scrH = scr ? scr.height : 1080;
-        const pad = 8;
-        const clampedY = Math.max(pad, Math.min(Math.max(pad, scrH - popupH - pad), desiredY));
-        calendarPopup.anchor.rect = Qt.rect(bRect.x, clampedY, bRect.width, popupH);
+
+        if (calendarPopup.fluidEnabled && desiredY <= joinThreshold) {
+          calendarPopup.joinTop = true;
+          calendarPopup.joinBottom = false;
+          calendarPopup.lastClampedY = 0;
+        } else if (calendarPopup.fluidEnabled && (desiredY + popupH >= scrH - joinThreshold)) {
+          calendarPopup.joinBottom = true;
+          calendarPopup.joinTop = false;
+          calendarPopup.lastClampedY = scrH - popupH;
+        } else {
+          calendarPopup.joinTop = false;
+          calendarPopup.joinBottom = false;
+          calendarPopup.lastClampedY = Math.max(pad, Math.min(Math.max(pad, scrH - popupH - pad), desiredY));
+        }
+
+        calendarPopup.joinLeft = false;
+        calendarPopup.joinRight = false;
+        calendarPopup.lastClampedX = hostContainer.barPos === "left" ? win.width : 0;
+        const anchorX = calendarPopup.fluidEnabled ? (hostContainer.barPos === "left" ? win.width : 0) : bRect.x;
+        const anchorW = calendarPopup.fluidEnabled ? 0 : bRect.width;
+        calendarPopup.anchor.rect = Qt.rect(anchorX, calendarPopup.lastClampedY, anchorW, popupH);
+      }
+
+      if (calendarPopup.isCalActive) {
+        calendarPopup.syncActivePopupState(true);
       }
     }
 
@@ -229,24 +332,55 @@ Rectangle {
 
       Behavior on opacity {
         NumberAnimation {
-          duration: calendarPopup.instantClose ? 0 : ((calendarPopup.isCalActive && BarConfig.isHoveringBarPills) ? 0 : 150)
+          duration: calendarPopup.instantClose ? 0 : ((calendarPopup.isCalActive && BarConfig.isHoveringBarPills) ? 0 : 180)
           easing.type: Easing.OutCubic
         }
       }
 
-      x: calendarPopup.fluidEnabled ? 0 : 6
-      y: calendarPopup.fluidEnabled ? 0 : (
-        hostContainer.barPos === "top"
-          ? (calendarPopup.isCalActive ? 6 : 0)
-          : (hostContainer.barPos === "bottom" ? (calendarPopup.isCalActive ? 6 : 12) : 6)
-      )
-      width: calendarPopup.fluidEnabled ? calendarPopup.implicitWidth : 280
-      height: calendarPopup.fluidEnabled ? calendarPopup.implicitHeight : 300
+      anchors.fill: parent
 
-      Behavior on y {
-        NumberAnimation {
-          duration: (calendarPopup.instantClose || BarConfig.isHoveringBarPills) ? 0 : 160
-          easing.type: Easing.OutCubic
+      transform: Translate {
+        id: calSlideTransform
+        x: {
+          if (!calendarPopup.fluidEnabled) return 0;
+          if (hostContainer.barPos === "right") return (calendarPopup.isCalActive && !calendarPopup.instantClose) ? 0 : 8;
+          if (hostContainer.barPos === "left") return (calendarPopup.isCalActive && !calendarPopup.instantClose) ? 0 : -8;
+          return 0;
+        }
+        y: {
+          if (!calendarPopup.fluidEnabled) return (
+            hostContainer.barPos === "top"
+              ? (calendarPopup.isCalActive ? 6 : 0)
+              : (hostContainer.barPos === "bottom" ? (calendarPopup.isCalActive ? 6 : 12) : 6)
+          );
+          if (hostContainer.barPos === "top") return (calendarPopup.isCalActive && !calendarPopup.instantClose) ? 0 : -8;
+          if (hostContainer.barPos === "bottom") return (calendarPopup.isCalActive && !calendarPopup.instantClose) ? 0 : 8;
+          return 0;
+        }
+
+        Behavior on x {
+          NumberAnimation {
+            duration: calendarPopup.instantClose ? 0 : ((calendarPopup.isCalActive && BarConfig.isHoveringBarPills) ? 0 : 200)
+            easing.type: Easing.OutCubic
+          }
+        }
+        Behavior on y {
+          NumberAnimation {
+            duration: calendarPopup.instantClose ? 0 : ((calendarPopup.isCalActive && BarConfig.isHoveringBarPills) ? 0 : 200)
+            easing.type: Easing.OutCubic
+          }
+        }
+      }
+
+      HoverHandler {
+        id: calHoverHandler
+        onHoveredChanged: {
+          if (hovered) {
+            calCloseGraceTimer.stop();
+            calendarPopup.effectiveHovered = true;
+          } else if (!calendarPopup.pillHovered) {
+            calCloseGraceTimer.restart();
+          }
         }
       }
 
@@ -258,14 +392,26 @@ Rectangle {
         cardColor: calendarPopup.fluidEnabled ? calendarPopup.barColor : hostRoot.theme.bgSurface
         borderColor: calendarPopup.cardBorderColor
         borderWidth: calendarPopup.cardBorderWidth
+        joinTop: calendarPopup.joinTop
+        joinBottom: calendarPopup.joinBottom
+        joinLeft: calendarPopup.joinLeft
+        joinRight: calendarPopup.joinRight
       }
 
       ColumnLayout {
         anchors.fill: parent
-        anchors.leftMargin: calendarPopup.fluidEnabled && (hostContainer.barPos === "top" || hostContainer.barPos === "bottom") ? (calendarPopup.cornerRad + 16) : 16
-        anchors.rightMargin: calendarPopup.fluidEnabled && (hostContainer.barPos === "top" || hostContainer.barPos === "bottom") ? (calendarPopup.cornerRad + 16) : 16
-        anchors.topMargin: calendarPopup.fluidEnabled && (hostContainer.barPos === "left" || hostContainer.barPos === "right") ? (calendarPopup.cornerRad + 16) : 16
-        anchors.bottomMargin: calendarPopup.fluidEnabled && (hostContainer.barPos === "left" || hostContainer.barPos === "right") ? (calendarPopup.cornerRad + 16) : 16
+        anchors.leftMargin: calendarPopup.fluidEnabled
+          ? (hostContainer.barPos === "top" || hostContainer.barPos === "bottom" ? (calendarPopup.cornerRad + 16) : (hostContainer.barPos === "right" ? 20 : 16))
+          : 16
+        anchors.rightMargin: calendarPopup.fluidEnabled
+          ? (hostContainer.barPos === "top" || hostContainer.barPos === "bottom" ? (calendarPopup.cornerRad + 16) : (hostContainer.barPos === "left" ? 20 : 16))
+          : 16
+        anchors.topMargin: calendarPopup.fluidEnabled
+          ? (hostContainer.barPos === "left" || hostContainer.barPos === "right" ? (calendarPopup.cornerRad + 16) : (hostContainer.barPos === "bottom" ? 20 : 16))
+          : 16
+        anchors.bottomMargin: calendarPopup.fluidEnabled
+          ? (hostContainer.barPos === "left" || hostContainer.barPos === "right" ? (calendarPopup.cornerRad + 16) : (hostContainer.barPos === "top" ? 20 : 16))
+          : 16
         spacing: 12
 
         Text {

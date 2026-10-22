@@ -18,7 +18,7 @@ Scope {
   IpcHandler {
     target: "wallpaper"
 
-    function toggle(): void {
+    function toggle() {
       wallpaperPanel.visible = !wallpaperPanel.visible;
       if (wallpaperPanel.visible) {
         root.searchText = "";
@@ -29,15 +29,15 @@ Scope {
       }
     }
 
-    function addFolder(path: string): void {
+    function addFolder(path) {
       WallpaperService.addDirectory(path);
     }
 
-    function removeFolder(path: string): void {
+    function removeFolder(path) {
       WallpaperService.removeDirectory(path);
     }
 
-    function rescan(): void {
+    function rescan() {
       WallpaperService.rescan();
     }
   }
@@ -52,9 +52,15 @@ Scope {
         return name.includes(q);
       });
     }
-    const current = WallpaperService.currentWallpaper;
-    if (current && list.includes(current)) {
-      list = [current].concat(list.filter(p => p !== current));
+    const curA = WallpaperService.wallpaperA;
+    const curB = WallpaperService.wallpaperB;
+    const curMain = WallpaperService.currentWallpaper;
+    const tops = [];
+    if (curA && list.includes(curA)) tops.push(curA);
+    if (curB && list.includes(curB) && !tops.includes(curB)) tops.push(curB);
+    if (curMain && list.includes(curMain) && !tops.includes(curMain)) tops.push(curMain);
+    if (tops.length > 0) {
+      list = tops.concat(list.filter(p => !tops.includes(p)));
     }
     return list;
   }

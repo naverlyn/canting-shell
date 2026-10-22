@@ -62,7 +62,7 @@ Rectangle {
     theme: hostRoot.theme
     font: hostRoot.font
     title: "Memory"
-    icon: "\uf2db"
+    icon: "󰍛"
     accent: hostContainer.wAccent("memory", hostRoot.theme.accentPrimary)
     script: "mem"
     barPosition: hostContainer.barPos

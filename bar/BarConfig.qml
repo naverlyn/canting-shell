@@ -53,6 +53,29 @@ Singleton {
   property int screenBorderShadowSize: 12
   property real screenBorderShadowOpacity: 0.35
 
+  // Active details popups tracking across bars
+  property var activePopupsList: []
+  readonly property bool isHoveringBarPills: activePopupsList && activePopupsList.length > 0
+
+  function notifyPopupActive(p) {
+    if (!activePopupsList) activePopupsList = [];
+    if (activePopupsList.indexOf(p) === -1) {
+      const copy = activePopupsList.slice();
+      copy.push(p);
+      activePopupsList = copy;
+    }
+  }
+
+  function notifyPopupInactive(p) {
+    if (!activePopupsList) return;
+    const idx = activePopupsList.indexOf(p);
+    if (idx !== -1) {
+      const copy = activePopupsList.slice();
+      copy.splice(idx, 1);
+      activePopupsList = copy;
+    }
+  }
+
   // Panel capacity limit
   readonly property int maxPanelWidgets: 10
   signal configWarning(string message)

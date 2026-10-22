@@ -110,7 +110,10 @@ ColumnLayout {
                     required property string modelData
                     required property int index
 
-                    readonly property bool isCurrent: WallpaperService.currentWallpaper === modelData
+                    readonly property bool isCurrentA: WallpaperService.wallpaperA === modelData
+                    readonly property bool isCurrentB: WallpaperService.wallpaperB === modelData
+                    readonly property bool isCurrentGlobal: WallpaperService.currentWallpaper === modelData
+                    readonly property bool isCurrent: isCurrentA || isCurrentB || isCurrentGlobal
                     readonly property string filename: {
                         const p = modelData.split("/");
                         return p[p.length - 1];
@@ -124,7 +127,9 @@ ColumnLayout {
                         color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)
                         scale: itemHover.hovered ? 1.02 : 1.0
                         border.color: delItem.isCurrent
-                            ? root.theme.accentPrimary
+                            ? ((WallpaperService.hasMultipleMonitors && delItem.isCurrentB && !delItem.isCurrentA)
+                                ? (root.theme.accentCyan ?? root.theme.accentPrimary)
+                                : root.theme.accentPrimary)
                             : (itemHover.hovered ? (root.theme.accentPrimary ?? Qt.rgba(1, 1, 1, 0.3)) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
                         border.width: delItem.isCurrent ? 2 : 1
 
@@ -193,7 +198,7 @@ ColumnLayout {
                             }
                         }
 
-                        // Active indicator (Current badge at top)
+                        // Active indicator badge at top
                         Rectangle {
                             visible: delItem.isCurrent
                             anchors.top: parent.top
@@ -202,12 +207,21 @@ ColumnLayout {
                             height: 20
                             width: currentBadgeText.implicitWidth + 14
                             radius: 4
-                            color: root.theme.accentPrimary
+                            color: (WallpaperService.hasMultipleMonitors && delItem.isCurrentB && !delItem.isCurrentA)
+                                ? (root.theme.accentCyan ?? root.theme.accentPrimary)
+                                : root.theme.accentPrimary
 
                             Text {
                                 id: currentBadgeText
                                 anchors.centerIn: parent
-                                text: "Current"
+                                text: {
+                                    if (WallpaperService.hasMultipleMonitors) {
+                                        if (delItem.isCurrentA && delItem.isCurrentB) return "All";
+                                        if (delItem.isCurrentA) return "Primary";
+                                        if (delItem.isCurrentB) return "Secondary";
+                                    }
+                                    return "Active";
+                                }
                                 font.family: root.font
                                 font.pixelSize: 10
                                 font.bold: true
@@ -231,7 +245,7 @@ ColumnLayout {
                                 if (mouse.button === Qt.RightButton) {
                                     root.previewPath = delItem.modelData;
                                 } else {
-                                    WallpaperService.setWallpaper(delItem.modelData);
+                                    WallpaperService.setWallpaper(delItem.modelData, WallpaperService.targetDisplay, WallpaperService.resizeMode);
                                 }
                             }
                         }
@@ -296,6 +310,58 @@ ColumnLayout {
                     font.family: root.font
                     font.pixelSize: 10
                     color: root.theme.textMuted
+                }
+            }
+
+            RowLayout {
+                spacing: 6
+                Rectangle {
+                    height: 18
+                    width: targetFooterText.implicitWidth + 12
+                    radius: 4
+                    color: root.theme.bgSurface
+                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.width: 1
+                    Text {
+                        id: targetFooterText
+                        anchors.centerIn: parent
+                        text: {
+                            if (WallpaperService.hasMultipleMonitors) {
+                                if (WallpaperService.targetDisplay === "all") return "Target: All";
+                                if (WallpaperService.targetDisplay === "secondary") return "Target: Secondary (" + WallpaperService.displayBName + ")";
+                                return "Target: Primary (" + WallpaperService.displayAName + ")";
+                            }
+                            return "Display: " + WallpaperService.displayAName;
+                        }
+                        font.family: root.font
+                        font.pixelSize: 10
+                        color: root.theme.accentPrimary
+                    }
+                }
+            }
+
+            RowLayout {
+                spacing: 6
+                Rectangle {
+                    height: 18
+                    width: typeFooterText.implicitWidth + 12
+                    radius: 4
+                    color: root.theme.bgSurface
+                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.width: 1
+                    Text {
+                        id: typeFooterText
+                        anchors.centerIn: parent
+                        text: {
+                            const modeLabel = (WallpaperService.resizeMode === "fit") ? "Fit"
+                                : (WallpaperService.resizeMode === "stretch") ? "Stretch"
+                                : (WallpaperService.resizeMode === "no") ? "Center" : "Fill";
+                            return "Type: " + modeLabel;
+                        }
+                        font.family: root.font
+                        font.pixelSize: 10
+                        color: root.theme.accentPrimary
+                    }
                 }
             }
 

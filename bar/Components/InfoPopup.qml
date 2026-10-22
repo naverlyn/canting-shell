@@ -12,6 +12,7 @@ PopupWindow {
 
   required property Item target
   property Item barItem: null
+  property var hostRoot: (target && target.hostRoot !== undefined) ? target.hostRoot : null
   property bool hovered: false
   property bool pinned: false
   property var theme
@@ -22,8 +23,61 @@ PopupWindow {
   property string script: ""
   property string barPosition: barItem && barItem.barPos !== undefined ? barItem.barPos : BarConfig.position
 
-  // Activated only by target hover or pin toggle (eliminates cross-widget jitter)
-  readonly property bool isDetailsActive: hovered || pinned
+  property int lastClampedX: 0
+  property int lastClampedY: 0
+  property bool joinTop: false
+  property bool joinBottom: false
+  property bool joinLeft: false
+  property bool joinRight: false
+
+  function syncActivePopupState(active) {
+    const hr = popup.hostRoot;
+    if (!hr) return;
+    if (!active) {
+      if (hr.activePopupData && hr.activePopupData.target === popup) {
+        hr.activePopupData = null;
+      }
+      return;
+    }
+    const win = target ? target.QsWindow.window : null;
+    const scr = win ? win.screen : null;
+    hr.activePopupData = {
+      target: popup,
+      active: true,
+      fluidEnabled: popup.fluidEnabled,
+      barPos: popup.barPosition,
+      x: popup.lastClampedX,
+      y: popup.lastClampedY,
+      width: popup.implicitWidth,
+      height: popup.implicitHeight,
+      screen: scr,
+      joinTop: popup.joinTop,
+      joinBottom: popup.joinBottom,
+      joinLeft: popup.joinLeft,
+      joinRight: popup.joinRight,
+      cornerRad: popup.cornerRad
+    };
+  }
+
+  // Activated only by target hover or pin toggle (with grace timer and card hover support)
+  property bool effectiveHovered: false
+  readonly property bool isDetailsActive: effectiveHovered || pinned
+
+  Timer {
+    id: closeGraceTimer
+    interval: 180
+    repeat: false
+    onTriggered: popup.effectiveHovered = false
+  }
+
+  onHoveredChanged: {
+    if (hovered) {
+      closeGraceTimer.stop();
+      effectiveHovered = true;
+    } else if (!cardHoverHandler.hovered) {
+      closeGraceTimer.restart();
+    }
+  }
 
   // Fluid vs Flyout mode toggle
   readonly property bool isFloatingBar: barItem && barItem.isFloating !== undefined
@@ -69,17 +123,24 @@ PopupWindow {
 
   function dismissImmediate() {
     instantClose = true;
+    effectiveHovered = false;
+    closeGraceTimer.stop();
     cardContainer.opacity = 0.0;
+    syncActivePopupState(false);
   }
 
   onIsDetailsActiveChanged: {
     if (isDetailsActive) {
       instantClose = false;
       BarConfig.notifyPopupActive(popup);
+      syncActivePopupState(true);
     } else {
       BarConfig.notifyPopupInactive(popup);
+      syncActivePopupState(false);
     }
   }
+
+  Component.onDestruction: syncActivePopupState(false)
 
   Component.onCompleted: {
     if (!proc.running && popup.script) {
@@ -94,13 +155,13 @@ PopupWindow {
   readonly property int baseContentH: content.implicitHeight + 28
 
   implicitWidth: {
-    if (!fluidEnabled) return baseContentW + 12;
-    if (popup.barPosition === "left" || popup.barPosition === "right") return baseContentW;
+    if (!fluidEnabled) return baseContentW + 16;
+    if (popup.barPosition === "left" || popup.barPosition === "right") return baseContentW + 8;
     return baseContentW + (2 * cornerRad);
   }
   implicitHeight: {
-    if (!fluidEnabled) return baseContentH + 12;
-    if (popup.barPosition === "top" || popup.barPosition === "bottom") return baseContentH;
+    if (!fluidEnabled) return baseContentH + 16;
+    if (popup.barPosition === "top" || popup.barPosition === "bottom") return baseContentH + 8;
     return baseContentH + (2 * cornerRad);
   }
 
@@ -125,25 +186,68 @@ PopupWindow {
     if (popup.barItem) {
       const bRect = win.contentItem.mapFromItem(popup.barItem, 0, 0, popup.barItem.width, popup.barItem.height);
       const scr = win.screen;
+      const pad = 8;
+      const joinThreshold = 36;
+
       if (popup.barPosition === "top" || popup.barPosition === "bottom") {
         const widgetCenter = widgetRect.x + (widgetRect.width / 2);
         const popupW = popup.implicitWidth;
         const desiredX = Math.round(widgetCenter - (popupW / 2));
         const scrW = scr ? scr.width : 1920;
-        const pad = 8;
-        const clampedX = Math.max(pad, Math.min(Math.max(pad, scrW - popupW - pad), desiredX));
-        anchor.rect = Qt.rect(clampedX, bRect.y, popupW, bRect.height);
+
+        if (popup.fluidEnabled && desiredX <= joinThreshold) {
+          popup.joinLeft = true;
+          popup.joinRight = false;
+          popup.lastClampedX = 0;
+        } else if (popup.fluidEnabled && (desiredX + popupW >= scrW - joinThreshold)) {
+          popup.joinRight = true;
+          popup.joinLeft = false;
+          popup.lastClampedX = scrW - popupW;
+        } else {
+          popup.joinLeft = false;
+          popup.joinRight = false;
+          popup.lastClampedX = Math.max(pad, Math.min(Math.max(pad, scrW - popupW - pad), desiredX));
+        }
+
+        popup.joinTop = false;
+        popup.joinBottom = false;
+        popup.lastClampedY = popup.barPosition === "top" ? win.height : 0;
+        const anchorY = popup.fluidEnabled ? (popup.barPosition === "top" ? win.height : 0) : bRect.y;
+        const anchorH = popup.fluidEnabled ? 0 : bRect.height;
+        anchor.rect = Qt.rect(popup.lastClampedX, anchorY, popupW, anchorH);
       } else {
         const widgetCenter = widgetRect.y + (widgetRect.height / 2);
         const popupH = popup.implicitHeight;
         const desiredY = Math.round(widgetCenter - (popupH / 2));
         const scrH = scr ? scr.height : 1080;
-        const pad = 8;
-        const clampedY = Math.max(pad, Math.min(Math.max(pad, scrH - popupH - pad), desiredY));
-        anchor.rect = Qt.rect(bRect.x, clampedY, bRect.width, popupH);
+
+        if (popup.fluidEnabled && desiredY <= joinThreshold) {
+          popup.joinTop = true;
+          popup.joinBottom = false;
+          popup.lastClampedY = 0;
+        } else if (popup.fluidEnabled && (desiredY + popupH >= scrH - joinThreshold)) {
+          popup.joinBottom = true;
+          popup.joinTop = false;
+          popup.lastClampedY = scrH - popupH;
+        } else {
+          popup.joinTop = false;
+          popup.joinBottom = false;
+          popup.lastClampedY = Math.max(pad, Math.min(Math.max(pad, scrH - popupH - pad), desiredY));
+        }
+
+        popup.joinLeft = false;
+        popup.joinRight = false;
+        popup.lastClampedX = popup.barPosition === "left" ? win.width : 0;
+        const anchorX = popup.fluidEnabled ? (popup.barPosition === "left" ? win.width : 0) : bRect.x;
+        const anchorW = popup.fluidEnabled ? 0 : bRect.width;
+        anchor.rect = Qt.rect(anchorX, popup.lastClampedY, anchorW, popupH);
       }
     } else {
       anchor.rect = widgetRect;
+    }
+
+    if (popup.isDetailsActive) {
+      popup.syncActivePopupState(true);
     }
   }
 
@@ -174,27 +278,57 @@ PopupWindow {
     id: cardContainer
     opacity: (popup.isDetailsActive && !popup.instantClose) ? 1.0 : 0.0
 
-    // Smooth rock-solid opacity fade without scale distortion or inter-card jitter
     Behavior on opacity {
       NumberAnimation {
-        duration: popup.instantClose ? 0 : ((popup.isDetailsActive && BarConfig.isHoveringBarPills) ? 0 : 150)
+        duration: popup.instantClose ? 0 : ((popup.isDetailsActive && BarConfig.isHoveringBarPills) ? 0 : 180)
         easing.type: Easing.OutCubic
       }
     }
 
-    x: popup.fluidEnabled ? 0 : 6
-    y: popup.fluidEnabled ? 0 : (
-      popup.barPosition === "top"
-        ? (popup.isDetailsActive ? 6 : 0)
-        : (popup.barPosition === "bottom" ? (popup.isDetailsActive ? 6 : 12) : 6)
-    )
-    width: popup.fluidEnabled ? popup.implicitWidth : popup.baseContentW
-    height: popup.fluidEnabled ? popup.implicitHeight : popup.baseContentH
+    anchors.fill: parent
 
-    Behavior on y {
-      NumberAnimation {
-        duration: (popup.instantClose || BarConfig.isHoveringBarPills) ? 0 : 160
-        easing.type: Easing.OutCubic
+    transform: Translate {
+      id: cardSlideTransform
+      x: {
+        if (!popup.fluidEnabled) return 0;
+        if (popup.barPosition === "right") return (popup.isDetailsActive && !popup.instantClose) ? 0 : 8;
+        if (popup.barPosition === "left") return (popup.isDetailsActive && !popup.instantClose) ? 0 : -8;
+        return 0;
+      }
+      y: {
+        if (!popup.fluidEnabled) return (
+          popup.barPosition === "top"
+            ? (popup.isDetailsActive ? 6 : 0)
+            : (popup.barPosition === "bottom" ? (popup.isDetailsActive ? 6 : 12) : 6)
+        );
+        if (popup.barPosition === "top") return (popup.isDetailsActive && !popup.instantClose) ? 0 : -8;
+        if (popup.barPosition === "bottom") return (popup.isDetailsActive && !popup.instantClose) ? 0 : 8;
+        return 0;
+      }
+
+      Behavior on x {
+        NumberAnimation {
+          duration: popup.instantClose ? 0 : ((popup.isDetailsActive && BarConfig.isHoveringBarPills) ? 0 : 200)
+          easing.type: Easing.OutCubic
+        }
+      }
+      Behavior on y {
+        NumberAnimation {
+          duration: popup.instantClose ? 0 : ((popup.isDetailsActive && BarConfig.isHoveringBarPills) ? 0 : 200)
+          easing.type: Easing.OutCubic
+        }
+      }
+    }
+
+    HoverHandler {
+      id: cardHoverHandler
+      onHoveredChanged: {
+        if (hovered) {
+          closeGraceTimer.stop();
+          popup.effectiveHovered = true;
+        } else if (!popup.hovered) {
+          closeGraceTimer.restart();
+        }
       }
     }
 
@@ -207,11 +341,18 @@ PopupWindow {
       cardColor: popup.fluidEnabled ? popup.barColor : popup.theme.bgSurface
       borderColor: popup.cardBorderColor
       borderWidth: popup.cardBorderWidth
+      joinTop: popup.joinTop
+      joinBottom: popup.joinBottom
+      joinLeft: popup.joinLeft
+      joinRight: popup.joinRight
     }
 
     ColumnLayout {
       id: content
-      anchors.centerIn: parent
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.horizontalCenterOffset: popup.fluidEnabled ? (popup.barPosition === "right" ? 4 : (popup.barPosition === "left" ? -4 : 0)) : 0
+      anchors.verticalCenter: parent.verticalCenter
+      anchors.verticalCenterOffset: popup.fluidEnabled ? (popup.barPosition === "bottom" ? -4 : (popup.barPosition === "top" ? 4 : 0)) : 0
       spacing: 10
 
       // Title

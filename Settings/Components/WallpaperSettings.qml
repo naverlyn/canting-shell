@@ -32,7 +32,7 @@ Item {
     property string searchFilter: ""
     property string previewPath: ""
 
-    // Filtered wallpapers (Current wallpaper prioritized at the top)
+    // Filtered wallpapers (Active wallpapers prioritized at the top)
     readonly property var filteredWallpapers: {
         const q = root.searchFilter.toLowerCase().trim();
         let list = WallpaperService.wallpapers || [];
@@ -42,9 +42,15 @@ Item {
                 return name.includes(q);
             });
         }
-        const current = WallpaperService.currentWallpaper;
-        if (current && list.includes(current)) {
-            list = [current].concat(list.filter(p => p !== current));
+        const curA = WallpaperService.wallpaperA;
+        const curB = WallpaperService.wallpaperB;
+        const curMain = WallpaperService.currentWallpaper;
+        const tops = [];
+        if (curA && list.includes(curA)) tops.push(curA);
+        if (curB && list.includes(curB) && !tops.includes(curB)) tops.push(curB);
+        if (curMain && list.includes(curMain) && !tops.includes(curMain)) tops.push(curMain);
+        if (tops.length > 0) {
+            list = tops.concat(list.filter(p => !tops.includes(p)));
         }
         return list;
     }
@@ -58,11 +64,13 @@ Item {
     function selectRandomWallpaper() {
         const list = WallpaperService.wallpapers || [];
         if (list.length === 0) return;
-        const current = WallpaperService.currentWallpaper;
+        const current = WallpaperService.targetDisplay === "secondary"
+            ? (WallpaperService.wallpaperB || WallpaperService.currentWallpaper)
+            : (WallpaperService.wallpaperA || WallpaperService.currentWallpaper);
         let pool = list.filter(p => p !== current);
         if (pool.length === 0) pool = list;
         const rand = pool[Math.floor(Math.random() * pool.length)];
-        WallpaperService.setWallpaper(rand);
+        WallpaperService.setWallpaper(rand, WallpaperService.targetDisplay, WallpaperService.resizeMode);
     }
 
     Component.onCompleted: {

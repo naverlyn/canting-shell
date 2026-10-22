@@ -19,6 +19,7 @@ Scope {
   property var theme: DefaultTheme {}
   property string font: "Hack Nerd Font"
   property bool barVisible: true
+  property var activePopupData: null
 
   function withAlpha(col, alpha) {
     if (!col) return Qt.rgba(0, 0, 0, alpha);

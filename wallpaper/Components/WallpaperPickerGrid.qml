@@ -77,11 +77,17 @@ import QtQuick.Effects
             model: hostRoot.filteredWallpapers
 
             delegate: Item {
+              id: delItem
               required property string modelData
               required property int index
 
+              readonly property bool isCurrentA: WallpaperService.wallpaperA === modelData
+              readonly property bool isCurrentB: WallpaperService.wallpaperB === modelData
+              readonly property bool isCurrentGlobal: WallpaperService.currentWallpaper === modelData
+              readonly property bool isCurrent: isCurrentA || isCurrentB || isCurrentGlobal
+
               Accessible.role: Accessible.Button
-              Accessible.name: modelData.split("/").pop() + (WallpaperService.currentWallpaper === modelData ? ", current wallpaper" : "")
+              Accessible.name: modelData.split("/").pop() + (delItem.isCurrent ? ", current wallpaper" : "")
 
               width: wallpaperGrid.cellWidth
               height: wallpaperGrid.cellHeight
@@ -92,8 +98,12 @@ import QtQuick.Effects
                 anchors.margins: 4
                 radius: 8
                 color: hostRoot.theme.bgSurface
-                border.color: WallpaperService.currentWallpaper === modelData ? hostRoot.theme.accentPrimary : (imgHover.containsMouse ? hostRoot.theme.bgBorder : "transparent")
-                border.width: WallpaperService.currentWallpaper === modelData ? 2 : 1
+                border.color: delItem.isCurrent
+                  ? ((WallpaperService.hasMultipleMonitors && delItem.isCurrentB && !delItem.isCurrentA)
+                      ? (hostRoot.theme.accentCyan ?? hostRoot.theme.accentPrimary)
+                      : hostRoot.theme.accentPrimary)
+                  : (imgHover.containsMouse ? hostRoot.theme.bgBorder : "transparent")
+                border.width: delItem.isCurrent ? 2 : 1
                 scale: imgHover.pressed ? 0.96 : (imgHover.containsMouse ? 1.03 : 1.0)
 
                 Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
@@ -157,12 +167,12 @@ import QtQuick.Effects
 
                   Rectangle {
                     anchors.fill: parent
-                    radius: Math.max(2, cardRect.radius - (WallpaperService.currentWallpaper === modelData ? 2 : 1))
+                    radius: Math.max(2, cardRect.radius - (delItem.isCurrent ? 2 : 1))
                     color: "black"
                   }
                 }
 
-                // Active indicator (Current badge at top)
+                // Active indicator badge at top
                 Rectangle {
                   anchors.top: parent.top
                   anchors.right: parent.right
@@ -170,13 +180,22 @@ import QtQuick.Effects
                   height: 20
                   width: currentBadgeText.implicitWidth + 14
                   radius: 4
-                  color: hostRoot.theme.accentPrimary
-                  visible: WallpaperService.currentWallpaper === modelData
+                  color: (WallpaperService.hasMultipleMonitors && delItem.isCurrentB && !delItem.isCurrentA)
+                    ? (hostRoot.theme.accentCyan ?? hostRoot.theme.accentPrimary)
+                    : hostRoot.theme.accentPrimary
+                  visible: delItem.isCurrent
 
                   Text {
                     id: currentBadgeText
                     anchors.centerIn: parent
-                    text: "Current"
+                    text: {
+                      if (WallpaperService.hasMultipleMonitors) {
+                        if (delItem.isCurrentA && delItem.isCurrentB) return "All";
+                        if (delItem.isCurrentA) return "Primary";
+                        if (delItem.isCurrentB) return "Secondary";
+                      }
+                      return "Active";
+                    }
                     color: hostRoot.theme.bgBase
                     font.pixelSize: 10
                     font.bold: true
@@ -194,7 +213,7 @@ import QtQuick.Effects
                     if (mouse.button === Qt.RightButton) {
                       hostRoot.previewPath = modelData;
                     } else {
-                      WallpaperService.setWallpaper(modelData);
+                      WallpaperService.setWallpaper(modelData, WallpaperService.targetDisplay, WallpaperService.resizeMode);
                     }
                   }
                 }
