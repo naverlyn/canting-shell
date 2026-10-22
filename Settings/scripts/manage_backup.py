@@ -22,7 +22,7 @@ MODULE_FILES = {
     "osd": ["osd_config.json"],
     "controlcenter": ["control_center_config.json"],
     "appearance": ["theme.conf", "qml_color.json", "ThemeSwitcher/wallpaper-theme.json"],
-    "wallpaper": ["wallpaper.conf", "wallpaper_sync.conf", "wallpaper_dirs.conf"],
+    "wallpaper": ["wallpaper.conf", "wallpaper_sync.conf", "wallpaper_dirs.conf", "wallpaper_mode.conf", "wallpaper_displays.json"],
 }
 
 DEFAULT_CONFIGS = {
