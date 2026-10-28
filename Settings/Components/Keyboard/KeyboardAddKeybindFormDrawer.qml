@@ -25,10 +25,12 @@ Item {
             top: parent.top
             left: parent.left
             right: parent.right
-            margins: 4
+            topMargin: 4
+            leftMargin: 8
+            rightMargin: 8
         }
         implicitHeight: addCol.implicitHeight + 20
-        radius: 10
+        radius: 8
         color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
         border.color: root.theme.accentPrimary
         border.width: 1
@@ -39,9 +41,9 @@ Item {
                 left: parent.left
                 right: parent.right
                 top: parent.top
-                margins: 12
+                margins: 10
             }
-            spacing: 12
+            spacing: 10
 
             Text {
                 text: "Create New Keybinding"
@@ -238,7 +240,7 @@ Item {
             /* Form Row 4: Key Input + Record Button + Live Preview */
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 10
 
                 Text {
                     text: "Key:"
@@ -251,9 +253,9 @@ Item {
                 }
 
                 Rectangle {
-                    width: 110
-                    height: 30
-                    radius: 6
+                    width: 190
+                    height: 32
+                    radius: 7
                     color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
                     border.color: addKeyInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
                     border.width: addKeyInput.activeFocus ? 2 : 1
@@ -278,9 +280,9 @@ Item {
 
                 // Record Key Button
                 Rectangle {
-                    implicitWidth: addRecLabel.implicitWidth + 16
-                    height: 30
-                    radius: 6
+                    implicitWidth: addRecLabel.implicitWidth + 24
+                    height: 32
+                    radius: 7
                     color: root.isCapturingAddKey ? root.theme.accentPrimary : (addRecMouse.containsMouse ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)))
                     border.color: root.isCapturingAddKey ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
                     border.width: 1
@@ -330,8 +332,8 @@ Item {
                         model: root.getAddPreviewPills()
                         Rectangle {
                             required property var modelData
-                            implicitWidth: addPrevPillText.implicitWidth + 10
-                            height: 22
+                            implicitWidth: addPrevPillText.implicitWidth + 12
+                            height: 24
                             radius: 5
                             color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15)
                             border.color: root.theme.accentPrimary
@@ -361,7 +363,7 @@ Item {
                 // Cancel
                 Rectangle {
                     implicitWidth: cancelAddText.implicitWidth + 24
-                    height: 30
+                    height: 32
                     radius: 7
                     color: cancelAddHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase
                     border.color: cancelAddHover.hovered ? root.theme.textSecondary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
@@ -395,7 +397,7 @@ Item {
                 // Add & Save
                 Rectangle {
                     implicitWidth: saveAddText.implicitWidth + 28
-                    height: 30
+                    height: 32
                     radius: 7
                     readonly property bool canSave: root.addKey.trim().length > 0
                     color: canSave

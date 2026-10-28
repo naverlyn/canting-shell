@@ -196,6 +196,11 @@ def parse_lua_file(filepath):
         elif "layout(\"togglesplit\")" in resolved_action or "togglesplit" in resolved_action:
             disp = "togglesplit"
             desc = "Toggle Split Layout"
+        elif re.search(r'dsp\.layout\s*\(', resolved_action):
+            lm = re.search(r'layout\s*\(\s*["\']([^"\']*)["\']', resolved_action)
+            disp = "layoutmsg"
+            arg = lm.group(1) if lm else ""
+            desc = f"Layout: {arg}"
         elif "window.pseudo" in resolved_action:
             disp = "pseudo"
             desc = "Pseudo Tiling"
@@ -439,6 +444,7 @@ try:
     with open(target, "r") as f:
         content = f.read()
 
+    original = content
     # Remove any existing block for this tag, legacy tag, or arg
     for t in [tag, legacy_tag]:
         if t:
@@ -447,6 +453,41 @@ try:
     if arg:
         content = re.sub(rf"\n*# <qs_[^>\n]*>(?:(?!# </qs_).)*?{re.escape(arg)}(?:(?!# </qs_).)*?# </qs_[^>\n]*>\n*", "\n", content, flags=re.DOTALL)
         content = re.sub(rf"\n*-- <qs_[^>\n]*>(?:(?!-- </qs_).)*?{re.escape(arg)}(?:(?!-- </qs_).)*?-- </qs_[^>\n]*>\n*", "\n", content, flags=re.DOTALL)
+
+    # Tombstone cleanup: drop stale unbind-only blocks for this key (avoid pile-up)
+    if is_lua:
+        content = re.sub(rf'\\n*-- <qs_[^>\\n]*>\\s*pcall\\(function\\(\\) hl\\.unbind\\("{re.escape(lua_key)}"\\) end\\)\\s*-- </qs_[^>\\n]*>\\n*', "\\n", content)
+
+    # An unbind tombstone is only needed to disable a bind defined elsewhere
+    # (e.g. the default Configs/Keybinds.lua). If the key only lived in our own
+    # block, removing that block is enough and no tombstone is left behind.
+    def norm_key(k):
+        return re.sub(r"[\\s+\"'.]", "", k).lower()
+
+    defined_elsewhere = True
+    if is_lua:
+        defined_elsewhere = False
+        want = norm_key(lua_key)
+        hdir = __import__("os").path.dirname(target)
+        for fp in [hdir + "/Configs/Keybinds.lua", hdir + "/hyprland.lua"]:
+            try:
+                with open(fp, "r") as ff:
+                    txt = re.sub(r"(?m)^\\s*--.*$", "", ff.read())
+            except Exception:
+                continue
+            mm = re.search(r"local\\s+mainMod\\s*=\\s*[\"']([^\"']+)[\"']", txt)
+            for m in re.finditer(r"hl\\.bind\\(\\s*([^,]+?)\\s*,", txt):
+                expr = m.group(1)
+                if mm:
+                    expr = re.sub(r"\\bmainMod\\b", mm.group(1), expr)
+                if norm_key(expr) == want:
+                    defined_elsewhere = True
+
+    if not defined_elsewhere:
+        content = content.rstrip() + "\\n"
+        with open(target, "w") as f:
+            f.write(content)
+        raise SystemExit(0)
 
     if is_lua:
         unbind_block = f"""
@@ -563,6 +604,8 @@ def format_lua_bind(mods_key, d, a):
         return f'hl.bind({lua_keys}, hl.dsp.focus({{ direction = "{dirs[a_s.lower()]}" }}))'
     if d == "togglespecialworkspace":
         return f'hl.bind({lua_keys}, hl.dsp.workspace.toggle_special("{a_s or "special"}"))'
+    if d == "layoutmsg" and a_s:
+        return f'hl.bind({lua_keys}, hl.dsp.layout({ws(a_s)}))'
     if d == "exit":
         return f'hl.bind({lua_keys}, hl.dsp.exit())'
     # Unknown dispatcher: legacy dispatch string via hyprctl (may not work on Lua-only Hyprland)
@@ -701,6 +744,8 @@ def format_lua_bind(mods_key, d, a):
         return f'hl.bind({lua_keys}, hl.dsp.focus({{ direction = "{dirs[a_s.lower()]}" }}))'
     if d == "togglespecialworkspace":
         return f'hl.bind({lua_keys}, hl.dsp.workspace.toggle_special("{a_s or "special"}"))'
+    if d == "layoutmsg" and a_s:
+        return f'hl.bind({lua_keys}, hl.dsp.layout({ws(a_s)}))'
     if d == "exit":
         return f'hl.bind({lua_keys}, hl.dsp.exit())'
     # Unknown dispatcher: legacy dispatch string via hyprctl (may not work on Lua-only Hyprland)

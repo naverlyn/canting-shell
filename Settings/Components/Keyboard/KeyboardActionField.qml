@@ -24,8 +24,8 @@ RowLayout {
 
     Rectangle {
         id: addActionSegmentTrack
-        implicitWidth: 620
-        Layout.preferredWidth: 620
+        implicitWidth: 400
+        Layout.fillWidth: true
         height: 32
         radius: 7
         color: root.theme.bgBase
@@ -100,5 +100,4 @@ RowLayout {
         }
     }
 
-    Item { Layout.fillWidth: true }
 }

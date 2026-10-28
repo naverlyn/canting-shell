@@ -109,8 +109,8 @@ Rectangle {
 
             Rectangle {
                 id: editActionSegmentTrack
-                implicitWidth: 620
-                Layout.preferredWidth: 620
+                implicitWidth: 400
+                Layout.fillWidth: true
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
@@ -180,9 +180,6 @@ Rectangle {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     root.editDispatcher = eSegBtn.modelData.val;
-                                    if (eSegBtn.modelData.val === "custom" && !root.editCustomDisp) {
-                                        root.editCustomDisp = root.editingItem ? (root.editingItem.dispatcher || "") : "";
-                                    }
                                 }
                             }
                         }
@@ -190,7 +187,6 @@ Rectangle {
                 }
             }
 
-            Item { Layout.fillWidth: true }
         }
 
         /* Row 0b: Custom Dispatcher Name (if custom selected) */
@@ -344,6 +340,7 @@ Rectangle {
 
             Rectangle {
                 implicitWidth: 280
+                Layout.preferredWidth: 280
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
@@ -413,8 +410,6 @@ Rectangle {
                     }
                 }
             }
-
-            Item { Layout.fillWidth: true }
         }
 
         /* Row 2: Key Text Input + Record Key Button + Live Preview */
@@ -433,7 +428,7 @@ Rectangle {
             }
 
             Rectangle {
-                width: 110
+                Layout.preferredWidth: 190
                 height: 32
                 radius: 7
                 color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)

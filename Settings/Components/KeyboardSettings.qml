@@ -36,6 +36,23 @@ Item {
 
     readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_keybind.sh").toString().replace(/^file:\/\//, "")
 
+    /* Feedback toast state */
+    property string toastMessage: ""
+    property bool toastVisible: false
+
+    Timer {
+        id: toastTimer
+        interval: 2600
+        repeat: false
+        onTriggered: root.toastVisible = false
+    }
+
+    function showToast(msg) {
+        root.toastMessage = msg;
+        root.toastVisible = true;
+        toastTimer.restart();
+    }
+
     /* Keybindings State */
     property var rawBinds: []
     property string searchQuery: ""
@@ -75,7 +92,9 @@ Item {
             { name: "Close Window", val: "killactive" },
             { name: "Toggle Float", val: "togglefloating" },
             { name: "Fullscreen", val: "fullscreen" },
-            { name: "Workspace", val: "workspace" }
+            { name: "Workspace", val: "workspace" },
+            { name: "Focus", val: "movefocus" },
+            { name: "Layout", val: "layoutmsg" }
         ];
         const orig = root.editingItem ? (root.editingItem.dispatcher || "") : "";
         if (orig && !base.some(o => o.val === orig)) {
@@ -91,6 +110,8 @@ Item {
         { name: "Toggle Float", val: "togglefloating" },
         { name: "Fullscreen", val: "fullscreen" },
         { name: "Workspace", val: "workspace" },
+        { name: "Focus", val: "movefocus" },
+        { name: "Layout", val: "layoutmsg" },
         { name: "Custom", val: "custom" }
     ]
 
@@ -257,7 +278,7 @@ Item {
         root.editName = (item.description && item.description.length > 0) ? item.description : root.getFriendlyAction(item);
         const disp = item.dispatcher || "exec";
         root.editDispatcher = disp;
-        root.editCustomDisp = disp;
+        root.editCustomDisp = "";
         root.editArg = item.arg || "";
         root.editSuper = (item.modmask & 64) !== 0;
         root.editCtrl = (item.modmask & 4) !== 0;
@@ -314,7 +335,7 @@ Item {
         const newKey = root.editKey.trim();
         let newDisp = root.editDispatcher;
         if (newDisp === "custom") {
-            newDisp = root.editCustomDisp.trim() || "exec";
+            newDisp = root.editCustomDisp.trim() || oldItem.dispatcher || "exec";
         }
         if (!newDisp) newDisp = oldItem.dispatcher || "exec";
 
@@ -341,6 +362,7 @@ Item {
         root.editingItem = null;
         root.isCapturingKey = false;
         root.confirmingUnbindUid = -1;
+        root.showToast("Keybind updated");
 
         rebindProc.command = [
             "bash",
@@ -373,6 +395,7 @@ Item {
         root.editingItem = null;
         root.isCapturingKey = false;
         root.confirmingUnbindUid = -1;
+        root.showToast("Keybind removed");
 
         rebindProc.command = [
             "bash",
@@ -421,6 +444,8 @@ Item {
             desc
         ];
         rebindProc.running = true;
+
+        root.showToast("Keybind added");
 
         root.isAddingKeybind = false;
         root.isCapturingAddKey = false;
@@ -618,6 +643,36 @@ Item {
         KeyboardPageContent {
             id: keyboardPageContentInst
             root: root
+        }
+    }
+    /* Non-intrusive bottom feedback toast */
+    Rectangle {
+        id: keybindToast
+        z: 10000
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottomMargin: 16
+        implicitWidth: keybindToastText.implicitWidth + 32
+        height: 38
+        radius: 19
+        color: root.theme.bgSelected ?? "#283457"
+        border.color: root.theme.accentPrimary ?? "#7aa2f7"
+        border.width: 1.5
+        opacity: root.toastVisible ? 1.0 : 0.0
+        scale: root.toastVisible ? 1.0 : 0.92
+        visible: opacity > 0
+
+        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+        Text {
+            id: keybindToastText
+            anchors.centerIn: parent
+            text: root.toastMessage
+            font.family: root.font
+            font.pixelSize: 11
+            font.bold: true
+            color: root.theme.textPrimary
         }
     }
 }
