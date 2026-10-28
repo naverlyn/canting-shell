@@ -127,7 +127,7 @@ Scope {
   }
 
   PwObjectTracker {
-    objects: Pipewire.defaultAudioSink ? [Pipewire.defaultAudioSink] : []
+    objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource].filter(Boolean)
   }
 
   // Brightness state

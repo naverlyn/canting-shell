@@ -44,7 +44,7 @@ PopupWindow {
     : Math.max(contentLayout.implicitWidth + 32, 200)
   readonly property int baseContentH: (provider && provider.preferredHeight !== undefined && provider.preferredHeight > 0)
     ? provider.preferredHeight
-    : Math.max(contentLayout.implicitHeight + 28, 64)
+    : Math.max(contentLayout.implicitHeight + 20, 56)
 
   readonly property int targetCardW: {
     if (!fluidEnabled) return baseContentW + 16;
@@ -309,25 +309,17 @@ PopupWindow {
         anchors.horizontalCenterOffset: sharedPopup.fluidEnabled ? (sharedPopup.barPosition === "right" ? 4 : (sharedPopup.barPosition === "left" ? -4 : 0)) : 0
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: sharedPopup.fluidEnabled ? (sharedPopup.barPosition === "bottom" ? -4 : (sharedPopup.barPosition === "top" ? 4 : 0)) : 0
-        spacing: 10
+        spacing: 8
 
-        RowLayout {
+        Text {
           visible: !sharedPopup.hideHeader
-          spacing: 6
-          Text {
-            visible: sharedPopup.icon !== ""
-            text: sharedPopup.icon
-            color: morphCard.animatedAccent
-            font.pixelSize: 14
-            font.family: sharedPopup.font
-          }
-          Text {
-            text: sharedPopup.title
-            color: morphCard.animatedAccent
-            font.pixelSize: 13
-            font.bold: true
-            font.family: sharedPopup.font
-          }
+          Layout.fillWidth: true
+          horizontalAlignment: Text.AlignHCenter
+          text: sharedPopup.title
+          color: morphCard.animatedAccent
+          font.pixelSize: 13
+          font.bold: true
+          font.family: sharedPopup.font
         }
 
         Rectangle {
@@ -339,7 +331,8 @@ PopupWindow {
 
         Loader {
           Layout.fillWidth: true
-          Layout.fillHeight: true
+          Layout.fillHeight: active
+          visible: active
           active: provider && provider.contentComponent !== undefined && provider.contentComponent !== null
           sourceComponent: provider ? provider.contentComponent : null
         }
