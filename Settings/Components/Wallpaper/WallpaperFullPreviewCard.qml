@@ -40,6 +40,9 @@ Rectangle {
             Image {
                 anchors.fill: parent
                 source: root.previewPath !== "" ? ("file://" + root.previewPath) : ""
+                sourceSize.width: 1920
+                sourceSize.height: 1080
+                cache: false
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
             }

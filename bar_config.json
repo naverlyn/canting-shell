@@ -1,6 +1,6 @@
 {
   "barVisible": true,
-  "position": "left",
+  "position": "top",
   "barHeight": 28,
   "floating": false,
   "barOpacity": 1,
@@ -27,22 +27,22 @@
     ]
   ],
   "innerCorners": true,
-  "fluidCards": true,
+  "fluidCards": false,
   "barBorder": true,
   "barBorderWidth": 1,
   "barBorderColor": "",
   "screenBorder": true,
-  "screenBorderThickness": 16,
+  "screenBorderThickness": 8,
   "screenBorderColor": "",
   "screenBorderCorners": true,
   "screenBorderShadow": true,
-  "screenBorderShadowSize": 12,
+  "screenBorderShadowSize": 24,
   "bars": [
     {
       "id": "bar_1",
       "name": "Primary Bar",
       "enabled": true,
-      "position": "left",
+      "position": "top",
       "barHeight": 28,
       "floating": false,
       "barOpacity": 1,
@@ -50,6 +50,7 @@
       "pillOpacity": 1,
       "hidePill": true,
       "activeStyle": "underline",
+      "barColor": "",
       "allMonitors": true,
       "displayTarget": "all",
       "secondaryPosition": "bottom",
@@ -69,38 +70,37 @@
         ]
       ],
       "innerCorners": true,
-      "fluidCards": true,
+      "fluidCards": false,
       "barBorder": true,
       "barBorderWidth": 1,
       "barBorderColor": "",
       "panels": [
         [
           "appGrid",
-          "windowTitle",
-          "cava",
-          "weather"
+          "windowTitle"
         ],
-        [],
         [
-          "network",
-          "workspaces",
-          "controlCenter",
           "clock"
+        ],
+        [
+          "weather",
+          "controlCenter"
         ]
       ]
     },
     {
-      "id": "bar_1792518566724",
+      "id": "bar_1792754979569",
       "name": "Bar 2",
       "enabled": true,
-      "position": "right",
-      "barHeight": 32,
+      "position": "bottom",
+      "barHeight": 28,
       "floating": false,
       "barOpacity": 1,
       "pillRadius": 10,
       "pillOpacity": 1,
       "hidePill": true,
       "activeStyle": "underline",
+      "barColor": "",
       "allMonitors": false,
       "displayTarget": "primary",
       "secondaryPosition": "bottom",
@@ -119,18 +119,22 @@
         ]
       ],
       "innerCorners": true,
-      "fluidCards": true,
+      "fluidCards": false,
       "barBorder": true,
       "barBorderWidth": 1,
       "barBorderColor": "",
       "panels": [
-        [],
+        [
+          "workspaces"
+        ],
         [],
         [
+          "volume",
+          "cpu",
+          "temp",
           "memory",
           "disk",
-          "temp",
-          "cpu",
+          "network",
           "tray"
         ]
       ]
@@ -139,39 +143,35 @@
   "panels": [
     [
       "appGrid",
-      "windowTitle",
-      "cava",
-      "weather"
+      "windowTitle"
     ],
-    [],
     [
-      "network",
-      "workspaces",
-      "controlCenter",
       "clock"
+    ],
+    [
+      "weather",
+      "controlCenter"
     ]
   ],
   "leftWidgets": [
     "appGrid",
-    "windowTitle",
-    "cava",
-    "weather"
+    "windowTitle"
   ],
-  "centerWidgets": [],
-  "rightWidgets": [
-    "network",
-    "workspaces",
-    "controlCenter",
+  "centerWidgets": [
     "clock"
+  ],
+  "rightWidgets": [
+    "weather",
+    "controlCenter"
   ],
   "removedWidgets": [
     "@color:bar_1:appGrid=textPrimary",
     "idleInhibitor",
     "media",
     "globalMenu",
-    "volume",
+    "cava",
     "battery",
-    "tray"
+    "network"
   ],
   "showAppGrid": true,
   "showCpu": true,

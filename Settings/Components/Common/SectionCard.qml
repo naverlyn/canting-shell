@@ -28,8 +28,13 @@ ColumnLayout {
             font.pixelSize: 13
             font.bold: true
             color: secCard.titleColor
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
         }
-        Item { Layout.fillWidth: true }
+        Item {
+            visible: secCard.subtitle === ""
+            Layout.fillWidth: true
+        }
         Text {
             visible: secCard.subtitle !== ""
             text: secCard.subtitle
@@ -38,7 +43,9 @@ ColumnLayout {
             font.bold: secCard.subtitleBold
             color: secCard.subtitleColor
             elide: Text.ElideRight
-            Layout.maximumWidth: Math.max(180, secCard.width * secCard.subtitleMaxRatio)
+            horizontalAlignment: Text.AlignRight
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
         }
     }
 
@@ -49,7 +56,6 @@ ColumnLayout {
         color: Style.theme.bgSurface
         border.color: Style.theme.bgBorder
         border.width: 1
-        Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
         ColumnLayout {
             id: secInnerCol

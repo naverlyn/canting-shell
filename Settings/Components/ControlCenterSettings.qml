@@ -21,7 +21,7 @@ import "./ControlCenter"
 Item {
     id: root
     property var theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     property int currentSubTab: 0
     property alias subTabContentAnimation: subTabContentAnim

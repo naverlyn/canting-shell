@@ -9,7 +9,7 @@ Item {
 
   required property var barContainer
   property var theme
-  property string font: "Hack Nerd Font"
+  property string font: "Lato Nerd Font"
 
   readonly property bool isVert: barContainer.isVert
   readonly property var menus: GlobalMenuService.menus

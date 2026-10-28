@@ -77,8 +77,9 @@ ColumnLayout {
                 model: [
                     { idx: 0, icon: "󰖲", label: "General & Layout" },
                     { idx: 1, icon: "󰏘", label: "Window Decoration" },
-                    { idx: 2, icon: "󰌒", label: "Gestures & Touchpad" },
-                    { idx: 3, icon: "󰒓", label: "Misc & Compositor" }
+                    { idx: 2, icon: "󰕮", label: "Window Rules" },
+                    { idx: 3, icon: "󰌒", label: "Gestures & Touchpad" },
+                    { idx: 4, icon: "󰒓", label: "Misc & Compositor" }
                 ]
                 delegate: Rectangle {
                     id: subTabItem
@@ -175,14 +176,21 @@ ColumnLayout {
     }
 
     /* ========================================================================= */
-    /* TAB 2: GESTURES & TOUCHPAD                                                */
+    /* TAB 2: WINDOW RULES                                                       */
+    /* ========================================================================= */
+    HyprlandWindowRules {
+        root: mainCol.root
+    }
+
+    /* ========================================================================= */
+    /* TAB 3: GESTURES & TOUCHPAD                                                */
     /* ========================================================================= */
     HyprlandTouchpadWorkspaceGestures {
         root: mainCol.root
     }
 
     /* ========================================================================= */
-    /* TAB 3: MISC & COMPOSITOR                                                  */
+    /* TAB 4: MISC & COMPOSITOR                                                  */
     /* ========================================================================= */
     HyprlandDisplaySyncRefresh {
         root: mainCol.root

@@ -9,7 +9,7 @@ import QtQuick.Layouts
 Scope {
   id: root
   property var theme: Theme
-  property string font: "Hack Nerd Font"
+  property string font: "Lato Nerd Font"
   property bool commandMode: false
   property int selectedIndex: 0
 

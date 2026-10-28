@@ -18,7 +18,7 @@ Item {
     id: root
 
     property var theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
     property string currentValue: ""
     property var options: []
     property string placeholder: "Select application..."

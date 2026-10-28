@@ -69,12 +69,12 @@ import QtQuick.Effects
             id: wallpaperGrid
             Layout.fillWidth: true
             Layout.fillHeight: true
-            cellWidth: Math.floor(width / 4)
+            cellWidth: Math.max(120, Math.floor((width > 0 ? width : 800) / 4))
             cellHeight: cellWidth * 0.6 + 8
             clip: true
             cacheBuffer: 0
             boundsBehavior: Flickable.StopAtBounds
-            model: hostRoot.filteredWallpapers
+            model: (hostPanel.visible && !hostRoot.browsingFolders) ? hostRoot.filteredWallpapers : []
 
             delegate: Item {
               id: delItem

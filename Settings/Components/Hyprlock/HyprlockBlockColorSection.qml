@@ -77,14 +77,14 @@ ColumnLayout {
 
         Repeater {
             model: [
-                { name: "Default", val: "$color8", color: "#9FA7A8" },
-                { name: "Accent", val: "$color13", color: "#D8EEF1" },
-                { name: "Purple", val: "$color9", color: "#828bb8" },
-                { name: "Highlight", val: "$color11", color: "#67748F" },
-                { name: "Blue", val: "$color12", color: "#8F9EA7" },
-                { name: "Bright", val: "$color7", color: "#E3EEF0" },
-                { name: "White", val: "#ffffff", color: "#ffffff" },
-                { name: "Primary", val: "$accentPrimary", color: (hostCard.theme && hostCard.theme.accentPrimary ? String(hostCard.theme.accentPrimary) : "#7aa2f7") }
+                { name: "Primary", val: "$accent", color: String(hostCard.theme.accentPrimary ?? "#7aa2f7") },
+                { name: "Blue / Cyan", val: "$color12", color: String(hostCard.theme.accentCyan ?? "#89b4fa") },
+                { name: "Green", val: "$color14", color: String(hostCard.theme.accentGreen ?? "#a6e3a1") },
+                { name: "Orange", val: "$color11", color: String(hostCard.theme.accentOrange ?? "#fab387") },
+                { name: "Red", val: "$color9", color: String(hostCard.theme.accentRed ?? "#f38ba8") },
+                { name: "Text", val: "$text", color: String(hostCard.theme.textPrimary ?? "#cdd6f4") },
+                { name: "Secondary", val: "$color10", color: String(hostCard.theme.textSecondary ?? "#bac2de") },
+                { name: "Muted", val: "$color8", color: String(hostCard.theme.textMuted ?? "#a6adc8") }
             ]
 
             Rectangle {

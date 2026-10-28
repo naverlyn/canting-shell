@@ -13,7 +13,7 @@ PopupWindow {
   property bool hovered: false
   property bool pinned: false
   property var theme: DefaultTheme {}
-  property string font: "Hack Nerd Font"
+  property string font: "Lato Nerd Font"
   readonly property string effectiveNerdFont: {
     const families = Qt.fontFamilies();
     const candidates = [
@@ -21,7 +21,7 @@ PopupWindow {
       "JetBrainsMonoNL Nerd Font",
       "DroidSansM Nerd Font",
       "FantasqueSansM Nerd Font",
-      "Hack Nerd Font",
+      "Lato Nerd Font",
       "monospace"
     ];
     for (let i = 0; i < candidates.length; i++) {
@@ -35,7 +35,24 @@ PopupWindow {
 
   signal pinToggled()
 
-  readonly property bool isWeatherActive: hovered || pinned
+  property bool effectiveHovered: false
+  readonly property bool isWeatherActive: effectiveHovered || pinned
+
+  Timer {
+    id: closeGraceTimer
+    interval: 180
+    repeat: false
+    onTriggered: popup.effectiveHovered = false
+  }
+
+  onHoveredChanged: {
+    if (hovered) {
+      closeGraceTimer.stop();
+      effectiveHovered = true;
+    } else if (!boxHoverHandler.hovered) {
+      closeGraceTimer.restart();
+    }
+  }
   property bool isLoading: false
   property bool hasValidData: false
 
@@ -345,6 +362,18 @@ PopupWindow {
     radius: 12
     border.color: popup.theme.bgBase
     border.width: 2
+
+    HoverHandler {
+      id: boxHoverHandler
+      onHoveredChanged: {
+        if (hovered) {
+          closeGraceTimer.stop();
+          popup.effectiveHovered = true;
+        } else if (!popup.hovered) {
+          closeGraceTimer.restart();
+        }
+      }
+    }
 
     ColumnLayout {
       id: mainCol

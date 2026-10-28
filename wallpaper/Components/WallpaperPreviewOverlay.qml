@@ -26,6 +26,9 @@ Rectangle {
       Layout.fillWidth: true
       Layout.fillHeight: true
       source: hostRoot.previewPath !== "" ? "file://" + hostRoot.previewPath : ""
+      sourceSize.width: 1920
+      sourceSize.height: 1080
+      cache: false
       fillMode: Image.PreserveAspectFit
       asynchronous: true
     }

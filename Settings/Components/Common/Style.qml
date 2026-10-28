@@ -8,7 +8,7 @@ QtObject {
     // Emitted by Common widgets with announce:true; pages show it in their own toast.
     signal toast(string msg)
 
-    readonly property string font: "Hack Nerd Font"
+    readonly property string font: "Lato Nerd Font"
 
     function withAlpha(col, alpha) {
         if (!col) return Qt.rgba(0, 0, 0, alpha);

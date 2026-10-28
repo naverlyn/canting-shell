@@ -12,7 +12,7 @@ import "./Components/Common"
 Scope {
     id: root
     property var theme: Theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
     
     // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About, 12: Lock Screen, 13: Animations, 14: Hyprland Settings, 15: Wallpaper, 16: OSD, 17: Control Center, 18: Backup & Restore
     property int currentTab: 0

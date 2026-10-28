@@ -283,7 +283,7 @@ ColumnLayout {
 
                         Text {
                             text: MonitorService.persistenceAvailable
-                                ? ("Will apply live and save to ~/.config/hypr/monitors." + MonitorService.configFormat)
+                                ? ("Will apply live and save to " + MonitorService.persistenceFilePath)
                                 : "Will apply live to current Hyprland session"
                             font.family: root.font
                             font.pixelSize: 10

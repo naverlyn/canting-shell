@@ -15,6 +15,16 @@ ANIM_DIR="$HOME/.config/hypr/animations"
 HYPR_CONF="$HOME/.config/hypr/hyprland.conf"
 
 find_user_conf() {
+    if [[ -f "$HOME/.config/hypr/hyprland.lua" ]]; then
+        if [[ -f "$HOME/.config/hypr/Configs/WindowDecoration.lua" ]]; then
+            echo "$HOME/.config/hypr/Configs/WindowDecoration.lua"
+            return
+        fi
+        if [[ -f "$HOME/.config/hypr/custom_animations.lua" ]]; then
+            echo "$HOME/.config/hypr/custom_animations.lua"
+            return
+        fi
+    fi
     if [[ -f "$HOME/.config/hypr/UserConfigs/UserAnimations.conf" ]]; then
         echo "$HOME/.config/hypr/UserConfigs/UserAnimations.conf"
         return
@@ -31,25 +41,31 @@ find_user_conf() {
         echo "$HOME/.config/hypr/UserConfigs/UserAnimations.conf"
         return
     fi
+    if [[ -f "$HOME/.config/hypr/hyprland.lua" ]]; then
+        echo "$HOME/.config/hypr/Configs/WindowDecoration.lua"
+        return
+    fi
     echo "$HOME/.config/hypr/animations.conf"
 }
 
 ensure_dirs() {
-    mkdir -p "$BACKUP_DIR"
+    mkdir -p "$BACKUP_DIR" 2>/dev/null || true
     local uconf
     uconf="$(find_user_conf)"
-    mkdir -p "$(dirname "$uconf")"
+    mkdir -p "$(dirname "$uconf")" 2>/dev/null || true
     if [[ ! -d "$ANIM_DIR" || -z "$(ls -A "$ANIM_DIR" 2>/dev/null)" ]]; then
-        mkdir -p "$ANIM_DIR"
+        mkdir -p "$ANIM_DIR" 2>/dev/null || true
         if [[ -d "$BUNDLED_DIR" ]]; then
             cp -n "$BUNDLED_DIR"/*.conf "$ANIM_DIR/" 2>/dev/null || true
         fi
     fi
     if [[ ! -f "$uconf" ]]; then
-        if [[ -f "$ANIM_DIR/00-default.conf" ]]; then
-            cp -p "$ANIM_DIR/00-default.conf" "$uconf"
-        elif [[ -f "$BUNDLED_DIR/00-default.conf" ]]; then
-            cp -p "$BUNDLED_DIR/00-default.conf" "$uconf"
+        if [[ "$uconf" != *".lua" ]]; then
+            if [[ -f "$ANIM_DIR/00-default.conf" ]]; then
+                cp -p "$ANIM_DIR/00-default.conf" "$uconf" 2>/dev/null || true
+            elif [[ -f "$BUNDLED_DIR/00-default.conf" ]]; then
+                cp -p "$BUNDLED_DIR/00-default.conf" "$uconf" 2>/dev/null || true
+            fi
         fi
     fi
 }
@@ -64,6 +80,7 @@ bundled_dir = os.environ.get('BUNDLED_DIR') or os.path.expanduser('~/.config/qui
 backup_dir = os.environ.get('BACKUP_DIR') or os.path.expanduser('~/.config/quickshell/Settings/backups')
 
 user_conf_candidates = [
+    os.path.expanduser('~/.config/hypr/Configs/WindowDecoration.lua'),
     os.path.expanduser('~/.config/hypr/UserConfigs/UserAnimations.conf'),
     os.path.expanduser('~/.config/hypr/animations.conf'),
     os.path.expanduser('~/.config/hypr/custom_animations.conf')
@@ -74,7 +91,10 @@ for uc in user_conf_candidates:
         user_conf = uc
         break
 if not user_conf:
-    user_conf = user_conf_candidates[0] if os.path.isdir(os.path.expanduser('~/.config/hypr/UserConfigs')) else user_conf_candidates[1]
+    if os.path.exists(os.path.expanduser('~/.config/hypr/hyprland.lua')):
+        user_conf = user_conf_candidates[0]
+    else:
+        user_conf = user_conf_candidates[1] if os.path.isdir(os.path.expanduser('~/.config/hypr/UserConfigs')) else user_conf_candidates[2]
 
 user_content = ""
 if user_conf and os.path.exists(user_conf):
@@ -101,12 +121,19 @@ for sf in [local_state_file, enabled_state_file]:
             pass
 
 if is_enabled is None:
-    enabled_match = re.search(r'^\s*enabled\s*=\s*(yes|true|1|no|false|0)', user_content, re.MULTILINE | re.IGNORECASE)
-    if enabled_match:
-        val = enabled_match.group(1).lower()
-        is_enabled = val in ('yes', 'true', '1')
+    if user_conf and user_conf.endswith(".lua"):
+        lua_m = re.search(r'animations\s*=\s*\{[^}]*?enabled\s*=\s*(true|false)', user_content, re.DOTALL | re.IGNORECASE)
+        if lua_m:
+            is_enabled = lua_m.group(1).lower() == "true"
+        else:
+            is_enabled = True
     else:
-        is_enabled = True
+        enabled_match = re.search(r'^\s*enabled\s*=\s*(yes|true|1|no|false|0)', user_content, re.MULTILINE | re.IGNORECASE)
+        if enabled_match:
+            val = enabled_match.group(1).lower()
+            is_enabled = val in ('yes', 'true', '1')
+        else:
+            is_enabled = True
 
 def parse_preset_info(content, filename):
     base = os.path.splitext(filename)[0]
@@ -152,6 +179,29 @@ def parse_preset_info(content, filename):
             "curve": m.group(4).strip(),
             "style": (m.group(5) or "").strip()
         })
+
+    # Fallback: extract Lua hl.curve(...) and hl.animation({...})
+    if not beziers:
+        for m in re.finditer(r"""hl\.curve\s*\(\s*["']([^"']+)["']\s*,\s*\{[^\n]*?points\s*=\s*\{\s*\{\s*([^,}]+),\s*([^}]+)\}\s*,\s*\{\s*([^,}]+),\s*([^}]+)\}""", content):
+            pts = f"{m.group(2).strip()}, {m.group(3).strip()}, {m.group(4).strip()}, {m.group(5).strip()}"
+            beziers.append({"name": m.group(1).strip(), "curve": pts})
+    if not anims:
+        for m in re.finditer(r'hl\.animation\s*\(\s*\{([^}]+)\}\s*\)', content):
+            body = m.group(1)
+            leaf_m = re.search(r"""leaf\s*=\s*["']([^"']+)["']""", body)
+            if not leaf_m:
+                continue
+            en_m = re.search(r'enabled\s*=\s*(true|false)', body)
+            spd_m = re.search(r'speed\s*=\s*([0-9.]+)', body)
+            crv_m = re.search(r"""(?:bezier|spring)\s*=\s*["']([^"']+)["']""", body)
+            sty_m = re.search(r"""style\s*=\s*["']([^"']+)["']""", body)
+            anims.append({
+                "target": leaf_m.group(1).strip(),
+                "enabled": (en_m.group(1) == "true") if en_m else True,
+                "speed": float(spd_m.group(1)) if spd_m else 4.0,
+                "curve": crv_m.group(1).strip() if crv_m else "default",
+                "style": sty_m.group(1).strip() if sty_m else ""
+            })
 
     # Description synthesis
     desc = f"{len(beziers)} bezier curves, {len(anims)} rules"
@@ -232,13 +282,17 @@ for p in all_conf_paths:
     presets.append(info)
 
 # Select the single unique active preset
+saved_preset_id = re.sub(r'\.conf$', '', saved_preset) if saved_preset else ""
+preset_ids = {item["id"] for item in presets}
 active_preset_id = ""
-if saved_preset and (saved_preset in candidates_exact or saved_preset in candidates_normalized):
-    active_preset_id = saved_preset
+if saved_preset_id and (saved_preset_id in candidates_exact or saved_preset_id in candidates_normalized):
+    active_preset_id = saved_preset_id
 elif candidates_exact:
     active_preset_id = candidates_exact[0]
 elif candidates_normalized:
     active_preset_id = candidates_normalized[0]
+elif saved_preset_id and saved_preset_id in preset_ids and user_conf and user_conf.endswith(".lua"):
+    active_preset_id = saved_preset_id
 
 if active_preset_id:
     for item in presets:
@@ -246,8 +300,16 @@ if active_preset_id:
             item["active"] = True
             break
 
-# Parse current user beziers & rules
-current_info = parse_preset_info(user_content, "current")
+# Parse current user beziers & rules (prefer custom_animations.lua in Lua mode if present)
+anim_source_content = user_content
+custom_lua_anim = os.path.expanduser('~/.config/hypr/custom_animations.lua')
+if os.path.exists(custom_lua_anim):
+    try:
+        with open(custom_lua_anim, 'r', encoding='utf-8', errors='ignore') as cf:
+            anim_source_content = cf.read()
+    except Exception:
+        pass
+current_info = parse_preset_info(anim_source_content, "current")
 
 output = {
     "enabled": is_enabled,
@@ -297,17 +359,29 @@ import sys, re
 
 path = sys.argv[1]
 kw = sys.argv[2]
+is_lua = path.endswith(".lua")
 
 try:
     with open(path, 'r', encoding='utf-8', errors='ignore') as f:
         content = f.read()
 
-    if re.search(r'^\s*enabled\s*=', content, re.MULTILINE):
-        new_content = re.sub(r'^\s*enabled\s*=.*', f'  enabled = {kw}', content, flags=re.MULTILINE)
-    elif re.search(r'animations\s*\{', content):
-        new_content = re.sub(r'animations\s*\{', f'animations {{\n  enabled = {kw}', content, count=1)
+    if is_lua:
+        lua_bool = "true" if kw in ("yes", "true", "1") else "false"
+        if re.search(r'animations\s*=\s*\{', content):
+            pattern = r'(animations\s*=\s*\{[^}]*?enabled\s*=\s*)(true|false)'
+            if re.search(pattern, content, re.DOTALL):
+                new_content = re.sub(pattern, rf'\g<1>{lua_bool}', content, count=1, flags=re.DOTALL)
+            else:
+                new_content = re.sub(r'(animations\s*=\s*\{)', rf'\1\n        enabled = {lua_bool},', content, count=1)
+        else:
+            new_content = content.rstrip() + f"\nhl.config({{\n    animations = {{\n        enabled = {lua_bool},\n    }},\n}})\n"
     else:
-        new_content = f"animations {{\n  enabled = {kw}\n\n" + content + "\n}\n"
+        if re.search(r'^\s*enabled\s*=', content, re.MULTILINE):
+            new_content = re.sub(r'^\s*enabled\s*=.*', f'  enabled = {kw}', content, flags=re.MULTILINE)
+        elif re.search(r'animations\s*\{', content):
+            new_content = re.sub(r'animations\s*\{', f'animations {{\n  enabled = {kw}', content, count=1)
+        else:
+            new_content = f"animations {{\n  enabled = {kw}\n\n" + content + "\n}\n"
 
     with open(path, 'w', encoding='utf-8') as f:
         f.write(new_content)
@@ -318,8 +392,12 @@ PYEOF
 
     # Apply live to Hyprland
     if command -v hyprctl >/dev/null 2>&1; then
-        hyprctl keyword animations:enabled "$hypr_val" >/dev/null 2>&1 || true
-        hyprctl reload >/dev/null 2>&1 || true
+        if [[ -f "$HOME/.config/hypr/hyprland.lua" ]]; then
+            hyprctl eval "hl.config({ animations = { enabled = $target } })" >/dev/null 2>&1 || true
+        else
+            hyprctl keyword animations:enabled "$hypr_val" >/dev/null 2>&1 || true
+            hyprctl reload >/dev/null 2>&1 || true
+        fi
     fi
 
     echo "{\"success\":true,\"enabled\":$target}"
@@ -358,6 +436,26 @@ apply_preset() {
     # Backup current user config
     if [[ -f "$user_conf" ]]; then
         cp -p "$user_conf" "$BACKUP_DIR/${conf_name}.pre_preset" 2>/dev/null || true
+    fi
+
+    # Lua configs: never overwrite the user's .lua (it holds general/decoration too).
+    # Convert the hyprlang preset to a standalone custom_animations.lua, required last.
+    if [[ -f "$HOME/.config/hypr/hyprland.lua" ]]; then
+        local lua_out="$HOME/.config/hypr/custom_animations.lua"
+        [[ -f "$lua_out" ]] && cp -p "$lua_out" "$BACKUP_DIR/custom_animations.lua.pre_preset" 2>/dev/null || true
+        local preset_on
+        preset_on="$(python3 "$SCRIPT_DIR/lua_anim.py" "$target_file" "$lua_out")" || {
+            echo "{\"success\":false,\"error\":\"Failed to convert preset to Lua\"}"; exit 1; }
+        if ! grep -q 'custom_animations' "$HOME/.config/hypr/hyprland.lua" 2>/dev/null; then
+            printf '\npcall(require, "custom_animations")\n' >> "$HOME/.config/hypr/hyprland.lua"
+        fi
+        echo -n "$preset_name" > "$BACKUP_DIR/.current_animation" 2>/dev/null || true
+        if command -v hyprctl >/dev/null 2>&1; then
+            hyprctl eval "dofile(\"$lua_out\")" >/dev/null 2>&1 || true
+        fi
+        set_enabled "${preset_on:-true}" >/dev/null
+        echo "{\"success\":true,\"preset\":\"$preset_name\",\"target\":\"$lua_out\"}"
+        return
     fi
 
     # Copy preset into user_conf
@@ -484,7 +582,7 @@ for r in rules:
     if not target:
         continue
     en = 1 if r.get("enabled", True) else 0
-    spd = float(r.get("speed", 4.0))
+    spd = min(100.0, max(0.01, float(r.get("speed", 4.0))))
     crv = r.get("curve", beziers[0].get("name", "default")).strip()
     style = r.get("style", "").strip()
     if style:
@@ -560,31 +658,51 @@ test_animation() {
     local payload="${1:-}"
     if [[ -n "$payload" ]]; then
         python3 - "$payload" << 'EOF' 2>/dev/null || true
-import sys, json, os
+import sys, json, os, subprocess
 
 try:
     data = json.loads(sys.argv[1])
 except Exception:
     sys.exit(0)
 
+is_lua = os.path.exists(os.path.expanduser("~/.config/hypr/hyprland.lua"))
+lua_lines = []
+
 for b in data.get("beziers", []):
     n = b.get("name", "").strip()
     c = b.get("curve", "").strip()
     if n and c:
-        os.system(f"hyprctl keyword bezier '{n}, {c}' >/dev/null 2>&1")
+        if is_lua:
+            pts = [p.strip() for p in c.split(",")]
+            if len(pts) >= 4:
+                lua_lines.append(f'hl.curve("{n}", {{ type = "bezier", points = {{ {{{pts[0]}, {pts[1]}}}, {{{pts[2]}, {pts[3]}}} }} }})')
+        else:
+            os.system(f"hyprctl keyword bezier '{n}, {c}' >/dev/null 2>&1")
 
 for r in data.get("rules", []):
     target = r.get("target", "").strip()
     if not target:
         continue
     en = 1 if r.get("enabled", True) else 0
-    spd = float(r.get("speed", 4.0))
+    spd = min(100.0, max(0.01, float(r.get("speed", 4.0))))
     crv = r.get("curve", "default").strip()
     style = r.get("style", "").strip()
-    if style:
-        os.system(f"hyprctl keyword animation '{target}, {en}, {spd}, {crv}, {style}' >/dev/null 2>&1")
+    if is_lua:
+        fields = [f'leaf = "{target}"', f'enabled = {"true" if en else "false"}']
+        if en:
+            fields.append(f"speed = {spd}")
+            fields.append(f'bezier = "{crv}"')
+            if style:
+                fields.append(f'style = "{style}"')
+        lua_lines.append("hl.animation({ " + ", ".join(fields) + " })")
     else:
-        os.system(f"hyprctl keyword animation '{target}, {en}, {spd}, {crv}' >/dev/null 2>&1")
+        if style:
+            os.system(f"hyprctl keyword animation '{target}, {en}, {spd}, {crv}, {style}' >/dev/null 2>&1")
+        else:
+            os.system(f"hyprctl keyword animation '{target}, {en}, {spd}, {crv}' >/dev/null 2>&1")
+
+if is_lua and lua_lines:
+    subprocess.run(["hyprctl", "eval", "; ".join(lua_lines)], capture_output=True, timeout=2)
 EOF
     fi
 

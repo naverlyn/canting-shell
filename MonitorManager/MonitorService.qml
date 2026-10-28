@@ -11,6 +11,7 @@ Singleton {
   property var  monitors:             []
   property bool loading:              false
   property bool persistenceAvailable: false
+  property string persistenceFilePath: "~/.config/hypr/monitors.conf"
   property string configFormat:       "conf" // "conf" or "lua" - which hyprland.* is active
 
   property var  _lastEdits:     []
@@ -88,8 +89,13 @@ Singleton {
     // Guard against double-apply
     if (applyProc.running) return;
     _lastEdits = edits.map(m => Object.assign({}, m));
-    const parts = _lastEdits.map(buildMonitorArg);
-    applyProc.command = ["hyprctl", "--batch", parts.join(" ; ")];
+    if (root.configFormat === "lua") {
+      const luaChunk = _lastEdits.map(buildMonitorLuaLine).join("; ");
+      applyProc.command = ["hyprctl", "eval", luaChunk];
+    } else {
+      const parts = _lastEdits.map(buildMonitorArg);
+      applyProc.command = ["hyprctl", "--batch", parts.join(" ; ")];
+    }
     applyProc.running = true;
   }
 
@@ -98,12 +104,17 @@ Singleton {
     if (!toSave || toSave.length === 0) return;
     const isLua  = root.configFormat === "lua";
     const content = isLua ? buildFileContentLua(toSave) : buildFileContent(toSave);
-    const targetFile = isLua ? "$HOME/.config/hypr/monitors.lua" : "$HOME/.config/hypr/monitors.conf";
     const hyprConf = isLua ? "$HOME/.config/hypr/hyprland.lua" : "$HOME/.config/hypr/hyprland.conf";
 
     const script = isLua
-      ? `printf '%s' "$1" > "${targetFile}" && if [ -f "${hyprConf}" ] && ! grep -Eq 'require\\("monitors"\\)' "${hyprConf}"; then printf '\\nrequire("monitors")\\n' >> "${hyprConf}"; fi`
-      : `printf '%s' "$1" > "${targetFile}" && if [ -f "${hyprConf}" ] && ! grep -q 'monitors\\.conf' "${hyprConf}"; then printf '\\nsource = ~/.config/hypr/monitors.conf\\n' >> "${hyprConf}"; fi`;
+      ? `TARGET="$HOME/.config/hypr/monitors.lua"; MOD="monitors"; ` +
+        `if [ -f "$HOME/.config/hypr/Configs/Monitors.lua" ]; then TARGET="$HOME/.config/hypr/Configs/Monitors.lua"; MOD="Configs.Monitors"; fi; ` +
+        `printf '%s' "$1" > "$TARGET" && ` +
+        `if [ -f "${hyprConf}" ] && ! grep -Eq 'require\\([[:space:]]*["\x27].*[Mm]onitors' "${hyprConf}"; then printf '\\nrequire("%s")\\n' "$MOD" >> "${hyprConf}"; fi`
+      : `TARGET="$HOME/.config/hypr/monitors.conf"; ` +
+        `if [ -f "$HOME/.config/hypr/UserConfigs/Monitors.conf" ]; then TARGET="$HOME/.config/hypr/UserConfigs/Monitors.conf"; fi; ` +
+        `printf '%s' "$1" > "$TARGET" && ` +
+        `if [ -f "${hyprConf}" ] && ! grep -Eq 'source.*[Mm]onitors\\.conf' "${hyprConf}"; then printf '\\nsource = ~/.config/hypr/monitors.conf\\n' >> "${hyprConf}"; fi`;
 
     writeProc.command = ["sh", "-c", script, "sh", content];
     writeProc.running = true;
@@ -157,10 +168,12 @@ Singleton {
     command: ["sh", "-c",
       "if [ -f \"$HOME/.config/hypr/hyprland.lua\" ]; then " +
         "echo lua; " +
-        "grep -Eq 'require\\(\"monitors\"\\)' \"$HOME/.config/hypr/hyprland.lua\" && echo yes || echo no; " +
+        "grep -Eq 'require\\([[:space:]]*[\"\\x27].*[Mm]onitors' \"$HOME/.config/hypr/hyprland.lua\" && echo yes || echo no; " +
+        "if [ -f \"$HOME/.config/hypr/Configs/Monitors.lua\" ]; then echo \"~/.config/hypr/Configs/Monitors.lua\"; else echo \"~/.config/hypr/monitors.lua\"; fi; " +
       "else " +
         "echo conf; " +
-        "grep -q 'source.*monitors\\.conf' \"$HOME/.config/hypr/hyprland.conf\" && echo yes || echo no; " +
+        "grep -Eq 'source.*[Mm]onitors\\.conf' \"$HOME/.config/hypr/hyprland.conf\" 2>/dev/null && echo yes || echo no; " +
+        "if [ -f \"$HOME/.config/hypr/UserConfigs/Monitors.conf\" ]; then echo \"~/.config/hypr/UserConfigs/Monitors.conf\"; else echo \"~/.config/hypr/monitors.conf\"; fi; " +
       "fi"]
     running: true
     stdout: StdioCollector {
@@ -168,6 +181,7 @@ Singleton {
         const lines = text.trim().split("\n");
         root.configFormat        = lines[0] === "lua" ? "lua" : "conf";
         root.persistenceAvailable = lines[1] === "yes";
+        if (lines.length > 2 && lines[2]) root.persistenceFilePath = lines[2];
       }
     }
     stderr: StdioCollector {

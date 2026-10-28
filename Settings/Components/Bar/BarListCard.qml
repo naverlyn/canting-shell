@@ -24,7 +24,7 @@ SectionCard {
     // Monitor Setup Identification Banner
     Rectangle {
         Layout.fillWidth: true
-        height: 38
+        implicitHeight: 38
         radius: 8
         color: root.theme.bgBase
         border.color: root.hasMultipleMonitors

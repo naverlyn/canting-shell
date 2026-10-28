@@ -30,7 +30,7 @@ SectionCard {
     Rectangle {
         visible: BarConfig.activeEditingDisplay !== "secondary" || (BarConfig.currentBar ? (BarConfig.currentBar.secondaryMode || "custom") : BarConfig.secondaryMode) === "custom"
         Layout.fillWidth: true
-        height: 44
+        implicitHeight: 44
         radius: 9
         color: root.theme.bgBase
         border.color: root.theme.bgBorder
@@ -217,7 +217,7 @@ SectionCard {
                                     if (BarConfig.unassignedWidgets.length > 0) {
                                         const wid = BarConfig.unassignedWidgets[0].id;
                                         if (BarConfig.addWidgetToPanel(wid, panelColumnCard.index)) {
-                                            root.showToast("Added " + BarConfig.getWidgetMeta(wid).name + " to " + BarConfig.getPanelTitle(panelColumnCard.index));
+                                            self.root.showToast("Added " + BarConfig.getWidgetMeta(wid).name + " to " + BarConfig.getPanelTitle(panelColumnCard.index));
                                         }
                                     }
                                 }
@@ -303,7 +303,7 @@ SectionCard {
                                 if (BarConfig.unassignedWidgets.length > 0) {
                                     const wid = BarConfig.unassignedWidgets[0].id;
                                     if (BarConfig.addWidgetToPanel(wid, panelColumnCard.index)) {
-                                        root.showToast("Added " + BarConfig.getWidgetMeta(wid).name + " to " + BarConfig.getPanelTitle(panelColumnCard.index));
+                                        self.root.showToast("Added " + BarConfig.getWidgetMeta(wid).name + " to " + BarConfig.getPanelTitle(panelColumnCard.index));
                                     }
                                 }
                             }
@@ -592,9 +592,9 @@ SectionCard {
                                 if (BarConfig.addWidgetToPanel(wid, 0)) {
                                     const targetPanel = BarConfig.getWidgetPanelIndex(wid);
                                     const targetTitle = targetPanel >= 0 ? BarConfig.getPanelTitle(targetPanel) : "Panel";
-                                    root.showToast("Added " + wname + " to " + targetTitle);
+                                    self.root.showToast("Added " + wname + " to " + targetTitle);
                                 } else {
-                                    root.showToast("Already maxed out, please move somewhere else", true);
+                                    self.root.showToast("Already maxed out, please move somewhere else", true);
                                 }
                             }
                         }

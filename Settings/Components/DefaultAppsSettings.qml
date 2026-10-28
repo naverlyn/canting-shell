@@ -24,7 +24,7 @@ import ".."
 Item {
     id: root
     property var theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     /* Current active defaults tracked live */
     property string currentBrowser: "brave-browser.desktop"

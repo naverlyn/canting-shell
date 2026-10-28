@@ -9,7 +9,7 @@ import "./Components"
 Scope {
   id: root
   property var theme: Theme
-  property string font: "Hack Nerd Font"
+  property string font: "Lato Nerd Font"
 
   property string searchText: ""
   property string previewPath: ""
@@ -29,11 +29,11 @@ Scope {
       }
     }
 
-    function addFolder(path) {
+    function addFolder(path: string) {
       WallpaperService.addDirectory(path);
     }
 
-    function removeFolder(path) {
+    function removeFolder(path: string) {
       WallpaperService.removeDirectory(path);
     }
 
@@ -70,6 +70,13 @@ Scope {
     visible: false
     focusable: true
     color: "transparent"
+
+    onVisibleChanged: {
+      if (!visible) {
+        root.previewPath = "";
+        root.browsingFolders = false;
+      }
+    }
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive

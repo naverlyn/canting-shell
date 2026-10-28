@@ -18,7 +18,7 @@ PanelWindow {
     id: root
 
     property var theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
     property string currentSelected: ""
 
     signal wallpaperSelected(string path)
@@ -288,12 +288,13 @@ PanelWindow {
                     id: gridView
                     anchors.fill: parent
                     clip: true
+                    cacheBuffer: 0
                     visible: root.filteredWallpapers.length > 0
 
                     cellWidth: 178
                     cellHeight: 118
 
-                    model: root.filteredWallpapers
+                    model: root.visible ? root.filteredWallpapers : []
 
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded

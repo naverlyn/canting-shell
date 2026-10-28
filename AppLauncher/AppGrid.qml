@@ -9,7 +9,7 @@ import "../bar"
 Scope {
   id: root
   property var theme: DefaultTheme {}
-  property string font: "Hack Nerd Font"
+  property string font: "Lato Nerd Font"
   property int selectedIndex: 0
 
   readonly property int cellSize: 96

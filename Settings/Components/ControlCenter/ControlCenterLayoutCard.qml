@@ -43,7 +43,7 @@ ColumnLayout {
         // Top Controls Bar (matches BarLayoutCard.qml)
         Rectangle {
             Layout.fillWidth: true
-            height: 44
+            implicitHeight: 44
             radius: 9
             color: root.theme.bgBase
             border.color: root.theme.bgBorder
@@ -162,7 +162,6 @@ ColumnLayout {
                 panelIndex: 0
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.alignment: Qt.AlignTop
             }
 
             ControlCenterModulePanel {
@@ -171,7 +170,6 @@ ColumnLayout {
                 panelIndex: 1
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.alignment: Qt.AlignTop
             }
 
             ControlCenterModulePanel {
@@ -180,7 +178,6 @@ ColumnLayout {
                 panelIndex: 2
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.alignment: Qt.AlignTop
             }
         }
 
@@ -208,7 +205,6 @@ ColumnLayout {
                 hostRoot: self.root
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.alignment: Qt.AlignTop
             }
 
             ControlCenterQuickTilesPanel {
@@ -216,7 +212,6 @@ ColumnLayout {
                 hostRoot: self.root
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.alignment: Qt.AlignTop
             }
 
             ControlCenterQuickTiles2Panel {
@@ -224,7 +219,6 @@ ColumnLayout {
                 hostRoot: self.root
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.alignment: Qt.AlignTop
             }
         }
 

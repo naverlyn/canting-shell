@@ -12,9 +12,16 @@ import "./Bar"
 Item {
     id: root
     property var theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     property int currentSubTab: 0
+    onCurrentSubTabChanged: {
+        if (root.isDraggingBlock) {
+            root.isDraggingBlock = false;
+            root.dragHoverPanelIndex = -1;
+            root.dragHoverItemIndex = -1;
+        }
+    }
     property string selectedColorTargetType: "block"
     property string selectedColorWidgetId: "launcher"
     property int selectedColorPanelIndex: 0
@@ -54,9 +61,7 @@ Item {
             root.showToast(msg, true);
         }
         function onPanelsUpdated() {
-            const p = BarConfig.panels;
-            layoutCard.panelRepeater.model = null;
-            layoutCard.panelRepeater.model = p;
+            void BarConfig.panelsRevision;
         }
     }
 
@@ -415,7 +420,7 @@ Item {
         return Qt.rgba(c.r, c.g, c.b, alpha);
     }
 
-    function _trackColorDeps() {
+    readonly property int _colorRevision: {
         if (root.theme) {
             void root.theme.currentName;
             void root.theme.customAccent;
@@ -434,16 +439,21 @@ Item {
         }
         void BarConfig.selectedBarIndex;
         void BarConfig.removedWidgets;
+        return 0;
+    }
+
+    function _trackColorDeps() {
+        void root._colorRevision;
     }
 
     function getBlockColorSpec(widgetId) {
-        _trackColorDeps();
+        void root._colorRevision;
         if (!widgetId) return "";
         const prefix = "@color:" + currentBarId() + ":" + widgetId + "=";
         const rem = BarConfig.removedWidgets || [];
         for (let i = 0; i < rem.length; i++) {
             const s = String(rem[i]);
-            if (s.indexOf(prefix) === 0) return s.substring(prefix.length).trim();
+            if (s.startsWith(prefix)) return s.substring(prefix.length).trim();
         }
         return "";
     }
@@ -451,7 +461,7 @@ Item {
     function setBlockColorSpec(widgetId, spec) {
         if (!widgetId) return;
         const prefix = "@color:" + currentBarId() + ":" + widgetId + "=";
-        let rem = (BarConfig.removedWidgets || []).filter(item => String(item).indexOf(prefix) !== 0);
+        let rem = (BarConfig.removedWidgets || []).filter(item => !String(item).startsWith(prefix));
         const clean = spec ? String(spec).trim() : "";
         if (clean !== "") rem.push(prefix + clean);
         BarConfig.removedWidgets = rem;
@@ -462,13 +472,18 @@ Item {
         const pList = BarConfig.panels || [];
         if (panelIndex < 0 || panelIndex >= pList.length) return;
         const widgets = pList[panelIndex] || [];
+        if (widgets.length === 0) return;
         const bId = currentBarId();
-        let rem = (BarConfig.removedWidgets || []).slice();
+        const prefixes = widgets.map(w => "@color:" + bId + ":" + w + "=");
         const clean = spec ? String(spec).trim() : "";
-        for (let i = 0; i < widgets.length; i++) {
-            const prefix = "@color:" + bId + ":" + widgets[i] + "=";
-            rem = rem.filter(item => String(item).indexOf(prefix) !== 0);
-            if (clean !== "") rem.push(prefix + clean);
+        let rem = (BarConfig.removedWidgets || []).filter(item => {
+            const s = String(item);
+            return !prefixes.some(p => s.startsWith(p));
+        });
+        if (clean !== "") {
+            for (let i = 0; i < prefixes.length; i++) {
+                rem.push(prefixes[i] + clean);
+            }
         }
         BarConfig.removedWidgets = rem;
         BarConfig.saveConfig();

@@ -20,13 +20,13 @@ Item {
         anchors.fill: parent
         anchors.leftMargin: 16
         anchors.rightMargin: 16
-        spacing: 16
+        spacing: 20
 
         // Left Label Column (Fixed width: guarantees 100% vertical alignment of seekbars)
         Item {
-            Layout.preferredWidth: 260
-            Layout.minimumWidth: 260
-            Layout.maximumWidth: 260
+            Layout.preferredWidth: 280
+            Layout.minimumWidth: 280
+            Layout.maximumWidth: 280
             Layout.fillHeight: true
 
             Column {
@@ -41,6 +41,7 @@ Item {
                     font.pixelSize: 13
                     font.bold: true
                     color: Style.theme.textPrimary
+                    elide: Text.ElideRight
                 }
 
                 Text {
@@ -50,6 +51,7 @@ Item {
                     font.family: Style.font
                     font.pixelSize: 11
                     color: Style.theme.textSecondary
+                    elide: Text.ElideRight
                 }
             }
         }

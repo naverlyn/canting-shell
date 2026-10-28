@@ -17,7 +17,7 @@ import "./Widgets"
 Scope {
   id: root
   property var theme: DefaultTheme {}
-  property string font: "Hack Nerd Font"
+  property string font: "Lato Nerd Font"
   property bool barVisible: true
   property var activePopupData: null
 
@@ -209,12 +209,13 @@ Scope {
       readonly property bool isVert: barPos === "left" || barPos === "right"
       readonly property int barThickness: barCfg.barHeight || 32
       readonly property bool isFloating: Boolean(barCfg.floating)
-      readonly property real barAlpha: (barCfg.barOpacity !== undefined && barCfg.barOpacity !== null && barCfg.barOpacity !== 0.85) ? Number(barCfg.barOpacity) : BarConfig.barOpacity
+      readonly property real barAlpha: (barCfg.barOpacity !== undefined && barCfg.barOpacity !== null) ? Number(barCfg.barOpacity) : BarConfig.barOpacity
       readonly property int pillRadius: (barCfg.pillRadius !== undefined) ? Number(barCfg.pillRadius) : BarConfig.pillRadius
       readonly property real pillOpacity: (barCfg.pillOpacity !== undefined) ? Number(barCfg.pillOpacity) : BarConfig.pillOpacity
       readonly property bool hidePill: (barCfg.hidePill !== undefined) ? Boolean(barCfg.hidePill) : BarConfig.hidePill
       readonly property var barPanels: barCfg.panels || []
       readonly property bool hasInnerCorners: (barCfg.innerCorners !== undefined ? Boolean(barCfg.innerCorners) : Boolean(BarConfig.innerCorners)) && !barInstanceScope.isFloating
+      readonly property bool fluidCards: (barCfg.fluidCards !== undefined) ? Boolean(barCfg.fluidCards) : Boolean(BarConfig.fluidCards)
       readonly property int innerCornerRadius: 16
       readonly property string activeStyle: (barCfg.activeStyle !== undefined) ? String(barCfg.activeStyle) : (BarConfig.activeStyle || "pill")
       readonly property string barColorSpec: (barCfg.barColor !== undefined) ? String(barCfg.barColor) : (BarConfig.barColor || "")
@@ -228,15 +229,7 @@ Scope {
       readonly property bool blankOnSecondary: (barCfg.blankOnSecondary !== undefined) ? Boolean(barCfg.blankOnSecondary) : (secondaryMode === "blank")
       readonly property var secondaryPanels: (barCfg.secondaryPanels && barCfg.secondaryPanels.length > 0) ? barCfg.secondaryPanels : BarConfig.defaultSecondaryPanels
 
-      readonly property bool hasDockedTop: root.isDockedBarActive("top", currentBarId)
-      readonly property bool hasDockedBottom: root.isDockedBarActive("bottom", currentBarId)
-      readonly property bool hasDockedLeft: root.isDockedBarActive("left", currentBarId)
-      readonly property bool hasDockedRight: root.isDockedBarActive("right", currentBarId)
 
-      readonly property int dockedTopH: root.getDockedBarThickness("top", currentBarId)
-      readonly property int dockedBottomH: root.getDockedBarThickness("bottom", currentBarId)
-      readonly property int dockedLeftW: root.getDockedBarThickness("left", currentBarId)
-      readonly property int dockedRightW: root.getDockedBarThickness("right", currentBarId)
 
       Variants {
         model: Quickshell.screens
@@ -447,9 +440,19 @@ Scope {
             readonly property string barColorSpec: barInstanceScope.barColorSpec
             readonly property int barThickness: barInstanceScope.barThickness
             readonly property bool isFloating: barInstanceScope.isFloating
+            readonly property bool fluidCards: barInstanceScope.fluidCards
             readonly property bool hasInnerCorners: barInstanceScope.hasInnerCorners
             readonly property int innerCornerRadius: barInstanceScope.innerCornerRadius
             readonly property color barColor: barBackground.color
+            property Item activeInfoProvider: null
+            property alias sharedInfoPopup: sharedInfoPopupInst
+
+            SharedInfoPopup {
+              id: sharedInfoPopupInst
+              barWindow: barWindow
+              barContainer: barContentContainer
+              hostRoot: root
+            }
             readonly property int vHitPadding: Math.max(0, Math.floor((barContentContainer.height - 24) / 2))
             readonly property int hHitPadding: barWindow.windowIsVert ? Math.max(0, Math.floor((barContentContainer.width - vertPillWidth) / 2)) : 4
 
@@ -840,13 +843,7 @@ Scope {
               }
             }
 
-            Connections {
-              target: BarConfig
-              function onPanelsUpdated() {
-                panelsOuterRepeater.model = null;
-                panelsOuterRepeater.model = Qt.binding(function() { return barWindow.effectivePanels; });
-              }
-            }
+
           }
 
         }

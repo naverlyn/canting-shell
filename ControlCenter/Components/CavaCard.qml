@@ -7,7 +7,7 @@ Rectangle {
     id: root
 
     property var theme: DefaultTheme {}
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     width: parent ? parent.width : 300
     height: cavaCol.implicitHeight + 24

@@ -23,7 +23,7 @@ import "./Wallpaper"
 Item {
     id: root
     property var theme: DefaultTheme {}
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     // View state: 0: Gallery, 1: Folders
     property int currentView: 0

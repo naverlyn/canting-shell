@@ -1144,14 +1144,14 @@ Item {
                             anchors.centerIn: parent
                             spacing: 6
                             Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
+                                Layout.alignment: Qt.AlignHCenter
                                 text: "󰁯"
                                 font.family: root.font
                                 font.pixelSize: 22
                                 color: root.theme.textMuted
                             }
                             Text {
-                                anchors.horizontalCenter: parent.horizontalCenter
+                                Layout.alignment: Qt.AlignHCenter
                                 text: "No snapshots saved yet. Click 'Quick Snapshot' above to create one."
                                 font.family: root.font
                                 font.pixelSize: 11

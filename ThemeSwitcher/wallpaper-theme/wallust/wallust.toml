@@ -2,10 +2,9 @@
 # Used via `wallust run <img> -d this-dir`, so it never touches your own
 # wallust setup.
 backend = "fastresize"
-color_space = "lchansi"
-palette = "ansidark"
+color_space = "labmixed"
 
 [templates]
 quickshell.template = "quickshell.json"
-quickshell.target = '~/.config/quickshell/ThemeSwitcher/wallpaper-theme.json'
+quickshell.target = '~/.config/quickshell/ThemeSwitcher/wallpaper-theme/.raw-palette.json'
 quickshell.new_engine = true

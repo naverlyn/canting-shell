@@ -24,7 +24,7 @@ Item {
     property alias updatePositionsProcRef: updatePositionsProc
     property alias loadSettingsProcRef: loadSettingsProc
     property var theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     /* Internal state synced with hyprlock.conf */
     property bool isLoading: true
@@ -64,6 +64,11 @@ Item {
     property int inputPosY: -85
     property string inputHalign: "center"
     property string inputValign: "center"
+    property string inputOuterColor: "$accent"
+    property string inputInnerColor: "$surface0"
+    property string inputFontColor: "$text"
+    property string inputCheckColor: "$accent"
+    property string inputFailColor: "$red"
 
     /* Modular Text & Command Building Blocks */
     property var textBlocks: []
@@ -139,6 +144,13 @@ Item {
                         if (data.input_pos_y !== undefined) root.inputPosY = data.input_pos_y;
                         if (data.input_halign !== undefined) root.inputHalign = data.input_halign;
                         if (data.input_valign !== undefined) root.inputValign = data.input_valign;
+                        if (data.input_outer_color !== undefined) root.inputOuterColor = data.input_outer_color;
+                        if (data.input_inner_color !== undefined) root.inputInnerColor = data.input_inner_color;
+                        if (data.input_font_color !== undefined) {
+                            root.inputFontColor = (data.input_font_color === data.input_inner_color) ? "$text" : data.input_font_color;
+                        }
+                        if (data.input_check_color !== undefined) root.inputCheckColor = data.input_check_color;
+                        if (data.input_fail_color !== undefined) root.inputFailColor = data.input_fail_color;
                         if (data.text_blocks !== undefined) root.textBlocks = data.text_blocks;
                         root.isLoading = false;
                     }
@@ -224,6 +236,8 @@ Item {
     }
 
     /* Process to add a new custom building block */
+    property int autoExpandBlockIndex: -1
+
     Process {
         id: addBlockProc
         running: false
@@ -232,8 +246,9 @@ Item {
                 try {
                     const res = JSON.parse(text);
                     if (res && res.status === "ok" && res.blocks) {
+                        root.autoExpandBlockIndex = res.blocks.length - 1;
                         root.textBlocks = res.blocks;
-                        showStatus("Custom block added");
+                        showStatus("Custom block added — configure font & settings below");
                     }
                 } catch(e) {}
             }
@@ -244,13 +259,13 @@ Item {
         let newPayload = {
             name: "Custom Command",
             raw_text: "cmd[update:1000] echo \"Hello $USER\"",
-            font_size: 14,
-            font_family: "Victor Mono Bold Oblique",
+            font_size: 16,
+            font_family: "$font",
             position_x: 0,
             position_y: 60,
             halign: "center",
             valign: "bottom",
-            color: "$color8"
+            color: "$text"
         };
         addBlockProc.command = [root.scriptPath, "add-block", JSON.stringify(newPayload)];
         addBlockProc.running = true;
@@ -308,7 +323,12 @@ Item {
             "input_hide_input": root.inputHideInput,
             "input_placeholder": root.inputPlaceholder,
             "input_pos_x": root.inputPosX,
-            "input_pos_y": root.inputPosY
+            "input_pos_y": root.inputPosY,
+            "input_outer_color": root.inputOuterColor,
+            "input_inner_color": root.inputInnerColor,
+            "input_font_color": root.inputFontColor,
+            "input_check_color": root.inputCheckColor,
+            "input_fail_color": root.inputFailColor
         };
         saveSettingsProc.command = [root.scriptPath, "set", JSON.stringify(payload)];
         saveSettingsProc.running = true;

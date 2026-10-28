@@ -8,7 +8,7 @@ Rectangle {
     id: root
 
     property var theme: DefaultTheme {}
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     // Pick a playing/loaded player first
     readonly property var player: {
@@ -115,6 +115,9 @@ Rectangle {
                     anchors.fill: parent
                     anchors.margins: 1
                     source: (root.player && root.player.trackArtUrl) ? root.player.trackArtUrl : ""
+                    sourceSize.width: 84
+                    sourceSize.height: 84
+                    cache: false
                     fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     visible: status === Image.Ready
@@ -352,6 +355,9 @@ Rectangle {
                 anchors.fill: parent
                 anchors.margins: 1
                 source: (root.player && root.player.trackArtUrl) ? root.player.trackArtUrl : ""
+                sourceSize.width: 240
+                sourceSize.height: 240
+                cache: false
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 visible: status === Image.Ready

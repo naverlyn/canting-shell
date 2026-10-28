@@ -22,7 +22,7 @@ Item {
     id: root
     property alias queryProcRef: queryProc
     property var theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     /* Animation State */
     property bool animationsEnabled: true

@@ -7,7 +7,7 @@ import QtQuick.Layouts
 Scope {
     id: root
     property var theme: Theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     IpcHandler {
         target: "theme"
@@ -53,6 +53,7 @@ Scope {
     }
 
     property var filteredThemes: {
+        if (!themePanel.visible) return [];
         var query = searchText.toLowerCase();
         var result = [];
         for (var i = 0; i < root.theme.themes.length; i++) {
@@ -356,7 +357,8 @@ Scope {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     visible: !root.theme.wallpaperMode
-                    model: root.filteredThemes
+                    model: themePanel.visible ? root.filteredThemes : []
+                    cacheBuffer: 0
                     clip: true
                     spacing: 2
                     boundsBehavior: Flickable.StopAtBounds

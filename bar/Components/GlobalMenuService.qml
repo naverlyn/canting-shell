@@ -10,6 +10,8 @@ Singleton {
 
   readonly property string userBindsPath: (Quickshell.env("HOME") || "") + "/.config/hypr/UserConfigs/UserKeybinds.conf"
   readonly property string defaultBindsPath: (Quickshell.env("HOME") || "") + "/.config/hypr/configs/Keybinds.conf"
+  readonly property string luaBindsPath: (Quickshell.env("HOME") || "") + "/.config/hypr/Configs/Keybinds.lua"
+  readonly property string customLuaBindsPath: (Quickshell.env("HOME") || "") + "/.config/hypr/custom_keybinds.lua"
 
   property var parsedBinds: ({})
   property int bindsUpdateCounter: 0
@@ -127,8 +129,98 @@ Singleton {
     onTextChanged: root.updateKeybinds()
   }
 
+  FileView {
+    id: luaBindsFile
+    path: root.luaBindsPath
+    watchChanges: true
+    printErrors: false
+    onFileChanged: {
+      luaBindsFile.reload();
+      root.updateKeybinds();
+    }
+    onTextChanged: root.updateKeybinds()
+  }
+
+  FileView {
+    id: customLuaBindsFile
+    path: root.customLuaBindsPath
+    watchChanges: true
+    printErrors: false
+    onFileChanged: {
+      customLuaBindsFile.reload();
+      root.updateKeybinds();
+    }
+    onTextChanged: root.updateKeybinds()
+  }
+
   function updateKeybinds() {
     let binds = {};
+
+    const parseLuaText = (text) => {
+      if (!text) return;
+      const lines = text.split("\n");
+      const vars = {};
+      for (let i = 0; i < lines.length; i++) {
+        const vmatch = lines[i].match(/^\s*local\s+([a-zA-Z0-9_]+)\s*=\s*(?:.*?["']([^"']+)["'])/);
+        if (vmatch) vars[vmatch[1]] = vmatch[2];
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (!line || line.startsWith("--")) continue;
+
+        const bmatch = line.match(/hl\.bind\s*\(\s*(.+?)\s*,\s*(.+?)\s*(?:,\s*\{.*\}|\s*)\)$/);
+        if (!bmatch) continue;
+
+        let keyExpr = bmatch[1].trim();
+        let actionExpr = bmatch[2].trim();
+
+        for (const [k, v] of Object.entries(vars)) {
+          keyExpr = keyExpr.replace(new RegExp(k, "g"), `"${v}"`);
+        }
+        let fullKey = keyExpr.replace(/["'\s\.]+/g, " ").trim();
+        let keyParts = fullKey.split("+").map(s => s.trim()).filter(Boolean);
+        if (keyParts.length === 0) continue;
+
+        let mods = [];
+        let key = keyParts[keyParts.length - 1];
+        for (let m = 0; m < keyParts.length - 1; m++) {
+          let p = keyParts[m].toUpperCase();
+          if (p === "SUPER") mods.push("Super");
+          else if (p === "CTRL") mods.push("Ctrl");
+          else if (p === "ALT") mods.push("Alt");
+          else if (p === "SHIFT") mods.push("Shift");
+        }
+
+        if (key === "SPACE" || key === "space") key = "Space";
+        else if (key === "Return" || key === "return") key = "Enter";
+
+        const shortcut = mods.length > 0 ? (mods.join("+") + "+" + key) : key;
+
+        let resolvedAction = actionExpr;
+        for (const [k, v] of Object.entries(vars)) {
+          resolvedAction = resolvedAction.replace(new RegExp(k, "g"), v);
+        }
+
+        if (resolvedAction.indexOf("float") !== -1 || resolvedAction.indexOf("togglefloating") !== -1) {
+          binds["togglefloating"] = shortcut;
+        } else if (resolvedAction.indexOf("close") !== -1 || resolvedAction.indexOf("killactive") !== -1) {
+          binds["closewindow"] = shortcut;
+        } else if (resolvedAction.indexOf("fullscreen") !== -1) {
+          binds["fullscreen"] = shortcut;
+        } else if (resolvedAction.indexOf("togglesplit") !== -1) {
+          binds["togglesplit"] = shortcut;
+        } else if (resolvedAction.indexOf("toggle_special") !== -1 || resolvedAction.indexOf("togglespecialworkspace") !== -1) {
+          binds["togglespecialworkspace"] = shortcut;
+        } else if (resolvedAction.indexOf("launcher toggle") !== -1 || resolvedAction.indexOf("rofi") !== -1) {
+          binds["launcher"] = shortcut;
+        } else if (resolvedAction.indexOf("terminal") !== -1 || resolvedAction.indexOf("kitty") !== -1 || resolvedAction.indexOf("ghostty") !== -1) {
+          if (!binds["terminal"]) binds["terminal"] = shortcut;
+        } else if (resolvedAction.indexOf("ScreenShot") !== -1 || resolvedAction.indexOf("grimblast") !== -1) {
+          binds["screenshot"] = shortcut;
+        }
+      }
+    };
 
     const parseText = (text) => {
       if (!text) return;
@@ -195,6 +287,8 @@ Singleton {
 
     parseText(defaultBindsFile.text());
     parseText(userBindsFile.text());
+    parseLuaText(luaBindsFile.text());
+    parseLuaText(customLuaBindsFile.text());
 
     root.parsedBinds = binds;
     root.bindsUpdateCounter++;
@@ -202,12 +296,14 @@ Singleton {
 
   Timer {
     id: retryTimer
+    property int attempts: 0
     interval: 150
-    running: Object.keys(root.parsedBinds).length === 0
+    running: Object.keys(root.parsedBinds).length === 0 && attempts < 10
     repeat: true
     onTriggered: {
+      attempts++;
       root.updateKeybinds();
-      if (Object.keys(root.parsedBinds).length > 0) {
+      if (Object.keys(root.parsedBinds).length > 0 || attempts >= 10) {
         retryTimer.stop();
       }
     }

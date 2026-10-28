@@ -58,28 +58,31 @@ RowLayout {
             anchors.rightMargin: 8
             spacing: 6
 
-            TextInput {
-                id: searchTextInput
+            Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                color: root.theme.textPrimary
-                font.pixelSize: 11
-                font.family: root.font
-                verticalAlignment: TextInput.AlignVCenter
-                clip: true
-                selectByMouse: true
-                onTextChanged: root.searchFilter = text
-            }
 
-            Text {
-                text: "Search wallpapers..."
-                color: root.theme.textMuted
-                font.pixelSize: 11
-                font.family: root.font
-                anchors.left: parent.left
-                anchors.leftMargin: 10
-                anchors.verticalCenter: parent.verticalCenter
-                visible: searchTextInput.text === "" && !searchTextInput.activeFocus
+                TextInput {
+                    id: searchTextInput
+                    anchors.fill: parent
+                    color: root.theme.textPrimary
+                    font.pixelSize: 11
+                    font.family: root.font
+                    verticalAlignment: TextInput.AlignVCenter
+                    clip: true
+                    selectByMouse: true
+                    onTextChanged: root.searchFilter = text
+                }
+
+                Text {
+                    text: "Search wallpapers..."
+                    color: root.theme.textMuted
+                    font.pixelSize: 11
+                    font.family: root.font
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: searchTextInput.text === "" && !searchTextInput.activeFocus
+                }
             }
 
             Rectangle {

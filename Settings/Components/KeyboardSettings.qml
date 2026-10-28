@@ -100,8 +100,13 @@ Item {
         running: false
     }
 
+    /* Apply live AND persist (Lua or .conf) via manage_hyprland.sh.
+       "input:touchpad:natural_scroll" -> section "input.touchpad", key "natural_scroll" */
+    readonly property string hyprVarScript: Qt.resolvedUrl("../scripts/manage_hyprland.sh").toString().replace(/^file:\/\//, "")
     function applyHyprKeyword(key, val) {
-        hyprcmd.command = ["hyprctl", "keyword", key, String(val)];
+        const parts = String(key).split(":");
+        const k = parts.pop();
+        hyprcmd.command = [root.hyprVarScript, "set", parts.join("."), k, String(val)];
         hyprcmd.running = true;
     }
 
@@ -144,33 +149,39 @@ Item {
 
     /* Helper: Human-friendly action title (dynamic and distro-agnostic) */
     function getFriendlyAction(item) {
-        if (item.description && item.description.length > 0) {
+        if (!item) return "";
+        if (item.description && item.description.length > 0 && !item.description.startsWith("__lua") && !item.description.startsWith("Lua ")) {
             return item.description;
         }
         const disp = item.dispatcher || "";
         const arg = item.arg || "";
 
-        if (disp === "killactive") return "Close Active Window";
+        if (disp === "killactive" || disp === "closewindow") return "Close Active Window";
         if (disp === "togglefloating") return "Toggle Floating Window";
         if (disp === "fullscreen") return arg === "1" ? "Maximize Window" : "Toggle Fullscreen";
         if (disp === "workspace") return "Switch to Workspace " + arg;
         if (disp === "movetoworkspace") return "Move Window to Workspace " + arg;
         if (disp === "movetoworkspacesilent") return "Move Silently to Workspace " + arg;
         if (disp === "splitratio") return "Adjust Split Ratio";
-        if (disp === "movefocus") return "Focus Window (" + arg + ")";
+        if (disp === "movefocus") return "Focus Window" + (arg ? " (" + arg + ")" : "");
+        if (disp === "togglesplit") return "Toggle Split Layout";
+        if (disp === "pseudo") return "Pseudo Tiling";
         if (disp === "togglespecialworkspace") return "Special Workspace (" + (arg || "Default") + ")";
 
         if (disp === "exec") {
             // Quickshell desktop shell IPC
             if (arg.includes("launcher toggle")) return "App Launcher";
+            if (arg.includes("settings toggle")) return "Settings App";
+            if (arg.includes("wallpaper toggle")) return "Wallpaper Switcher";
             if (arg.includes("monitors toggle")) return "Display Settings";
             if (arg.includes("theme toggle")) return "Theme Switcher";
+            if (arg.includes("clipboard toggle")) return "Clipboard Manager";
             if (arg.includes("notifications dismiss_all")) return "Dismiss Notifications";
 
             // Standard volume, brightness, and screenshot utilities
             if (arg.includes("wpctl") || arg.includes("pamixer") || arg.includes("pactl")) return "Volume Control";
             if (arg.includes("brightnessctl") || arg.includes("light")) return "Brightness Control";
-            if (arg.includes("grim") || arg.includes("slurp") || arg.includes("hyprshot")) return "Take Screenshot";
+            if (arg.includes("ScreenShot.sh") || arg.includes("grim") || arg.includes("slurp") || arg.includes("hyprshot") || arg.includes("grimblast")) return "Take Screenshot";
 
             // Generic app launchers
             if (arg.includes("rofi") || arg.includes("wofi") || arg.includes("fuzzel") || arg.includes("tofi")) {
@@ -179,8 +190,15 @@ Item {
                 return "App Launcher";
             }
 
+            if (arg === "kitty" || arg.includes("kitty")) return "Terminal (kitty)";
+            if (arg === "nautilus" || arg.includes("nautilus")) return "File Manager (nautilus)";
+
             // Dynamic clean title for any application or script path
             return root.formatTitle(arg);
+        }
+
+        if (disp === "__lua" || disp === "lua") {
+            return "Custom Shortcut (" + (item.key || arg) + ")";
         }
 
         return root.formatTitle(disp + (arg ? " " + arg : ""));
@@ -558,7 +576,7 @@ Item {
 
     Process {
         id: queryBindsProc
-        command: ["hyprctl", "binds", "-j"]
+        command: ["bash", root.scriptPath, "list"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {

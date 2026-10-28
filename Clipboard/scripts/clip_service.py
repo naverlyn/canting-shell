@@ -23,6 +23,7 @@ def get_list(limit=150, out_file=None):
     lines = raw_out.strip().split("\n")
     items = []
     thumb_gen_count = 0
+    active_thumbs = set()
 
     for line in lines:
         if not line:
@@ -46,7 +47,8 @@ def get_list(limit=150, out_file=None):
             else:
                 img_meta = "Image"
 
-            thumb_path = f"{THUMB_DIR}/{cid}.png"
+            thumb_fname = f"{cid}.png"
+            thumb_path = f"{THUMB_DIR}/{thumb_fname}"
             if not os.path.exists(thumb_path) and thumb_gen_count < 30:
                 try:
                     p = subprocess.Popen(["cliphist", "decode"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -57,6 +59,8 @@ def get_list(limit=150, out_file=None):
                     thumb_gen_count += 1
                 except Exception:
                     pass
+            if os.path.exists(thumb_path):
+                active_thumbs.add(thumb_fname)
         elif re.match(r'^https?://', preview.strip()):
             cat = "link"
         elif re.match(r'^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3}|[0-9a-fA-F]{8})$', preview.strip()):
@@ -70,12 +74,21 @@ def get_list(limit=150, out_file=None):
             "category": cat,
             "imgMeta": img_meta,
             "isBinary": is_binary,
-            "thumbPath": thumb_path if os.path.exists(thumb_path) else "",
-            "raw": line
+            "thumbPath": thumb_path if os.path.exists(thumb_path) else ""
         })
 
         if limit > 0 and len(items) >= limit:
             break
+
+    try:
+        for fname in os.listdir(THUMB_DIR):
+            if fname not in active_thumbs:
+                try:
+                    os.remove(os.path.join(THUMB_DIR, fname))
+                except Exception:
+                    pass
+    except Exception:
+        pass
 
     if out_file:
         tmp = out_file + ".tmp"

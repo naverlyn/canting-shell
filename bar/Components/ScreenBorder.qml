@@ -37,21 +37,39 @@ Item {
   readonly property bool anyEdgeActive: topActive || bottomActive || leftActive || rightActive
 
   readonly property bool borderCornersEnabled: Boolean(BarConfig.screenBorder) && Boolean(BarConfig.screenBorderCorners)
-  readonly property bool showTopLeftCorner: Boolean(BarConfig.innerCorners) && (topActive && leftActive) && ((hasDockedTop || hasDockedLeft) ? true : borderCornersEnabled)
-  readonly property bool showTopRightCorner: Boolean(BarConfig.innerCorners) && (topActive && rightActive) && ((hasDockedTop || hasDockedRight) ? true : borderCornersEnabled)
-  readonly property bool showBottomLeftCorner: Boolean(BarConfig.innerCorners) && (bottomActive && leftActive) && ((hasDockedBottom || hasDockedLeft) ? true : borderCornersEnabled)
-  readonly property bool showBottomRightCorner: Boolean(BarConfig.innerCorners) && (bottomActive && rightActive) && ((hasDockedBottom || hasDockedRight) ? true : borderCornersEnabled)
+  readonly property bool showTopLeftCorner: Boolean(BarConfig.innerCorners) && (hasDockedTop || hasDockedLeft || (topActive && leftActive && borderCornersEnabled))
+  readonly property bool showTopRightCorner: Boolean(BarConfig.innerCorners) && (hasDockedTop || hasDockedRight || (topActive && rightActive && borderCornersEnabled))
+  readonly property bool showBottomLeftCorner: Boolean(BarConfig.innerCorners) && (hasDockedBottom || hasDockedLeft || (bottomActive && leftActive && borderCornersEnabled))
+  readonly property bool showBottomRightCorner: Boolean(BarConfig.innerCorners) && (hasDockedBottom || hasDockedRight || (bottomActive && rightActive && borderCornersEnabled))
   readonly property bool anyCornerVisible: showTopLeftCorner || showTopRightCorner || showBottomLeftCorner || showBottomRightCorner
 
-  readonly property color resolvedBorderColor: {
+  readonly property color resolvedBorderColor: resolveBarColorForPos("top")
+
+  function resolveBarColorForPos(pos) {
+    void BarConfig.panelsRevision;
     const spec = BarConfig.screenBorderColor;
     if (spec && String(spec).trim() !== "") {
       return barRoot.resolveThemeSpec(spec, barRoot.theme.bgBase);
     }
-    const cur = BarConfig.bars && BarConfig.bars.length > 0 ? BarConfig.bars[0] : null;
-    const colSpec = cur && cur.barColor ? cur.barColor : BarConfig.barColor;
+    const list = BarConfig.bars || [];
+    let match = null;
+    for (let i = 0; i < list.length; i++) {
+      const b = list[i];
+      if (!b || b.enabled === false) continue;
+      const bTarget = b.displayTarget || (b.allMonitors ? "all" : "primary");
+      const isPrim = (borderRoot.screenIndex === 0);
+      if (bTarget === "primary" && !isPrim) continue;
+      if (bTarget === "secondary" && isPrim) continue;
+      const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
+      if (effectivePos === pos && !Boolean(b.floating)) {
+        match = b;
+        break;
+      }
+    }
+    const bObj = match || (list.length > 0 ? list[0] : null);
+    const colSpec = bObj && bObj.barColor ? bObj.barColor : BarConfig.barColor;
     const baseCol = barRoot.resolveThemeSpec(colSpec, barRoot.theme.bgBase);
-    const alpha = BarConfig.barOpacity !== undefined ? BarConfig.barOpacity : (cur && cur.barOpacity !== undefined ? cur.barOpacity : 1.0);
+    const alpha = (bObj && bObj.barOpacity !== undefined && bObj.barOpacity !== null) ? Number(bObj.barOpacity) : (BarConfig.barOpacity !== undefined ? BarConfig.barOpacity : 1.0);
     return Qt.rgba(baseCol.r, baseCol.g, baseCol.b, alpha);
   }
 
@@ -84,11 +102,10 @@ Item {
     }
     exclusiveZone: borderRoot.borderThickness
     implicitHeight: borderRoot.borderThickness
-    height: borderRoot.borderThickness
 
     Rectangle {
       anchors.fill: parent
-      color: borderRoot.resolvedBorderColor
+      color: borderRoot.resolveBarColorForPos("top")
       Behavior on color { ColorAnimation { duration: 180 } }
     }
   }
@@ -108,11 +125,10 @@ Item {
     }
     exclusiveZone: borderRoot.borderThickness
     implicitHeight: borderRoot.borderThickness
-    height: borderRoot.borderThickness
 
     Rectangle {
       anchors.fill: parent
-      color: borderRoot.resolvedBorderColor
+      color: borderRoot.resolveBarColorForPos("bottom")
       Behavior on color { ColorAnimation { duration: 180 } }
     }
   }
@@ -132,11 +148,10 @@ Item {
     }
     exclusiveZone: borderRoot.borderThickness
     implicitWidth: borderRoot.borderThickness
-    width: borderRoot.borderThickness
 
     Rectangle {
       anchors.fill: parent
-      color: borderRoot.resolvedBorderColor
+      color: borderRoot.resolveBarColorForPos("left")
       Behavior on color { ColorAnimation { duration: 180 } }
     }
   }
@@ -156,11 +171,10 @@ Item {
     }
     exclusiveZone: borderRoot.borderThickness
     implicitWidth: borderRoot.borderThickness
-    width: borderRoot.borderThickness
 
     Rectangle {
       anchors.fill: parent
-      color: borderRoot.resolvedBorderColor
+      color: borderRoot.resolveBarColorForPos("right")
       Behavior on color { ColorAnimation { duration: 180 } }
     }
   }
@@ -414,7 +428,7 @@ Item {
         id: cornerTopLeft
         visible: borderRoot.showTopLeftCorner
         cornerPosition: "top-left"
-        cornerColor: borderRoot.resolvedBorderColor
+        cornerColor: borderRoot.resolveBarColorForPos("top")
         width: borderRoot.cornerRadius
         height: borderRoot.cornerRadius
         anchors.top: parent.top
@@ -425,7 +439,7 @@ Item {
         id: cornerTopRight
         visible: borderRoot.showTopRightCorner
         cornerPosition: "top-right"
-        cornerColor: borderRoot.resolvedBorderColor
+        cornerColor: borderRoot.resolveBarColorForPos("top")
         width: borderRoot.cornerRadius
         height: borderRoot.cornerRadius
         anchors.top: parent.top
@@ -436,7 +450,7 @@ Item {
         id: cornerBottomLeft
         visible: borderRoot.showBottomLeftCorner
         cornerPosition: "bottom-left"
-        cornerColor: borderRoot.resolvedBorderColor
+        cornerColor: borderRoot.resolveBarColorForPos("bottom")
         width: borderRoot.cornerRadius
         height: borderRoot.cornerRadius
         anchors.bottom: parent.bottom
@@ -447,7 +461,7 @@ Item {
         id: cornerBottomRight
         visible: borderRoot.showBottomRightCorner
         cornerPosition: "bottom-right"
-        cornerColor: borderRoot.resolvedBorderColor
+        cornerColor: borderRoot.resolveBarColorForPos("bottom")
         width: borderRoot.cornerRadius
         height: borderRoot.cornerRadius
         anchors.bottom: parent.bottom

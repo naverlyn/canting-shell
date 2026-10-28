@@ -9,7 +9,7 @@ import ".."
 
 ColumnLayout {
     required property var root
-    visible: root.currentSubTab === 3
+    visible: root.currentSubTab === 4
     Layout.fillWidth: true
     spacing: 16
 
@@ -20,7 +20,6 @@ ColumnLayout {
 
         Item {
             Layout.fillWidth: true
-            width: parent ? parent.width : 0
             height: 52
 
             RowLayout {
@@ -32,10 +31,7 @@ ColumnLayout {
                 ColumnLayout {
                     spacing: 2
                     Layout.alignment: Qt.AlignVCenter
-                    readonly property int colWidth: Math.max(260, Math.round(((root.width > 0 ? root.width : 889) - 48) * 0.595))
-                    Layout.preferredWidth: colWidth
-                    Layout.minimumWidth: colWidth
-                    Layout.maximumWidth: colWidth
+                    Layout.fillWidth: true
 
                     Text {
                         text: "Variable Refresh Rate (VRR)"

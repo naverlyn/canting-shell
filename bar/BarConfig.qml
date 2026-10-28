@@ -239,6 +239,7 @@ Singleton {
     } else if (mode === "wide") {
       root.cavaBars = 24;
     }
+    root.panelsRevision++;
     saveConfig();
   }
 
@@ -268,28 +269,16 @@ Singleton {
   function updateBarProp(propName, val, barIdx) {
     const idx = barIdx !== undefined ? barIdx : Math.max(0, Math.min(root.bars.length - 1, root.selectedBarIndex));
     let bList = root.bars.map((b, i) => {
-      if (propName === "barOpacity") {
-        let copy = Object.assign({}, b);
-        copy.panels = (b.panels || []).map(p => (p || []).slice());
-        if (b.secondaryPanels) {
-          copy.secondaryPanels = b.secondaryPanels.map(p => (p || []).slice());
-        }
-        copy[propName] = Number(val);
-        return copy;
-      }
       if (i !== idx) return b;
       let copy = Object.assign({}, b);
       copy.panels = (b.panels || []).map(p => (p || []).slice());
       if (b.secondaryPanels) {
         copy.secondaryPanels = b.secondaryPanels.map(p => (p || []).slice());
       }
-      copy[propName] = val;
+      copy[propName] = propName === "barOpacity" ? Number(val) : val;
       return copy;
     });
     root.bars = bList;
-    if (propName === "barOpacity") {
-      root.barOpacity = Number(val);
-    }
     if (idx === 0) {
       if (propName === "enabled") root.barVisible = Boolean(val);
       else if (propName === "position") root.position = String(val);
@@ -331,6 +320,7 @@ Singleton {
       else if (propName === "screenBorderShadow") root.screenBorderShadow = Boolean(val);
       else if (propName === "screenBorderShadowSize") root.screenBorderShadowSize = Math.max(1, Math.min(64, Math.round(Number(val))));
     }
+    root.panelsRevision++;
     saveConfig();
   }
 
@@ -390,18 +380,29 @@ Singleton {
     } else {
       root.activeEditingDisplay = "primary";
     }
+    root.panelsRevision++;
     saveConfig();
   }
 
   // Remove a Bar instance by index (minimum 1 bar kept)
   function removeBarAt(barIdx) {
     if (root.bars.length <= 1 || barIdx < 0 || barIdx >= root.bars.length) return;
+    const removedBar = root.bars[barIdx];
+    const removedId = (removedBar && removedBar.id) ? String(removedBar.id) : "";
     let bList = root.bars.slice();
     bList.splice(barIdx, 1);
-    if (root.selectedBarIndex >= bList.length) {
-      root.selectedBarIndex = Math.max(0, bList.length - 1);
-    }
     root.bars = bList;
+    if (removedId !== "") {
+      const cPref = "@color:" + removedId + ":";
+      const hPref = "@hidden:" + removedId + ":";
+      root.removedWidgets = (root.removedWidgets || []).filter(item => {
+        const s = String(item);
+        return !s.startsWith(cPref) && !s.startsWith(hPref);
+      });
+    }
+    root.selectedBarIndex = Math.max(0, Math.min(bList.length - 1, root.selectedBarIndex));
+    root.panelsRevision++;
+    root.panelsUpdated();
     if (bList.length > 0) {
       root.barVisible = Boolean(bList[0].enabled);
       root.position = String(bList[0].position);
@@ -418,6 +419,7 @@ Singleton {
       root.barBorderWidth = bList[0].barBorderWidth !== undefined ? Number(bList[0].barBorderWidth) : root.barBorderWidth;
       root.barBorderColor = bList[0].barBorderColor !== undefined ? String(bList[0].barBorderColor) : root.barBorderColor;
     }
+    root.panelsRevision++;
     saveConfig();
   }
 
@@ -510,7 +512,18 @@ Singleton {
   property string _lastSavedJson: ""
   property bool _savePending: false
 
+  Timer {
+    id: saveDebounceTimer
+    interval: 150
+    repeat: false
+    onTriggered: root._flushSaveConfig()
+  }
+
   function saveConfig() {
+    saveDebounceTimer.restart();
+  }
+
+  function _flushSaveConfig() {
     if (saveProcess.running) {
       root._savePending = true;
       return;
@@ -595,7 +608,7 @@ Singleton {
     onExited: {
       if (root._savePending) {
         root._savePending = false;
-        root.saveConfig();
+        root._flushSaveConfig();
       }
     }
   }

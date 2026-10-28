@@ -28,7 +28,7 @@ Item {
     id: root
     property alias dispFlickableRef: dispFlickable
     property var theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     /* Monitor editing state synced with MonitorService */
     property var editState: []
@@ -554,6 +554,8 @@ Item {
         }
     }
 
+    readonly property string hyprVarScript: Qt.resolvedUrl("../scripts/manage_hyprland.sh").toString().replace(/^file:\/\//, "")
+
     Process {
         id: hyprKeywordProc
         running: false
@@ -561,7 +563,7 @@ Item {
 
     function setVrrMode(mode) {
         root.vrrMode = mode;
-        hyprKeywordProc.command = ["hyprctl", "keyword", "misc:vrr", String(mode)];
+        hyprKeywordProc.command = [root.hyprVarScript, "set", "misc", "vrr", String(mode)];
         hyprKeywordProc.running = true;
         const labels = ["Off", "Always On", "Fullscreen Only"];
         root.showStatus("Adaptive Sync (VRR) set to " + (labels[mode] || mode));
@@ -569,7 +571,7 @@ Item {
 
     function setAllowTearing(enabled) {
         root.allowTearing = enabled;
-        hyprKeywordProc.command = ["hyprctl", "keyword", "general:allow_tearing", enabled ? "true" : "false"];
+        hyprKeywordProc.command = [root.hyprVarScript, "set", "general", "allow_tearing", enabled ? "true" : "false"];
         hyprKeywordProc.running = true;
         root.showStatus("Screen tearing " + (enabled ? "allowed for low latency" : "disabled"));
     }

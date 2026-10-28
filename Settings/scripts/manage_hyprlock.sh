@@ -56,7 +56,7 @@ label {
     text = cmd[update:1000] echo "$TIME"
     color = rgba(240, 240, 240, 0.95)
     font_size = 80
-    font_family = Hack Nerd Font
+    font_family = Lato Nerd Font
     position = 0, 100
     halign = center
     valign = center
@@ -88,14 +88,27 @@ EOF
 
 ensure_hyprlock_source() {
     local target_source="source = $SCRIPT_DIR/wallust-hyprlock.conf"
-    if [[ -f "$CONF_PATH" ]] && ! grep -q "wallust-hyprlock.conf" "$CONF_PATH" 2>/dev/null; then
-        sed -i 's|^source = .*/wallust/wallust-hyprland.conf|'"$target_source"'|' "$CONF_PATH" || true
-    fi
+    local harmonize_py="$SCRIPT_DIR/../../ThemeSwitcher/wallpaper-theme/harmonize_palette.py"
+    local wp_theme_json="$SCRIPT_DIR/../../ThemeSwitcher/wallpaper-theme.json"
 
-    if [[ ! -f "$SCRIPT_DIR/wallust-hyprlock.conf" ]]; then
-        if [[ -f "$HOME/.config/hypr/wallust/wallust-hyprland.conf" ]]; then
+    if [[ ! -f "$SCRIPT_DIR/wallust-hyprlock.conf" ]] || ! grep -q '^\$accent =' "$SCRIPT_DIR/wallust-hyprlock.conf" 2>/dev/null; then
+        if [[ -f "$harmonize_py" && -f "$wp_theme_json" ]] && command -v python3 >/dev/null 2>&1; then
+            python3 "$harmonize_py" "$wp_theme_json" 2>/dev/null || true
+        elif [[ -f "$HOME/.config/hypr/wallust/wallust-hyprland.conf" ]]; then
             cp -f "$HOME/.config/hypr/wallust/wallust-hyprland.conf" "$SCRIPT_DIR/wallust-hyprlock.conf"
         fi
+    fi
+
+    if [[ -f "$CONF_PATH" ]]; then
+        # Replace any legacy mocha.conf or wallust-hyprland.conf source lines with our unified dynamic wallust-hyprlock.conf
+        if grep -q "mocha.conf" "$CONF_PATH" 2>/dev/null; then
+            sed -i 's|^source = .*mocha\.conf|'"$target_source"'|' "$CONF_PATH" 2>/dev/null || true
+        fi
+        if grep -q "wallust/wallust-hyprland.conf" "$CONF_PATH" 2>/dev/null; then
+            sed -i 's|^source = .*/wallust/wallust-hyprland.conf|'"$target_source"'|' "$CONF_PATH" 2>/dev/null || true
+        fi
+        # Deduplicate consecutive wallust-hyprlock.conf source lines if both existed
+        awk '!seen[$0]++ || $0 !~ /^source = .*wallust-hyprlock\.conf$/' "$CONF_PATH" > "$CONF_PATH.tmp" 2>/dev/null && mv "$CONF_PATH.tmp" "$CONF_PATH" 2>/dev/null || rm -f "$CONF_PATH.tmp" 2>/dev/null || true
     fi
 }
 
@@ -106,12 +119,15 @@ generate_hyprlock_palette() {
         return 1
     fi
 
-    ensure_hyprlock_wallust_config
-
-    if command -v wallust >/dev/null 2>&1; then
+    local set_sh="$SCRIPT_DIR/../../ThemeSwitcher/wallpaper-theme/set.sh"
+    if [[ -f "$set_sh" ]]; then
+        sh "$set_sh" "$img" >/dev/null 2>&1 || true
+    elif command -v wallust >/dev/null 2>&1; then
+        ensure_hyprlock_wallust_config
         local templates_dir="$HOME/.config/wallust/templates"
         wallust run -C "$SCRIPT_DIR/wallust-hyprlock.toml" --templates-dir "$templates_dir" -s --no-hooks "$img" >/dev/null 2>&1 || true
     fi
+    ensure_hyprlock_source
 }
 
 ensure_backups() {
@@ -307,6 +323,7 @@ get_base_settings() {
         in_w = 260; in_h = 56; in_thick = 2; in_dsize = 0.2; in_dspace = 0.2;
         in_dcenter = "true"; in_fade = "false"; in_hide = "false"; in_holder = "Type Password";
         in_px = 0; in_py = -85; in_halign = "center"; in_valign = "center";
+        in_outer = "$accent"; in_inner = "$surface0"; in_font = "$text"; in_check = "$accent"; in_fail = "$red";
 
         cur_section = ""; in_gen = 0; in_bg = 0; in_input = 0;
     }
@@ -378,6 +395,11 @@ get_base_settings() {
     }
     in_input && /^[[:space:]]*halign[[:space:]]*=/ { split($0, a, "="); in_halign = clean_val(a[2]); }
     in_input && /^[[:space:]]*valign[[:space:]]*=/ { split($0, a, "="); in_valign = clean_val(a[2]); }
+    in_input && /^[[:space:]]*outer_color[[:space:]]*=/ { split($0, a, "="); in_outer = clean_val(a[2]); }
+    in_input && /^[[:space:]]*inner_color[[:space:]]*=/ { split($0, a, "="); in_inner = clean_val(a[2]); }
+    in_input && /^[[:space:]]*font_color[[:space:]]*=/ { split($0, a, "="); in_font = clean_val(a[2]); }
+    in_input && /^[[:space:]]*check_color[[:space:]]*=/ { split($0, a, "="); in_check = clean_val(a[2]); }
+    in_input && /^[[:space:]]*fail_color[[:space:]]*=/ { split($0, a, "="); in_fail = clean_val(a[2]); }
 
     cur_section == "time" && /^[[:space:]]*text[[:space:]]*=/ {
         if ($0 ~ /%H/ && $0 !~ /%I/) clock_fmt = "24h"; else clock_fmt = "12h";
@@ -426,7 +448,12 @@ get_base_settings() {
         printf "  \"input_pos_x\": %d,\n", in_px;
         printf "  \"input_pos_y\": %d,\n", in_py;
         printf "  \"input_halign\": \"%s\",\n", in_halign;
-        printf "  \"input_valign\": \"%s\"\n", in_valign;
+        printf "  \"input_valign\": \"%s\",\n", in_valign;
+        printf "  \"input_outer_color\": \"%s\",\n", in_outer;
+        printf "  \"input_inner_color\": \"%s\",\n", in_inner;
+        printf "  \"input_font_color\": \"%s\",\n", in_font;
+        printf "  \"input_check_color\": \"%s\",\n", in_check;
+        printf "  \"input_fail_color\": \"%s\"\n", in_fail;
         printf "}\n";
     }
     ' "$CONF_PATH"
@@ -434,6 +461,7 @@ get_base_settings() {
 
 cmd_get() {
     ensure_hyprlock_conf
+    ensure_hyprlock_source
 
     local base_json blocks_json
     base_json="$(get_base_settings)"
@@ -453,6 +481,7 @@ cmd_set() {
     fi
 
     ensure_backups
+    ensure_hyprlock_source
 
     local tmp_file
     tmp_file="$(mktemp /tmp/hyprlock_edit.XXXXXX.conf)"
@@ -477,6 +506,7 @@ cmd_set() {
     local has_in_hide v_in_hide
     local has_in_holder v_in_holder
     local has_in_px v_in_px has_in_py v_in_py
+    local has_in_outer v_in_outer has_in_inner v_in_inner has_in_font v_in_font has_in_check v_in_check has_in_fail v_in_fail
     local has_show_date v_show_date
     local has_show_user v_show_user
     local has_show_layout v_show_layout
@@ -513,6 +543,11 @@ cmd_set() {
         flag("in_holder"; .input_placeholder),
         flag("in_px"; .input_pos_x),
         flag("in_py"; .input_pos_y),
+        flag("in_outer"; .input_outer_color),
+        flag("in_inner"; .input_inner_color),
+        flag("in_font"; .input_font_color),
+        flag("in_check"; .input_check_color),
+        flag("in_fail"; .input_fail_color),
         flag("show_date"; .show_date),
         flag("show_user"; .show_user),
         flag("show_layout"; .show_layout),
@@ -534,9 +569,11 @@ cmd_set() {
     elif [[ -n "$target_img" && -f "$target_img" ]]; then
         generate_hyprlock_palette "$target_img"
     elif [[ "${has_bg_src:-0}" -eq 1 && "${v_bg_src:-}" == "wallpaper_current" ]]; then
-        # Sync hyprlock colors with current wallpaper without touching desktop theme
-        if [[ -f "$HOME/.config/hypr/wallust/wallust-hyprland.conf" ]]; then
-            cp -f "$HOME/.config/hypr/wallust/wallust-hyprland.conf" "$SCRIPT_DIR/wallust-hyprlock.conf"
+        # Sync hyprlock colors with current wallpaper-theme.json palette
+        local harmonize_py="$SCRIPT_DIR/../../ThemeSwitcher/wallpaper-theme/harmonize_palette.py"
+        local wp_theme_json="$SCRIPT_DIR/../../ThemeSwitcher/wallpaper-theme.json"
+        if [[ -f "$harmonize_py" && -f "$wp_theme_json" ]] && command -v python3 >/dev/null 2>&1; then
+            python3 "$harmonize_py" "$wp_theme_json" 2>/dev/null || true
         fi
     fi
 
@@ -569,6 +606,11 @@ cmd_set() {
         -v has_in_holder="${has_in_holder:-0}" -v v_in_holder="${v_in_holder:-}" \
         -v has_in_px="${has_in_px:-0}" -v v_in_px="${v_in_px:-}" \
         -v has_in_py="${has_in_py:-0}" -v v_in_py="${v_in_py:-}" \
+        -v has_in_outer="${has_in_outer:-0}" -v v_in_outer="${v_in_outer:-}" \
+        -v has_in_inner="${has_in_inner:-0}" -v v_in_inner="${v_in_inner:-}" \
+        -v has_in_font="${has_in_font:-0}" -v v_in_font="${v_in_font:-}" \
+        -v has_in_check="${has_in_check:-0}" -v v_in_check="${v_in_check:-}" \
+        -v has_in_fail="${has_in_fail:-0}" -v v_in_fail="${v_in_fail:-}" \
         -v has_show_date="${has_show_date:-0}" -v v_show_date="${v_show_date:-}" \
         -v has_show_user="${has_show_user:-0}" -v v_show_user="${v_show_user:-}" \
         -v has_show_layout="${has_show_layout:-0}" -v v_show_layout="${v_show_layout:-}" \
@@ -697,6 +739,26 @@ cmd_set() {
             printf "%sposition = %d, %d\n", indent, v_in_px, v_in_py;
             next;
         }
+        if (has_in_outer == 1 && $0 ~ /^[[:space:]]*outer_color[[:space:]]*=/) {
+            printf "%souter_color = %s\n", indent, v_in_outer;
+            next;
+        }
+        if (has_in_inner == 1 && $0 ~ /^[[:space:]]*inner_color[[:space:]]*=/) {
+            printf "%sinner_color = %s\n", indent, v_in_inner;
+            next;
+        }
+        if (has_in_font == 1 && $0 ~ /^[[:space:]]*font_color[[:space:]]*=/) {
+            printf "%sfont_color = %s\n", indent, v_in_font;
+            next;
+        }
+        if (has_in_check == 1 && $0 ~ /^[[:space:]]*check_color[[:space:]]*=/) {
+            printf "%scheck_color = %s\n", indent, v_in_check;
+            next;
+        }
+        if (has_in_fail == 1 && $0 ~ /^[[:space:]]*fail_color[[:space:]]*=/) {
+            printf "%sfail_color = %s\n", indent, v_in_fail;
+            next;
+        }
         print $0;
         next;
     }
@@ -773,6 +835,7 @@ cmd_update_block() {
     fi
 
     ensure_backups
+    ensure_hyprlock_source
 
     local tmp_file
     tmp_file="$(mktemp /tmp/hyprlock_ublock.XXXXXX.conf)" || tmp_file="/tmp/hyprlock_ublock.conf"
@@ -792,6 +855,7 @@ out_lines = []
 in_b = False
 b_idx = -1
 is_target = False
+saw_font_family = False
 
 for line in lines:
     # Match label start (either active or commented)
@@ -799,6 +863,10 @@ for line in lines:
         in_b = True
         b_idx += 1
         is_target = (b_idx == target_idx)
+        saw_font_family = False
+        if is_target and "name" in payload and len(out_lines) > 0:
+            if re.match(r"^\s*#\s*[A-Za-z0-9_\[\]: -]+", out_lines[-1]) and not re.match(r"^\s*#\s*label", out_lines[-1]):
+                out_lines[-1] = "# " + str(payload.get("name")) + "\n"
         if is_target and "enabled" in payload:
             if payload["enabled"]:
                 out_lines.append(re.sub(r"^\s*#\s*label\s*\{", "label {", line))
@@ -813,6 +881,9 @@ for line in lines:
 
     if in_b and re.match(r"^\s*#?\s*\}", line):
         in_b = False
+        if is_target and "font_family" in payload and not saw_font_family:
+            prefix = "#     " if (payload.get("enabled") is False) else "    "
+            out_lines.append(f"{prefix}font_family = {payload.get(\x27font_family\x27)}\n")
         if is_target and "enabled" in payload:
             if payload["enabled"]:
                 out_lines.append(re.sub(r"^\s*#\s*\}", "}", line))
@@ -844,6 +915,7 @@ for line in lines:
             indent = re.match(r"^(\s*#?\s*)", line).group(1)
             line = indent + "font_size = " + str(payload.get("font_size")) + "\n"
         elif "font_family" in payload and re.search(r"font_family\s*=", line):
+            saw_font_family = True
             indent = re.match(r"^(\s*#?\s*)", line).group(1)
             line = indent + "font_family = " + str(payload.get("font_family")) + "\n"
         elif "color" in payload and re.search(r"color\s*=", line):
@@ -863,12 +935,6 @@ for line in lines:
 
         out_lines.append(line)
         continue
-
-    # Update comment header name if specified
-    if not in_b and "name" in payload and (b_idx + 1) == target_idx and re.match(r"^\s*#\s*[A-Za-z0-9_\[\]: -]+", line):
-        if not re.match(r"^\s*#\s*label", line):
-            out_lines.append("# " + str(payload.get("name")) + "\n")
-            continue
 
     out_lines.append(line)
 
@@ -896,6 +962,7 @@ cmd_update_positions() {
     fi
 
     ensure_backups
+    ensure_hyprlock_source
 
     local tmp_file
     tmp_file="$(mktemp /tmp/hyprlock_upos.XXXXXX.conf)" || tmp_file="/tmp/hyprlock_upos.conf"
@@ -1048,6 +1115,7 @@ cmd_delete_block() {
     fi
 
     ensure_backups
+    ensure_hyprlock_source
 
     local tmp_file
     tmp_file="$(mktemp /tmp/hyprlock_del.XXXXXX.conf)"
@@ -1118,7 +1186,7 @@ cmd_eval() {
         echo '{"status":"ok","output":""}'
         return 0
     fi
-    export Scripts="$HOME/.config/hypr/scripts"
+    if [[ -d "$HOME/.config/hypr/Scripts" ]]; then export Scripts="$HOME/.config/hypr/Scripts"; else export Scripts="$HOME/.config/hypr/scripts"; fi
     local output
     output="$(timeout 3s bash -c "$cmd" 2>&1 || true)"
     jq -n --arg o "$output" '{"status":"ok", "output": $o}'

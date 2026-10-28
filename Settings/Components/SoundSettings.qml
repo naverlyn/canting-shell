@@ -23,7 +23,7 @@ import "./Sound"
 Item {
     id: root
     property var theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     /* Standardized button dimensions */
     readonly property int btnHeight: 32

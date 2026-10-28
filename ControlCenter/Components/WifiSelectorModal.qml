@@ -9,7 +9,7 @@ PanelWindow {
     id: root
 
     property var theme: DefaultTheme {}
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     property bool wifiEnabled: true
     property string currentSsid: ""

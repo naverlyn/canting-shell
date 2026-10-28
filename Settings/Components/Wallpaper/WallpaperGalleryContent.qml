@@ -84,14 +84,15 @@ ColumnLayout {
                 anchors.margins: 8
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                cacheBuffer: 150
+                cacheBuffer: 0
                 visible: root.filteredWallpapers && root.filteredWallpapers.length > 0
 
-                readonly property int columns: Math.max(3, Math.min(6, Math.floor(width / 164)))
-                cellWidth: Math.floor(width / columns)
+                readonly property real safeWidth: width > 0 ? width : 720
+                readonly property int columns: Math.max(3, Math.min(6, Math.floor(safeWidth / 164)))
+                cellWidth: Math.max(120, Math.floor(safeWidth / columns))
                 cellHeight: Math.floor(cellWidth * 0.62) + 6
 
-                model: root.filteredWallpapers
+                model: root.currentView === 0 ? root.filteredWallpapers : []
 
                 ScrollBar.vertical: ScrollBar {
                     policy: ScrollBar.AsNeeded

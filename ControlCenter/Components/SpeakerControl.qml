@@ -8,7 +8,7 @@ ColumnLayout {
     id: root
 
     property var theme: DefaultTheme {}
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
     property bool dropdownOpen: false
 
     signal dropdownToggled(bool open)

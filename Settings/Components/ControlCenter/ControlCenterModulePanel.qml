@@ -49,7 +49,6 @@ Rectangle {
 
     Layout.fillWidth: true
     Layout.fillHeight: true
-    Layout.alignment: Qt.AlignTop
     implicitHeight: Math.max(240, colContent.implicitHeight + 20)
     radius: 10
     opacity: isPanelActive ? 1.0 : 0.65

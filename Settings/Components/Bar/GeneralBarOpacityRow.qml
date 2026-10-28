@@ -39,7 +39,13 @@ Item {
             }
 
             Text {
-                text: "Background transparency"
+                text: {
+                    const cur = BarConfig.currentBar;
+                    if (!cur) return "Background transparency";
+                    const bName = cur.name || "Bar";
+                    const bPos = (cur.position || "top").toUpperCase();
+                    return "Transparency · " + bName + " (" + bPos + ")";
+                }
                 font.family: root.font
                 font.pixelSize: 11
                 color: root.theme.textSecondary

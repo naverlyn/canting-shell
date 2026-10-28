@@ -551,13 +551,13 @@ ColumnLayout {
                                         }
                                     }
 
-                                    ColumnLayout {
+                                    Column {
                                         anchors.centerIn: parent
                                         width: parent.width - 12
                                         spacing: 4
 
                                         Item {
-                                            Layout.alignment: Qt.AlignHCenter
+                                            anchors.horizontalCenter: parent.horizontalCenter
                                             width: 24
                                             height: 24
 
@@ -578,7 +578,7 @@ ColumnLayout {
                                         }
 
                                         Text {
-                                            Layout.fillWidth: true
+                                            width: parent.width
                                             horizontalAlignment: Text.AlignHCenter
                                             text: previewTile.modelData.label || "App"
                                             font.family: root.font
@@ -776,13 +776,13 @@ ColumnLayout {
                                 }
                             }
 
-                            ColumnLayout {
+                            Column {
                                 anchors.centerIn: parent
                                 width: parent.width - 10
                                 spacing: 5
 
                                 Item {
-                                    Layout.alignment: Qt.AlignHCenter
+                                    anchors.horizontalCenter: parent.horizontalCenter
                                     width: 30
                                     height: 30
 
@@ -803,7 +803,7 @@ ColumnLayout {
                                 }
 
                                 Text {
-                                    Layout.fillWidth: true
+                                    width: parent.width
                                     text: appGridCell.modelData.name ?? ""
                                     color: (cellHoverArea.containsMouse || appGridCell.assignedSlot >= 0) ? root.theme.textPrimary : root.theme.textSecondary
                                     font.pixelSize: 10

@@ -18,9 +18,11 @@ Item {
 
     Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
+    readonly property var presetValues: [4, 8, 28, 32, 40]
     readonly property int activeH: BarConfig.currentBar ? Number(BarConfig.currentBar.barHeight) : BarConfig.barHeight
-    readonly property bool isPreset: [28, 32, 36, 40, 46].indexOf(activeH) !== -1
-    property bool customActive: !isPreset
+    readonly property bool isPreset: presetValues.indexOf(activeH) !== -1
+    property bool userForcedCustom: false
+    readonly property bool customActive: userForcedCustom || !isPreset
 
     ColumnLayout {
         id: customHeightCol
@@ -69,8 +71,7 @@ Item {
 
                 readonly property int activeIdx: {
                     if (barHeightItem.customActive) return 5;
-                    const presets = [4, 8, 28, 32, 40];
-                    const idx = presets.indexOf(barHeightItem.activeH);
+                    const idx = barHeightItem.presetValues.indexOf(barHeightItem.activeH);
                     return idx !== -1 ? idx : 5;
                 }
                 readonly property real cellWidth: (width - 6 - 20) / 6
@@ -139,9 +140,9 @@ Item {
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
                                     if (hSegBtn.modelData.value === "custom") {
-                                        barHeightItem.customActive = !barHeightItem.customActive;
+                                        barHeightItem.userForcedCustom = !barHeightItem.customActive;
                                     } else {
-                                        barHeightItem.customActive = false;
+                                        barHeightItem.userForcedCustom = false;
                                         BarConfig.updateBarProp("barHeight", hSegBtn.modelData.value);
                                         root.showToast("Bar height set to: " + hSegBtn.modelData.label);
                                     }

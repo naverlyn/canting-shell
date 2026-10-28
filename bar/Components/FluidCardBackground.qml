@@ -22,6 +22,10 @@ Item {
   property int shadowBlur: fluidEnabled ? 8 : 10
   property color shadowColor: Qt.rgba(0, 0, 0, 0.36)
 
+  function requestRepaint() {
+    if (canvas && canvas.visible) canvas.requestPaint();
+  }
+
   onFluidEnabledChanged: if (canvas.visible) canvas.requestPaint()
   onBarPositionChanged: if (canvas.visible) canvas.requestPaint()
   onJoinTopChanged: if (canvas.visible) canvas.requestPaint()

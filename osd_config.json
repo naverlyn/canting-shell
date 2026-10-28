@@ -1,7 +1,7 @@
 {
   "position": "bottom",
-  "orientation": "auto",
+  "orientation": "horizontal",
   "marginX": 0,
-  "marginY": 16,
-  "timeoutMs": 1500
+  "marginY": 50,
+  "timeoutMs": 1774
 }

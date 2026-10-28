@@ -44,7 +44,6 @@ Item {
     }
 
     Layout.fillWidth: true
-    width: parent ? parent.width : 0
     implicitHeight: (presets.length > 0 && isCustomEffective) ? 94 : 52
     height: implicitHeight
 
@@ -67,7 +66,7 @@ Item {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
                 Layout.fillWidth: true
-                Layout.maximumWidth: sliderRow.width > 0 ? Math.max(180, sliderRow.width - (sliderRow.presets.length > 0 ? 370 : 230)) : 320
+                Layout.maximumWidth: sliderRow.presets.length > 0 ? 320 : 420
 
                 Text {
                     text: sliderRow.title

@@ -455,6 +455,16 @@ ColumnLayout {
             inputPosY: root.inputPosY
             inputHalign: root.inputHalign
             inputValign: root.inputValign
+            inputOuterColor: root.inputOuterColor
+            inputInnerColor: root.inputInnerColor
+            inputFontColor: root.inputFontColor
+            inputOutlineThickness: root.inputOutlineThickness
+            onInputColorModified: (outerCol, innerCol, fontCol) => {
+                root.inputOuterColor = outerCol;
+                root.inputInnerColor = innerCol;
+                root.inputFontColor = fontCol;
+                root.scheduleSave();
+            }
             onInputMoved: (newX, newY) => {
                 root.inputPosX = newX;
                 root.inputPosY = newY;
@@ -483,7 +493,9 @@ ColumnLayout {
                     payload.push({
                         index: b.index !== undefined ? b.index : i,
                         position_x: b.position_x !== undefined ? b.position_x : 0,
-                        position_y: b.position_y !== undefined ? b.position_y : 0
+                        position_y: b.position_y !== undefined ? b.position_y : 0,
+                        halign: b.halign || "center",
+                        valign: b.valign || "center"
                     });
                 }
                 root.updatePositionsProcRef.running = false;
@@ -528,6 +540,12 @@ ColumnLayout {
                     blockIndex: index
                     theme: root.theme
                     font: root.font
+                    Component.onCompleted: {
+                        if (root.autoExpandBlockIndex === index) {
+                            isExpanded = true;
+                            root.autoExpandBlockIndex = -1;
+                        }
+                    }
                     onBlockSaved: (idx, payload) => root.updateBlock(idx, payload)
                     onBlockDeleted: (idx) => root.deleteBlock(idx)
                 }

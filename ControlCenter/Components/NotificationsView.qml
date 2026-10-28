@@ -10,7 +10,7 @@ Column {
     id: root
 
     property var theme: DefaultTheme {}
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     // 1. Permanent History Array
     property var historyModel: []
@@ -520,6 +520,10 @@ Column {
                                             anchors.centerIn: parent
                                             width: 28; height: 28
                                             source: notifDelegate.notif.notifImage ? notifDelegate.notif.notifImage : ""
+                                            sourceSize.width: 56
+                                            sourceSize.height: 56
+                                            cache: false
+                                            asynchronous: true
                                             fillMode: Image.PreserveAspectFit
                                             visible: status === Image.Ready && appIconImg.status !== Image.Ready
                                         }

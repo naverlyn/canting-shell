@@ -11,7 +11,7 @@ PanelWindow {
     id: controlCenter
 
     property var theme: DefaultTheme {}
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
     property var anchorTarget
     property string barPosition: BarConfig.position
     property int barThickness: BarConfig.barHeight

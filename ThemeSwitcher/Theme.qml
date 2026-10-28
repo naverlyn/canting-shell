@@ -100,6 +100,7 @@ Singleton {
             customAccent = colorStr;
         }
         applyHyprlandBorders(current);
+        applyHyprlockTheme(current);
     }
 
     // Semantic aliases
@@ -114,24 +115,136 @@ Singleton {
         return "rgba(" + hex.toString().replace("#", "") + "ff)";
     }
 
+    function stripHex(hex) {
+        return hex.toString().replace("#", "").toLowerCase();
+    }
+
+    function applyHyprlockTheme(t) {
+        if (!t || !t.bgBase) return;
+        var pHex   = stripHex(root.accentPrimary);
+        var cHex   = stripHex(t.accentCyan);
+        var gHex   = stripHex(t.accentGreen);
+        var oHex   = stripHex(t.accentOrange);
+        var rHex   = stripHex(t.accentRed);
+        var bgBase = stripHex(t.bgBase);
+        var bgSurf = stripHex(t.bgSurface);
+        var bgHov  = stripHex(t.bgHover);
+        var bgSel  = stripHex(t.bgSelected);
+        var txtPri = stripHex(t.textPrimary);
+        var txtSec = stripHex(t.textSecondary);
+        var txtMut = stripHex(t.textMuted);
+
+        var hyprlockConf = [
+            "# Dynamic Hyprlock palette generated from active Quickshell / Wallust theme",
+            "$background = rgb(" + bgBase + ")",
+            "$foreground = rgb(" + txtPri + ")",
+            "$color0 = rgb(" + bgSurf + ")",
+            "$color1 = rgb(" + rHex + ")",
+            "$color2 = rgb(" + gHex + ")",
+            "$color3 = rgb(" + oHex + ")",
+            "$color4 = rgb(" + cHex + ")",
+            "$color5 = rgb(" + pHex + ")",
+            "$color6 = rgb(" + cHex + ")",
+            "$color7 = rgb(" + txtSec + ")",
+            "$color8 = rgb(" + txtMut + ")",
+            "$color9 = rgb(" + rHex + ")",
+            "$color10 = rgb(" + txtSec + ")",
+            "$color11 = rgb(" + oHex + ")",
+            "$color12 = rgb(" + cHex + ")",
+            "$color13 = rgb(" + pHex + ")",
+            "$color14 = rgb(" + gHex + ")",
+            "$color15 = rgb(" + txtPri + ")",
+            "$accent = rgb(" + pHex + ")",
+            "$accentAlpha = " + pHex,
+            "$accentPrimary = rgb(" + pHex + ")",
+            "$mauve = rgb(" + pHex + ")",
+            "$mauveAlpha = " + pHex,
+            "$blue = rgb(" + cHex + ")",
+            "$blueAlpha = " + cHex,
+            "$sapphire = rgb(" + cHex + ")",
+            "$sapphireAlpha = " + cHex,
+            "$sky = rgb(" + cHex + ")",
+            "$skyAlpha = " + cHex,
+            "$teal = rgb(" + gHex + ")",
+            "$tealAlpha = " + gHex,
+            "$green = rgb(" + gHex + ")",
+            "$greenAlpha = " + gHex,
+            "$yellow = rgb(" + oHex + ")",
+            "$yellowAlpha = " + oHex,
+            "$peach = rgb(" + oHex + ")",
+            "$peachAlpha = " + oHex,
+            "$maroon = rgb(" + rHex + ")",
+            "$maroonAlpha = " + rHex,
+            "$red = rgb(" + rHex + ")",
+            "$redAlpha = " + rHex,
+            "$pink = rgb(" + pHex + ")",
+            "$pinkAlpha = " + pHex,
+            "$flamingo = rgb(" + rHex + ")",
+            "$flamingoAlpha = " + rHex,
+            "$rosewater = rgb(" + txtPri + ")",
+            "$rosewaterAlpha = " + txtPri,
+            "$lavender = rgb(" + cHex + ")",
+            "$lavenderAlpha = " + cHex,
+            "$text = rgb(" + txtPri + ")",
+            "$textAlpha = " + txtPri,
+            "$subtext1 = rgb(" + txtSec + ")",
+            "$subtext1Alpha = " + txtSec,
+            "$subtext0 = rgb(" + txtMut + ")",
+            "$subtext0Alpha = " + txtMut,
+            "$overlay2 = rgb(" + txtMut + ")",
+            "$overlay2Alpha = " + txtMut,
+            "$overlay1 = rgb(" + bgSel + ")",
+            "$overlay1Alpha = " + bgSel,
+            "$overlay0 = rgb(" + bgHov + ")",
+            "$overlay0Alpha = " + bgHov,
+            "$surface2 = rgb(" + bgSel + ")",
+            "$surface2Alpha = " + bgSel,
+            "$surface1 = rgb(" + bgHov + ")",
+            "$surface1Alpha = " + bgHov,
+            "$surface0 = rgb(" + bgSurf + ")",
+            "$surface0Alpha = " + bgSurf,
+            "$base = rgb(" + bgBase + ")",
+            "$baseAlpha = " + bgBase,
+            "$mantle = rgb(" + bgBase + ")",
+            "$mantleAlpha = " + bgBase,
+            "$crust = rgb(" + bgBase + ")",
+            "$crustAlpha = " + bgBase
+        ].join("\n");
+
+        hyprlockThemeProc.command = ["sh", "-c",
+            "mkdir -p \"$HOME/.config/hypr/wallust\" && " +
+            "printf '%s\\n' '" + hyprlockConf + "' > \"$HOME/.config/quickshell/Settings/scripts/wallust-hyprlock.conf\" && " +
+            "cp -f \"$HOME/.config/quickshell/Settings/scripts/wallust-hyprlock.conf\" \"$HOME/.config/hypr/wallust/wallust-hyprland.conf\" 2>/dev/null || true; " +
+            "if [ -f \"$HOME/.config/hypr/hyprlock.conf\" ]; then " +
+            "  sed -i 's|^source = .*mocha\\.conf|source = $HOME/.config/quickshell/Settings/scripts/wallust-hyprlock.conf|' \"$HOME/.config/hypr/hyprlock.conf\" 2>/dev/null || true; " +
+            "  sed -i 's|^source = .*/wallust/wallust-hyprland\\.conf|source = $HOME/.config/quickshell/Settings/scripts/wallust-hyprlock.conf|' \"$HOME/.config/hypr/hyprlock.conf\" 2>/dev/null || true; " +
+            "fi"
+        ];
+        hyprlockThemeProc.running = true;
+    }
+
     function applyHyprlandBorders(t) {
         var activeColor1 = hexToRgba(root.accentPrimary);
         var activeColor2 = hexToRgba(t.accentCyan);
         var angle = 45;
         var active = activeColor1 + " " + activeColor2 + " " + angle + "deg";
         var inactive = hexToRgba(t.bgBorder);
+        var checkCustom = '! grep -q "custom_border = true" "$HOME/.config/hypr/theme-borders.lua" "$HOME/.config/hypr/theme-borders.conf" 2>/dev/null';
         var writeCmd = root.configFormat === "lua"
-            ? "printf 'hl.config({\\n    general = {\\n        [\"col.active_border\"] = { colors = { \"" + activeColor1 + "\", \"" + activeColor2 + "\" }, angle = " + angle + " },\\n        [\"col.inactive_border\"] = \"" + inactive + "\",\\n    },\\n})\\n' > \"$HOME/.config/hypr/theme-borders.lua\""
-            : 'printf "general {\\n    col.active_border = ' + active + '\\n    col.inactive_border = ' + inactive + '\\n}\\n" > "$HOME/.config/hypr/theme-borders.conf"';
+            ? "printf '%s\\n' '-- theme_sync = true' 'hl.config({' '    general = {' '        [\"col.active_border\"] = { colors = { \"" + activeColor1 + "\", \"" + activeColor2 + "\" }, angle = " + angle + " },' '        [\"col.inactive_border\"] = \"" + inactive + "\",' '    },' '})' > \"$HOME/.config/hypr/theme-borders.lua\""
+            : 'printf "%s\\n" "# theme_sync = true" "general {" "    col.active_border = ' + active + '" "    col.inactive_border = ' + inactive + '" "}" > "$HOME/.config/hypr/theme-borders.conf"';
         var applyCmd = root.configFormat === "lua"
-            ? "hyprctl -r eval \"$(/bin/cat $HOME/.config/hypr/theme-borders.lua)\""
+            ? 'hyprctl eval \'dofile(os.getenv("HOME") .. "/.config/hypr/theme-borders.lua")\''
             : 'hyprctl keyword general:col.active_border "' + active + '" && hyprctl keyword general:col.inactive_border "' + inactive + '"';
 
-        var ensureSource = '[ -f "$HOME/.config/hypr/hyprland.conf" ] && ! grep -q "theme-borders" "$HOME/.config/hypr/hyprland.conf" 2>/dev/null && echo -e "\\nsource = ~/.config/hypr/theme-borders.' + (root.configFormat === "lua" ? "lua" : "conf") + '" >> "$HOME/.config/hypr/hyprland.conf" || true';
+        var ensureSource = root.configFormat === "lua"
+            ? '[ -f "$HOME/.config/hypr/hyprland.lua" ] && ! grep -q "theme-borders" "$HOME/.config/hypr/hyprland.lua" 2>/dev/null && printf "\\npcall(require, \\"theme-borders\\")\\n" >> "$HOME/.config/hypr/hyprland.lua" || true'
+            : '[ -f "$HOME/.config/hypr/hyprland.conf" ] && ! grep -q "theme-borders" "$HOME/.config/hypr/hyprland.conf" 2>/dev/null && printf "\\nsource = ~/.config/hypr/theme-borders.conf\\n" >> "$HOME/.config/hypr/hyprland.conf" || true';
         hyprlandProc.command = ["sh", "-c",
+            checkCustom + ' && { ' +
             writeCmd + ' && ' +
             applyCmd + ' ; ' +
-            ensureSource
+            ensureSource + ' ; } || true'
         ];
         hyprlandProc.running = true;
     }
@@ -140,6 +253,7 @@ Singleton {
         applyKittyTheme(t);
         applySystemColorScheme(!isLightColor(t.bgBase));
         applyHyprlandBorders(t);
+        applyHyprlockTheme(t);
     }
 
     readonly property string themeConfPath: Qt.resolvedUrl("../theme.conf").toString().replace(/^file:\/\//, "")
@@ -253,6 +367,7 @@ Singleton {
     Process { id: kittyProc; running: false }
     Process { id: colorSchemeProc; running: false }
     Process { id: hyprlandProc; running: false }
+    Process { id: hyprlockThemeProc; running: false }
 
     // Which hyprland.* is active - hyprland.lua wins exclusively if present, per
     // Hyprland's own startup precedence (see monitor-manager/MonitorService.qml for the twin check).

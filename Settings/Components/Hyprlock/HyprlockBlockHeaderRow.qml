@@ -52,6 +52,26 @@ RowLayout {
         }
     }
 
+    // Font & Size Badge Pill
+    Rectangle {
+        height: 20
+        implicitWidth: fontBadgeText.implicitWidth + 12
+        radius: 4
+        color: Qt.rgba(1, 1, 1, 0.04)
+        border.color: Qt.rgba(1, 1, 1, 0.08)
+        border.width: 1
+        Layout.alignment: Qt.AlignVCenter
+
+        Text {
+            id: fontBadgeText
+            anchors.centerIn: parent
+            text: (hostCard.editFontFamily || "$font") + " • " + hostCard.editFontSize + "pt"
+            font.family: hostCard.font
+            font.pixelSize: 10
+            color: hostCard.theme.textSecondary ?? "#9aa5ce"
+        }
+    }
+
     // Custom block indicator
     Rectangle {
         visible: hostCard.blockData && hostCard.blockData.is_custom

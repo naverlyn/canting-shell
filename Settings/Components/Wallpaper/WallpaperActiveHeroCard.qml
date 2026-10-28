@@ -84,7 +84,7 @@ Rectangle {
                         font.family: root.font
                         font.pixelSize: 9
                         font.bold: true
-                        color: root.theme.textPrimary
+                        color: "#ffffff"
                     }
                 }
 

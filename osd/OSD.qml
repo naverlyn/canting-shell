@@ -8,7 +8,7 @@ import QtQuick.Layouts
 Scope {
   id: root
   property var theme: DefaultTheme {}
-  property string font: "Hack Nerd Font"
+  property string font: "Lato Nerd Font"
 
   readonly property bool isHorizontal: OSDService.isHorizontal
 

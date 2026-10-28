@@ -9,7 +9,7 @@ Scope {
     id: root
 
     property var theme: DefaultTheme {}
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
 
     property int selectedIndex: 0
     property bool confirmWipe: false
@@ -49,6 +49,12 @@ Scope {
         visible: false
         focusable: true
         color: "transparent"
+
+        onVisibleChanged: {
+            if (!visible) {
+                ClipboardService.releaseMemory();
+            }
+        }
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
@@ -490,7 +496,8 @@ Scope {
                         anchors.margins: 8
                         spacing: 6
                         clip: true
-                        model: ClipboardService.filteredItems
+                        cacheBuffer: 0
+                        model: clipboardPanel.visible ? ClipboardService.filteredItems : []
                         boundsBehavior: Flickable.StopAtBounds
 
                         ScrollBar.vertical: ScrollBar {
@@ -554,7 +561,10 @@ Scope {
 
                                         Image {
                                             anchors.fill: parent
-                                            source: itemCard.modelData.thumbPath ? ("file://" + itemCard.modelData.thumbPath) : ""
+                                            source: (clipboardPanel.visible && itemCard.modelData.thumbPath) ? ("file://" + itemCard.modelData.thumbPath) : ""
+                                            sourceSize.width: 128
+                                            sourceSize.height: 112
+                                            cache: false
                                             fillMode: Image.PreserveAspectCrop
                                             asynchronous: true
                                             smooth: true

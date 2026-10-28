@@ -9,7 +9,7 @@ Scope {
   id: root
 
   property var  theme: DefaultTheme {}
-  property string font: "Hack Nerd Font"
+  property string font: "Lato Nerd Font"
 
   property var  editState:       []
   property int  selectedIndex:   -1
@@ -368,7 +368,9 @@ Scope {
 
             Text {
               Layout.fillWidth: true
-              text: "Persistence disabled - add 'source = ~/.config/hypr/monitors.conf' to hyprland.conf."
+              text: MonitorService.configFormat === "lua"
+                ? "Persistence disabled - add 'require(\"Configs.Monitors\")' to hyprland.lua."
+                : "Persistence disabled - add 'source = ~/.config/hypr/monitors.conf' to hyprland.conf."
               color: root.theme.accentOrange
               font { pixelSize: 11; family: root.font }
               elide: Text.ElideRight

@@ -24,7 +24,7 @@ Rectangle {
     property var blockData: ({})
     property int blockIndex: 0
     property var theme
-    property string font: "Hack Nerd Font"
+    property string font: "Lato Nerd Font"
     property bool isExpanded: false
 
     signal blockSaved(int index, var payload)
@@ -54,6 +54,7 @@ Rectangle {
     property string editCmdBody: blockData && blockData.cmd_body ? blockData.cmd_body : ""
     property string editRawText: blockData && blockData.raw_text ? blockData.raw_text : ""
     property int editFontSize: blockData && blockData.font_size ? blockData.font_size : 14
+    property string editFontFamily: blockData && blockData.font_family ? blockData.font_family : "$font"
     property string editHalign: blockData && blockData.halign ? blockData.halign : "center"
     property string editValign: blockData && blockData.valign ? blockData.valign : "center"
     property int editPosX: blockData && blockData.position_x !== undefined ? blockData.position_x : 0
@@ -70,13 +71,37 @@ Rectangle {
             let m2 = str.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
             if (m2) return Qt.rgba(parseInt(m2[1])/255, parseInt(m2[2])/255, parseInt(m2[3])/255, 1);
         }
+        const t = cardRoot.theme || {};
+        const pHex   = String(t.accentPrimary ?? "#cba6f7");
+        const cHex   = String(t.accentCyan ?? "#89b4fa");
+        const gHex   = String(t.accentGreen ?? "#a6e3a1");
+        const oHex   = String(t.accentOrange ?? "#fab387");
+        const rHex   = String(t.accentRed ?? "#f38ba8");
+        const bgBase = String(t.bgBase ?? "#1e1e2e");
+        const bgSurf = String(t.bgSurface ?? "#313244");
+        const bgHov  = String(t.bgHover ?? "#45475a");
+        const bgSel  = String(t.bgSelected ?? "#585b70");
+        const txtPri = String(t.textPrimary ?? "#cdd6f4");
+        const txtSec = String(t.textSecondary ?? "#bac2de");
+        const txtMut = String(t.textMuted ?? "#a6adc8");
+
         const wallustMap = {
-            "$color0": "#404145", "$color1": "#131B43", "$color2": "#464F58", "$color3": "#4D576B",
-            "$color4": "#6B777D", "$color5": "#A2B3B5", "$color6": "#A2B3B5", "$color7": "#E3EEF0",
-            "$color8": "#9FA7A8", "$color9": "#828bb8", "$color10": "#5E6A76", "$color11": "#67748F",
-            "$color12": "#8F9EA7", "$color13": "#D8EEF1", "$color14": "#D8EEF1", "$color15": "#E3EEF0",
-            "$foreground": "#F1F9FA", "$background": "#1A1A1E",
-            "$accentPrimary": (cardRoot.theme && cardRoot.theme.accentPrimary) ? String(cardRoot.theme.accentPrimary) : "#7aa2f7"
+            "$color0": bgSurf, "$color1": rHex, "$color2": gHex, "$color3": oHex,
+            "$color4": cHex, "$color5": pHex, "$color6": cHex, "$color7": txtSec,
+            "$color8": txtMut, "$color9": rHex, "$color10": txtSec, "$color11": oHex,
+            "$color12": cHex, "$color13": pHex, "$color14": gHex, "$color15": txtPri,
+            "$foreground": txtPri, "$background": bgBase,
+            "$accentPrimary": pHex, "$accent": pHex,
+            "$mauve": pHex, "$pink": pHex,
+            "$blue": cHex, "$sapphire": cHex, "$sky": cHex, "$lavender": cHex,
+            "$teal": gHex, "$green": gHex,
+            "$yellow": oHex, "$peach": oHex,
+            "$maroon": rHex, "$red": rHex, "$flamingo": rHex,
+            "$rosewater": txtPri,
+            "$text": txtPri, "$subtext1": txtSec, "$subtext0": txtMut,
+            "$surface2": bgSel, "$surface1": bgHov, "$surface0": bgSurf,
+            "$overlay2": txtMut, "$overlay1": bgSel, "$overlay0": bgHov,
+            "$base": bgBase, "$mantle": bgBase, "$crust": bgBase
         };
         if (wallustMap[str]) return wallustMap[str];
         return "#ffffff";
@@ -96,6 +121,7 @@ Rectangle {
             editCmdBody = blockData && blockData.cmd_body ? blockData.cmd_body : "";
             editRawText = blockData && blockData.raw_text ? blockData.raw_text : "";
             editFontSize = blockData && blockData.font_size ? blockData.font_size : 14;
+            editFontFamily = blockData && blockData.font_family ? blockData.font_family : "$font";
             editHalign = blockData && blockData.halign ? blockData.halign : "center";
             editValign = blockData && blockData.valign ? blockData.valign : "center";
             editColor = blockData && blockData.color ? blockData.color : "$color8";
@@ -149,7 +175,7 @@ Rectangle {
             name: cardRoot.editName.trim(),
             raw_text: finalRaw,
             font_size: cardRoot.editFontSize,
-            font_family: (cardRoot.blockData && cardRoot.blockData.font_family) ? cardRoot.blockData.font_family : "Victor Mono Bold Oblique",
+            font_family: cardRoot.editFontFamily.trim() !== "" ? cardRoot.editFontFamily.trim() : "$font",
             position_x: cardRoot.editPosX,
             position_y: cardRoot.editPosY,
             halign: cardRoot.editHalign,

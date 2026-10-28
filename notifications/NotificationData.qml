@@ -15,14 +15,23 @@ QtObject {
     property string body: ""
     property string appIcon: ""
     property string appName: ""
+    property string customGlyph: ""
     property string image: ""
     property var    actions: []
     property int    urgency: NotificationUrgency.Normal
     property real   expireTimeout: defaultTimeout
+    property date   createdAt: new Date()
 
     property bool hovered: false
 
-    readonly property int defaultTimeout: 5000  // ms - fallback auto-dismiss when app sends -1/0
+    readonly property int defaultTimeout: NotificationService.defaultTimeout > 0 ? NotificationService.defaultTimeout : 5000
+
+    readonly property string timeLabel: {
+        if (NotificationService.timestampFormat === "time") {
+            return Qt.formatTime(createdAt, "hh:mm");
+        }
+        return "Now";
+    }
 
     function _checkIsWhatsApp(n) {
         var sBody = ((n && n.body) || notificationData.body || "").toLowerCase();
@@ -111,9 +120,9 @@ QtObject {
 
     readonly property Timer _timer: Timer {
         running: !notificationData.closed
-                 && !notificationData.hovered
-                 && notificationData.urgency !== NotificationUrgency.Critical
-        interval: notificationData.expireTimeout > 0 ? notificationData.expireTimeout : notificationData.defaultTimeout  // no * 1000: Quickshell passes raw D-Bus ms, not seconds
+                 && !(NotificationService.pauseOnHover && notificationData.hovered)
+                 && (notificationData.urgency !== NotificationUrgency.Critical || NotificationService.progressShowCritical)
+        interval: notificationData.expireTimeout > 0 ? notificationData.expireTimeout : notificationData.defaultTimeout
         onTriggered: {
             notificationData.dismiss()
         }
@@ -134,18 +143,23 @@ QtObject {
             if (a.identifier === "reply" || text.toLowerCase() === "reply") {
                 hasExplicitReply = true;
             }
-            res.push({ identifier: a.identifier, text: text, isReply: false });
+            res.push({ identifier: a.identifier, text: text, isReply: false, customCmd: a.customCmd || "" });
         }
 
         if (_checkIsWhatsApp(notif) && !hasExplicitReply) {
-            res.unshift({ identifier: "reply", text: "Reply", isReply: true });
+            res.unshift({ identifier: "reply", text: "Reply", isReply: true, customCmd: "" });
         }
 
         return res;
     }
 
     Component.onCompleted: {
-        if (!notification) return;
+        createdAt = new Date();
+        if (!notification) {
+            if (!notifId) notifId = "custom_" + seqId;
+            if (expireTimeout <= 0) expireTimeout = defaultTimeout;
+            return;
+        }
         notifId   = String(notification.id || "");
         summary   = notification.summary   || "";
         body      = notification.body      || "";
@@ -209,6 +223,17 @@ QtObject {
         if (!identifier || closed) return;
         closed = true;
         NotificationService._remove(notificationData);
+
+        // Check custom actions first (for synthetic/composer notifications)
+        if (actions && actions.length > 0) {
+            for (var c = 0; c < actions.length; c++) {
+                var act = actions[c];
+                if (act && act.identifier === identifier && act.customCmd && String(act.customCmd).trim() !== "") {
+                    Quickshell.execDetached(["sh", "-c", String(act.customCmd)]);
+                    break;
+                }
+            }
+        }
 
         var actionToInvoke = identifier;
         if (identifier === "reply") {

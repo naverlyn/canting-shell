@@ -11,7 +11,7 @@ Singleton {
     readonly property string serviceScript: Qt.resolvedUrl("scripts/clip_service.py").toString().replace(/^file:\/\//, "")
 
     property var items: []
-    property int maxItems: 0
+    property int maxItems: 100
     property bool loading: false
     property string activeCategory: "all"
     property string searchText: ""
@@ -76,6 +76,11 @@ Singleton {
         listProcess.running = true;
     }
 
+    function releaseMemory() {
+        cacheWatcher.path = "";
+        root.items = [];
+    }
+
     function copyItem(id, preview) {
         copyProcess.command = ["python3", root.serviceScript, "copy", String(id)];
         copyProcess.running = true;
@@ -111,6 +116,11 @@ Singleton {
         running: false
         onExited: {
             root.loading = false;
+            if (cacheWatcher.path !== root.cacheFile) {
+                cacheWatcher.path = root.cacheFile;
+            } else {
+                cacheWatcher.reload();
+            }
         }
     }
 
@@ -131,7 +141,7 @@ Singleton {
 
     FileView {
         id: cacheWatcher
-        path: root.cacheFile
+        path: ""
         watchChanges: true
         onTextChanged: {
             const raw = cacheWatcher.text();
@@ -145,9 +155,5 @@ Singleton {
                 console.error("Failed to parse clipboard cache:", e);
             }
         }
-    }
-
-    Component.onCompleted: {
-        root.refresh();
     }
 }

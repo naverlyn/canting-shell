@@ -619,7 +619,18 @@ Singleton {
     onExited: root.generatingTheme = false
   }
 
+  // Re-apply saved wallpaper at startup (awww-daemon starts empty)
+  Timer {
+    id: startupApplyTimer
+    interval: 1500
+    repeat: false
+    onTriggered: {
+      if (root.wallpaperA || root.currentWallpaper) root.reapplyWallpapers();
+    }
+  }
+
   Component.onCompleted: {
     loadDirectories();
+    startupApplyTimer.start();
   }
 }
