@@ -1,0 +1,13 @@
+{
+  "windowWidth": 680,
+  "windowHeight": 740,
+  "maxItems": 100,
+  "closeOnCopy": true,
+  "clearSearchOnClose": true,
+  "autoPasteOnSelect": false,
+  "generateThumbnails": true,
+  "detectColors": true,
+  "detectLinks": true,
+  "detectCode": true,
+  "defaultCategory": "text"
+}

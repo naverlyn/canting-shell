@@ -55,7 +55,7 @@ ColumnLayout {
                         font.family: hostCard.font
                         font.pixelSize: 10
                         font.bold: hostCard.editCmdInterval === modelData.val
-                        color: hostCard.editCmdInterval === modelData.val ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.textPrimary ?? "#ffffff")
+                        color: hostCard.editCmdInterval === modelData.val ? hostCard.theme.accentPrimary : hostCard.theme.textPrimary
 
                         Behavior on color { ColorAnimation { duration: 140 } }
                     }
@@ -94,8 +94,8 @@ ColumnLayout {
             Layout.fillWidth: true
             height: 38
             radius: 6
-            color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3)
-            border.color: hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+            color: hostCard.theme.bgBase
+            border.color: hostCard.theme.bgBorder
             border.width: 1
 
             TextInput {
@@ -126,8 +126,8 @@ ColumnLayout {
             implicitWidth: runBtnText.implicitWidth + 24
             height: 32
             radius: 7
-            color: runBtnHover.hovered ? (hostCard.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-            border.color: runBtnHover.hovered ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+            color: runBtnHover.hovered ? hostCard.theme.bgHover : hostCard.theme.bgBase
+            border.color: runBtnHover.hovered ? hostCard.theme.accentPrimary : hostCard.theme.bgBorder
             border.width: 1
             scale: runBtnMouse.pressed ? 0.96 : 1.0
 
@@ -144,7 +144,7 @@ ColumnLayout {
                 font.family: hostCard.font
                 font.pixelSize: 11
                 font.bold: true
-                color: runBtnHover.hovered ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.textPrimary ?? "#ffffff")
+                color: runBtnHover.hovered ? hostCard.theme.accentPrimary : hostCard.theme.textPrimary
                 Behavior on color { ColorAnimation { duration: 140 } }
             }
 
@@ -161,7 +161,7 @@ ColumnLayout {
             text: hostCard.isEvaluating ? "Running in bash..." : (hostCard.testOutput !== "" ? "Command finished" : "Click to test output live")
             font.family: hostCard.font
             font.pixelSize: 11
-            color: hostCard.theme.textMuted ?? "#888888"
+            color: hostCard.theme.textMuted
         }
     }
 
@@ -171,8 +171,8 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: Math.max(38, evalOutputText.implicitHeight + 16)
         radius: 6
-        color: Qt.rgba(0, 0, 0, 0.45)
-        border.color: hostCard.theme.accentPrimary ?? "#7aa2f7"
+        color: hostCard.theme.bgOverlay
+        border.color: hostCard.theme.accentPrimary
         border.width: 1
 
         Text {
@@ -184,7 +184,7 @@ ColumnLayout {
             text: hostCard.testOutput
             font.family: hostCard.font
             font.pixelSize: 11
-            color: hostCard.theme.textPrimary ?? "#ffffff"
+            color: hostCard.theme.textPrimary
             wrapMode: Text.WrapAnywhere
         }
     }

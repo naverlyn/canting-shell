@@ -196,11 +196,6 @@ Item {
         AppearanceThemeSelector {
             root: root
         }
-
-        // 3. Desktop Wallpaper Switcher Card
-        AppearanceWallpaperCard {
-            root: root
-        }
     }
 
     Process {

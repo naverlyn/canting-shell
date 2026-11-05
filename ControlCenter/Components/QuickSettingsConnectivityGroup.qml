@@ -104,6 +104,7 @@ import ".."
                                     if (groupTileBtn.tid === "bluetooth") return (hostGrid.btAvailable && hostGrid.btEnabled) ? "On" : "Off";
                                     if (groupTileBtn.tid === "airplane") return hostGrid.airplaneEnabled ? "On" : "Off";
                                     if (groupTileBtn.tid === "dnd") return hostGrid.dndEnabled ? "On" : "Off";
+                                    if (groupTileBtn.tid === "darkmode") return hostGrid.isDarkMode ? "Dark" : "Light";
                                     return groupTileBtn.isActive ? "On" : "Off";
                                 }
                                 font.family: hostGrid.font

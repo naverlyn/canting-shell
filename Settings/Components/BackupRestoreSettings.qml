@@ -172,6 +172,7 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
 
         ScrollBar.vertical: ScrollBar {
+            id: vertScroll
             policy: ScrollBar.AsNeeded
             contentItem: Rectangle {
                 implicitWidth: 4
@@ -182,19 +183,20 @@ Item {
 
         ColumnLayout {
             id: mainCol
-            width: parent.width - 10
+            width: flickable.width - (vertScroll.visible ? 12 : 0)
             spacing: 16
 
             // Header Row
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 12
+                spacing: 10
 
                 ColumnLayout {
                     spacing: 3
                     Layout.fillWidth: true
 
                     RowLayout {
+                        Layout.fillWidth: true
                         spacing: 8
                         Text {
                             text: "Backup & Restore"
@@ -202,11 +204,13 @@ Item {
                             font.pixelSize: 20
                             font.bold: true
                             color: root.theme.textPrimary
+                            Layout.alignment: Qt.AlignVCenter
                         }
                         Rectangle {
                             height: 20
                             implicitWidth: snapCountText.implicitWidth + 12
                             radius: 10
+                            Layout.alignment: Qt.AlignVCenter
                             color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.15)
                             border.color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.3)
                             border.width: 1
@@ -220,6 +224,7 @@ Item {
                                 color: root.theme.accentPrimary ?? "#7aa2f7"
                             }
                         }
+                        Item { Layout.fillWidth: true }
                     }
 
                     Text {
@@ -232,31 +237,73 @@ Item {
                     }
                 }
 
-                // Quick Snapshot Button
-                ActionButton {
-                    iconText: "󰁯"
-                    label: "Quick Snapshot"
-                    onClicked: root.createQuickSnapshot()
-                }
+                RowLayout {
+                    spacing: 8
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
 
-                // Custom Backup Button
-                ActionButton {
-                    iconText: root.showCustomForm ? "󰅖" : "󰐕"
-                    label: root.showCustomForm ? "Cancel" : "New Backup"
-                    onClicked: root.showCustomForm = !root.showCustomForm
-                }
+                    // Quick Snapshot Button
+                    ActionButton {
+                        iconText: "󰁯"
+                        label: "Quick Snapshot"
+                        btnHeight: 32
+                        onClicked: root.createQuickSnapshot()
+                    }
 
-                // Refresh Button
-                MiniIconButton {
-                    iconText: "󰑓"
-                    onClicked: root.refreshSnapshots()
+                    // Custom Backup Button
+                    ActionButton {
+                        iconText: root.showCustomForm ? "󰅖" : "󰐕"
+                        label: root.showCustomForm ? "Cancel" : "New Backup"
+                        btnHeight: 32
+                        onClicked: root.showCustomForm = !root.showCustomForm
+                    }
+
+                    // Refresh Button (bordered 32x32 matching ActionButton height)
+                    Rectangle {
+                        id: headerRefreshBtn
+                        implicitWidth: 32
+                        implicitHeight: 32
+                        width: 32
+                        height: 32
+                        Layout.preferredWidth: 32
+                        Layout.preferredHeight: 32
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: 8
+                        scale: headerRefreshMouse.pressed ? 0.95 : (headerRefreshHover.hovered ? 1.02 : 1.0)
+                        color: headerRefreshMouse.pressed
+                            ? Style.theme.bgSelected
+                            : (headerRefreshHover.hovered ? Style.withAlpha(Style.theme.accentPrimary, 0.14) : Style.theme.bgBase)
+                        border.color: headerRefreshHover.hovered ? Style.withAlpha(Style.theme.accentPrimary, 0.5) : Style.theme.bgBorder
+                        border.width: 1
+
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        Behavior on border.color { ColorAnimation { duration: 140 } }
+                        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+                        HoverHandler { id: headerRefreshHover }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰑓"
+                            font.family: root.font
+                            font.pixelSize: 13
+                            color: headerRefreshHover.hovered ? Style.theme.accentPrimary : Style.theme.textSecondary
+                            Behavior on color { ColorAnimation { duration: 140 } }
+                        }
+
+                        MouseArea {
+                            id: headerRefreshMouse
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.refreshSnapshots()
+                        }
+                    }
                 }
             }
 
             // Top Status / Overview Card
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: statusRow.implicitHeight + 24
+                implicitHeight: statusRow.implicitHeight + 28
                 radius: 12
                 color: root.theme.bgSurface
                 border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
@@ -270,7 +317,8 @@ Item {
 
                     // Stat 1: Total Backups
                     ColumnLayout {
-                        spacing: 2
+                        spacing: 3
+                        Layout.alignment: Qt.AlignVCenter
                         Text {
                             text: "TOTAL BACKUPS"
                             font.family: root.font
@@ -278,25 +326,33 @@ Item {
                             font.bold: true
                             color: root.theme.textMuted
                         }
-                        Text {
-                            text: String(root.snapshots.length)
-                            font.family: root.font
-                            font.pixelSize: 16
-                            font.bold: true
-                            color: root.theme.textPrimary
+                        Item {
+                            implicitWidth: totalBackupsVal.implicitWidth
+                            implicitHeight: 20
+                            Text {
+                                id: totalBackupsVal
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: String(root.snapshots.length)
+                                font.family: root.font
+                                font.pixelSize: 15
+                                font.bold: true
+                                color: root.theme.textPrimary
+                            }
                         }
                     }
 
                     Rectangle {
                         width: 1
-                        height: 28
+                        height: 32
+                        Layout.alignment: Qt.AlignVCenter
                         color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
                     }
 
                     // Stat 2: Latest Backup
                     ColumnLayout {
-                        spacing: 2
+                        spacing: 3
                         Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
                         Text {
                             text: "LATEST SNAPSHOT"
                             font.family: root.font
@@ -304,24 +360,31 @@ Item {
                             font.bold: true
                             color: root.theme.textMuted
                         }
-                        Text {
-                            text: root.snapshots.length > 0 ? (root.snapshots[0].name + " (" + root.snapshots[0].dateFormatted + ")") : "None"
-                            font.family: root.font
-                            font.pixelSize: 13
-                            font.bold: true
-                            color: root.theme.accentPrimary ?? "#7aa2f7"
-                            elide: Text.ElideRight
+                        Item {
                             Layout.fillWidth: true
+                            implicitHeight: 20
+                            Text {
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: root.snapshots.length > 0 ? (root.snapshots[0].name + " (" + root.snapshots[0].dateFormatted + ")") : "None"
+                                font.family: root.font
+                                font.pixelSize: 13
+                                font.bold: true
+                                color: root.theme.accentPrimary ?? "#7aa2f7"
+                                elide: Text.ElideRight
+                            }
                         }
                     }
 
                     // Quick Actions
                     RowLayout {
                         spacing: 8
+                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                         ActionButton {
                             iconText: "󰁞"
                             label: "Import Archive"
-                            btnHeight: 28
+                            btnHeight: 30
                             onClicked: root.showImportForm = !root.showImportForm
                         }
                     }
@@ -715,7 +778,6 @@ Item {
                 // Filter Bar
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.bottomMargin: 8
                     spacing: 8
 
                     Text {
@@ -723,6 +785,7 @@ Item {
                         font.family: root.font
                         font.pixelSize: 11
                         color: root.theme.textMuted
+                        Layout.alignment: Qt.AlignVCenter
                     }
 
                     // "All" filter
@@ -730,6 +793,7 @@ Item {
                         implicitWidth: allFilterText.implicitWidth + 16
                         height: 24
                         radius: 12
+                        Layout.alignment: Qt.AlignVCenter
                         color: root.activeFilter === "all" ? root.theme.bgSelected : "transparent"
                         border.color: root.activeFilter === "all" ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
                         border.width: 1
@@ -751,6 +815,7 @@ Item {
                         implicitWidth: manualFilterText.implicitWidth + 16
                         height: 24
                         radius: 12
+                        Layout.alignment: Qt.AlignVCenter
                         color: root.activeFilter === "manual" ? root.theme.bgSelected : "transparent"
                         border.color: root.activeFilter === "manual" ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
                         border.width: 1
@@ -772,6 +837,7 @@ Item {
                         implicitWidth: safetyFilterText.implicitWidth + 16
                         height: 24
                         radius: 12
+                        Layout.alignment: Qt.AlignVCenter
                         color: root.activeFilter === "safety" ? root.theme.bgSelected : "transparent"
                         border.color: root.activeFilter === "safety" ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
                         border.width: 1
@@ -810,9 +876,10 @@ Item {
                             readonly property bool isSelectedForRestore: root.selectedRestoreSnapshotId === snapItemCard.modelData.id
                             readonly property bool isConfirmDelete: root.confirmDeleteId === snapItemCard.modelData.id
                             readonly property bool isSafetyBackup: snapItemCard.modelData.type && snapItemCard.modelData.type.indexOf("auto_pre_") === 0
+                            readonly property var mods: snapItemCard.modelData.modules || []
 
                             Layout.fillWidth: true
-                            implicitHeight: snapCol.implicitHeight + (isSelectedForRestore ? 56 : 0) + (isConfirmDelete ? 44 : 0) + 20
+                            implicitHeight: snapCol.implicitHeight + 24
                             radius: 10
                             color: isSelectedForRestore
                                 ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.12)
@@ -830,28 +897,33 @@ Item {
                                 id: snapCol
                                 anchors.fill: parent
                                 anchors.margins: 12
-                                spacing: 8
+                                spacing: 10
 
                                 // Top row: Name, Type tag, Date, Size, Action buttons
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 8
+                                    spacing: 10
 
                                     // Icon indicator
                                     Text {
+                                        Layout.preferredWidth: 20
+                                        Layout.alignment: Qt.AlignVCenter
+                                        horizontalAlignment: Text.AlignHCenter
                                         text: snapItemCard.isSafetyBackup ? "󰌢" : "󰁯"
                                         font.family: root.font
-                                        font.pixelSize: 14
+                                        font.pixelSize: 15
                                         color: snapItemCard.isSafetyBackup ? (root.theme.accentOrange ?? "#ff9e64") : (root.theme.accentPrimary ?? "#7aa2f7")
                                     }
 
-                                    // Snapshot Name
+                                    // Snapshot Name & Metadata
                                     ColumnLayout {
-                                        spacing: 2
+                                        spacing: 3
                                         Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
 
                                         RowLayout {
-                                            spacing: 6
+                                            Layout.fillWidth: true
+                                            spacing: 8
                                             Text {
                                                 text: snapItemCard.modelData.name || snapItemCard.modelData.id
                                                 font.family: root.font
@@ -859,6 +931,7 @@ Item {
                                                 font.bold: true
                                                 color: root.theme.textPrimary
                                                 elide: Text.ElideRight
+                                                Layout.alignment: Qt.AlignVCenter
                                             }
 
                                             // Type badge
@@ -866,6 +939,7 @@ Item {
                                                 height: 18
                                                 implicitWidth: typeBadgeText.implicitWidth + 10
                                                 radius: 9
+                                                Layout.alignment: Qt.AlignVCenter
                                                 color: snapItemCard.isSafetyBackup
                                                     ? Style.withAlpha(root.theme.accentOrange ?? "#ff9e64", 0.2)
                                                     : (snapItemCard.modelData.type === "imported"
@@ -890,28 +964,34 @@ Item {
                                                         : (snapItemCard.modelData.type === "imported" ? (root.theme.accentGreen ?? "#9ece6a") : (root.theme.accentPrimary ?? "#7aa2f7"))
                                                 }
                                             }
+
+                                            Item { Layout.fillWidth: true }
                                         }
 
                                         // Date & ID
                                         RowLayout {
+                                            Layout.fillWidth: true
                                             spacing: 8
                                             Text {
                                                 text: "󰸗 " + (snapItemCard.modelData.dateFormatted || "")
                                                 font.family: root.font
                                                 font.pixelSize: 10
                                                 color: root.theme.textMuted
+                                                Layout.alignment: Qt.AlignVCenter
                                             }
                                             Text {
                                                 text: "•"
                                                 font.family: root.font
                                                 font.pixelSize: 10
                                                 color: root.theme.textMuted
+                                                Layout.alignment: Qt.AlignVCenter
                                             }
                                             Text {
                                                 text: "󰋊 " + (snapItemCard.modelData.sizeFormatted || "")
                                                 font.family: root.font
                                                 font.pixelSize: 10
                                                 color: root.theme.textMuted
+                                                Layout.alignment: Qt.AlignVCenter
                                             }
                                             Text {
                                                 visible: Boolean(snapItemCard.modelData.description)
@@ -920,14 +1000,20 @@ Item {
                                                 font.pixelSize: 10
                                                 color: root.theme.textMuted
                                                 elide: Text.ElideRight
-                                                Layout.maximumWidth: 200
+                                                Layout.fillWidth: true
+                                                Layout.alignment: Qt.AlignVCenter
+                                            }
+                                            Item {
+                                                visible: !Boolean(snapItemCard.modelData.description)
+                                                Layout.fillWidth: true
                                             }
                                         }
                                     }
 
-                                    // Action Buttons
+                                    // Action Buttons (Right-aligned)
                                     RowLayout {
                                         spacing: 6
+                                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
 
                                         // Restore Button
                                         ActionButton {
@@ -966,12 +1052,11 @@ Item {
                                     }
                                 }
 
-                                // Module Pills row
+                                // Module Pills row (hidden by default so card rows stay compact and vertically centered)
                                 Flow {
+                                    visible: false
                                     Layout.fillWidth: true
                                     spacing: 6
-
-                                    readonly property var mods: snapItemCard.modelData.modules || []
 
                                     Repeater {
                                         model: snapItemCard.mods
@@ -1014,7 +1099,7 @@ Item {
                                 Rectangle {
                                     visible: snapItemCard.isSelectedForRestore
                                     Layout.fillWidth: true
-                                    implicitHeight: restoreOptionsCol.implicitHeight + 12
+                                    implicitHeight: restoreOptionsCol.implicitHeight + 20
                                     radius: 8
                                     color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.08)
                                     border.color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.25)
@@ -1090,7 +1175,7 @@ Item {
                                 Rectangle {
                                     visible: snapItemCard.isConfirmDelete
                                     Layout.fillWidth: true
-                                    implicitHeight: deleteConfirmRow.implicitHeight + 12
+                                    implicitHeight: deleteConfirmRow.implicitHeight + 20
                                     radius: 8
                                     color: Style.withAlpha(root.theme.accentRed ?? "#f7768e", 0.08)
                                     border.color: Style.withAlpha(root.theme.accentRed ?? "#f7768e", 0.3)
@@ -1165,7 +1250,7 @@ Item {
             // Zero-Risk Protection Info Card
             Rectangle {
                 Layout.fillWidth: true
-                implicitHeight: infoRow.implicitHeight + 20
+                implicitHeight: infoRow.implicitHeight + 28
                 radius: 12
                 color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.06)
                 border.color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2)
@@ -1188,6 +1273,7 @@ Item {
                     ColumnLayout {
                         spacing: 2
                         Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
 
                         Text {
                             text: "Automatic Pre-Restore Safety Snapshots"
@@ -1213,6 +1299,8 @@ Item {
             SectionCard {
                 title: "Factory Defaults"
                 subtitle: "Reset configuration components back to clean default states"
+                contentMargins: 4
+                contentSpacing: 0
 
                 PreferenceRow {
                     title: "Reset Bar Configuration"

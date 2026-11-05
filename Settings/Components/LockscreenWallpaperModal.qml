@@ -1,5 +1,5 @@
 /*
- * HyprlockWallpaperModal.qml
+ * LockscreenWallpaperModal.qml
  *
  * Dedicated overlay window for selecting a lock screen wallpaper.
  * Provides a clean gallery grid with search filtering, rescan,
@@ -10,14 +10,17 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import "../../wallpaper"
+import ".."
+import "Common"
 
 PanelWindow {
     id: root
 
-    property var theme
+    property var theme: DefaultTheme {}
     property string font: "Lato Nerd Font"
     property string currentSelected: ""
 
@@ -29,7 +32,7 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    WlrLayershell.namespace: "quickshell-hyprlock-wallpaper"
+    WlrLayershell.namespace: "quickshell-lockscreen-wallpaper"
     exclusionMode: ExclusionMode.Ignore
 
     anchors {
@@ -69,7 +72,7 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
-            color: root.theme.bgOverlay ?? Qt.rgba(0, 0, 0, 0.65)
+            color: root.theme.bgOverlay
         }
     }
 
@@ -80,8 +83,8 @@ PanelWindow {
         width: 760
         height: 520
         radius: 14
-        color: root.theme.bgBase ?? "#1e1e2e"
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.12)
+        color: root.theme.bgBase
+        border.color: root.theme.bgBorder
         border.width: 1
         clip: true
 
@@ -118,7 +121,7 @@ PanelWindow {
                         font.family: root.font
                         font.pixelSize: 15
                         font.bold: true
-                        color: root.theme.textPrimary ?? "#ffffff"
+                        color: root.theme.textPrimary
                     }
 
                     Text {
@@ -132,7 +135,7 @@ PanelWindow {
                         }
                         font.family: root.font
                         font.pixelSize: 11
-                        color: root.theme.textSecondary ?? "#a6adc8"
+                        color: root.theme.textSecondary
                     }
                 }
 
@@ -141,8 +144,8 @@ PanelWindow {
                     width: 220
                     height: 32
                     radius: 8
-                    color: root.theme.bgSurface ?? Qt.rgba(0, 0, 0, 0.25)
-                    border.color: searchField.activeFocus ? (root.theme.accentPrimary ?? "#7aa2f7") : (searchHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
+                    color: root.theme.bgSurface
+                    border.color: searchField.activeFocus ? root.theme.accentPrimary : (searchHover.hovered ? Style.withAlpha(root.theme.accentPrimary, 0.4) : root.theme.bgBorder)
                     border.width: 1
 
                     Behavior on border.color { ColorAnimation { duration: 140 } }
@@ -157,7 +160,7 @@ PanelWindow {
                         text: root.searchText
                         font.family: root.font
                         font.pixelSize: 11
-                        color: root.theme.textPrimary ?? "#ffffff"
+                        color: root.theme.textPrimary
                         clip: true
 
                         onTextChanged: root.searchText = text
@@ -169,7 +172,7 @@ PanelWindow {
                             text: "Search wallpapers..."
                             font.family: root.font
                             font.pixelSize: 11
-                            color: root.theme.textSecondary ?? "#6c7086"
+                            color: root.theme.textMuted
                         }
                     }
                 }
@@ -177,11 +180,11 @@ PanelWindow {
                 // Rescan Button (Modern secondary action button)
                 Rectangle {
                     id: rescanBtn
-                    width: rescanText.implicitWidth + 22
+                    width: rescanText.implicitWidth + 24
                     height: 32
-                    radius: 8
-                    color: rescanHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-                    border.color: rescanHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                    radius: 6
+                    color: rescanHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                    border.color: rescanHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
                     border.width: 1
                     scale: rescanMouse.pressed ? 0.96 : 1.0
 
@@ -196,9 +199,9 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: "Rescan"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: 12
                         font.bold: true
-                        color: rescanHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                        color: root.theme.textPrimary
                         Behavior on color { ColorAnimation { duration: 140 } }
                     }
 
@@ -213,11 +216,11 @@ PanelWindow {
                 // Close Button (Modern secondary action button)
                 Rectangle {
                     id: closeBtn
-                    width: closeText.implicitWidth + 22
+                    width: closeText.implicitWidth + 24
                     height: 32
-                    radius: 8
-                    color: closeHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-                    border.color: closeHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                    radius: 6
+                    color: closeHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                    border.color: closeHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
                     border.width: 1
                     scale: closeMouse.pressed ? 0.96 : 1.0
 
@@ -232,9 +235,9 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: "Close"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: 12
                         font.bold: true
-                        color: closeHover.hovered ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textPrimary ?? "#ffffff")
+                        color: root.theme.textPrimary
                         Behavior on color { ColorAnimation { duration: 140 } }
                     }
 
@@ -251,7 +254,7 @@ PanelWindow {
             Rectangle {
                 Layout.fillWidth: true
                 height: 1
-                color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                color: root.theme.bgBorder
             }
 
             // --- Wallpaper Grid Content ---
@@ -270,7 +273,7 @@ PanelWindow {
                         font.family: root.font
                         font.pixelSize: 14
                         font.bold: true
-                        color: root.theme.textSecondary ?? "#a6adc8"
+                        color: root.theme.textSecondary
                         Layout.alignment: Qt.AlignHCenter
                     }
 
@@ -278,7 +281,7 @@ PanelWindow {
                         text: root.searchText !== "" ? "Try adjusting your search query." : "Ensure ~/Pictures/wallpapers has image files."
                         font.family: root.font
                         font.pixelSize: 12
-                        color: root.theme.textSecondary ?? "#6c7086"
+                        color: root.theme.textSecondary
                         Layout.alignment: Qt.AlignHCenter
                     }
                 }
@@ -298,58 +301,96 @@ PanelWindow {
 
                     ScrollBar.vertical: ScrollBar {
                         policy: ScrollBar.AsNeeded
+                        contentItem: Rectangle {
+                            implicitWidth: 4
+                            radius: 2
+                            color: root.theme.bgBorder
+                        }
                     }
 
                     delegate: Item {
                         id: delegateRoot
-                        width: 170
-                        height: 110
+                        width: gridView.cellWidth
+                        height: gridView.cellHeight
 
-                        property bool isCurrent: root.currentSelected === modelData
-                        property string filename: modelData.split("/").pop()
+                        required property string modelData
+                        required property int index
+
+                        readonly property bool isCurrent: root.currentSelected === modelData
+                        readonly property string filename: modelData.split("/").pop()
 
                         Rectangle {
+                            id: cardRect
                             anchors.fill: parent
+                            anchors.margins: 4
                             radius: 8
-                            color: root.theme.bgSurface ?? Qt.rgba(0, 0, 0, 0.3)
-                            border.color: delegateRoot.isCurrent ? (root.theme.accentPrimary ?? "#7aa2f7") : (cardHover.hovered ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.25)) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
-                            border.width: delegateRoot.isCurrent ? 2 : 1
-                            clip: true
+                            color: root.theme.bgSurface
+                            scale: cardHover.hovered ? 1.02 : 1.0
+                            border.color: delegateRoot.isCurrent || cardHover.hovered
+                                ? root.theme.accentPrimary
+                                : root.theme.bgBorder
+                            border.width: (delegateRoot.isCurrent || cardHover.hovered) ? 2 : 1
 
-                            Behavior on border.color { ColorAnimation { duration: 140 } }
+                            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+                            Behavior on border.color { ColorAnimation { duration: 120 } }
 
                             HoverHandler { id: cardHover }
 
-                            // Thumbnail Image
-                            Image {
+                            // Masked container so thumbnail and bottom bar curve to match card radius without covering the border
+                            Item {
+                                id: imgContainer
                                 anchors.fill: parent
-                                anchors.margins: delegateRoot.isCurrent ? 2 : 0
-                                source: "file://" + modelData
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                cache: false
-                                sourceSize.width: 240
-                                sourceSize.height: 150
+                                anchors.margins: (delegateRoot.isCurrent || cardHover.hovered) ? 2 : 1
+                                layer.enabled: true
+                                layer.effect: MultiEffect {
+                                    maskEnabled: true
+                                    maskSource: cardMask
+                                }
+
+                                // Thumbnail Image
+                                Image {
+                                    anchors.fill: parent
+                                    source: "file://" + delegateRoot.modelData
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    cache: false
+                                    sourceSize.width: 240
+                                    sourceSize.height: 150
+                                }
+
+                                // Dark gradient bar at bottom for filename label
+                                Rectangle {
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.bottom: parent.bottom
+                                    height: 26
+                                    color: Qt.rgba(0, 0, 0, 0.65)
+
+                                    Text {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 8
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: delegateRoot.filename
+                                        font.family: root.font
+                                        font.pixelSize: 10
+                                        color: root.theme.textPrimary
+                                        elide: Text.ElideRight
+                                    }
+                                }
                             }
 
-                            // Dark gradient bar at bottom for filename label
-                            Rectangle {
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.bottom: parent.bottom
-                                height: 26
-                                color: Qt.rgba(0, 0, 0, 0.65)
+                            // Mask item providing matching inner corner radius
+                            Item {
+                                id: cardMask
+                                anchors.fill: imgContainer
+                                visible: false
+                                layer.enabled: true
 
-                                Text {
+                                Rectangle {
                                     anchors.fill: parent
-                                    anchors.leftMargin: 8
-                                    anchors.rightMargin: 8
-                                    verticalAlignment: Text.AlignVCenter
-                                    text: delegateRoot.filename
-                                    font.family: root.font
-                                    font.pixelSize: 10
-                                    color: "#ffffff"
-                                    elide: Text.ElideRight
+                                    radius: Math.max(2, cardRect.radius - ((delegateRoot.isCurrent || cardHover.hovered) ? 2 : 1))
+                                    color: "black"
                                 }
                             }
 
@@ -362,7 +403,7 @@ PanelWindow {
                                 width: 48
                                 height: 18
                                 radius: 4
-                                color: root.theme.accentPrimary ?? "#7aa2f7"
+                                color: root.theme.accentPrimary
 
                                 Text {
                                     anchors.centerIn: parent
@@ -370,15 +411,28 @@ PanelWindow {
                                     font.family: root.font
                                     font.pixelSize: 9
                                     font.bold: true
-                                    color: "#ffffff"
+                                    color: root.theme.bgBase
                                 }
+                            }
+
+                            // Hover overlay & crisp border ring on top
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: cardRect.radius
+                                color: cardHover.hovered ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+                                border.color: delegateRoot.isCurrent || cardHover.hovered
+                                    ? root.theme.accentPrimary
+                                    : "transparent"
+                                border.width: (delegateRoot.isCurrent || cardHover.hovered) ? 2 : 0
+                                Behavior on color { ColorAnimation { duration: 100 } }
+                                Behavior on border.color { ColorAnimation { duration: 120 } }
                             }
 
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    root.wallpaperSelected(modelData);
+                                    root.wallpaperSelected(delegateRoot.modelData);
                                     root.visible = false;
                                 }
                             }
@@ -396,7 +450,7 @@ PanelWindow {
                     text: root.currentSelected !== "" ? ("Current: " + root.currentSelected.split("/").pop()) : "No wallpaper selected"
                     font.family: root.font
                     font.pixelSize: 11
-                    color: root.theme.textSecondary ?? "#6c7086"
+                    color: root.theme.textSecondary
                     elide: Text.ElideMiddle
                     Layout.fillWidth: true
                 }
@@ -405,7 +459,7 @@ PanelWindow {
                     text: "Click any image to select • Press Esc to cancel"
                     font.family: root.font
                     font.pixelSize: 10
-                    color: root.theme.textSecondary ?? "#6c7086"
+                    color: root.theme.textMuted
                     Layout.alignment: Qt.AlignRight
                 }
             }

@@ -1,8 +1,10 @@
 {
   "scaling": "fill",
+  "filter": "Lanczos3",
+  "effect": "none",
   "target": "all",
-  "primaryWallpaper": "/home/xeana/Pictures/wallpapers/pixiv/Aula's Bookmarks - pixiv/122270159_p0.jpg",
-  "secondaryWallpaper": "/home/xeana/Pictures/wallpapers/pixiv/Aula's Bookmarks - pixiv/122270159_p0.jpg",
+  "primaryWallpaper": "/home/xeana/Pictures/wallpapers/pixiv/Blue Archive, Alice Tendou, Key (Blue Archive) ／ 무제 - pixiv/113818657_p0.png",
+  "secondaryWallpaper": "/home/xeana/Pictures/wallpapers/pixiv/Blue Archive, Alice Tendou, Key (Blue Archive) ／ 무제 - pixiv/113818657_p0.png",
   "primaryDisplay": "HDMI-A-1",
   "secondaryDisplay": ""
 }

@@ -186,6 +186,7 @@ Scope {
     target: MonitorService
 
     function onApplyDone(hasErrors, errorText) {
+      if (!root.isApplying) return;
       root.isApplying = false;
       if (hasErrors) {
         root.applyError = errorText;
@@ -326,6 +327,9 @@ Scope {
             font:          root.font
 
             onMonitorSelected: idx => root.selectedIndex = idx
+            onMonitorsArranged: updated => {
+              root.editState = updated;
+            }
             onMonitorMoved: (idx, nx, ny) => {
               const copy = root.editState.slice();
               copy[idx] = Object.assign({}, root.editState[idx], { x: nx, y: ny });

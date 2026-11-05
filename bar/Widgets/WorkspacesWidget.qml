@@ -23,6 +23,19 @@ Item {
   width: implicitWidth
   height: hostContainer.isVert ? implicitHeight : hostContainer.height
 
+  property bool isLua: true
+
+  Process {
+    id: configFormatCheck
+    command: ["sh", "-c", "[ -f \"$HOME/.config/hypr/hyprland.lua\" ] && echo lua || echo conf"]
+    running: true
+    stdout: StdioCollector {
+      onStreamFinished: {
+        wsContainer.isLua = (text.trim() === "lua");
+      }
+    }
+  }
+
   function formatWsLabel(wsId, style) {
     const s = style !== undefined ? style : BarConfig.workspaceStyle;
     if (s === "roman") {
@@ -34,6 +47,56 @@ Item {
       return "•";
     }
     return String(wsId);
+  }
+
+  function switchToWorkspace(wsTarget, modelItem) {
+    if (wsTarget === undefined || wsTarget === null) return;
+    if (wsContainer.isLua) {
+      const isNum = !isNaN(Number(wsTarget));
+      const arg = isNum ? Number(wsTarget) : ("'" + String(wsTarget).replace(/'/g, "\\'") + "'");
+      try {
+        Hyprland.dispatch("hl.dsp.focus({ workspace = " + arg + " })");
+      } catch (e) {
+        Hyprland.dispatch("workspace " + wsTarget);
+      }
+    } else {
+      if (modelItem && typeof modelItem.activate === "function") {
+        try {
+          modelItem.activate();
+          return;
+        } catch (e) {}
+      }
+      Hyprland.dispatch("workspace " + wsTarget);
+    }
+  }
+
+  function cycleWorkspace(deltaY) {
+    if (BarConfig.workspaceScrollSwitch === false) return;
+
+    try {
+      const list = [...Hyprland.workspaces.values].sort((a, b) => a.id - b.id);
+      if (list.length > 1) {
+        const curIdx = list.findIndex(ws => ws.focused);
+        if (curIdx !== -1) {
+          let targetIdx = deltaY > 0 ? curIdx - 1 : curIdx + 1;
+          if (targetIdx < 0) targetIdx = list.length - 1;
+          else if (targetIdx >= list.length) targetIdx = 0;
+          wsContainer.switchToWorkspace(list[targetIdx].id, list[targetIdx]);
+          return;
+        }
+      }
+    } catch (e) {}
+
+    const arg = deltaY > 0 ? "e-1" : "e+1";
+    wsContainer.switchToWorkspace(arg);
+  }
+
+  MouseArea {
+    anchors.fill: parent
+    z: -1
+    onWheel: wheel => {
+      wsContainer.cycleWorkspace(wheel.angleDelta.y);
+    }
   }
 
   Grid {
@@ -141,14 +204,9 @@ Item {
           anchors.fill: parent
           hoverEnabled: true
           cursorShape: Qt.PointingHandCursor
-          onClicked: wsPill.modelData.activate()
+          onClicked: wsContainer.switchToWorkspace(wsPill.modelData.id, wsPill.modelData)
           onWheel: wheel => {
-            if (BarConfig.workspaceScrollSwitch === false) return;
-            if (wheel.angleDelta.y > 0) {
-              Hyprland.dispatch("workspace e-1");
-            } else if (wheel.angleDelta.y < 0) {
-              Hyprland.dispatch("workspace e+1");
-            }
+            wsContainer.cycleWorkspace(wheel.angleDelta.y);
           }
         }
       }

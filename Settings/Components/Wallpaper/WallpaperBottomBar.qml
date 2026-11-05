@@ -73,7 +73,7 @@ Rectangle {
                                 width: 14
                                 height: 14
                                 radius: 7
-                                color: chipRemHover.hovered ? (root.theme.accentRed ?? "#ef4444") : "transparent"
+                                color: chipRemHover.hovered ? root.theme.accentRed : "transparent"
                                 scale: chipRemHover.hovered ? 1.15 : 1.0
                                 HoverHandler { id: chipRemHover }
 
@@ -83,7 +83,7 @@ Rectangle {
                                 Text {
                                     anchors.centerIn: parent
                                     text: "×"
-                                    color: chipRemHover.hovered ? "#ffffff" : root.theme.textMuted
+                                    color: chipRemHover.hovered ? root.theme.bgBase : root.theme.textMuted
                                     font.pixelSize: 11
                                     font.family: root.font
                                 }

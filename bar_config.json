@@ -22,6 +22,7 @@
       "cava"
     ],
     [
+      "battery",
       "weather",
       "clock"
     ]
@@ -65,6 +66,7 @@
           "cava"
         ],
         [
+          "battery",
           "weather",
           "clock"
         ]
@@ -170,8 +172,8 @@
     "media",
     "globalMenu",
     "cava",
-    "battery",
-    "network"
+    "network",
+    "battery"
   ],
   "showAppGrid": true,
   "showCpu": true,

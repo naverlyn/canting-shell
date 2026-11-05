@@ -16,7 +16,7 @@ Rectangle {
     implicitHeight: mainCol.implicitHeight + 20
     radius: 12
     color: root.theme.bgSurface
-    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+    border.color: root.theme.bgBorder
     border.width: 1
 
     readonly property string activeDisplayWallpaper: {
@@ -45,9 +45,9 @@ Rectangle {
                 Layout.preferredWidth: 116
                 Layout.preferredHeight: 64
                 radius: 6
-                color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)
+                color: root.theme.bgBase
                 clip: true
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.color: root.theme.bgBorder
                 border.width: 1
 
                 Image {
@@ -84,7 +84,7 @@ Rectangle {
                         font.family: root.font
                         font.pixelSize: 9
                         font.bold: true
-                        color: "#ffffff"
+                        color: root.theme.bgBase
                     }
                 }
 
@@ -133,7 +133,7 @@ Rectangle {
                         const syncDesc = WallpaperService.autoSyncPalette
                             ? "Colors synced via " + (WallpaperService.backend || "wallust")
                             : "Color sync disabled";
-                        return syncDesc + " · Mode: " + modeLabel;
+                        return syncDesc + " · Mode: " + modeLabel + " · Filter: " + (WallpaperService.filterMode || "Lanczos3");
                     }
                     font.family: root.font
                     font.pixelSize: 10
@@ -155,8 +155,8 @@ Rectangle {
                         implicitWidth: randBtnText.implicitWidth + 20
                         height: 28
                         radius: 6
-                        color: randHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.1)) : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.05))
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                        color: randHover.hovered ? root.theme.bgHover : root.theme.bgSelected
+                        border.color: root.theme.bgBorder
                         border.width: 1
 
                         HoverHandler { id: randHover }
@@ -182,8 +182,8 @@ Rectangle {
                         implicitWidth: rescanBtnText.implicitWidth + 20
                         height: 28
                         radius: 6
-                        color: rescanHov.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.1)) : "transparent"
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                        color: rescanHov.hovered ? root.theme.bgHover : "transparent"
+                        border.color: root.theme.bgBorder
                         border.width: 1
 
                         HoverHandler { id: rescanHov }
@@ -209,7 +209,7 @@ Rectangle {
                 Rectangle {
                     width: 1
                     height: 24
-                    color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                    color: root.theme.bgBorder
                 }
 
                 // Sync Theme Toggle
@@ -251,8 +251,8 @@ Rectangle {
                             width: 44
                             height: 24
                             radius: 12
-                            color: WallpaperService.autoSyncPalette ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
-                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                            color: WallpaperService.autoSyncPalette ? root.theme.accentPrimary : root.theme.bgSelected
+                            border.color: root.theme.bgBorder
                             border.width: 1
                             Layout.alignment: Qt.AlignVCenter
 
@@ -264,7 +264,7 @@ Rectangle {
                                 radius: 9
                                 anchors.verticalCenter: parent.verticalCenter
                                 x: WallpaperService.autoSyncPalette ? parent.width - width - 3 : 3
-                                color: WallpaperService.autoSyncPalette ? "#ffffff" : (root.theme.textPrimary ?? "#c0caf5")
+                                color: WallpaperService.autoSyncPalette ? root.theme.textPrimary : root.theme.textMuted
 
                                 Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                                 Behavior on color { ColorAnimation { duration: 160 } }
@@ -279,7 +279,7 @@ Rectangle {
         Rectangle {
             Layout.fillWidth: true
             height: 1
-            color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            color: root.theme.bgBorder
         }
 
         // Bottom Row: Target Display Selector (when multi-monitor) & Wallpaper Type Selector
@@ -498,6 +498,365 @@ Rectangle {
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
                                         WallpaperService.setWallpaperType(typeSegBtn.modelData.value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // awww Image Scaling Filter Dropdown
+                Rectangle {
+                    id: filterDropdownBtn
+                    implicitWidth: filterBtnRow.implicitWidth + 20
+                    height: 30
+                    radius: 7
+                    color: filterPopup.opened
+                        ? root.theme.bgSelected
+                        : (filterHover.hovered ? root.theme.bgHover : root.theme.bgBase)
+                    border.color: filterPopup.opened
+                        ? root.theme.accentPrimary
+                        : root.theme.bgBorder
+                    border.width: 1
+
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                    HoverHandler { id: filterHover }
+
+                    RowLayout {
+                        id: filterBtnRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Text {
+                            text: "󰈲"
+                            font.family: root.font
+                            font.pixelSize: 12
+                            color: filterPopup.opened ? root.theme.accentPrimary : root.theme.textSecondary
+                        }
+
+                        Text {
+                            text: WallpaperService.filterMode || "Lanczos3"
+                            font.family: root.font
+                            font.pixelSize: 11
+                            font.bold: true
+                            color: filterPopup.opened ? root.theme.accentPrimary : root.theme.textPrimary
+                        }
+
+                        Text {
+                            text: "󰅀"
+                            font.family: root.font
+                            font.pixelSize: 11
+                            color: filterPopup.opened ? root.theme.accentPrimary : root.theme.textSecondary
+                            rotation: filterPopup.opened ? 180 : 0
+                            Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (filterPopup.opened) filterPopup.close();
+                            else filterPopup.open();
+                        }
+                    }
+
+                    // Floating Filter Popover
+                    Popup {
+                        id: filterPopup
+                        parent: filterDropdownBtn
+                        x: filterDropdownBtn.width - width
+                        y: filterDropdownBtn.height + 6
+                        width: 195
+                        padding: 6
+                        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+
+                        enter: Transition {
+                            NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 140; easing.type: Easing.OutCubic }
+                            NumberAnimation { property: "y"; from: filterDropdownBtn.height; to: filterDropdownBtn.height + 6; duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        exit: Transition {
+                            NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 100 }
+                        }
+
+                        background: Rectangle {
+                            radius: 10
+                            color: root.theme.bgSurface
+                            border.color: root.theme.accentPrimary ? Style.withAlpha(root.theme.accentPrimary, 0.35) : root.theme.bgBorder
+                            border.width: 1
+                        }
+
+                        contentItem: ColumnLayout {
+                            spacing: 3
+
+                            Text {
+                                text: "Scaling Filter (awww)"
+                                font.family: root.font
+                                font.pixelSize: 10
+                                font.bold: true
+                                color: root.theme.textMuted
+                                Layout.leftMargin: 6
+                                Layout.topMargin: 2
+                                Layout.bottomMargin: 2
+                            }
+
+                            Repeater {
+                                model: WallpaperService.filterModes || [
+                                    { id: "Lanczos3",   label: "Lanczos3",    desc: "Lanczos3 (High Quality)" },
+                                    { id: "Mitchell",   label: "Mitchell",    desc: "Mitchell (Smooth)" },
+                                    { id: "CatmullRom", label: "Catmull-Rom", desc: "Catmull-Rom (Sharp)" },
+                                    { id: "Bilinear",   label: "Bilinear",    desc: "Bilinear (Fast)" },
+                                    { id: "Nearest",    label: "Nearest",     desc: "Nearest (Pixel Art)" }
+                                ]
+
+                                delegate: Rectangle {
+                                    id: filterItemDelegate
+                                    required property var modelData
+                                    readonly property bool isSelected: (WallpaperService.filterMode || "Lanczos3") === modelData.id
+
+                                    Layout.fillWidth: true
+                                    height: 32
+                                    radius: 6
+                                    color: isSelected
+                                        ? root.theme.bgSelected
+                                        : (itemHover.hovered ? root.theme.bgHover : "transparent")
+
+                                    HoverHandler { id: itemHover }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 8
+                                        spacing: 8
+
+                                        ColumnLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 1
+
+                                            Text {
+                                                text: filterItemDelegate.modelData.label
+                                                font.family: root.font
+                                                font.pixelSize: 11
+                                                font.bold: filterItemDelegate.isSelected
+                                                color: filterItemDelegate.isSelected
+                                                    ? root.theme.accentPrimary
+                                                    : root.theme.textPrimary
+                                            }
+
+                                            Text {
+                                                text: filterItemDelegate.modelData.desc
+                                                font.family: root.font
+                                                font.pixelSize: 9
+                                                color: root.theme.textSecondary
+                                            }
+                                        }
+
+                                        Text {
+                                            visible: filterItemDelegate.isSelected
+                                            text: "󰄬"
+                                            font.family: root.font
+                                            font.pixelSize: 12
+                                            color: root.theme.accentPrimary
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            WallpaperService.setFilterMode(filterItemDelegate.modelData.id);
+                                            filterPopup.close();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ImageMagick Wallpaper Effects Dropdown
+                Rectangle {
+                    id: effectDropdownBtn
+                    implicitWidth: effectBtnRow.implicitWidth + 20
+                    height: 30
+                    radius: 7
+                    color: effectPopup.opened
+                        ? root.theme.bgSelected
+                        : (effectHover.hovered ? root.theme.bgHover : root.theme.bgBase)
+                    border.color: effectPopup.opened
+                        ? root.theme.accentPrimary
+                        : ((WallpaperService.effectMode || "none") !== "none" ? root.theme.accentOrange : root.theme.bgBorder)
+                    border.width: 1
+
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                    HoverHandler { id: effectHover }
+
+                    RowLayout {
+                        id: effectBtnRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Text {
+                            text: "󰄛"
+                            font.family: root.font
+                            font.pixelSize: 12
+                            color: effectPopup.opened
+                                ? root.theme.accentPrimary
+                                : ((WallpaperService.effectMode || "none") !== "none" ? root.theme.accentOrange : root.theme.textSecondary)
+                        }
+
+                        Text {
+                            text: {
+                                const eff = WallpaperService.effectMode || "none";
+                                const modes = WallpaperService.effectModes || [];
+                                for (let i = 0; i < modes.length; i++) {
+                                    if (modes[i].id === eff) return modes[i].label;
+                                }
+                                return "No Effects";
+                            }
+                            font.family: root.font
+                            font.pixelSize: 11
+                            font.bold: (WallpaperService.effectMode || "none") !== "none"
+                            color: effectPopup.opened
+                                ? root.theme.accentPrimary
+                                : ((WallpaperService.effectMode || "none") !== "none" ? root.theme.accentOrange : root.theme.textPrimary)
+                        }
+
+                        Text {
+                            text: "󰅀"
+                            font.family: root.font
+                            font.pixelSize: 11
+                            color: effectPopup.opened ? root.theme.accentPrimary : root.theme.textSecondary
+                            rotation: effectPopup.opened ? 180 : 0
+                            Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            if (effectPopup.opened) effectPopup.close();
+                            else effectPopup.open();
+                        }
+                    }
+
+                    // Floating Effects Popover
+                    Popup {
+                        id: effectPopup
+                        parent: effectDropdownBtn
+                        x: effectDropdownBtn.width - width
+                        y: effectDropdownBtn.height + 6
+                        width: 220
+                        padding: 6
+                        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+
+                        enter: Transition {
+                            NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 140; easing.type: Easing.OutCubic }
+                            NumberAnimation { property: "y"; from: effectDropdownBtn.height; to: effectDropdownBtn.height + 6; duration: 140; easing.type: Easing.OutCubic }
+                        }
+                        exit: Transition {
+                            NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 100 }
+                        }
+
+                        background: Rectangle {
+                            radius: 10
+                            color: root.theme.bgSurface
+                            border.color: root.theme.accentPrimary ? Style.withAlpha(root.theme.accentPrimary, 0.35) : root.theme.bgBorder
+                            border.width: 1
+                        }
+
+                        contentItem: ColumnLayout {
+                            spacing: 4
+
+                            Text {
+                                text: "Wallpaper Effects (ImageMagick)"
+                                font.family: root.font
+                                font.pixelSize: 10
+                                font.bold: true
+                                color: root.theme.textMuted
+                                Layout.leftMargin: 6
+                                Layout.topMargin: 2
+                                Layout.bottomMargin: 2
+                            }
+
+                            ScrollView {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 270
+                                clip: true
+                                ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
+
+                                ColumnLayout {
+                                    width: parent.width
+                                    spacing: 2
+
+                                    Repeater {
+                                        model: WallpaperService.effectModes || []
+
+                                        delegate: Rectangle {
+                                            id: effItemDelegate
+                                            required property var modelData
+                                            readonly property bool isSelected: (WallpaperService.effectMode || "none") === modelData.id
+
+                                            Layout.fillWidth: true
+                                            height: 32
+                                            radius: 6
+                                            color: isSelected
+                                                ? root.theme.bgSelected
+                                                : (effItemHover.hovered ? root.theme.bgHover : "transparent")
+
+                                            HoverHandler { id: effItemHover }
+
+                                            RowLayout {
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 8
+                                                anchors.rightMargin: 8
+                                                spacing: 8
+
+                                                ColumnLayout {
+                                                    Layout.fillWidth: true
+                                                    spacing: 1
+
+                                                    Text {
+                                                        text: effItemDelegate.modelData.label
+                                                        font.family: root.font
+                                                        font.pixelSize: 11
+                                                        font.bold: effItemDelegate.isSelected
+                                                        color: effItemDelegate.isSelected
+                                                            ? root.theme.accentPrimary
+                                                            : root.theme.textPrimary
+                                                    }
+
+                                                    Text {
+                                                        text: effItemDelegate.modelData.desc
+                                                        font.family: root.font
+                                                        font.pixelSize: 9
+                                                        color: root.theme.textSecondary
+                                                    }
+                                                }
+
+                                                Text {
+                                                    visible: effItemDelegate.isSelected
+                                                    text: "󰄬"
+                                                    font.family: root.font
+                                                    font.pixelSize: 12
+                                                    color: root.theme.accentPrimary
+                                                }
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: {
+                                                    WallpaperService.setEffectMode(effItemDelegate.modelData.id);
+                                                    effectPopup.close();
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }

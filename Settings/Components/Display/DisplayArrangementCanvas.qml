@@ -98,6 +98,9 @@ ColumnLayout {
                         root.selectedIndex = idx;
                         root.closeAllDropdowns();
                     }
+                    onMonitorsArranged: updated => {
+                        root.editState = updated;
+                    }
                     onMonitorMoved: (idx, nx, ny) => {
                         const copy = root.editState.slice();
                         copy[idx] = Object.assign({}, root.editState[idx], { x: nx, y: ny });

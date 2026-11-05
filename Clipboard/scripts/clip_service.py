@@ -156,9 +156,57 @@ def wipe_all():
                 pass
     sys.exit(0)
 
+def get_status():
+    db_path = os.path.expanduser("~/.cache/cliphist/db")
+    db_size = os.path.getsize(db_path) if os.path.isfile(db_path) else 0
+    if db_size >= 1024 * 1024:
+        size_str = f"{db_size / (1024 * 1024):.1f} MB"
+    elif db_size >= 1024:
+        size_str = f"{db_size / 1024:.1f} KB"
+    else:
+        size_str = f"{db_size} B"
+
+    try:
+        out = subprocess.check_output(["cliphist", "list"], text=True, errors="replace")
+        total_items = len([l for l in out.strip().split("\n") if l.strip()])
+    except Exception:
+        total_items = 0
+
+    try:
+        res = subprocess.run(["pgrep", "-f", "cliphist store"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        daemon_running = res.returncode == 0
+    except Exception:
+        daemon_running = False
+
+    thumbs_count = len(os.listdir(THUMB_DIR)) if os.path.isdir(THUMB_DIR) else 0
+
+    print(json.dumps({
+        "success": True,
+        "totalItems": total_items,
+        "dbSizeBytes": db_size,
+        "dbSizeFormatted": size_str,
+        "daemonRunning": daemon_running,
+        "thumbsCount": thumbs_count
+    }))
+
+def start_daemon():
+    try:
+        subprocess.Popen("wl-paste --type text --watch cliphist store", shell=True, start_new_session=True)
+        subprocess.Popen("wl-paste --type image --watch cliphist store", shell=True, start_new_session=True)
+        print(json.dumps({"success": True, "message": "Clipboard watcher daemon started"}))
+    except Exception as e:
+        print(json.dumps({"success": False, "error": str(e)}))
+
+def stop_daemon():
+    try:
+        subprocess.run(["pkill", "-f", "cliphist store"], check=False)
+        print(json.dumps({"success": True, "message": "Clipboard watcher daemon stopped"}))
+    except Exception as e:
+        print(json.dumps({"success": False, "error": str(e)}))
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: clip_service.py [list|copy|delete|wipe] [args...]")
+        print("Usage: clip_service.py [list|copy|delete|wipe|status|start_daemon|stop_daemon] [args...]")
         sys.exit(1)
 
     cmd = sys.argv[1]
@@ -172,5 +220,11 @@ if __name__ == "__main__":
         delete_item(sys.argv[2])
     elif cmd == "wipe":
         wipe_all()
+    elif cmd == "status":
+        get_status()
+    elif cmd == "start_daemon":
+        start_daemon()
+    elif cmd == "stop_daemon":
+        stop_daemon()
     else:
         sys.exit(1)

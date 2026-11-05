@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 
 Singleton {
   id: root
@@ -12,10 +13,31 @@ Singleton {
   property string wallpaperA: ""
   property string wallpaperB: ""
   property string resizeMode: "crop" // "crop" (Scale), "fit", "stretch", "no" (Center)
+  property string filterMode: "Lanczos3" // "Lanczos3", "Mitchell", "CatmullRom", "Bilinear", "Nearest"
+  property string effectMode: "none" // "none", "negate", "bw", "blurred", "sepia", etc.
+  property bool generatingEffect: false
   property string targetDisplay: "all" // "all", "primary", "secondary"
   property string backend: "awww + wallust"
   property bool generatingTheme: false
   property var directories: []
+
+  readonly property var effectModes: [
+    { id: "none",            label: "No Effects",         desc: "Original unaltered wallpaper" },
+    { id: "negate",          label: "Negate (Invert)",    desc: "Inverted color negative" },
+    { id: "bw",              label: "Black & White",      desc: "Monochrome with boosted contrast" },
+    { id: "blurred",         label: "Blurred",            desc: "Smooth background blur" },
+    { id: "charcoal",        label: "Charcoal",           desc: "Pencil & charcoal sketch" },
+    { id: "edge",            label: "Edge Detect",        desc: "Contour line outlines" },
+    { id: "emboss",          label: "Emboss",             desc: "3D textured relief" },
+    { id: "oil",             label: "Oil Paint",          desc: "Painterly brush strokes" },
+    { id: "posterize",       label: "Posterize",          desc: "Retro reduced color palette" },
+    { id: "sepia",           label: "Sepia Tone",         desc: "Warm vintage antique tone" },
+    { id: "solarize",        label: "Solarize",           desc: "Partial tone inversion glow" },
+    { id: "sharpen",         label: "Sharpen",            desc: "High clarity detail boost" },
+    { id: "vignette",        label: "Vignette",           desc: "Soft peripheral edge fade" },
+    { id: "vignette_black",  label: "Vignette (Black)",   desc: "Dark cinematic border shadow" },
+    { id: "zoomed",          label: "Zoomed (1:1)",       desc: "Centered 1:1 aspect crop" }
+  ]
 
   // Active connected displays detection
   readonly property var activeScreens: {
@@ -66,6 +88,14 @@ Singleton {
     { id: "fit",     label: "Fit" },
     { id: "stretch", label: "Stretch" },
     { id: "no",      label: "Center" }
+  ]
+
+  readonly property var filterModes: [
+    { id: "Lanczos3",   label: "Lanczos3",    desc: "Lanczos3 (High Quality)" },
+    { id: "Mitchell",   label: "Mitchell",    desc: "Mitchell (Smooth)" },
+    { id: "CatmullRom", label: "Catmull-Rom", desc: "Catmull-Rom (Sharp)" },
+    { id: "Bilinear",   label: "Bilinear",    desc: "Bilinear (Fast)" },
+    { id: "Nearest",    label: "Nearest",     desc: "Nearest (Pixel Art)" }
   ]
 
   readonly property var displayOptions: {
@@ -302,6 +332,9 @@ Singleton {
       else if (sc === "center" || sc === "no") root.resizeMode = "no";
       else if (sc === "fit" || sc === "stretch") root.resizeMode = sc;
 
+      if (data.filter) root.filterMode = String(data.filter);
+      if (data.effect) root.effectMode = String(data.effect);
+
       if (data.target) root.targetDisplay = data.target;
       const wallA = data.primaryWallpaper || data.displayA || data.current;
       const wallB = data.secondaryWallpaper || data.displayB;
@@ -467,20 +500,63 @@ Singleton {
     }
 
     // 1. Change wallpaper via available daemon (awww, swww, or hyprpaper)
+    const activeFilter = root.filterMode || "Lanczos3";
+    const activeEffect = root.effectMode || "none";
+    const syncThemeFlag = root.autoSyncPalette ? "syncTheme" : "noSync";
+    const setShScript = Qt.resolvedUrl("../ThemeSwitcher/wallpaper-theme/set.sh").toString().replace(/^file:\/\//, "");
+
+    root.generatingEffect = (activeEffect !== "none");
+    if (root.autoSyncPalette) root.generatingTheme = true;
+
     setProcess.command = [
       "sh", "-c",
-      'path="$1"; target="$2"; mode="$3"; ' +
+      'origPath="$1"; target="$2"; mode="$3"; filter="$4"; effect="$5"; syncFlag="$6"; setSh="$7"; ' +
+      'export MAGICK_THREAD_LIMIT=2; ' +
+      'export OMP_NUM_THREADS=2; ' +
+      'pkill -f "wallpaper_effects/wallpaper_modified" 2>/dev/null || true; ' +
+      'apply_eff() { ' +
+      '  inP="$1"; eff="$2"; outP="$3"; ' +
+      '  if [ -z "$eff" ] || [ "$eff" = "none" ] || ! command -v magick >/dev/null 2>&1; then ' +
+      '    printf "%s" "$inP"; return 0; ' +
+      '  fi; ' +
+      '  mkdir -p "$HOME/.cache/quickshell/wallpaper_effects"; ' +
+      '  run_magick() { nice -n 19 ionice -c 3 magick "$@"; }; ' +
+      '  case "$eff" in ' +
+      '    negate)         run_magick "$inP" -negate "$outP" ;; ' +
+      '    bw)             run_magick "$inP" -colorspace gray -sigmoidal-contrast 10,40% "$outP" ;; ' +
+      '    blurred)        run_magick "$inP" -resize 2560x1440\> -blur 0x8 "$outP" ;; ' +
+      '    charcoal)       run_magick "$inP" -resize 2560x1440\> -charcoal 0x4 "$outP" ;; ' +
+      '    edge)           run_magick "$inP" -resize 2560x1440\> -edge 1 "$outP" ;; ' +
+      '    emboss)         run_magick "$inP" -resize 2560x1440\> -emboss 0x4 "$outP" ;; ' +
+      '    oil)            run_magick "$inP" -resize 2560x1440\> -paint 3 "$outP" ;; ' +
+      '    posterize)      run_magick "$inP" -posterize 4 "$outP" ;; ' +
+      '    sepia)          run_magick "$inP" -sepia-tone 65% "$outP" ;; ' +
+      '    solarize)       run_magick "$inP" -solarize 80% "$outP" ;; ' +
+      '    sharpen)        run_magick "$inP" -sharpen 0x4 "$outP" ;; ' +
+      '    vignette)       run_magick "$inP" -vignette 0x3 "$outP" ;; ' +
+      '    vignette_black) run_magick "$inP" -background black -vignette 0x3 "$outP" ;; ' +
+      '    zoomed)         run_magick "$inP" -gravity Center -extent 1:1 "$outP" ;; ' +
+      '    *)              printf "%s" "$inP"; return 0 ;; ' +
+      '  esac; ' +
+      '  if [ -f "$outP" ]; then printf "%s" "$outP"; else printf "%s" "$inP"; fi; ' +
+      '}; ' +
+      'cacheDir="$HOME/.cache/quickshell/wallpaper_effects"; ' +
+      'mkdir -p "$cacheDir"; ' +
+      'modImg="$cacheDir/wallpaper_modified.png"; ' +
+      'path=$(apply_eff "$origPath" "$effect" "$modImg"); ' +
       'if command -v awww >/dev/null 2>&1; then ' +
+      '  filterArg=""; [ -n "$filter" ] && filterArg="--filter $filter"; ' +
       '  if [ -n "$target" ] && [ "$target" != "all" ]; then ' +
-      '    awww img "$path" -o "$target" --resize "$mode" --transition-type grow --transition-pos center --transition-duration 1; ' +
+      '    awww img "$path" -o "$target" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1; ' +
       '  else ' +
-      '    awww img "$path" --resize "$mode" --transition-type grow --transition-pos center --transition-duration 1; ' +
+      '    awww img "$path" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1; ' +
       '  fi; ' +
       'elif command -v swww >/dev/null 2>&1; then ' +
+      '  filterArg=""; [ -n "$filter" ] && filterArg="--filter $filter"; ' +
       '  if [ -n "$target" ] && [ "$target" != "all" ]; then ' +
-      '    swww img "$path" -o "$target" --resize "$mode" --transition-type grow --transition-pos center --transition-duration 1; ' +
+      '    swww img "$path" -o "$target" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1; ' +
       '  else ' +
-      '    swww img "$path" --resize "$mode" --transition-type grow --transition-pos center --transition-duration 1; ' +
+      '    swww img "$path" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1; ' +
       '  fi; ' +
       'elif command -v hyprpaper >/dev/null 2>&1 && command -v hyprctl >/dev/null 2>&1; then ' +
       '  hyprctl hyprpaper preload "$path" 2>/dev/null || true; ' +
@@ -489,23 +565,16 @@ Singleton {
       '  else ' +
       '    hyprctl hyprpaper wallpaper ",$path" 2>/dev/null || true; ' +
       '  fi; ' +
+      'fi; ' +
+      'if [ "$syncFlag" = "syncTheme" ] && [ -f "$setSh" ]; then ' +
+      '  env WALLPAPER_THEME_TOOL=wallust sh "$setSh" "$path" 2>/dev/null || true; ' +
       'fi',
-      "setWallpaper", path, outputArg, chosenMode
+      "setWallpaper", path, outputArg, chosenMode, activeFilter, activeEffect, syncThemeFlag, setShScript
     ];
     setProcess.running = true;
 
     // 2. Persist state to configurations
     saveState();
-
-    // 3. Generate wallpaper-theme.json via set.sh only if autoSyncPalette is enabled
-    if (root.autoSyncPalette) {
-      root.generatingTheme = true;
-      wallustProcess.command = [
-        "env", "WALLPAPER_THEME_TOOL=wallust",
-        "sh", Qt.resolvedUrl("../ThemeSwitcher/wallpaper-theme/set.sh").toString().replace(/^file:\/\//, ""), path
-      ];
-      wallustProcess.running = true;
-    }
   }
 
   function setWallpaperType(mode) {
@@ -516,11 +585,51 @@ Singleton {
 
     root.resizeMode = chosenMode;
     saveState();
-    reapplyWallpapers();
+
+    const currentImg = root.currentWallpaper || root.wallpaperA;
+    if (currentImg && currentImg !== "") {
+      root.setWallpaper(currentImg, root.targetDisplay, chosenMode);
+    } else {
+      reapplyWallpapers();
+    }
+  }
+
+  function setFilterMode(filter) {
+    if (!filter || filter === root.filterMode) return;
+    root.filterMode = filter;
+    saveState();
+
+    const currentImg = root.currentWallpaper || root.wallpaperA;
+    if (currentImg && currentImg !== "") {
+      root.setWallpaper(currentImg, root.targetDisplay, root.resizeMode);
+    } else {
+      reapplyWallpapers();
+    }
+  }
+
+  function setEffectMode(eff) {
+    let chosenEffect = eff || "none";
+    if (chosenEffect === root.effectMode) return;
+    root.effectMode = chosenEffect;
+    saveState();
+
+    const currentImg = root.currentWallpaper || root.wallpaperA;
+    if (currentImg && currentImg !== "") {
+      root.setWallpaper(currentImg, root.targetDisplay, root.resizeMode);
+    } else {
+      reapplyWallpapers();
+    }
   }
 
   function reapplyWallpapers() {
+    if (reapplyProcess.running) {
+      screenReconnectTimer.restart();
+      return;
+    }
+
     const mode = root.resizeMode || "crop";
+    const activeFilter = root.filterMode || "Lanczos3";
+    const activeEffect = root.effectMode || "none";
     const wallA = root.wallpaperA || root.currentWallpaper;
     const wallB = root.wallpaperB;
     const outA = root.displayAName;
@@ -528,23 +637,73 @@ Singleton {
 
     reapplyProcess.command = [
       "sh", "-c",
-      'mode="$1"; wallA="$2"; wallB="$3"; outA="$4"; outB="$5"; ' +
+      'mode="$1"; wallA="$2"; wallB="$3"; outA="$4"; outB="$5"; filter="$6"; effect="$7"; ' +
+      'export MAGICK_THREAD_LIMIT=2; ' +
+      'export OMP_NUM_THREADS=2; ' +
+      'pkill -f "wallpaper_effects/wallpaper_modified" 2>/dev/null || true; ' +
+      'apply_eff() { ' +
+      '  inP="$1"; eff="$2"; outP="$3"; ' +
+      '  if [ -z "$eff" ] || [ "$eff" = "none" ] || ! command -v magick >/dev/null 2>&1; then ' +
+      '    printf "%s" "$inP"; return 0; ' +
+      '  fi; ' +
+      '  mkdir -p "$HOME/.cache/quickshell/wallpaper_effects"; ' +
+      '  run_magick() { nice -n 19 ionice -c 3 magick "$@"; }; ' +
+      '  case "$eff" in ' +
+      '    negate)         run_magick "$inP" -negate "$outP" ;; ' +
+      '    bw)             run_magick "$inP" -colorspace gray -sigmoidal-contrast 10,40% "$outP" ;; ' +
+      '    blurred)        run_magick "$inP" -resize 2560x1440\> -blur 0x8 "$outP" ;; ' +
+      '    charcoal)       run_magick "$inP" -resize 2560x1440\> -charcoal 0x4 "$outP" ;; ' +
+      '    edge)           run_magick "$inP" -resize 2560x1440\> -edge 1 "$outP" ;; ' +
+      '    emboss)         run_magick "$inP" -resize 2560x1440\> -emboss 0x4 "$outP" ;; ' +
+      '    oil)            run_magick "$inP" -resize 2560x1440\> -paint 3 "$outP" ;; ' +
+      '    posterize)      run_magick "$inP" -posterize 4 "$outP" ;; ' +
+      '    sepia)          run_magick "$inP" -sepia-tone 65% "$outP" ;; ' +
+      '    solarize)       run_magick "$inP" -solarize 80% "$outP" ;; ' +
+      '    sharpen)        run_magick "$inP" -sharpen 0x4 "$outP" ;; ' +
+      '    vignette)       run_magick "$inP" -vignette 0x3 "$outP" ;; ' +
+      '    vignette_black) run_magick "$inP" -background black -vignette 0x3 "$outP" ;; ' +
+      '    zoomed)         run_magick "$inP" -gravity Center -extent 1:1 "$outP" ;; ' +
+      '    *)              printf "%s" "$inP"; return 0 ;; ' +
+      '  esac; ' +
+      '  if [ -f "$outP" ]; then printf "%s" "$outP"; else printf "%s" "$inP"; fi; ' +
+      '}; ' +
+      'cacheDir="$HOME/.cache/quickshell/wallpaper_effects"; ' +
+      'mkdir -p "$cacheDir"; ' +
+      'effA=$(apply_eff "$wallA" "$effect" "$cacheDir/wallpaper_modified_A.png"); ' +
+      'effB=$(apply_eff "$wallB" "$effect" "$cacheDir/wallpaper_modified_B.png"); ' +
       'if command -v awww >/dev/null 2>&1; then ' +
-      '  if [ -n "$wallB" ] && [ "$wallB" != "$wallA" ] && [ -n "$outA" ] && [ -n "$outB" ]; then ' +
-      '    awww img "$wallA" -o "$outA" --resize "$mode" --transition-type simple --transition-step 255 2>/dev/null || true; ' +
-      '    awww img "$wallB" -o "$outB" --resize "$mode" --transition-type simple --transition-step 255 2>/dev/null || true; ' +
-      '  elif [ -n "$wallA" ]; then ' +
-      '    awww img "$wallA" --resize "$mode" --transition-type simple --transition-step 255 2>/dev/null || true; ' +
+      '  filterArg=""; [ -n "$filter" ] && filterArg="--filter $filter"; ' +
+      '  if [ -n "$effB" ] && [ "$effB" != "$effA" ] && [ -n "$outA" ] && [ -n "$outB" ]; then ' +
+      '    awww img "$effA" -o "$outA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
+      '    awww img "$effB" -o "$outB" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
+      '  elif [ -n "$effA" ]; then ' +
+      '    if [ -n "$outA" ]; then ' +
+      '      awww img "$effA" -o "$outA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
+      '    else ' +
+      '      awww img "$effA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
+      '    fi; ' +
       '  fi; ' +
       'elif command -v swww >/dev/null 2>&1; then ' +
-      '  if [ -n "$wallB" ] && [ "$wallB" != "$wallA" ] && [ -n "$outA" ] && [ -n "$outB" ]; then ' +
-      '    swww img "$wallA" -o "$outA" --resize "$mode" --transition-type simple --transition-step 255 2>/dev/null || true; ' +
-      '    swww img "$wallB" -o "$outB" --resize "$mode" --transition-type simple --transition-step 255 2>/dev/null || true; ' +
-      '  elif [ -n "$wallA" ]; then ' +
-      '    swww img "$wallA" --resize "$mode" --transition-type simple --transition-step 255 2>/dev/null || true; ' +
+      '  filterArg=""; [ -n "$filter" ] && filterArg="--filter $filter"; ' +
+      '  if [ -n "$effB" ] && [ "$effB" != "$effA" ] && [ -n "$outA" ] && [ -n "$outB" ]; then ' +
+      '    swww img "$effA" -o "$outA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
+      '    swww img "$effB" -o "$outB" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
+      '  elif [ -n "$effA" ]; then ' +
+      '    if [ -n "$outA" ]; then ' +
+      '      swww img "$effA" -o "$outA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
+      '    else ' +
+      '      swww img "$effA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
+      '    fi; ' +
+      '  fi; ' +
+      'elif command -v hyprpaper >/dev/null 2>&1 && command -v hyprctl >/dev/null 2>&1; then ' +
+      '  if [ -n "$effB" ] && [ "$effB" != "$effA" ] && [ -n "$outA" ] && [ -n "$outB" ]; then ' +
+      '    hyprctl hyprpaper wallpaper "$outA,$effA" 2>/dev/null || true; ' +
+      '    hyprctl hyprpaper wallpaper "$outB,$effB" 2>/dev/null || true; ' +
+      '  elif [ -n "$effA" ]; then ' +
+      '    hyprctl hyprpaper wallpaper ",$effA" 2>/dev/null || true; ' +
       '  fi; ' +
       'fi',
-      "reapplyWallpapers", mode, wallA, wallB, outA, outB
+      "reapplyWallpapers", mode, wallA, wallB, outA, outB, activeFilter, activeEffect
     ];
     reapplyProcess.running = true;
   }
@@ -553,6 +712,8 @@ Singleton {
     const prim = root.wallpaperA || root.currentWallpaper || "";
     const sec = root.wallpaperB || "";
     const mode = root.resizeMode || "crop";
+    const filter = root.filterMode || "Lanczos3";
+    const effect = root.effectMode || "none";
     const target = root.targetDisplay || "all";
 
     const confLines = [prim];
@@ -561,6 +722,8 @@ Singleton {
 
     const stateObj = {
       scaling: mode === "crop" ? "fill" : (mode === "no" ? "center" : mode),
+      filter: filter,
+      effect: effect,
       target: target,
       primaryWallpaper: prim,
       secondaryWallpaper: sec,
@@ -598,6 +761,10 @@ Singleton {
     id: setProcess
     command: []
     running: false
+    onExited: {
+      root.generatingEffect = false;
+      root.generatingTheme = false;
+    }
   }
 
   Process {
@@ -622,10 +789,40 @@ Singleton {
   // Re-apply saved wallpaper at startup (awww-daemon starts empty)
   Timer {
     id: startupApplyTimer
-    interval: 1500
+    interval: 200
     repeat: false
     onTriggered: {
       if (root.wallpaperA || root.currentWallpaper) root.reapplyWallpapers();
+    }
+  }
+
+  // Auto-restore wallpaper when a monitor is connected or powered on
+  onActiveScreensChanged: {
+    if (activeScreens && activeScreens.length > 0) {
+      screenReconnectTimer.restart();
+    }
+  }
+
+  // Listen for Hyprland events: monitor hotplug, DPMS changes, and config reloads
+  Connections {
+    target: Hyprland
+    function onRawEvent(event) {
+      if (!event || !event.name) return;
+      const triggers = ["monitoradded", "monitoraddedv2", "dpms", "configreloaded"];
+      if (triggers.includes(event.name)) {
+        screenReconnectTimer.restart();
+      }
+    }
+  }
+
+  Timer {
+    id: screenReconnectTimer
+    interval: 350
+    repeat: false
+    onTriggered: {
+      if (root.wallpaperA || root.currentWallpaper) {
+        root.reapplyWallpapers();
+      }
     }
   }
 

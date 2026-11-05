@@ -15,10 +15,10 @@ Rectangle {
 
     implicitWidth: actRow.implicitWidth + 24
     implicitHeight: btnHeight
-    width: implicitWidth
-    height: implicitHeight
-    Layout.preferredWidth: implicitWidth
-    Layout.preferredHeight: implicitHeight
+    width: visible ? implicitWidth : 0
+    height: visible ? implicitHeight : 0
+    Layout.preferredWidth: visible ? implicitWidth : 0
+    Layout.preferredHeight: visible ? implicitHeight : 0
     Layout.alignment: Qt.AlignVCenter
     radius: 8
     opacity: btnEnabled ? 1.0 : 0.4

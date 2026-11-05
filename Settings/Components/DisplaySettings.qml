@@ -763,8 +763,8 @@ Item {
         implicitWidth: toastText.implicitWidth + 24
         height: 34
         radius: 17
-        color: root.theme.bgSelected ?? "#283457"
-        border.color: root.theme.accentPrimary ?? "#7aa2f7"
+        color: root.theme.bgSelected
+        border.color: root.theme.accentPrimary
         border.width: 1
         opacity: root.statusVisible ? 1.0 : 0.0
         scale: root.statusVisible ? 1.0 : 0.92
@@ -780,7 +780,7 @@ Item {
             font.family: root.font
             font.pixelSize: 12
             font.bold: true
-            color: root.theme.textPrimary ?? "#c0caf5"
+            color: root.theme.textPrimary
         }
     }
 }

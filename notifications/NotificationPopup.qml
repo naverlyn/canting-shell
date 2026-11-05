@@ -109,6 +109,7 @@ Scope {
                             if (notifCard.modelData.customGlyph && notifCard.modelData.customGlyph !== "") {
                                 return notifCard.modelData.customGlyph;
                             }
+                            if (notifCard.modelData.socialApp) return notifCard.modelData.socialApp.icon;
                             if (notifCard.modelData.isWhatsApp) return "󰖣";
                             const name = (notifCard.modelData.appName || "").toLowerCase();
                             if (notifCard.modelData.urgency === NotificationUrgency.Critical) return "󰀦";
@@ -221,23 +222,25 @@ Scope {
                                 Layout.alignment: Qt.AlignTop
                                 radius: NotificationService.iconRadius
                                 color: NotificationService.iconShowBg
-                                    ? (notifCard.modelData.isWhatsApp
-                                        ? Qt.alpha("#25D366", 0.15)
-                                        : Qt.alpha(notifCard.urgencyColor, 0.15))
+                                    ? (notifCard.modelData.socialApp
+                                        ? Qt.alpha(notifCard.modelData.socialApp.color, 0.15)
+                                        : (notifCard.modelData.isWhatsApp
+                                            ? Qt.alpha("#25D366", 0.15)
+                                            : Qt.alpha(notifCard.urgencyColor, 0.15)))
                                     : "transparent"
 
                                 IconImage {
                                     anchors.centerIn: parent
                                     source: Quickshell.iconPath(notifCard.modelData.appIcon, true)
                                     implicitSize: Math.round(parent.width * 0.65)
-                                    visible: notifCard.modelData.appIcon !== "" && !notifCard.modelData.isWhatsApp && notifCard.modelData.customGlyph === ""
+                                    visible: notifCard.modelData.appIcon !== "" && !notifCard.modelData.isSocialApp && !notifCard.modelData.isWhatsApp && notifCard.modelData.customGlyph === ""
                                 }
 
                                 Text {
                                     anchors.centerIn: parent
-                                    visible: notifCard.modelData.appIcon === "" || notifCard.modelData.isWhatsApp || notifCard.modelData.customGlyph !== ""
+                                    visible: notifCard.modelData.appIcon === "" || notifCard.modelData.isSocialApp || notifCard.modelData.isWhatsApp || notifCard.modelData.customGlyph !== ""
                                     text: notifCard.resolveGlyph()
-                                    color: notifCard.modelData.isWhatsApp ? "#25D366" : notifCard.urgencyColor
+                                    color: notifCard.modelData.socialApp ? notifCard.modelData.socialApp.color : (notifCard.modelData.isWhatsApp ? "#25D366" : notifCard.urgencyColor)
                                     font.pixelSize: Math.round(parent.width * 0.56)
                                     font.family: root.font
                                 }
@@ -390,23 +393,25 @@ Scope {
                                 implicitHeight: height
                                 radius: NotificationService.iconRadius
                                 color: NotificationService.iconShowBg
-                                    ? (notifCard.modelData.isWhatsApp
-                                        ? Qt.alpha("#25D366", 0.15)
-                                        : Qt.alpha(notifCard.urgencyColor, 0.15))
+                                    ? (notifCard.modelData.socialApp
+                                        ? Qt.alpha(notifCard.modelData.socialApp.color, 0.15)
+                                        : (notifCard.modelData.isWhatsApp
+                                            ? Qt.alpha("#25D366", 0.15)
+                                            : Qt.alpha(notifCard.urgencyColor, 0.15)))
                                     : "transparent"
 
                                 IconImage {
                                     anchors.centerIn: parent
                                     source: Quickshell.iconPath(notifCard.modelData.appIcon, true)
                                     implicitSize: Math.round(parent.width * 0.66)
-                                    visible: notifCard.modelData.appIcon !== "" && !notifCard.modelData.isWhatsApp && notifCard.modelData.customGlyph === ""
+                                    visible: notifCard.modelData.appIcon !== "" && !notifCard.modelData.isSocialApp && !notifCard.modelData.isWhatsApp && notifCard.modelData.customGlyph === ""
                                 }
 
                                 Text {
                                     anchors.centerIn: parent
-                                    visible: notifCard.modelData.appIcon === "" || notifCard.modelData.isWhatsApp || notifCard.modelData.customGlyph !== ""
+                                    visible: notifCard.modelData.appIcon === "" || notifCard.modelData.isSocialApp || notifCard.modelData.isWhatsApp || notifCard.modelData.customGlyph !== ""
                                     text: notifCard.resolveGlyph()
-                                    color: notifCard.modelData.isWhatsApp ? "#25D366" : notifCard.urgencyColor
+                                    color: notifCard.modelData.socialApp ? notifCard.modelData.socialApp.color : (notifCard.modelData.isWhatsApp ? "#25D366" : notifCard.urgencyColor)
                                     font.pixelSize: Math.round(parent.width * 0.58)
                                     font.family: root.font
                                 }
@@ -683,14 +688,6 @@ Scope {
                                             id: actionContent
                                             anchors.centerIn: parent
                                             spacing: 5
-
-                                            Text {
-                                                visible: actionBtn.isReply
-                                                text: "󰈎"
-                                                color: root.theme.bgBase
-                                                font.pixelSize: 11
-                                                font.family: root.font
-                                            }
 
                                             Text {
                                                 id: actionText

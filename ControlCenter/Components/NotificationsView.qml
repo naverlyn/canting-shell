@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import ".."
+import "../../notifications/SocialApps.js" as SocialApps
 
 Column {
     id: root
@@ -126,17 +127,10 @@ Column {
                     let summaryStr = (n.summary || "New Notification") + "";
                     let bodyStr = (n.body || "") + "";
 
-                    // WhatsApp Web
-                    let isWA = bodyStr.indexOf("web.whatsapp.com") !== -1 ||
-                               bodyStr.indexOf("whatsapp.com") !== -1 ||
-                               summaryStr.toLowerCase().indexOf("whatsapp") !== -1 ||
-                               (n.appName || "").toLowerCase().indexOf("whatsapp") !== -1;
-
-                    if (isWA) {
-                        let clean = bodyStr.replace(/^https?:\/\/web\.whatsapp\.com\/?\s*\n*/i, "");
-                        clean = clean.replace(/^web\.whatsapp\.com\/?\s*\n*/i, "");
-                        clean = clean.trim();
-                        if (clean.length > 0) bodyStr = clean;
+                    // Dynamic Social App handling
+                    let socialApp = SocialApps.detectApp(n.appName, n.appIcon, summaryStr, bodyStr);
+                    if (socialApp) {
+                        bodyStr = SocialApps.cleanBody(bodyStr, socialApp);
 
                         let defaultAct = null;
                         for (let k = 0; k < acts.length; k++) {
@@ -146,7 +140,7 @@ Column {
                             }
                         }
 
-                        let focusCmd = 'if ! hyprctl dispatch focuswindow "title:^(.*WhatsApp.*)$" 2>&1 | grep -q "ok"; then if ! hyprctl dispatch focuswindow "class:^(brave-browser|Brave-browser)$" 2>&1 | grep -q "ok"; then brave "https://web.whatsapp.com" >/dev/null 2>&1 & fi; fi';
+                        let focusCmd = SocialApps.getFocusCommand(socialApp);
 
                         extractedActions.unshift({
                             label: "Reply",
@@ -154,7 +148,9 @@ Column {
                                 if (defaultAct && defaultAct.invoke) {
                                     try { defaultAct.invoke(); } catch(e) {}
                                 }
-                                Quickshell.execDetached(["sh", "-c", focusCmd]);
+                                if (focusCmd) {
+                                    Quickshell.execDetached(["sh", "-c", focusCmd]);
+                                }
                             },
                             customCmd: ""
                         });
@@ -204,7 +200,7 @@ Column {
                     // Deep copy strings
                     let newItem = {
                         notifId: nId,
-                        notifAppName: (isWA ? "WhatsApp Web" : (n.appName || "Notification")) + "",
+                        notifAppName: SocialApps.formatAppName(n.appName, socialApp) + "",
                         notifAppIcon: (n.appIcon || "") + "",
                         notifImage: imgStr,
                         notifSummary: summaryStr,
@@ -504,11 +500,10 @@ Column {
                                                 let app = (notifDelegate.notif.notifAppName || "").toLowerCase();
                                                 let sum = (notifDelegate.notif.notifSummary || "").toLowerCase();
                                                 let body = (notifDelegate.notif.notifBody || "").toLowerCase();
-                                                if (app.includes("whatsapp") || sum.includes("whatsapp") || body.includes("whatsapp"))
-                                                    return Quickshell.iconPath("whatsapp", true);
+                                                let sApp = SocialApps.detectApp(app, icon, sum, body);
+                                                if (sApp && sApp.appIcon) return Quickshell.iconPath(sApp.appIcon, true);
                                                 if (app.includes("brave")) return Quickshell.iconPath("brave-desktop", true);
                                                 if (app.includes("firefox")) return Quickshell.iconPath("firefox", true);
-                                                if (app.includes("discord")) return Quickshell.iconPath("discord", true);
                                                 if (app.includes("spotify")) return Quickshell.iconPath("spotify", true);
                                                 return "";
                                             }
@@ -531,20 +526,22 @@ Column {
                                         Text {
                                             anchors.centerIn: parent
                                             text: {
+                                                let sApp = SocialApps.detectApp(notifDelegate.notif.notifAppName, notifDelegate.notif.notifAppIcon, notifDelegate.notif.notifSummary, notifDelegate.notif.notifBody);
+                                                if (sApp) return sApp.icon;
                                                 let name = (notifDelegate.notif.notifAppName + " " + notifDelegate.notif.notifSummary + " " + notifDelegate.notif.notifBody).toLowerCase();
-                                                if (name.includes("whatsapp")) return "󰖣";
-                                                if (name.includes("discord"))  return "󰙯";
                                                 if (name.includes("firefox"))  return "󰈹";
                                                 if (name.includes("chrome") || name.includes("brave")) return "󰊯";
                                                 if (name.includes("spotify"))  return "󰓇";
-                                                if (name.includes("telegram")) return "󰓓";
                                                 if (name.includes("gmail") || name.includes("mail")) return "󰊫";
                                                 if (name.includes("terminal") || name.includes("kitty") || name.includes("alacritty")) return "󰞷";
                                                 return "󰂚";
                                             }
                                             font.family: root.font
                                             font.pixelSize: 14
-                                            color: root.theme.accentPrimary
+                                            color: {
+                                                let sApp = SocialApps.detectApp(notifDelegate.notif.notifAppName, notifDelegate.notif.notifAppIcon, notifDelegate.notif.notifSummary, notifDelegate.notif.notifBody);
+                                                return sApp ? sApp.color : root.theme.accentPrimary;
+                                            }
                                             visible: appIconImg.status !== Image.Ready && notifImg.status !== Image.Ready
                                         }
                                     }

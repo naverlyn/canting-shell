@@ -12,8 +12,8 @@ Scope {
   property string font: "Lato Nerd Font"
   property int selectedIndex: 0
 
-  readonly property int cellSize: 96
-  readonly property int columns: 5
+  readonly property int cellSize: AppLauncherConfig.gridCellSize
+  readonly property int columns: AppLauncherConfig.gridColumns
   readonly property int edgeMargin: 10
 
   property string activeBarPos: "top"
@@ -91,10 +91,19 @@ Scope {
   function openOrToggle() {
     gridPanel.visible = !gridPanel.visible;
     if (gridPanel.visible) {
-      searchInput.text = "";
+      if (AppLauncherConfig.clearSearchOnClose) {
+        searchInput.text = "";
+      }
       root.selectedIndex = 0;
       loadUsageProc.running = true;
       searchInput.forceActiveFocus();
+    }
+  }
+
+  Connections {
+    target: AppLauncherConfig
+    function onUsageCleared() {
+      root.appUsage = ({});
     }
   }
 
@@ -185,34 +194,72 @@ Scope {
     values: {
       if (!gridPanel.visible) return [];
       const usage = root.appUsage;
-      const all = [...DesktopEntries.applications.values];
+      const all = [...DesktopEntries.applications.values].filter(d => {
+        const key = root.getAppKey(d);
+        return !AppLauncherConfig.isAppHidden(key);
+      });
       const q = searchInput.text.trim().toLowerCase();
+      const matchGen = AppLauncherConfig.matchGenericName;
+      const matchKw = AppLauncherConfig.matchKeywords;
+      const matchCat = AppLauncherConfig.matchCategories;
+      const sortMode = AppLauncherConfig.sortMode;
 
-      if (q === "") {
-        return all.sort((a, b) => {
+      function compareApps(a, b) {
+        const favA = AppLauncherConfig.isAppFavorite(root.getAppKey(a));
+        const favB = AppLauncherConfig.isAppFavorite(root.getAppKey(b));
+        if (favA && !favB) return -1;
+        if (!favA && favB) return 1;
+
+        if (sortMode === "alphabetical") {
+          return (a.name || "").localeCompare(b.name || "");
+        } else if (sortMode === "recent") {
+          const recA = (usage[root.getAppKey(a)] || {}).lastUsed || 0;
+          const recB = (usage[root.getAppKey(b)] || {}).lastUsed || 0;
+          if (recA !== recB) return recB - recA;
+          return (a.name || "").localeCompare(b.name || "");
+        } else {
           const sa = root.getFrecencyScore(a, usage);
           const sb = root.getFrecencyScore(b, usage);
           if (sa !== sb) return sb - sa;
           return (a.name || "").localeCompare(b.name || "");
-        });
+        }
+      }
+
+      if (q === "") {
+        return all.sort(compareApps);
       }
 
       return all.filter(d =>
         (d.name && d.name.toLowerCase().includes(q)) ||
-        (d.genericName && d.genericName.toLowerCase().includes(q)) ||
-        (d.keywords && d.keywords.some(k => k.toLowerCase().includes(q))) ||
-        (d.categories && d.categories.some(c => c.toLowerCase().includes(q)))
+        (matchGen && d.genericName && d.genericName.toLowerCase().includes(q)) ||
+        (matchKw && d.keywords && d.keywords.some(k => k.toLowerCase().includes(q))) ||
+        (matchCat && d.categories && d.categories.some(c => c.toLowerCase().includes(q)))
       ).sort((a, b) => {
+        const favA = AppLauncherConfig.isAppFavorite(root.getAppKey(a));
+        const favB = AppLauncherConfig.isAppFavorite(root.getAppKey(b));
+        if (favA && !favB) return -1;
+        if (!favA && favB) return 1;
+
         const an = (a.name || "").toLowerCase();
         const bn = (b.name || "").toLowerCase();
         const as = an.startsWith(q);
         const bs = bn.startsWith(q);
         if (as && !bs) return -1;
         if (!as && bs) return 1;
-        const sa = root.getFrecencyScore(a, usage);
-        const sb = root.getFrecencyScore(b, usage);
-        if (sa !== sb) return sb - sa;
-        return an.localeCompare(bn);
+
+        if (sortMode === "alphabetical") {
+          return an.localeCompare(bn);
+        } else if (sortMode === "recent") {
+          const recA = (usage[root.getAppKey(a)] || {}).lastUsed || 0;
+          const recB = (usage[root.getAppKey(b)] || {}).lastUsed || 0;
+          if (recA !== recB) return recB - recA;
+          return an.localeCompare(bn);
+        } else {
+          const sa = root.getFrecencyScore(a, usage);
+          const sb = root.getFrecencyScore(b, usage);
+          if (sa !== sb) return sb - sa;
+          return an.localeCompare(bn);
+        }
       });
     }
   }

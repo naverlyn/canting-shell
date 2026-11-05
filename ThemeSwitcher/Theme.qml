@@ -57,10 +57,176 @@ Singleton {
     }
 
     function applySystemColorScheme(dark) {
-        colorSchemeProc.command = ["gsettings", "set",
-            "org.gnome.desktop.interface", "color-scheme",
-            dark ? "prefer-dark" : "prefer-light"];
+        var scheme = dark ? "prefer-dark" : "prefer-light";
+        var modeStr = dark ? "Dark" : "Light";
+        colorSchemeProc.command = ["sh", "-c",
+            'mkdir -p "$HOME/.cache" && printf "%s\\n" "$1" > "$HOME/.cache/.theme_mode"; ' +
+            'gsettings set org.gnome.desktop.interface color-scheme "$2" 2>/dev/null || true',
+            "sh", modeStr, scheme
+        ];
         colorSchemeProc.running = true;
+    }
+
+    property int lastDarkIndex: -1
+    property int lastLightIndex: -1
+
+    function hexToHsl(hex) {
+        var s = String(hex || "#7aa2f7").replace("#", "");
+        if (s.length !== 6) return { h: 220 / 360, s: 0.6, l: 0.65 };
+        var r = parseInt(s.substr(0, 2), 16) / 255.0;
+        var g = parseInt(s.substr(2, 2), 16) / 255.0;
+        var b = parseInt(s.substr(4, 2), 16) / 255.0;
+        var max = Math.max(r, g, b), min = Math.min(r, g, b);
+        var h = 0, sat = 0, l = (max + min) / 2.0;
+        if (max !== min) {
+            var d = max - min;
+            sat = l > 0.5 ? d / (2.0 - max - min) : d / (max + min);
+            switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6.0 : 0.0); break;
+            case g: h = (b - r) / d + 2.0; break;
+            case b: h = (r - g) / d + 4.0; break;
+            }
+            h /= 6.0;
+        }
+        return { h: h, s: sat, l: l };
+    }
+
+    function hslToHex(h, l, s) {
+        h = ((h % 1.0) + 1.0) % 1.0;
+        l = Math.max(0.0, Math.min(1.0, l));
+        s = Math.max(0.0, Math.min(1.0, s));
+        var r, g, b;
+        if (s === 0) {
+            r = g = b = l;
+        } else {
+            var hue2rgb = function(p, q, t) {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            var p = 2 * l - q;
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        var toHex = function(x) {
+            var v = Math.max(0, Math.min(255, Math.round(x * 255))).toString(16);
+            return v.length === 1 ? "0" + v : v;
+        };
+        return "#" + toHex(r) + toHex(g) + toHex(b);
+    }
+
+    function adjustAccentForMode(hex, toLight) {
+        var hsl = hexToHsl(hex);
+        var targetL = toLight ? Math.max(0.40, Math.min(0.48, hsl.l - 0.20)) : Math.max(0.65, Math.min(0.72, hsl.l + 0.20));
+        var targetS = toLight ? Math.min(0.72, Math.max(0.55, hsl.s)) : Math.min(0.66, Math.max(0.52, hsl.s));
+        return hslToHex(hsl.h, targetL, targetS);
+    }
+
+    function transformWallpaperPalette(pal, toDark) {
+        var isLight = !toDark;
+        var primHsl = hexToHsl(pal && pal.accentPrimary ? pal.accentPrimary : "#7aa2f7");
+        var h = primHsl.h;
+        return {
+            name: (pal && pal.name) ? pal.name : "Wallpaper",
+            family: (pal && pal.family) ? pal.family : "Dynamic",
+            bgBase:        isLight ? hslToHex(h, 0.94, 0.18) : hslToHex(h, 0.08, 0.07),
+            bgSurface:     isLight ? hslToHex(h, 0.88, 0.16) : hslToHex(h, 0.13, 0.07),
+            bgHover:       isLight ? hslToHex(h, 0.83, 0.18) : hslToHex(h, 0.18, 0.08),
+            bgSelected:    isLight ? hslToHex(h, 0.78, 0.20) : hslToHex(h, 0.23, 0.09),
+            bgBorder:      isLight ? hslToHex(h, 0.74, 0.14) : hslToHex(h, 0.19, 0.05),
+            textPrimary:   isLight ? hslToHex(h, 0.16, 0.22) : hslToHex(h, 0.92, 0.04),
+            textSecondary: isLight ? hslToHex(h, 0.34, 0.18) : hslToHex(h, 0.72, 0.05),
+            textMuted:     isLight ? hslToHex(h, 0.50, 0.14) : hslToHex(h, 0.48, 0.06),
+            accentPrimary: adjustAccentForMode(pal.accentPrimary, isLight),
+            accentCyan:    adjustAccentForMode(pal.accentCyan, isLight),
+            accentGreen:   adjustAccentForMode(pal.accentGreen, isLight),
+            accentOrange:  adjustAccentForMode(pal.accentOrange, isLight),
+            accentRed:     adjustAccentForMode(pal.accentRed, isLight)
+        };
+    }
+
+    function findCounterpartThemeIndex(targetDark) {
+        var cur = root.themes[root.currentIndex];
+        var curFam = cur ? (cur.family || "") : "";
+        var curName = cur ? (cur.name || "") : "";
+
+        // 1. Direct name pair in same family (e.g., "WhatsApp Dark" <-> "WhatsApp Light", "Dark" <-> "Light")
+        var swappedName = targetDark
+            ? curName.replace(/Light/i, "Dark").replace(/^Latte$/i, "Mocha").replace(/^9009$/, "8008")
+            : curName.replace(/Dark/i, "Light").replace(/^(Mocha|Macchiato|Frappe)$/i, "Latte").replace(/^(Night|Storm|Moon)$/i, "Light").replace(/^8008$/, "9009");
+
+        if (swappedName !== curName) {
+            for (var i = 0; i < root.themes.length; i++) {
+                var t = root.themes[i];
+                if (t.family === curFam && t.name.toLowerCase() === swappedName.toLowerCase() && (!root.isLightColor(t.bgBase) === targetDark)) {
+                    return i;
+                }
+            }
+        }
+
+        // 2. Previously used theme of target darkness in the same family
+        var prevIdx = targetDark ? root.lastDarkIndex : root.lastLightIndex;
+        if (prevIdx >= 0 && prevIdx < root.themes.length) {
+            var prevT = root.themes[prevIdx];
+            if (prevT && prevT.family === curFam && (!root.isLightColor(prevT.bgBase) === targetDark)) {
+                return prevIdx;
+            }
+        }
+
+        // 3. Any theme in the same family matching target darkness
+        for (var j = 0; j < root.themes.length; j++) {
+            var famT = root.themes[j];
+            if (famT.family === curFam && (!root.isLightColor(famT.bgBase) === targetDark)) {
+                return j;
+            }
+        }
+
+        // 4. Previously used theme of target darkness across any family
+        if (prevIdx >= 0 && prevIdx < root.themes.length) {
+            var anyPrevT = root.themes[prevIdx];
+            if (anyPrevT && (!root.isLightColor(anyPrevT.bgBase) === targetDark)) {
+                return prevIdx;
+            }
+        }
+
+        // 5. Fallback to first matching theme in list
+        for (var k = 0; k < root.themes.length; k++) {
+            if (!root.isLightColor(root.themes[k].bgBase) === targetDark) {
+                return k;
+            }
+        }
+        return 0;
+    }
+
+    function toggleDarkLight() {
+        var targetDark = !root.isDark;
+        root.previewIndex = -1;
+        root.previewAccent = "";
+
+        if (root.wallpaperMode && root.wallpaperTheme && root.wallpaperTheme.bgBase) {
+            var nextPal = root.transformWallpaperPalette(root.wallpaperTheme, targetDark);
+            root.wallpaperTheme = nextPal;
+            root.applyTheme(nextPal);
+            var harmonizePy = Qt.resolvedUrl("wallpaper-theme/harmonize_palette.py").toString().replace(/^file:\/\//, "");
+            var wpJson = Qt.resolvedUrl("wallpaper-theme.json").toString().replace(/^file:\/\//, "");
+            var modeArg = targetDark ? "dark" : "light";
+            var modeStr = targetDark ? "Dark" : "Light";
+            harmonizeModeProc.command = ["sh", "-c",
+                'mkdir -p "$HOME/.cache" && printf "%s\\n" "$1" > "$HOME/.cache/.theme_mode"; ' +
+                'python3 "$2" "$3" --mode "$4" 2>/dev/null || true',
+                "sh", modeStr, harmonizePy, wpJson, modeArg
+            ];
+            harmonizeModeProc.running = true;
+            return;
+        }
+
+        var nextIdx = root.findCounterpartThemeIndex(targetDark);
+        root.setTheme(nextIdx);
     }
 
     // Reactive color properties - same API as before
@@ -81,6 +247,13 @@ Singleton {
     onCurrentIndexChanged: {
         customAccent = "";
         previewAccent = "";
+        if (currentIndex >= 0 && currentIndex < themes.length && themes[currentIndex]) {
+            if (isLightColor(themes[currentIndex].bgBase)) {
+                lastLightIndex = currentIndex;
+            } else {
+                lastDarkIndex = currentIndex;
+            }
+        }
     }
 
     readonly property color accentPrimary: {
@@ -364,6 +537,7 @@ Singleton {
 
     Process { id: saveProc; running: false }
     Process { id: generateProc; running: false }
+    Process { id: harmonizeModeProc; running: false }
     Process { id: kittyProc; running: false }
     Process { id: colorSchemeProc; running: false }
     Process { id: hyprlandProc; running: false }

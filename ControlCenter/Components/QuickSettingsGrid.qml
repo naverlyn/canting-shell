@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import "../../bar"
+import "../../ThemeSwitcher"
 import ".."
 
 ColumnLayout {
@@ -22,7 +23,7 @@ ColumnLayout {
     property bool airplaneEnabled: false
     property bool nightLightEnabled: false
     property bool gameModeEnabled: false
-    property bool isDarkMode: true
+    readonly property bool isDarkMode: (root.theme && root.theme.isDark !== undefined) ? root.theme.isDark : Theme.isDark
 
     readonly property bool micMuted: {
         if (!Pipewire.defaultAudioSource || !Pipewire.defaultAudioSource.audio) return false;
@@ -228,25 +229,6 @@ ColumnLayout {
         onExited: gameModeStatusProc.running = true
     }
 
-    // Dark / Light Mode Processes
-    Process {
-        id: darkStatusProc
-        command: ["sh", "-c", "cat $HOME/.cache/.theme_mode 2>/dev/null || echo 'Dark'"]
-        running: false
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.isDarkMode = (text.trim() !== "Light");
-            }
-        }
-    }
-
-    Process {
-        id: darkToggleProc
-        command: ["sh", "-c", "$HOME/.config/hypr/scripts/DarkLight.sh"]
-        running: false
-        onExited: darkStatusProc.running = true
-    }
-
     // Clipboard Process
     Process {
         id: clipProc
@@ -349,7 +331,11 @@ ColumnLayout {
     }
 
     function toggleDarkMode() {
-        darkToggleProc.running = true;
+        if (root.theme && typeof root.theme.toggleDarkLight === "function") {
+            root.theme.toggleDarkLight();
+        } else {
+            Theme.toggleDarkLight();
+        }
     }
 
     function openClipboard() {
@@ -380,7 +366,6 @@ ColumnLayout {
         airplaneStatusProc.running = true;
         nlStatusProc.running = true;
         gameModeStatusProc.running = true;
-        darkStatusProc.running = true;
     }
 
     Component.onCompleted: refresh()

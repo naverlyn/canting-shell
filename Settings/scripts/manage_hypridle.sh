@@ -9,6 +9,14 @@ CONF="${HYPRIDLE_CONF:-$HOME/.config/hypr/hypridle.conf}"
 ACTION="${1:-get}"
 ARG="${2:-}"
 
+start_hypridle() {
+    if command -v hyprctl >/dev/null 2>&1 && hyprctl eval 'hl.exec_cmd("hypridle")' >/dev/null 2>&1; then
+        return 0
+    fi
+    nohup hypridle >/dev/null 2>&1 &
+    disown || true
+}
+
 get_timeout() {
     if [[ ! -f "$CONF" ]]; then
         printf '{"timeout_seconds": 600, "timeout_minutes": 10, "error": "file_not_found"}\n'
@@ -37,6 +45,9 @@ get_timeout() {
     fi
 
     local mins=$(( sec / 60 ))
+    if ! pgrep -x hypridle >/dev/null 2>&1; then
+        start_hypridle
+    fi
     printf '{"timeout_seconds": %d, "timeout_minutes": %d}\n' "$sec" "$mins"
 }
 
@@ -60,28 +71,38 @@ set_timeout() {
         warn_sec=$(( new_sec - 10 ))
         (( warn_sec < 5 )) && warn_sec=5
     fi
+    local dpms_sec=$(( new_sec + 120 ))
+    local suspend_sec=$(( new_sec + 600 ))
 
     local tmp
     tmp=$(mktemp)
 
-    awk -v new_sec="$new_sec" -v warn_sec="$warn_sec" '
+    awk -v new_sec="$new_sec" -v warn_sec="$warn_sec" -v dpms_sec="$dpms_sec" -v suspend_sec="$suspend_sec" '
         /^[[:space:]]*listener[[:space:]]*\{/ {
             in_listener=1
             block=$0 "\n"
             is_warn=0
             is_lock=0
+            is_dpms=0
+            is_suspend=0
             next
         }
         in_listener {
             block = block $0 "\n"
             if (/You are idle!/) is_warn=1
             if (/loginctl[[:space:]]+lock-session/) is_lock=1
+            if (/dpms/) is_dpms=1
+            if (/systemctl[[:space:]]+suspend/) is_suspend=1
             if (/^[[:space:]]*\}/) {
                 in_listener=0
                 if (is_warn) {
                     gsub(/timeout[[:space:]]*=[[:space:]]*[0-9]+/, "timeout = " warn_sec, block)
                 } else if (is_lock) {
                     gsub(/timeout[[:space:]]*=[[:space:]]*[0-9]+/, "timeout = " new_sec, block)
+                } else if (is_dpms) {
+                    gsub(/timeout[[:space:]]*=[[:space:]]*[0-9]+/, "timeout = " dpms_sec, block)
+                } else if (is_suspend) {
+                    gsub(/timeout[[:space:]]*=[[:space:]]*[0-9]+/, "timeout = " suspend_sec, block)
                 }
                 printf "%s", block
                 next
@@ -94,13 +115,10 @@ set_timeout() {
     cat "$tmp" > "$CONF"
     rm -f "$tmp"
 
-    # Restart hypridle if currently running
-    if pgrep -x hypridle >/dev/null 2>&1; then
-        pkill -x hypridle || true
-        sleep 0.1
-        hypridle >/dev/null 2>&1 &
-        disown || true
-    fi
+    # Start or restart hypridle so new timeouts take effect immediately
+    pkill -x hypridle 2>/dev/null || true
+    sleep 0.1
+    start_hypridle
 
     printf '{"success": true, "timeout_seconds": %d, "timeout_minutes": %d}\n' "$new_sec" "$mins"
 }

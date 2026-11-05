@@ -102,6 +102,7 @@ Singleton {
   function persistToFile(edits) {
     const toSave = (edits && edits.length > 0) ? edits : root._lastEdits;
     if (!toSave || toSave.length === 0) return;
+    if (writeProc.running) return;
     const isLua  = root.configFormat === "lua";
     const content = isLua ? buildFileContentLua(toSave) : buildFileContent(toSave);
     const hyprConf = isLua ? "$HOME/.config/hypr/hyprland.lua" : "$HOME/.config/hypr/hyprland.conf";
@@ -110,7 +111,7 @@ Singleton {
       ? `TARGET="$HOME/.config/hypr/monitors.lua"; MOD="monitors"; ` +
         `if [ -f "$HOME/.config/hypr/Configs/Monitors.lua" ]; then TARGET="$HOME/.config/hypr/Configs/Monitors.lua"; MOD="Configs.Monitors"; fi; ` +
         `printf '%s' "$1" > "$TARGET" && ` +
-        `if [ -f "${hyprConf}" ] && ! grep -Eq 'require\\([[:space:]]*["\x27].*[Mm]onitors' "${hyprConf}"; then printf '\\nrequire("%s")\\n' "$MOD" >> "${hyprConf}"; fi`
+        `if [ -f "${hyprConf}" ] && ! grep -Eq 'require.*[Mm]onitors' "${hyprConf}"; then printf '\\nrequire("%s")\\n' "$MOD" >> "${hyprConf}"; fi`
       : `TARGET="$HOME/.config/hypr/monitors.conf"; ` +
         `if [ -f "$HOME/.config/hypr/UserConfigs/Monitors.conf" ]; then TARGET="$HOME/.config/hypr/UserConfigs/Monitors.conf"; fi; ` +
         `printf '%s' "$1" > "$TARGET" && ` +
@@ -168,7 +169,7 @@ Singleton {
     command: ["sh", "-c",
       "if [ -f \"$HOME/.config/hypr/hyprland.lua\" ]; then " +
         "echo lua; " +
-        "grep -Eq 'require\\([[:space:]]*[\"\\x27].*[Mm]onitors' \"$HOME/.config/hypr/hyprland.lua\" && echo yes || echo no; " +
+        "grep -Eq 'require.*[Mm]onitors' \"$HOME/.config/hypr/hyprland.lua\" && echo yes || echo no; " +
         "if [ -f \"$HOME/.config/hypr/Configs/Monitors.lua\" ]; then echo \"~/.config/hypr/Configs/Monitors.lua\"; else echo \"~/.config/hypr/monitors.lua\"; fi; " +
       "else " +
         "echo conf; " +

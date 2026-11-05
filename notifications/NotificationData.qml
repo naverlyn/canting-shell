@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
+import "SocialApps.js" as SocialApps
 
 QtObject {
     id: notificationData
@@ -33,40 +34,13 @@ QtObject {
         return "Now";
     }
 
-    function _checkIsWhatsApp(n) {
-        var sBody = ((n && n.body) || notificationData.body || "").toLowerCase();
-        var sApp = ((n && n.appName) || notificationData.appName || "").toLowerCase();
-        var sSum = ((n && n.summary) || notificationData.summary || "").toLowerCase();
-        var sIcon = ((n && n.appIcon) || notificationData.appIcon || "").toLowerCase();
+    readonly property var socialApp: SocialApps.detectApp(appName, appIcon, summary, body)
+    readonly property bool isSocialApp: socialApp !== null
+    readonly property bool isWhatsApp: socialApp !== null && socialApp.id === "whatsapp"
 
-        return sBody.indexOf("web.whatsapp.com") !== -1 ||
-               sBody.indexOf("whatsapp.com") !== -1 ||
-               sSum.indexOf("whatsapp") !== -1 ||
-               sApp.indexOf("whatsapp") !== -1 ||
-               sIcon.indexOf("whatsapp") !== -1;
-    }
+    readonly property string displayAppName: SocialApps.formatAppName(appName, socialApp)
 
-    readonly property bool isWhatsApp: _checkIsWhatsApp(notification)
-
-    readonly property string displayAppName: {
-        if (isWhatsApp) {
-            if (!appName || appName === "Notification" || appName.toLowerCase() === "brave" || appName.toLowerCase() === "chromium") {
-                return "WhatsApp Web";
-            }
-        }
-        return appName || "Notification";
-    }
-
-    readonly property string displayBody: {
-        if (!body) return "";
-        if (isWhatsApp) {
-            var clean = body.replace(/^https?:\/\/web\.whatsapp\.com\/?\s*\n*/i, "");
-            clean = clean.replace(/^web\.whatsapp\.com\/?\s*\n*/i, "");
-            clean = clean.trim();
-            if (clean.length > 0) return clean;
-        }
-        return body;
-    }
+    readonly property string displayBody: SocialApps.cleanBody(body, socialApp)
 
     readonly property Connections _conn: Connections {
         target: notificationData.notification
@@ -146,7 +120,8 @@ QtObject {
             res.push({ identifier: a.identifier, text: text, isReply: false, customCmd: a.customCmd || "" });
         }
 
-        if (_checkIsWhatsApp(notif) && !hasExplicitReply) {
+        var detected = SocialApps.detectApp(notif.appName, notif.appIcon, notif.summary, notif.body);
+        if (detected && !hasExplicitReply) {
             res.unshift({ identifier: "reply", text: "Reply", isReply: true, customCmd: "" });
         }
 
@@ -174,18 +149,15 @@ QtObject {
     }
 
     function focusAppWindow(): void {
+        if (socialApp) {
+            var cmd = SocialApps.getFocusCommand(socialApp);
+            if (cmd) {
+                Quickshell.execDetached(["sh", "-c", cmd]);
+                return;
+            }
+        }
         var app = (appName || "").toLowerCase();
-        var b = (body || "").toLowerCase();
-        if (isWhatsApp || b.indexOf("web.whatsapp.com") !== -1 || b.indexOf("whatsapp.com") !== -1 || app.indexOf("brave") !== -1) {
-            Quickshell.execDetached([
-                "sh", "-c",
-                'if ! hyprctl dispatch focuswindow "title:^(.*WhatsApp.*)$" 2>&1 | grep -q "ok"; then if ! hyprctl dispatch focuswindow "class:^(brave-browser|Brave-browser)$" 2>&1 | grep -q "ok"; then brave "https://web.whatsapp.com" >/dev/null 2>&1 & fi; fi'
-            ]);
-        } else if (app.indexOf("discord") !== -1 || app.indexOf("vesktop") !== -1) {
-            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:^(vesktop|discord)$"]);
-        } else if (app.indexOf("telegram") !== -1) {
-            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:^(telegramdesktop|org.telegram.desktop)$"]);
-        } else if (app.indexOf("spotify") !== -1) {
+        if (app.indexOf("spotify") !== -1) {
             Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:^(spotify)$"]);
         } else if (app !== "" && app !== "notification") {
             Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:^(" + app + ")$"]);
@@ -211,7 +183,7 @@ QtObject {
                 }
             }
         }
-        if (isWhatsApp) {
+        if (isSocialApp) {
             invokeAction("reply");
             return;
         }

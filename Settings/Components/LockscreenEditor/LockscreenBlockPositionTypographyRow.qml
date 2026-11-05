@@ -33,8 +33,8 @@ ColumnLayout {
                 Layout.fillWidth: true
                 height: 30
                 radius: 6
-                color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                border.color: hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                color: hostCard.theme.bgBase
+                border.color: hostCard.theme.bgBorder
                 border.width: 1
 
                 readonly property var opts: ["left", "center", "right"]
@@ -48,7 +48,7 @@ ColumnLayout {
                     x: 3 + halignTrack.activeIdx * (halignTrack.cellWidth + 2)
                     radius: 4
                     color: hostCard.theme.bgSelected
-                    border.color: hostCard.theme.accentPrimary ?? "#7aa2f7"
+                    border.color: hostCard.theme.accentPrimary
                     border.width: 1
                     Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 }
@@ -66,7 +66,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             radius: 4
-                            color: !isSel && haHover.hovered ? (hostCard.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                            color: !isSel && haHover.hovered ? hostCard.theme.bgHover : "transparent"
                             Behavior on color { ColorAnimation { duration: 140 } }
                             HoverHandler { id: haHover }
 
@@ -76,7 +76,7 @@ ColumnLayout {
                                 font.family: hostCard.font
                                 font.pixelSize: 10
                                 font.bold: isSel
-                                color: isSel ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : hostCard.theme.textSecondary
+                                color: isSel ? hostCard.theme.accentPrimary : hostCard.theme.textSecondary
                                 Behavior on color { ColorAnimation { duration: 140 } }
                             }
 
@@ -109,8 +109,8 @@ ColumnLayout {
                 Layout.fillWidth: true
                 height: 30
                 radius: 6
-                color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                border.color: hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                color: hostCard.theme.bgBase
+                border.color: hostCard.theme.bgBorder
                 border.width: 1
 
                 readonly property var opts: ["top", "center", "bottom"]
@@ -124,7 +124,7 @@ ColumnLayout {
                     x: 3 + valignTrack.activeIdx * (valignTrack.cellWidth + 2)
                     radius: 4
                     color: hostCard.theme.bgSelected
-                    border.color: hostCard.theme.accentPrimary ?? "#7aa2f7"
+                    border.color: hostCard.theme.accentPrimary
                     border.width: 1
                     Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
                 }
@@ -142,7 +142,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             radius: 4
-                            color: !isSel && vaHover.hovered ? (hostCard.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                            color: !isSel && vaHover.hovered ? hostCard.theme.bgHover : "transparent"
                             Behavior on color { ColorAnimation { duration: 140 } }
                             HoverHandler { id: vaHover }
 
@@ -152,7 +152,7 @@ ColumnLayout {
                                 font.family: hostCard.font
                                 font.pixelSize: 10
                                 font.bold: isSel
-                                color: isSel ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : hostCard.theme.textSecondary
+                                color: isSel ? hostCard.theme.accentPrimary : hostCard.theme.textSecondary
                                 Behavior on color { ColorAnimation { duration: 140 } }
                             }
 
@@ -186,8 +186,8 @@ ColumnLayout {
                     Layout.fillWidth: true
                     height: 30
                     radius: 6
-                    color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                    border.color: posXInput.activeFocus ? hostCard.theme.accentPrimary : (hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                    color: hostCard.theme.bgBase
+                    border.color: posXInput.activeFocus ? hostCard.theme.accentPrimary : hostCard.theme.bgBorder
                     border.width: 1
 
                     TextInput {
@@ -211,8 +211,8 @@ ColumnLayout {
                     Layout.fillWidth: true
                     height: 30
                     radius: 6
-                    color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                    border.color: posYInput.activeFocus ? hostCard.theme.accentPrimary : (hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                    color: hostCard.theme.bgBase
+                    border.color: posYInput.activeFocus ? hostCard.theme.accentPrimary : hostCard.theme.bgBorder
                     border.width: 1
 
                     TextInput {
@@ -251,8 +251,8 @@ ColumnLayout {
                 Layout.fillWidth: true
                 height: 30
                 radius: 6
-                color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                border.color: fsizeInput.activeFocus ? hostCard.theme.accentPrimary : (hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                color: hostCard.theme.bgBase
+                border.color: fsizeInput.activeFocus ? hostCard.theme.accentPrimary : hostCard.theme.bgBorder
                 border.width: 1
 
                 TextInput {
@@ -325,8 +325,8 @@ ColumnLayout {
                 width: 240
                 height: 28
                 radius: 6
-                color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                border.color: fontFamInput.activeFocus ? hostCard.theme.accentPrimary : (hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                color: hostCard.theme.bgBase
+                border.color: fontFamInput.activeFocus ? hostCard.theme.accentPrimary : hostCard.theme.bgBorder
                 border.width: fontFamInput.activeFocus ? 1.5 : 1
 
                 TextInput {
@@ -355,8 +355,8 @@ ColumnLayout {
             Layout.fillWidth: true
             height: 30
             radius: 7
-            color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-            border.color: hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            color: hostCard.theme.bgBase
+            border.color: hostCard.theme.bgBorder
             border.width: 1
 
             readonly property var presets: [
@@ -387,7 +387,7 @@ ColumnLayout {
                 x: 3 + Math.max(0, fontPresetTrack.activeIdx) * (fontPresetTrack.cellWidth + 3)
                 radius: 5
                 color: hostCard.theme.bgSelected
-                border.color: hostCard.theme.accentPrimary ?? "#7aa2f7"
+                border.color: hostCard.theme.accentPrimary
                 border.width: 1
                 Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             }
@@ -406,7 +406,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         radius: 5
-                        color: !isSel && fpHover.hovered ? (hostCard.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                        color: !isSel && fpHover.hovered ? hostCard.theme.bgHover : "transparent"
                         Behavior on color { ColorAnimation { duration: 140 } }
                         HoverHandler { id: fpHover }
 
@@ -416,7 +416,7 @@ ColumnLayout {
                             font.family: modelData.previewFont
                             font.pixelSize: 10
                             font.bold: isSel
-                            color: isSel ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : hostCard.theme.textPrimary
+                            color: isSel ? hostCard.theme.accentPrimary : hostCard.theme.textPrimary
                             opacity: isSel || fpHover.hovered ? 1.0 : 0.78
                             elide: Text.ElideRight
                         }

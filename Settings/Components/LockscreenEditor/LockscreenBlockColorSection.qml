@@ -47,8 +47,8 @@ ColumnLayout {
             width: 140
             height: 28
             radius: 6
-            color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-            border.color: hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            color: hostCard.theme.bgBase
+            border.color: hostCard.theme.bgBorder
             border.width: 1
 
             TextInput {
@@ -77,14 +77,14 @@ ColumnLayout {
 
         Repeater {
             model: [
-                { name: "Primary", val: "$accent", color: String(hostCard.theme.accentPrimary ?? "#7aa2f7") },
-                { name: "Blue / Cyan", val: "$color12", color: String(hostCard.theme.accentCyan ?? "#89b4fa") },
-                { name: "Green", val: "$color14", color: String(hostCard.theme.accentGreen ?? "#a6e3a1") },
-                { name: "Orange", val: "$color11", color: String(hostCard.theme.accentOrange ?? "#fab387") },
-                { name: "Red", val: "$color9", color: String(hostCard.theme.accentRed ?? "#f38ba8") },
-                { name: "Text", val: "$text", color: String(hostCard.theme.textPrimary ?? "#cdd6f4") },
-                { name: "Secondary", val: "$color10", color: String(hostCard.theme.textSecondary ?? "#bac2de") },
-                { name: "Muted", val: "$color8", color: String(hostCard.theme.textMuted ?? "#a6adc8") }
+                { name: "Primary", val: "$accent", color: hostCard.theme.accentPrimary },
+                { name: "Blue / Cyan", val: "$color12", color: hostCard.theme.accentCyan },
+                { name: "Green", val: "$color14", color: hostCard.theme.accentGreen },
+                { name: "Orange", val: "$color11", color: hostCard.theme.accentOrange },
+                { name: "Red", val: "$color9", color: hostCard.theme.accentRed },
+                { name: "Text", val: "$text", color: hostCard.theme.textPrimary },
+                { name: "Secondary", val: "$color10", color: hostCard.theme.textSecondary },
+                { name: "Muted", val: "$color8", color: hostCard.theme.textMuted }
             ]
 
             Rectangle {
@@ -92,8 +92,8 @@ ColumnLayout {
                 implicitWidth: chipRow.implicitWidth + 14
                 height: 24
                 radius: 12
-                color: isSelected ? Qt.rgba(hostCard.theme.accentPrimary.r, hostCard.theme.accentPrimary.g, hostCard.theme.accentPrimary.b, 0.2) : (chipHover.hovered ? (hostCard.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)))
-                border.color: isSelected ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : Qt.rgba(1, 1, 1, 0.1)
+                color: isSelected ? Qt.rgba(hostCard.theme.accentPrimary.r, hostCard.theme.accentPrimary.g, hostCard.theme.accentPrimary.b, 0.2) : (chipHover.hovered ? hostCard.theme.bgHover : hostCard.theme.bgBase)
+                border.color: isSelected ? hostCard.theme.accentPrimary : hostCard.theme.bgBorder
                 border.width: isSelected ? 1.5 : 1
 
                 HoverHandler { id: chipHover }
@@ -117,7 +117,7 @@ ColumnLayout {
                         font.family: hostCard.font
                         font.pixelSize: 10
                         font.bold: isSelected
-                        color: isSelected ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.textSecondary ?? "#a6adc8")
+                        color: isSelected ? hostCard.theme.accentPrimary : hostCard.theme.textSecondary
                     }
                 }
 

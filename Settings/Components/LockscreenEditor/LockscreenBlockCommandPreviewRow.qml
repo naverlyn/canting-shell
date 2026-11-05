@@ -17,8 +17,8 @@ RowLayout {
         Layout.minimumWidth: 100
         height: 30
         radius: 6
-        color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3)
-        border.color: hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        color: hostCard.theme.bgBase
+        border.color: hostCard.theme.bgBorder
         border.width: 1
 
         TextInput {
@@ -32,7 +32,7 @@ RowLayout {
             text: (hostCard.blockData && hostCard.blockData.raw_text) ? hostCard.blockData.raw_text : hostCard.editRawText
             font.family: hostCard.font
             font.pixelSize: 11
-            color: hostCard.editEnabled ? (hostCard.theme.textSecondary ?? "#9aa5ce") : (hostCard.theme.textMuted ?? "#666666")
+            color: hostCard.editEnabled ? hostCard.theme.textSecondary : hostCard.theme.textMuted
             selectByMouse: true
             onEditingFinished: {
                 if (hostCard.editIsCmd) {
@@ -62,8 +62,8 @@ RowLayout {
         implicitWidth: runSummaryText.implicitWidth + 20
         height: 30
         radius: 7
-        color: runSummaryHover.hovered ? (hostCard.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-        border.color: runSummaryHover.hovered ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+        color: runSummaryHover.hovered ? hostCard.theme.bgHover : hostCard.theme.bgBase
+        border.color: runSummaryHover.hovered ? hostCard.theme.accentPrimary : hostCard.theme.bgBorder
         border.width: 1
         scale: runSummaryMouse.pressed ? 0.96 : 1.0
 
@@ -80,7 +80,7 @@ RowLayout {
             font.family: hostCard.font
             font.pixelSize: 10
             font.bold: true
-            color: runSummaryHover.hovered ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.textPrimary ?? "#ffffff")
+            color: runSummaryHover.hovered ? hostCard.theme.accentPrimary : hostCard.theme.textPrimary
             Behavior on color { ColorAnimation { duration: 140 } }
         }
 

@@ -1225,7 +1225,9 @@ cmd_restore() {
 }
 
 cmd_test() {
-    if pidof hyprlock >/dev/null 2>&1; then
+    if "$HOME/.config/quickshell/Lockscreen/scripts/lock.sh" >/dev/null 2>&1; then
+        echo '{"status":"launched"}'
+    elif pidof hyprlock >/dev/null 2>&1; then
         echo '{"status":"already_running"}'
     else
         hyprlock >/dev/null 2>&1 &

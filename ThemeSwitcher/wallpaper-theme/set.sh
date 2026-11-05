@@ -24,7 +24,12 @@ img=${1:-}
 dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 tool=${WALLPAPER_THEME_TOOL:-auto}
 
-run_matugen() { matugen image "$img" -c "$dir/matugen/config.toml" -m dark --prefer saturation -q; }
+mode_flag="dark"
+if [ -f "$HOME/.cache/.theme_mode" ] && [ "$(cat "$HOME/.cache/.theme_mode" 2>/dev/null)" = "Light" ]; then
+  mode_flag="light"
+fi
+
+run_matugen() { matugen image "$img" -c "$dir/matugen/config.toml" -m "$mode_flag" --prefer saturation -q; }
 run_wallust() { wallust run "$img" -d "$dir/wallust" -s -q; }
 
 case "$tool" in

@@ -1,0 +1,14 @@
+{
+  "spotlightWidth": 540,
+  "spotlightHeight": 480,
+  "defaultMode": "apps",
+  "sortMode": "frecency",
+  "matchGenericName": true,
+  "matchKeywords": true,
+  "matchCategories": true,
+  "clearSearchOnClose": true,
+  "gridColumns": 4,
+  "gridCellSize": 112,
+  "hiddenApps": [],
+  "favoriteApps": []
+}

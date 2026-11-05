@@ -93,11 +93,52 @@ Singleton {
     root.activeTopMenuIndex = -1;
   }
 
+  function dispatchHypr(cmd) {
+    if (!cmd) return;
+    const parts = cmd.trim().split(/\s+/);
+    const d = parts[0];
+    const a = parts.slice(1).join(" ");
+    
+    let luaCall = "";
+    if (d === "exec") {
+      luaCall = 'hl.dsp.exec_cmd("' + a.replace(/"/g, '\\"') + '")';
+    } else if (d === "killactive" || d === "closewindow") {
+      luaCall = 'hl.dsp.window.close()';
+    } else if (d === "togglefloating") {
+      luaCall = 'hl.dsp.window.float({ action = "toggle" })';
+    } else if (d === "fullscreen") {
+      luaCall = 'hl.dsp.window.fullscreen({ action = "toggle" })';
+    } else if (d === "pseudo") {
+      luaCall = 'hl.dsp.window.pseudo()';
+    } else if (d === "togglesplit") {
+      luaCall = 'hl.dsp.layout("togglesplit")';
+    } else if (d === "togglespecialworkspace") {
+      luaCall = 'hl.dsp.workspace.toggle_special("' + (a || "special") + '")';
+    } else if (d === "movetoworkspace") {
+      luaCall = 'hl.dsp.window.move({ workspace = ' + (isNaN(Number(a)) ? ('"' + a + '"') : a) + ' })';
+    } else if (d === "workspace") {
+      luaCall = 'hl.dsp.focus({ workspace = ' + (isNaN(Number(a)) ? ('"' + a + '"') : a) + ' })';
+    } else if (d === "centerwindow") {
+      luaCall = 'hl.dsp.window.center()';
+    } else if (d === "pin") {
+      luaCall = 'hl.dsp.window.pin()';
+    }
+
+    if (luaCall) {
+      try {
+        Hyprland.dispatch(luaCall);
+        return;
+      } catch (eLua) {}
+    }
+
+    Hyprland.dispatch(cmd);
+  }
+
   function triggerAction(item) {
     if (!item) return;
     if (item.hypr && item.hypr !== "") {
       try {
-        Hyprland.dispatch(item.hypr);
+        root.dispatchHypr(item.hypr);
       } catch (e) {
         console.error("Hyprland.dispatch failed:", e);
       }

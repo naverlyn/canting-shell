@@ -14,10 +14,10 @@ Scope {
     property var theme: Theme
     property string font: "Lato Nerd Font"
     
-    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About, 12: Lock Screen, 13: Animations, 14: Hyprland Settings, 15: Wallpaper, 16: OSD, 17: Control Center, 18: Backup & Restore
+    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About, 12: Lock Screen, 13: Animations, 14: Hyprland Settings, 15: Wallpaper, 16: OSD, 17: Control Center, 18: Backup & Restore, 19: App Launcher, 20: Autostart, 21: Clipboard
     property int currentTab: 0
-    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About", "Lock Screen", "Animations", "Hyprland Settings", "Wallpaper", "On-Screen Display", "Control Center", "Backup & Restore"]
-    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", "", "󰌾", "󰑈", "", "󰸉", "󰍹", "󰕮", "󰁯"]
+    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About", "Lock Screen", "Animations", "Hyprland Settings", "Wallpaper", "On-Screen Display", "Control Center", "Backup & Restore", "App Launcher", "Autostart", "Clipboard"]
+    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", "", "󰌾", "󰑈", "", "󰸉", "󰍹", "󰕮", "󰁯", "󰀻", "󰐊", "󰅌"]
 
     property var sections: [
         {
@@ -43,13 +43,16 @@ Scope {
             items: [
                 { id: "hyprland", name: "Hyprland Settings", icon: "", pageIndex: 14 },
                 { id: "animations", name: "Animations", icon: "󰑈", pageIndex: 13 },
-                { id: "hyprlock", name: "Lock Screen", icon: "󰌾", pageIndex: 12 }
+                { id: "autostart", name: "Autostart", icon: "󰐊", pageIndex: 20 }
             ]
         },
         {
             category: "Quickshell",
             items: [
+                { id: "lockscreen", name: "Lock Screen", icon: "󰌾", pageIndex: 12 },
                 { id: "bar", name: "Bar Settings", icon: "󰮲", pageIndex: 10 },
+                { id: "applauncher", name: "App Launcher", icon: "󰀻", pageIndex: 19 },
+                { id: "clipboard", name: "Clipboard", icon: "󰅌", pageIndex: 21 },
                 { id: "controlcenter", name: "Control Center", icon: "󰕮", pageIndex: 17 },
                 { id: "appearance", name: "Appearance", icon: "󰏘", pageIndex: 9 },
                 { id: "wallpaper", name: "Wallpaper", icon: "󰸉", pageIndex: 15 },
@@ -148,8 +151,8 @@ Scope {
             onActivated: root.closeSettings()
         }
 
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
         WlrLayershell.namespace: "quickshell-settings"
 
         exclusionMode: ExclusionMode.Ignore
@@ -161,17 +164,16 @@ Scope {
             right: true
         }
 
-        // Overlay backdrop
-        MouseArea {
-            anchors.fill: parent
-            onClicked: root.closeSettings()
+        mask: Region {
+            item: winHitRegion
+        }
 
-            Rectangle {
-                anchors.fill: parent
-                color: root.theme.bgOverlay ?? "#80000000"
-                opacity: root.windowActive ? 1.0 : 0.0
-                Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-            }
+        Item {
+            id: winHitRegion
+            x: Math.max(0, winCard.x - 6)
+            y: Math.max(0, winCard.y - 6)
+            width: winCard.width + 12
+            height: winCard.height + 12
         }
 
         // Floating Draggable & Resizable Window Card
@@ -267,7 +269,7 @@ Scope {
                             text: "󰅖"
                             font.family: root.font
                             font.pixelSize: 12
-                            color: closeMouse.containsMouse ? root.theme.accentRed ?? "#f7768e" : root.theme.textMuted
+                            color: closeMouse.containsMouse ? root.theme.accentRed : root.theme.textMuted
 
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
@@ -379,12 +381,12 @@ Scope {
                         pageComponent: AboutSettings { theme: root.theme; font: root.font }
                     }
 
-                    // 12: Lock Screen (Hyprlock)
+                    // 12: Lock Screen
                     SettingsPageContainer {
                         hostApp: root
                         hostWindow: settingsWindow
                         pageIndex: 12
-                        pageComponent: HyprlockSettings { theme: root.theme; font: root.font }
+                        pageComponent: LockscreenSettings { theme: root.theme; font: root.font }
                     }
 
                     // 13: Animations
@@ -433,6 +435,30 @@ Scope {
                         hostWindow: settingsWindow
                         pageIndex: 18
                         pageComponent: BackupRestoreSettings { theme: root.theme; font: root.font }
+                    }
+
+                    // 19: App Launcher
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 19
+                        pageComponent: AppLauncherSettings { theme: root.theme; font: root.font }
+                    }
+
+                    // 20: Autostart Applications & Daemons
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 20
+                        pageComponent: AutostartSettings { theme: root.theme; font: root.font }
+                    }
+
+                    // 21: Clipboard Manager
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 21
+                        pageComponent: ClipboardSettings { theme: root.theme; font: root.font }
                     }
                 }
             }

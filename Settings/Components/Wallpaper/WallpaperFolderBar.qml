@@ -116,10 +116,10 @@ Rectangle {
             height: 32
             radius: 6
             color: isAdded
-                ? (currRemoveHover.containsMouse ? (root.theme.accentRed ?? "#ef4444") : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.1)))
+                ? (currRemoveHover.containsMouse ? root.theme.accentRed : root.theme.bgSelected)
                 : root.theme.accentPrimary
             border.color: isAdded
-                ? (root.theme.accentGreen ?? root.theme.accentPrimary)
+                ? root.theme.accentGreen
                 : "transparent"
             border.width: 1
             scale: currRemoveHover.containsMouse ? 1.03 : 1.0
@@ -135,8 +135,8 @@ Rectangle {
                     ? (currRemoveHover.containsMouse ? "Remove Folder" : "Added as Source")
                     : "+ Add This Folder"
                 color: parent.isAdded
-                    ? (currRemoveHover.containsMouse ? "#ffffff" : root.theme.textPrimary)
-                    : (root.theme.bgBase ?? "#161313")
+                    ? (currRemoveHover.containsMouse ? root.theme.bgBase : root.theme.textPrimary)
+                    : root.theme.bgBase
                 font.pixelSize: 11
                 font.family: root.font
                 font.bold: true

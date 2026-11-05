@@ -11,7 +11,7 @@ Singleton {
     readonly property string serviceScript: Qt.resolvedUrl("scripts/clip_service.py").toString().replace(/^file:\/\//, "")
 
     property var items: []
-    property int maxItems: 100
+    property int maxItems: ClipboardConfig.maxItems
     property bool loading: false
     property string activeCategory: "all"
     property string searchText: ""
@@ -109,6 +109,7 @@ Singleton {
         root.items = [];
         root.toastMessage = "Clipboard wiped";
         root.wiped();
+        ClipboardConfig.historyWiped();
     }
 
     Process {

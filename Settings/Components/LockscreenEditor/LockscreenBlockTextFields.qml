@@ -23,8 +23,8 @@ ColumnLayout {
         Layout.fillWidth: true
         height: 38
         radius: 6
-        color: hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3)
-        border.color: hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+        color: hostCard.theme.bgBase
+        border.color: hostCard.theme.bgBorder
         border.width: 1
 
         TextInput {

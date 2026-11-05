@@ -19,6 +19,10 @@ Scope {
             root.theme.setWallpaperFromImage(image);
         }
 
+        function toggleDarkLight(): void {
+            root.theme.toggleDarkLight();
+        }
+
         function toggle(): void {
             themePanel.visible = !themePanel.visible;
             if (themePanel.visible) {

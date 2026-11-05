@@ -17,8 +17,8 @@ RowLayout {
         implicitWidth: delText.implicitWidth + 24
         height: 32
         radius: 8
-        color: delHover.hovered ? Qt.rgba(0.97, 0.46, 0.56, 0.18) : (hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-        border.color: delHover.hovered ? (hostCard.theme.accentRed ?? "#f7768e") : (hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+        color: delHover.hovered ? Qt.rgba(hostCard.theme.accentRed.r, hostCard.theme.accentRed.g, hostCard.theme.accentRed.b, 0.18) : hostCard.theme.bgBase
+        border.color: delHover.hovered ? hostCard.theme.accentRed : hostCard.theme.bgBorder
         border.width: 1
         scale: delMouse.pressed ? 0.96 : 1.0
 
@@ -35,7 +35,7 @@ RowLayout {
             font.family: hostCard.font
             font.pixelSize: 11
             font.bold: true
-            color: delHover.hovered ? (hostCard.theme.accentRed ?? "#f7768e") : (hostCard.theme.textPrimary ?? "#ffffff")
+            color: delHover.hovered ? hostCard.theme.accentRed : hostCard.theme.textPrimary
             Behavior on color { ColorAnimation { duration: 140 } }
         }
 
@@ -55,8 +55,8 @@ RowLayout {
         implicitWidth: cancelText.implicitWidth + 22
         height: 32
         radius: 8
-        color: cancelHover.hovered ? (hostCard.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-        border.color: cancelHover.hovered ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+        color: cancelHover.hovered ? hostCard.theme.bgHover : hostCard.theme.bgBase
+        border.color: cancelHover.hovered ? hostCard.theme.accentPrimary : hostCard.theme.bgBorder
         border.width: 1
         scale: cancelMouse.pressed ? 0.96 : 1.0
 
@@ -73,7 +73,7 @@ RowLayout {
             font.family: hostCard.font
             font.pixelSize: 11
             font.bold: true
-            color: cancelHover.hovered ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.textPrimary ?? "#ffffff")
+            color: cancelHover.hovered ? hostCard.theme.accentPrimary : hostCard.theme.textPrimary
             Behavior on color { ColorAnimation { duration: 140 } }
         }
 
@@ -91,7 +91,7 @@ RowLayout {
         implicitWidth: saveText.implicitWidth + 26
         height: 32
         radius: 8
-        color: saveHover.hovered ? Qt.darker(hostCard.theme.accentPrimary ?? "#7aa2f7", 1.1) : (hostCard.theme.accentPrimary ?? "#7aa2f7")
+        color: saveHover.hovered ? Qt.darker(hostCard.theme.accentPrimary, 1.1) : hostCard.theme.accentPrimary
         scale: saveMouse.pressed ? 0.96 : 1.0
 
         Behavior on color { ColorAnimation { duration: 140 } }
@@ -106,7 +106,7 @@ RowLayout {
             font.family: hostCard.font
             font.pixelSize: 11
             font.bold: true
-            color: "#ffffff"
+            color: hostCard.theme.bgBase
         }
 
         MouseArea {

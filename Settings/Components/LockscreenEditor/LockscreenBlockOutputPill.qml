@@ -11,8 +11,8 @@ Rectangle {
     Layout.fillWidth: true
     implicitHeight: testOutRow.implicitHeight + 8
     radius: 6
-    color: Qt.rgba(0, 0, 0, 0.45)
-    border.color: hostCard.theme.accentPrimary ?? "#7aa2f7"
+    color: hostCard.theme.bgOverlay
+    border.color: hostCard.theme.accentPrimary
     border.width: 1
 
     RowLayout {
@@ -30,14 +30,14 @@ Rectangle {
             font.family: hostCard.font
             font.pixelSize: 11
             font.bold: true
-            color: hostCard.theme.accentPrimary ?? "#7aa2f7"
+            color: hostCard.theme.accentPrimary
         }
 
         Text {
             text: hostCard.testOutput
             font.family: hostCard.font
             font.pixelSize: 11
-            color: hostCard.theme.textPrimary ?? "#ffffff"
+            color: hostCard.theme.textPrimary
             elide: Text.ElideRight
             Layout.fillWidth: true
         }
@@ -53,7 +53,7 @@ Rectangle {
                 text: "x"
                 font.family: hostCard.font
                 font.pixelSize: 11
-                color: hostCard.theme.textMuted ?? "#888888"
+                color: hostCard.theme.textMuted
             }
             MouseArea {
                 anchors.fill: parent

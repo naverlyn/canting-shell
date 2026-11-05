@@ -221,9 +221,38 @@ def build_candidate(hx_norm, w):
     }
 
 
-def harmonize(json_path, img_path=None):
+def read_theme_mode(explicit_mode=None):
+    if explicit_mode and explicit_mode.lower() in ("dark", "light"):
+        return explicit_mode.lower()
+    mode_file = os.path.expanduser("~/.cache/.theme_mode")
+    if os.path.exists(mode_file):
+        try:
+            with open(mode_file, "r", encoding="utf-8") as f:
+                val = f.read().strip().lower()
+                if val == "light":
+                    return "light"
+        except Exception:
+            pass
+    return "dark"
+
+
+def harmonize(json_path, img_path=None, explicit_mode=None):
+    mode = read_theme_mode(explicit_mode)
+    is_light = (mode == "light")
+
+    if not img_path and explicit_mode:
+        wp_conf = os.path.expanduser("~/.config/quickshell/wallpaper.conf")
+        if os.path.exists(wp_conf):
+            try:
+                with open(wp_conf, "r", encoding="utf-8") as f:
+                    cand = f.read().strip()
+                    if cand and os.path.isfile(cand):
+                        img_path = cand
+            except Exception:
+                pass
+
     raw_staging = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".raw-palette.json")
-    source_path = raw_staging if (img_path and os.path.exists(raw_staging)) else json_path
+    source_path = raw_staging if ((img_path or explicit_mode) and os.path.exists(raw_staging)) else json_path
 
     d = {}
     if os.path.exists(source_path):
@@ -237,8 +266,8 @@ def harmonize(json_path, img_path=None):
     elif not img_path:
         return
 
-    # If already harmonized and no new image was passed, just sync the hyprlock palette directly
-    if not img_path and "color0" not in d and "accentPrimary" in d and "bgSurface" in d:
+    # If already harmonized and no new image or explicit mode was passed, just sync the hyprlock palette directly
+    if not img_path and not explicit_mode and "color0" not in d and "accentPrimary" in d and "bgSurface" in d:
         write_hyprlock_palette(d)
         return
 
@@ -276,12 +305,16 @@ def harmonize(json_path, img_path=None):
     if chromatic:
         best_prim = max(chromatic, key=lambda c: c["total_score"])
         primary_h = best_prim["h"]
-        target_l = max(0.64, min(0.72, best_prim["l"]))
-        target_s = min(0.68, max(0.55, best_prim["s"] * 1.4))
+        if is_light:
+            target_l = max(0.42, min(0.50, best_prim["l"]))
+            target_s = min(0.75, max(0.58, best_prim["s"] * 1.4))
+        else:
+            target_l = max(0.64, min(0.72, best_prim["l"]))
+            target_s = min(0.68, max(0.55, best_prim["s"] * 1.4))
         accent_primary = clamp_color(primary_h, target_l, target_s)
     else:
         primary_h = 220.0 / 360.0
-        accent_primary = "#7aa2f7"
+        accent_primary = "#2e7de9" if is_light else "#7aa2f7"
 
     prim_deg = (primary_h * 360.0) % 360.0
 
@@ -295,6 +328,8 @@ def harmonize(json_path, img_path=None):
 
     # 2. Semantic Color Matching / Synthesis
     def find_or_synth(h_min, h_max, fallback_h, target_l=0.68, target_s=0.55, avoid_h_deg=None):
+        eff_l = (target_l - 0.22) if is_light else target_l
+        eff_s = min(0.75, target_s + 0.08) if is_light else target_s
         matches = []
         for c in semantic_candidates:
             h_deg = c["h_deg"]
@@ -309,11 +344,15 @@ def harmonize(json_path, img_path=None):
 
         if matches:
             best = max(matches, key=lambda x: x["chroma"] * (x["w"] ** 0.35))
-            adj_s = min(0.65, max(0.48, best["s"] * 1.25))
-            adj_l = max(0.64, min(0.72, best["l"]))
+            if is_light:
+                adj_s = min(0.72, max(0.55, best["s"] * 1.3))
+                adj_l = max(0.40, min(0.50, best["l"]))
+            else:
+                adj_s = min(0.65, max(0.48, best["s"] * 1.25))
+                adj_l = max(0.64, min(0.72, best["l"]))
             return clamp_color(best["h"], adj_l, adj_s)
         else:
-            return clamp_color(fallback_h / 360.0, target_l, target_s)
+            return clamp_color(fallback_h / 360.0, eff_l, eff_s)
 
     # True semantic colors (kept distinct from Primary so swatches don't duplicate):
     cyan_fallback = 192.0 if hue_dist_deg(prim_deg, 192.0) >= 14.0 else 212.0
@@ -322,16 +361,27 @@ def harmonize(json_path, img_path=None):
     accent_orange = find_or_synth(25, 60, 35, target_l=0.68, target_s=0.60, avoid_h_deg=prim_deg)
     accent_red    = find_or_synth(340, 20, 355, target_l=0.67, target_s=0.62, avoid_h_deg=prim_deg)
 
-    # 3. Clean Dark Surface Hierarchy (subtle undertone derived from wallpaper primary hue)
-    bg_base     = clamp_color(primary_h, 0.08, 0.07)
-    bg_surface  = clamp_color(primary_h, 0.13, 0.07)
-    bg_hover    = clamp_color(primary_h, 0.18, 0.08)
-    bg_selected = clamp_color(primary_h, 0.23, 0.09)
-    bg_border   = clamp_color(primary_h, 0.19, 0.05)
+    # 3. Clean Surface Hierarchy (Dark or Light with subtle undertone derived from wallpaper primary hue)
+    if is_light:
+        bg_base     = clamp_color(primary_h, 0.94, 0.18)
+        bg_surface  = clamp_color(primary_h, 0.88, 0.16)
+        bg_hover    = clamp_color(primary_h, 0.83, 0.18)
+        bg_selected = clamp_color(primary_h, 0.78, 0.20)
+        bg_border   = clamp_color(primary_h, 0.74, 0.14)
 
-    text_primary   = clamp_color(primary_h, 0.92, 0.04)
-    text_secondary = clamp_color(primary_h, 0.72, 0.05)
-    text_muted     = clamp_color(primary_h, 0.48, 0.06)
+        text_primary   = clamp_color(primary_h, 0.16, 0.22)
+        text_secondary = clamp_color(primary_h, 0.34, 0.18)
+        text_muted     = clamp_color(primary_h, 0.50, 0.14)
+    else:
+        bg_base     = clamp_color(primary_h, 0.08, 0.07)
+        bg_surface  = clamp_color(primary_h, 0.13, 0.07)
+        bg_hover    = clamp_color(primary_h, 0.18, 0.08)
+        bg_selected = clamp_color(primary_h, 0.23, 0.09)
+        bg_border   = clamp_color(primary_h, 0.19, 0.05)
+
+        text_primary   = clamp_color(primary_h, 0.92, 0.04)
+        text_secondary = clamp_color(primary_h, 0.72, 0.05)
+        text_muted     = clamp_color(primary_h, 0.48, 0.06)
 
     refined = {
         "name": "Wallpaper",
@@ -362,6 +412,23 @@ def harmonize(json_path, img_path=None):
 
 
 if __name__ == "__main__":
-    target = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~/.config/quickshell/ThemeSwitcher/wallpaper-theme.json")
-    img = sys.argv[2] if len(sys.argv) > 2 else None
-    harmonize(target, img)
+    args = sys.argv[1:]
+    explicit_mode = None
+    filtered_args = []
+    i = 0
+    while i < len(args):
+        if args[i] == "--mode" and i + 1 < len(args):
+            explicit_mode = args[i + 1]
+            i += 2
+        elif args[i] in ("--light", "light"):
+            explicit_mode = "light"
+            i += 1
+        elif args[i] in ("--dark", "dark"):
+            explicit_mode = "dark"
+            i += 1
+        else:
+            filtered_args.append(args[i])
+            i += 1
+    target = filtered_args[0] if len(filtered_args) > 0 else os.path.expanduser("~/.config/quickshell/ThemeSwitcher/wallpaper-theme.json")
+    img = filtered_args[1] if len(filtered_args) > 1 else None
+    harmonize(target, img, explicit_mode)

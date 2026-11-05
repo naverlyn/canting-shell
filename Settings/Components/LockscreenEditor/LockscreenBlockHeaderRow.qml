@@ -16,7 +16,7 @@ RowLayout {
         font.family: hostCard.font
         font.pixelSize: 13
         font.bold: true
-        color: hostCard.editEnabled ? (hostCard.theme.textPrimary ?? "#ffffff") : (hostCard.theme.textMuted ?? "#666666")
+        color: hostCard.editEnabled ? hostCard.theme.textPrimary : hostCard.theme.textMuted
         Layout.alignment: Qt.AlignVCenter
     }
 
@@ -48,7 +48,7 @@ RowLayout {
             font.family: hostCard.font
             font.pixelSize: 10
             font.bold: true
-            color: hostCard.editIsCmd ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.textSecondary ?? "#9aa5ce")
+            color: hostCard.editIsCmd ? hostCard.theme.accentPrimary : hostCard.theme.textSecondary
         }
     }
 
@@ -68,7 +68,7 @@ RowLayout {
             text: (hostCard.editFontFamily || "$font") + " • " + hostCard.editFontSize + "pt"
             font.family: hostCard.font
             font.pixelSize: 10
-            color: hostCard.theme.textSecondary ?? "#9aa5ce"
+            color: hostCard.theme.textSecondary
         }
     }
 
@@ -78,8 +78,8 @@ RowLayout {
         height: 20
         implicitWidth: customBadgeText.implicitWidth + 12
         radius: 4
-        color: Qt.rgba(0.9, 0.7, 0.2, 0.15)
-        border.color: Qt.rgba(0.9, 0.7, 0.2, 0.35)
+        color: Qt.rgba(hostCard.theme.accentOrange.r, hostCard.theme.accentOrange.g, hostCard.theme.accentOrange.b, 0.15)
+        border.color: Qt.rgba(hostCard.theme.accentOrange.r, hostCard.theme.accentOrange.g, hostCard.theme.accentOrange.b, 0.35)
         border.width: 1
         Layout.alignment: Qt.AlignVCenter
 
@@ -90,7 +90,7 @@ RowLayout {
             font.family: hostCard.font
             font.pixelSize: 10
             font.bold: true
-            color: "#e0af68"
+            color: hostCard.theme.accentOrange
         }
     }
 
@@ -102,7 +102,7 @@ RowLayout {
         width: 44
         height: 24
         radius: 12
-        color: hostCard.editEnabled ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
+        color: hostCard.editEnabled ? hostCard.theme.accentPrimary : hostCard.theme.bgSelected
         Layout.alignment: Qt.AlignVCenter
 
         Behavior on color { ColorAnimation { duration: 140 } }
@@ -113,7 +113,7 @@ RowLayout {
             radius: 9
             anchors.verticalCenter: parent.verticalCenter
             x: hostCard.editEnabled ? parent.width - width - 3 : 3
-            color: hostCard.editEnabled ? "#ffffff" : (hostCard.theme.textPrimary ?? "#c0caf5")
+            color: hostCard.editEnabled ? hostCard.theme.bgBase : hostCard.theme.textPrimary
 
             Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
             Behavior on color { ColorAnimation { duration: 140 } }
@@ -140,8 +140,8 @@ RowLayout {
         implicitWidth: editBtnText.implicitWidth + 20
         height: 28
         radius: 7
-        color: editHover.hovered ? (hostCard.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (hostCard.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25))
-        border.color: (hostCard.isExpanded || editHover.hovered) ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+        color: editHover.hovered ? hostCard.theme.bgHover : hostCard.theme.bgBase
+        border.color: (hostCard.isExpanded || editHover.hovered) ? hostCard.theme.accentPrimary : hostCard.theme.bgBorder
         border.width: 1
         scale: editMouse.pressed ? 0.96 : 1.0
         Layout.alignment: Qt.AlignVCenter
@@ -159,7 +159,7 @@ RowLayout {
             font.family: hostCard.font
             font.pixelSize: 11
             font.bold: true
-            color: (hostCard.isExpanded || editHover.hovered) ? (hostCard.theme.accentPrimary ?? "#7aa2f7") : (hostCard.theme.textPrimary ?? "#ffffff")
+            color: (hostCard.isExpanded || editHover.hovered) ? hostCard.theme.accentPrimary : hostCard.theme.textPrimary
             Behavior on color { ColorAnimation { duration: 140 } }
         }
 

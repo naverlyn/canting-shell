@@ -17,6 +17,7 @@ import "MonitorManager"
 import "IdleInhibitor"
 import "Settings"
 import "Clipboard"
+import "Lockscreen"
 
 Scope {
   ThemeSwitcher { id: ts }
@@ -30,4 +31,5 @@ Scope {
   OSD { theme: ts.theme }
   MonitorManager { theme: ts.theme }
   CaffeineToggle { theme: ts.theme }
+  Lockscreen { theme: ts.theme }
 }

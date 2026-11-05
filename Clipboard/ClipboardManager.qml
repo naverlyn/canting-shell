@@ -20,8 +20,10 @@ Scope {
         function toggle() {
             clipboardPanel.visible = !clipboardPanel.visible;
             if (clipboardPanel.visible) {
-                ClipboardService.searchText = "";
-                ClipboardService.activeCategory = "all";
+                if (ClipboardConfig.clearSearchOnClose) {
+                    ClipboardService.searchText = "";
+                }
+                ClipboardService.activeCategory = ClipboardConfig.defaultCategory || "all";
                 ClipboardService.refresh();
                 root.selectedIndex = 0;
                 root.confirmWipe = false;
@@ -31,8 +33,10 @@ Scope {
 
         function open() {
             clipboardPanel.visible = true;
-            ClipboardService.searchText = "";
-            ClipboardService.activeCategory = "all";
+            if (ClipboardConfig.clearSearchOnClose) {
+                ClipboardService.searchText = "";
+            }
+            ClipboardService.activeCategory = ClipboardConfig.defaultCategory || "all";
             ClipboardService.refresh();
             root.selectedIndex = 0;
             root.confirmWipe = false;
@@ -84,8 +88,8 @@ Scope {
         Rectangle {
             id: mainCard
             anchors.centerIn: parent
-            width: Math.min(840, parent.width - 40)
-            height: Math.min(640, parent.height - 40)
+            width: Math.min(ClipboardConfig.windowWidth, parent.width - 40)
+            height: Math.min(ClipboardConfig.windowHeight, parent.height - 40)
             radius: 16
             color: root.theme.bgBase
             border.color: root.theme.bgBorder
@@ -324,14 +328,14 @@ Scope {
                                 if (ClipboardService.filteredItems.length > 0 && root.selectedIndex >= 0 && root.selectedIndex < ClipboardService.filteredItems.length) {
                                     const it = ClipboardService.filteredItems[root.selectedIndex];
                                     ClipboardService.copyItem(it.id, it.preview);
-                                    clipboardPanel.visible = false;
+                                    if (ClipboardConfig.closeOnCopy) clipboardPanel.visible = false;
                                 }
                             }
                             Keys.onEnterPressed: {
                                 if (ClipboardService.filteredItems.length > 0 && root.selectedIndex >= 0 && root.selectedIndex < ClipboardService.filteredItems.length) {
                                     const it = ClipboardService.filteredItems[root.selectedIndex];
                                     ClipboardService.copyItem(it.id, it.preview);
-                                    clipboardPanel.visible = false;
+                                    if (ClipboardConfig.closeOnCopy) clipboardPanel.visible = false;
                                 }
                             }
                             Keys.onDeletePressed: {
@@ -675,7 +679,7 @@ Scope {
                                             cursorShape: Qt.PointingHandCursor
                                             onClicked: {
                                                 ClipboardService.copyItem(itemCard.modelData.id, itemCard.modelData.preview);
-                                                clipboardPanel.visible = false;
+                                                if (ClipboardConfig.closeOnCopy) clipboardPanel.visible = false;
                                             }
                                         }
                                     }
@@ -723,7 +727,7 @@ Scope {
                                 onClicked: {
                                     root.selectedIndex = itemCard.index;
                                     ClipboardService.copyItem(itemCard.modelData.id, itemCard.modelData.preview);
-                                    clipboardPanel.visible = false;
+                                    if (ClipboardConfig.closeOnCopy) clipboardPanel.visible = false;
                                 }
                             }
                         }

@@ -18,8 +18,12 @@ Item {
   property real dragMaxX: 100000
   property real dragMaxY: 100000
 
+  property bool isDragging: false
+  property bool isSnapped: false
+
   signal clicked(int idx)
   signal dragStarted()
+  signal dragMoved(int idx, real canvasX, real canvasY)
   signal dragEnded(int idx, real canvasX, real canvasY)
   signal dragCanceled()
 
@@ -33,14 +37,17 @@ Item {
     color: root.selected
       ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.15)
       : root.theme.bgBase
-    border.color: root.selected
-                  ? root.theme.accentPrimary
-                  : (root._isMirror && !root.monitor.disabled
-                     ? root.theme.accentCyan
-                     : root.theme.bgBorder)
-    border.width: root.selected ? 2 : 1
+    border.color: root.isDragging
+                  ? (root.isSnapped ? (root.theme.accentCyan ?? "#7dcfff") : (root.theme.accentPrimary ?? "#7aa2f7"))
+                  : (root.selected
+                     ? root.theme.accentPrimary
+                     : (root._isMirror && !root.monitor.disabled
+                        ? root.theme.accentCyan
+                        : root.theme.bgBorder))
+    border.width: (root.selected || root.isDragging) ? 2 : 1
     opacity: root.monitor.disabled ? 0.45 : 1.0
-    scale: (dragArea.drag.active && !root._inStrip) ? 1.02 : (dragArea.containsMouse ? 1.01 : 1.0)
+    scale: (root.isDragging && !root._inStrip) ? 1.02 : (dragArea.containsMouse ? 1.01 : 1.0)
+    z: root.isDragging ? 15 : (root.selected ? 3 : 1)
 
     Behavior on color { ColorAnimation { duration: 150 } }
     Behavior on border.color { ColorAnimation { duration: 150 } }
@@ -132,7 +139,7 @@ Item {
     drag.minimumY: root.dragMinY
     drag.maximumX: root.dragMaxX
     drag.maximumY: root.dragMaxY
-    cursorShape: root._inStrip ? Qt.PointingHandCursor : Qt.SizeAllCursor
+    cursorShape: root._inStrip ? Qt.PointingHandCursor : (drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor)
 
     property bool wasDragged: false
 
@@ -140,12 +147,19 @@ Item {
 
     onPressed: {
       wasDragged = false;
-      if (drag.target !== null) root.dragStarted();
+      if (drag.target !== null) {
+        root.isDragging = true;
+        root.dragStarted();
+      }
     }
     onPositionChanged: {
-      if (drag.active) wasDragged = true;
+      if (drag.active) {
+        wasDragged = true;
+        root.dragMoved(root.index, root.x, root.y);
+      }
     }
     onReleased: {
+      root.isDragging = false;
       if (wasDragged) {
         root.dragEnded(root.index, root.x, root.y);
       } else {
@@ -153,6 +167,7 @@ Item {
       }
     }
     onCanceled: {
+      root.isDragging = false;
       root.dragCanceled();
     }
   }

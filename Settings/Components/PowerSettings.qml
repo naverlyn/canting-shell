@@ -95,7 +95,7 @@ Item {
     /* Power action processes */
     Process {
         id: turnOffDisplaysProc
-        command: ["hyprctl", "dispatch", "dpms", "off"]
+        command: ["sh", "-c", "hyprctl dispatch hl.dsp.dpms '{ action = \"off\" }' 2>/dev/null || hyprctl dispatch dpms off"]
         running: false
     }
 

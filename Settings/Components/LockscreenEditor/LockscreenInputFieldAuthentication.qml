@@ -27,7 +27,7 @@ ColumnLayout {
         implicitHeight: authCol.implicitHeight + 16
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -41,26 +41,26 @@ ColumnLayout {
             spacing: 0
 
             function resolveAuthColor(colStr) {
-                if (!colStr) return "#ffffff";
+                const t = root.theme;
+                if (!colStr) return t.textPrimary;
                 let str = String(colStr).trim();
                 if (str.startsWith("#")) return str;
                 if (str.startsWith("rgb(") || str.startsWith("rgba(")) {
                     let m = str.match(/rgba?\(\s*([0-9a-fA-F]{6})\s*\)/);
                     if (m) return "#" + m[1];
                 }
-                const t = root.theme || {};
-                const pHex   = String(t.accentPrimary ?? "#cba6f7");
-                const cHex   = String(t.accentCyan ?? "#89b4fa");
-                const gHex   = String(t.accentGreen ?? "#a6e3a1");
-                const oHex   = String(t.accentOrange ?? "#fab387");
-                const rHex   = String(t.accentRed ?? "#f38ba8");
-                const bgBase = String(t.bgBase ?? "#1e1e2e");
-                const bgSurf = String(t.bgSurface ?? "#313244");
-                const bgHov  = String(t.bgHover ?? "#45475a");
-                const bgSel  = String(t.bgSelected ?? "#585b70");
-                const txtPri = String(t.textPrimary ?? "#cdd6f4");
-                const txtSec = String(t.textSecondary ?? "#bac2de");
-                const txtMut = String(t.textMuted ?? "#a6adc8");
+                const pHex   = t.accentPrimary;
+                const cHex   = t.accentCyan;
+                const gHex   = t.accentGreen;
+                const oHex   = t.accentOrange;
+                const rHex   = t.accentRed;
+                const bgBase = t.bgBase;
+                const bgSurf = t.bgSurface;
+                const bgHov  = t.bgHover;
+                const bgSel  = t.bgSelected;
+                const txtPri = t.textPrimary;
+                const txtSec = t.textSecondary;
+                const txtMut = t.textMuted;
 
                 const cmap = {
                     "$accent": pHex, "$accentPrimary": pHex,
@@ -97,6 +97,54 @@ ColumnLayout {
 
             RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
 
+            // Unlock Success Animation Toggle
+            PreferenceRow {
+                title: "Unlock Success Animation"
+                subtitle: "Play fade-in entrance and exciting ripple, zoom, and fade transition when authentication succeeds"
+
+                SwitchToggle {
+                    checked: root.unlockAnimation
+                    onToggled: (st) => {
+                        root.unlockAnimation = st;
+                        root.scheduleSave();
+                    }
+                }
+            }
+
+            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+
+            // Show User Profile Toggle
+            PreferenceRow {
+                title: "Show User Profile"
+                subtitle: "Display user avatar picture and account username above password field"
+
+                SwitchToggle {
+                    checked: root.showUser
+                    onToggled: (st) => {
+                        root.showUser = st;
+                        root.scheduleSave();
+                    }
+                }
+            }
+
+            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+
+            // Show Media Player Toggle
+            PreferenceRow {
+                title: "Show Media Player"
+                subtitle: "Display floating MPRIS media playback widget on lock screen"
+
+                SwitchToggle {
+                    checked: root.showMedia
+                    onToggled: (st) => {
+                        root.showMedia = st;
+                        root.scheduleSave();
+                    }
+                }
+            }
+
+            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+
             // Placeholder Text Input (Refined Libadwaita styling)
             PreferenceRow {
                 title: "Placeholder Text"
@@ -106,8 +154,8 @@ ColumnLayout {
                     width: 240
                     height: 32
                     radius: 7
-                    color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)
-                    border.color: placeholderInput.activeFocus ? (root.theme.accentPrimary ?? "#7aa2f7") : (phHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
+                    color: root.theme.bgBase
+                    border.color: placeholderInput.activeFocus ? root.theme.accentPrimary : (phHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : root.theme.bgBorder)
                     border.width: 1
 
                     Behavior on border.color { ColorAnimation { duration: 140 } }
@@ -184,10 +232,10 @@ ColumnLayout {
 
             // Input Box Horizontal Position (X)
             PreferenceSlider {
-                title: "Horizontal Position (X)"
-                subtitle: "Horizontal offset of the password entry box"
-                minVal: -800
-                maxVal: 800
+                title: "Center Offset X"
+                subtitle: "Horizontal offset from screen center (0 = centered)"
+                minVal: -960
+                maxVal: 960
                 unit: "px"
                 currentVal: root.inputPosX
                 onValueChanged: (val) => {
@@ -200,10 +248,10 @@ ColumnLayout {
 
             // Input Box Vertical Position (Y)
             PreferenceSlider {
-                title: "Vertical Position (Y)"
-                subtitle: "Vertical offset of the password entry box"
-                minVal: -500
-                maxVal: 500
+                title: "Center Offset Y"
+                subtitle: "Vertical offset from screen center (0 = centered)"
+                minVal: -540
+                maxVal: 540
                 unit: "px"
                 currentVal: root.inputPosY
                 onValueChanged: (val) => {
@@ -326,17 +374,17 @@ ColumnLayout {
                     height: 32
                     radius: 7
                     color: root.theme.bgBase
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.color: root.theme.bgBorder
                     border.width: 1
 
                     readonly property var swatches: [
-                        { name: "Accent", val: "$accent", color: String(root.theme.accentPrimary ?? "#cba6f7") },
-                        { name: "Blue / Cyan", val: "$blue", color: String(root.theme.accentCyan ?? "#89b4fa") },
-                        { name: "Green", val: "$green", color: String(root.theme.accentGreen ?? "#a6e3a1") },
-                        { name: "Orange", val: "$peach", color: String(root.theme.accentOrange ?? "#fab387") },
-                        { name: "Red", val: "$red", color: String(root.theme.accentRed ?? "#f38ba8") },
-                        { name: "Text", val: "$text", color: String(root.theme.textPrimary ?? "#cdd6f4") },
-                        { name: "Muted", val: "$color8", color: String(root.theme.textMuted ?? "#a6adc8") }
+                        { name: "Accent", val: "$accent", color: root.theme.accentPrimary },
+                        { name: "Blue / Cyan", val: "$blue", color: root.theme.accentCyan },
+                        { name: "Green", val: "$green", color: root.theme.accentGreen },
+                        { name: "Orange", val: "$peach", color: root.theme.accentOrange },
+                        { name: "Red", val: "$red", color: root.theme.accentRed },
+                        { name: "Text", val: "$text", color: root.theme.textPrimary },
+                        { name: "Muted", val: "$color8", color: root.theme.textMuted }
                     ]
                     readonly property int count: swatches.length
                     readonly property int activeIdx: {
@@ -374,7 +422,7 @@ ColumnLayout {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 radius: 5
-                                color: !isSel && oSwHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                color: !isSel && oSwHover.hovered ? root.theme.bgHover : "transparent"
                                 Behavior on color { ColorAnimation { duration: 140 } }
                                 HoverHandler { id: oSwHover }
 
@@ -516,15 +564,15 @@ ColumnLayout {
                     height: 32
                     radius: 7
                     color: root.theme.bgBase
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.color: root.theme.bgBorder
                     border.width: 1
 
                     readonly property var swatches: [
-                        { name: "Surface 0", val: "$surface0", color: String(root.theme.bgSurface ?? "#313244") },
-                        { name: "Surface 1", val: "$surface1", color: String(root.theme.bgHover ?? "#45475a") },
-                        { name: "Surface 2", val: "$surface2", color: String(root.theme.bgSelected ?? "#585b70") },
-                        { name: "Base", val: "$base", color: String(root.theme.bgBase ?? "#1e1e2e") },
-                        { name: "Color 0", val: "$color0", color: String(root.theme.bgSurface ?? "#404145") }
+                        { name: "Surface 0", val: "$surface0", color: root.theme.bgSurface },
+                        { name: "Surface 1", val: "$surface1", color: root.theme.bgHover },
+                        { name: "Surface 2", val: "$surface2", color: root.theme.bgSelected },
+                        { name: "Base", val: "$base", color: root.theme.bgBase },
+                        { name: "Color 0", val: "$color0", color: root.theme.bgSurface }
                     ]
                     readonly property int count: swatches.length
                     readonly property int activeIdx: {
@@ -562,7 +610,7 @@ ColumnLayout {
                                 Layout.fillWidth: true
                                 Layout.fillHeight: true
                                 radius: 5
-                                color: !isSel && iSwHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                color: !isSel && iSwHover.hovered ? root.theme.bgHover : "transparent"
                                 Behavior on color { ColorAnimation { duration: 140 } }
                                 HoverHandler { id: iSwHover }
 

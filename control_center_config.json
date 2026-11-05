@@ -3,8 +3,8 @@
   "panelLayout": "horizontal",
   "panelCount": 3,
   "panel1": [
-    "audio",
     "connectivity",
+    "audio",
     "systemInfo"
   ],
   "panel2": [
@@ -25,7 +25,8 @@
   ],
   "secondaryTileIds": [
     "gamemode",
-    "clipboard"
+    "clipboard",
+    "darkmode"
   ],
   "quickAppsMaxCount": 8,
   "quickApps": [
@@ -81,7 +82,7 @@
       "cmd": "qs ipc call settings toggle"
     }
   ],
-  "mediaWidgetStyle": "auto",
+  "mediaWidgetStyle": "full",
   "cards": {
     "header": true,
     "viewSwitcher": true

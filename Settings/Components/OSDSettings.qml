@@ -119,6 +119,7 @@ Item {
         interactive: !desktopMouse.pressed && !oSDPlacementTimingInst.marginXMouseRef.pressed && !oSDPlacementTimingInst.marginYMouseRef.pressed && !oSDPlacementTimingInst.timeoutMouseRef.pressed
 
         ScrollBar.vertical: ScrollBar {
+            id: vertScroll
             policy: ScrollBar.AsNeeded
             contentItem: Rectangle {
                 implicitWidth: 4
@@ -129,17 +130,17 @@ Item {
 
         ColumnLayout {
             id: mainCol
-            width: parent.width - 10
+            width: mainFlickable.width - (vertScroll.visible ? 12 : 0)
             spacing: 20
 
             /* Page Title & Subtitle */
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 4
+                spacing: 12
 
                 ColumnLayout {
-                    Layout.fillWidth: true
                     spacing: 4
+                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
 
                     Text {
                         text: "On-Screen Display"
@@ -157,6 +158,8 @@ Item {
                     }
                 }
 
+                Item { Layout.fillWidth: true }
+
                 Process {
                     id: openBackupProc
                     command: ["qs", "ipc", "call", "settings", "open", "backup"]
@@ -166,6 +169,7 @@ Item {
                 ActionButton {
                     iconText: "󰁯"
                     label: "Backup & Restore"
+                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                     onClicked: openBackupProc.running = true
                 }
             }

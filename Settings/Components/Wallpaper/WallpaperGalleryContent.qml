@@ -364,6 +364,23 @@ ColumnLayout {
                         color: root.theme.accentPrimary
                     }
                 }
+
+                Rectangle {
+                    height: 18
+                    width: filterFooterText.implicitWidth + 12
+                    radius: 4
+                    color: root.theme.bgSurface
+                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.width: 1
+                    Text {
+                        id: filterFooterText
+                        anchors.centerIn: parent
+                        text: "Filter: " + (WallpaperService.filterMode || "Lanczos3")
+                        font.family: root.font
+                        font.pixelSize: 10
+                        color: (root.theme && root.theme.accentCyan) ? root.theme.accentCyan : root.theme.accentPrimary
+                    }
+                }
             }
 
             Item { Layout.fillWidth: true }

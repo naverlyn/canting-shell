@@ -18,6 +18,7 @@ SNAPSHOTS_DIR = os.path.join(BASE_DIR, "backups", "snapshots")
 
 MODULE_FILES = {
     "bar": ["bar_config.json"],
+    "applauncher": ["app_launcher_config.json"],
     "notifications": ["notifications_config.json"],
     "osd": ["osd_config.json"],
     "controlcenter": ["control_center_config.json"],
@@ -26,6 +27,20 @@ MODULE_FILES = {
 }
 
 DEFAULT_CONFIGS = {
+    "app_launcher_config.json": {
+        "spotlightWidth": 620,
+        "spotlightHeight": 480,
+        "defaultMode": "apps",
+        "sortMode": "frecency",
+        "matchGenericName": True,
+        "matchKeywords": True,
+        "matchCategories": True,
+        "clearSearchOnClose": True,
+        "gridColumns": 5,
+        "gridCellSize": 96,
+        "hiddenApps": [],
+        "favoriteApps": []
+    },
     "notifications_config.json": {
         "doNotDisturb": False,
         "toastPosition": "top-right",
