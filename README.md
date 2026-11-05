@@ -31,7 +31,7 @@ currently supported: **Arch Linux** and **Fedora**.
 
 - [Quickshell](https://quickshell.outfoxxed.me/) + Qt 6
 - [Hyprland](https://hyprland.org/)
-- a [Nerd Font](https://www.nerdfonts.com/) (Lato Nerd Font and JetBrainsMono Nerd Font by default)
+- a [Nerd Font](https://www.nerdfonts.com/) (Lato Nerd Font and JetBrainsMono Nerd Font by default) * for Lato font, you need to patch it using [FontPatcher](https://github.com/ryanoasis/nerd-fonts#font-patcher)
 - `jq` and `python3`
 
 optional, depending on the features you use:
