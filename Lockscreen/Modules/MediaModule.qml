@@ -15,6 +15,7 @@ Item {
     property real scaleFactor: 1.0
 
     readonly property bool isCompact: !moduleData || moduleData.displayMode !== "full"
+    readonly property bool showCard: (moduleData && moduleData.showCard !== undefined) ? Boolean(moduleData.showCard) : true
 
     readonly property var activePlayer: {
         const players = Mpris.players.values;
@@ -63,8 +64,10 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: Math.max(8, Math.round(16 * root.scaleFactor))
-        color: Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
-        border.width: 1
+        color: root.showCard
+            ? Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
+            : "transparent"
+        border.width: root.showCard ? 1 : 0
         border.color: root.theme.bgBorder
 
         // -------------------------------------------------------------

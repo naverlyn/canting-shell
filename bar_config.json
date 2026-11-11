@@ -85,6 +85,7 @@
           "clock"
         ],
         [
+          "battery",
           "weather",
           "controlCenter"
         ]
@@ -151,6 +152,7 @@
       "clock"
     ],
     [
+      "battery",
       "weather",
       "controlCenter"
     ]
@@ -163,6 +165,7 @@
     "clock"
   ],
   "rightWidgets": [
+    "battery",
     "weather",
     "controlCenter"
   ],
@@ -172,8 +175,7 @@
     "media",
     "globalMenu",
     "cava",
-    "network",
-    "battery"
+    "network"
   ],
   "showAppGrid": true,
   "showCpu": true,

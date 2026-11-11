@@ -24,9 +24,9 @@ Item {
 
         // Left Label Column (Fixed width: guarantees 100% vertical alignment of seekbars)
         Item {
-            Layout.preferredWidth: 280
-            Layout.minimumWidth: 280
-            Layout.maximumWidth: 280
+            Layout.preferredWidth: 220
+            Layout.minimumWidth: 180
+            Layout.maximumWidth: 220
             Layout.fillHeight: true
 
             Column {

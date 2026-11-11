@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import ".."
 
-Item {
+Rectangle {
     id: root
 
     property var theme: DefaultTheme {}
@@ -12,6 +12,10 @@ Item {
     property real scaleFactor: 1.0
 
     property var currentNow: new Date()
+
+    readonly property bool showCard: (moduleData && moduleData.showCard !== undefined)
+        ? Boolean(moduleData.showCard)
+        : false
 
     Timer {
         interval: 1000
@@ -40,11 +44,23 @@ Item {
         return t.textPrimary;
     }
 
-    implicitWidth: col.implicitWidth
-    implicitHeight: col.implicitHeight
+    implicitWidth: root.showCard
+        ? (col.implicitWidth + Math.round(32 * root.scaleFactor))
+        : col.implicitWidth
+    implicitHeight: root.showCard
+        ? (col.implicitHeight + Math.round(20 * root.scaleFactor))
+        : col.implicitHeight
+
+    radius: Math.max(8, Math.round(16 * root.scaleFactor))
+    color: root.showCard
+        ? Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
+        : "transparent"
+    border.width: root.showCard ? 1 : 0
+    border.color: root.theme.bgBorder
 
     ColumnLayout {
         id: col
+        anchors.centerIn: parent
         spacing: Math.max(2, Math.round(4 * root.scaleFactor))
 
         Text {
@@ -68,7 +84,7 @@ Item {
             }
             font.bold: true
             color: root.resolveColor(root.moduleData ? root.moduleData.color : "$text")
-            style: Text.Outline
+            style: root.showCard ? Text.Normal : Text.Outline
             styleColor: root.theme.bgOverlay
         }
 
@@ -85,7 +101,7 @@ Item {
             font.pixelSize: Math.max(8, Math.round(timeTxt.font.pixelSize * 0.28))
             font.bold: false
             color: root.theme.textSecondary
-            style: Text.Outline
+            style: root.showCard ? Text.Normal : Text.Outline
             styleColor: root.theme.bgOverlay
         }
     }

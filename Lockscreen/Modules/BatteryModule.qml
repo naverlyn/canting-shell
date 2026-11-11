@@ -19,12 +19,15 @@ Rectangle {
     }
 
     readonly property int batPct: parsePercent(SystemInfo.batteryLevel)
+    readonly property bool showCard: (moduleData && moduleData.showCard !== undefined) ? Boolean(moduleData.showCard) : true
 
     implicitWidth: Math.max(80, Math.round(120 * root.scaleFactor))
     implicitHeight: Math.max(22, Math.round(38 * root.scaleFactor))
     radius: Math.max(6, Math.round(12 * root.scaleFactor))
-    color: Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
-    border.width: 1
+    color: root.showCard
+        ? Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
+        : "transparent"
+    border.width: root.showCard ? 1 : 0
     border.color: root.theme.bgBorder
 
     RowLayout {
@@ -37,6 +40,8 @@ Rectangle {
             font.family: root.font
             font.pixelSize: Math.max(10, Math.round(17 * root.scaleFactor))
             color: root.batPct > 20 ? root.theme.accentGreen : root.theme.accentRed
+            style: root.showCard ? Text.Normal : Text.Outline
+            styleColor: root.theme.bgOverlay
         }
 
         Text {
@@ -45,6 +50,8 @@ Rectangle {
             font.pixelSize: Math.max(8, Math.round(12 * root.scaleFactor))
             font.bold: true
             color: root.theme.textPrimary
+            style: root.showCard ? Text.Normal : Text.Outline
+            styleColor: root.theme.bgOverlay
         }
     }
 }

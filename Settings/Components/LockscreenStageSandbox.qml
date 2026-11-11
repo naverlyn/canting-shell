@@ -98,6 +98,126 @@ Rectangle {
 
     property alias canvasBoxRef: canvasBox
 
+    // Stage Animation Preview State
+    property string activePreviewStyle: LockscreenConfig.animation_style || "default"
+    property real animBgZoom: 1.0
+    property real animBlurMult: 1.0
+    property real animModsOpacity: 1.0
+    property real animModsScale: 1.0
+    property real animAuthOffsetY: 0.0
+    property real animAuthScale: 1.0
+    property real animStaggerProgress: 0.0
+    property real animCurtainProgress: 0.0
+    property real animCurtainSplit: 0.0
+    property real animCurtainSeamOpacity: 0.0
+    property real animCurtainSeamWidth: 0.0
+    property real animFlashOpacity: 0.0
+    property real animPortalPull: 0.0
+    property real animPortalRingRadius: 0.0
+    property real animPortalRingOpacity: 0.0
+    property real animRippleScale: 0.85
+    property real animRippleOpacity: 0.0
+
+    function resetStageAnimState() {
+        stageDefaultAnim.stop();
+        stageStaggeredAnim.stop();
+        stageCurtainAnim.stop();
+        stageDepthAnim.stop();
+        stagePortalAnim.stop();
+        animBgZoom = 1.0;
+        animBlurMult = 1.0;
+        animModsOpacity = 1.0;
+        animModsScale = 1.0;
+        animAuthOffsetY = 0.0;
+        animAuthScale = 1.0;
+        animStaggerProgress = 0.0;
+        animCurtainProgress = 0.0;
+        animCurtainSplit = 0.0;
+        animCurtainSeamOpacity = 0.0;
+        animCurtainSeamWidth = 0.0;
+        animFlashOpacity = 0.0;
+        animPortalPull = 0.0;
+        animPortalRingRadius = 0.0;
+        animPortalRingOpacity = 0.0;
+        animRippleScale = 0.85;
+        animRippleOpacity = 0.0;
+    }
+
+    function playAnimationPreview(styleOverride) {
+        resetStageAnimState();
+        const st = styleOverride || LockscreenConfig.animation_style || "default";
+        activePreviewStyle = st;
+        if (st === "staggered") stageStaggeredAnim.start();
+        else if (st === "curtain") stageCurtainAnim.start();
+        else if (st === "depth") stageDepthAnim.start();
+        else if (st === "portal") stagePortalAnim.start();
+        else stageDefaultAnim.start();
+    }
+
+    // 1. Default Stage Preview (Entrance + Ripple)
+    ParallelAnimation {
+        id: stageDefaultAnim
+        NumberAnimation { target: stageRoot; property: "animBgZoom"; from: 1.08; to: 1.0; duration: 480; easing.type: Easing.OutCubic }
+        NumberAnimation { target: stageRoot; property: "animModsOpacity"; from: 0.0; to: 1.0; duration: 360; easing.type: Easing.OutCubic }
+        NumberAnimation { target: stageRoot; property: "animModsScale"; from: 0.94; to: 1.0; duration: 420; easing.type: Easing.OutBack }
+        NumberAnimation { target: stageRoot; property: "animAuthScale"; from: 0.92; to: 1.0; duration: 420; easing.type: Easing.OutBack }
+        NumberAnimation { target: stageRoot; property: "animRippleScale"; from: 0.85; to: 2.3; duration: 520; easing.type: Easing.OutCubic }
+        SequentialAnimation {
+            NumberAnimation { target: stageRoot; property: "animRippleOpacity"; from: 0.0; to: 0.85; duration: 100; easing.type: Easing.OutQuad }
+            NumberAnimation { target: stageRoot; property: "animRippleOpacity"; from: 0.85; to: 0.0; duration: 420; easing.type: Easing.OutCubic }
+        }
+    }
+
+    // 2. Staggered Cascade Stage Preview
+    ParallelAnimation {
+        id: stageStaggeredAnim
+        NumberAnimation { target: stageRoot; property: "animBgZoom"; from: 1.08; to: 1.0; duration: 500; easing.type: Easing.OutCubic }
+        NumberAnimation { target: stageRoot; property: "animBlurMult"; from: 0.0; to: 1.0; duration: 440; easing.type: Easing.OutCubic }
+        NumberAnimation { target: stageRoot; property: "animStaggerProgress"; from: 1.0; to: 0.0; duration: 520; easing.type: Easing.OutBack; easing.overshoot: 1.35 }
+        NumberAnimation { target: stageRoot; property: "animModsOpacity"; from: 0.0; to: 1.0; duration: 340; easing.type: Easing.OutCubic }
+        NumberAnimation { target: stageRoot; property: "animModsScale"; from: 0.86; to: 1.0; duration: 460; easing.type: Easing.OutBack }
+        NumberAnimation { target: stageRoot; property: "animAuthOffsetY"; from: 45; to: 0; duration: 480; easing.type: Easing.OutBack; easing.overshoot: 1.35 }
+        NumberAnimation { target: stageRoot; property: "animAuthScale"; from: 0.86; to: 1.0; duration: 440; easing.type: Easing.OutBack }
+    }
+
+    // 3. Cinema Curtain Stage Preview
+    ParallelAnimation {
+        id: stageCurtainAnim
+        NumberAnimation { target: stageRoot; property: "animCurtainProgress"; from: 1.0; to: 0.0; duration: 520; easing.type: Easing.OutExpo }
+        NumberAnimation { target: stageRoot; property: "animCurtainSplit"; from: 1.0; to: 0.0; duration: 480; easing.type: Easing.OutQuart }
+        NumberAnimation { target: stageRoot; property: "animBgZoom"; from: 1.06; to: 1.0; duration: 500; easing.type: Easing.OutQuart }
+        NumberAnimation { target: stageRoot; property: "animModsOpacity"; from: 0.0; to: 1.0; duration: 360; easing.type: Easing.OutCubic }
+        SequentialAnimation {
+            NumberAnimation { target: stageRoot; property: "animCurtainSeamWidth"; from: 0.2; to: 1.0; duration: 180; easing.type: Easing.OutQuad }
+            NumberAnimation { target: stageRoot; property: "animCurtainSeamWidth"; to: 0.0; duration: 320; easing.type: Easing.InQuad }
+        }
+        NumberAnimation { target: stageRoot; property: "animCurtainSeamOpacity"; from: 0.95; to: 0.0; duration: 460; easing.type: Easing.OutCubic }
+    }
+
+    // 4. Zoom & Depth Stage Preview
+    ParallelAnimation {
+        id: stageDepthAnim
+        NumberAnimation { target: stageRoot; property: "animBgZoom"; from: 1.28; to: 1.0; duration: 560; easing.type: Easing.OutExpo }
+        NumberAnimation { target: stageRoot; property: "animBlurMult"; from: 0.0; to: 1.0; duration: 500; easing.type: Easing.OutCubic }
+        NumberAnimation { target: stageRoot; property: "animModsScale"; from: 1.26; to: 1.0; duration: 500; easing.type: Easing.OutExpo }
+        NumberAnimation { target: stageRoot; property: "animAuthScale"; from: 1.24; to: 1.0; duration: 500; easing.type: Easing.OutExpo }
+        NumberAnimation { target: stageRoot; property: "animModsOpacity"; from: 0.0; to: 1.0; duration: 360; easing.type: Easing.OutCubic }
+        NumberAnimation { target: stageRoot; property: "animFlashOpacity"; from: 0.32; to: 0.0; duration: 440; easing.type: Easing.OutCubic }
+    }
+
+    // 5. Portal Iris Stage Preview
+    ParallelAnimation {
+        id: stagePortalAnim
+        NumberAnimation { target: stageRoot; property: "animBgZoom"; from: 1.10; to: 1.0; duration: 500; easing.type: Easing.OutQuart }
+        NumberAnimation { target: stageRoot; property: "animBlurMult"; from: 0.0; to: 1.0; duration: 440; easing.type: Easing.OutCubic }
+        NumberAnimation { target: stageRoot; property: "animPortalPull"; from: 0.45; to: 0.0; duration: 500; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+        NumberAnimation { target: stageRoot; property: "animModsScale"; from: 0.72; to: 1.0; duration: 480; easing.type: Easing.OutBack }
+        NumberAnimation { target: stageRoot; property: "animAuthScale"; from: 0.65; to: 1.0; duration: 440; easing.type: Easing.OutBack; easing.overshoot: 1.4 }
+        NumberAnimation { target: stageRoot; property: "animModsOpacity"; from: 0.0; to: 1.0; duration: 340; easing.type: Easing.OutCubic }
+        NumberAnimation { target: stageRoot; property: "animPortalRingRadius"; from: 20; to: Math.max(400, canvasBox.width * 0.85); duration: 560; easing.type: Easing.OutQuart }
+        NumberAnimation { target: stageRoot; property: "animPortalRingOpacity"; from: 0.9; to: 0.0; duration: 540; easing.type: Easing.OutCubic }
+    }
+
     function selectBlock(idx) {
         stageRoot.selectedIndex = idx;
     }
@@ -458,6 +578,43 @@ Rectangle {
                 Layout.fillWidth: false
                 Layout.preferredWidth: implicitWidth
                 Layout.minimumWidth: implicitWidth
+
+                // Preview Animation Button
+                Rectangle {
+                    implicitWidth: previewAnimLabel.implicitWidth + 20
+                    Layout.preferredWidth: implicitWidth
+                    Layout.minimumWidth: implicitWidth
+                    height: 30
+                    radius: 6
+                    color: previewStageHover.hovered ? stageRoot.theme.bgHover : stageRoot.theme.bgBase
+                    border.color: previewStageHover.hovered ? stageRoot.theme.accentPrimary : stageRoot.theme.bgBorder
+                    border.width: 1
+                    scale: previewStageMouse.pressed ? 0.95 : 1.0
+
+                    Behavior on color { ColorAnimation { duration: 140 } }
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
+                    Behavior on scale { NumberAnimation { duration: 100 } }
+
+                    HoverHandler { id: previewStageHover }
+
+                    Text {
+                        id: previewAnimLabel
+                        anchors.centerIn: parent
+                        text: "Preview Anim"
+                        font.family: stageRoot.font
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: previewStageHover.hovered ? stageRoot.theme.accentPrimary : stageRoot.theme.textPrimary
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                    }
+
+                    MouseArea {
+                        id: previewStageMouse
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: stageRoot.playAnimationPreview(LockscreenConfig.animation_style)
+                    }
+                }
 
                 // Snap Toggle Button
                 Rectangle {
@@ -838,6 +995,7 @@ Rectangle {
                 id: bgImage
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
+                scale: stageRoot.animBgZoom
                 source: stageRoot.wallpaperPath !== "" ? (stageRoot.wallpaperPath.startsWith("/") ? ("file://" + stageRoot.wallpaperPath) : stageRoot.wallpaperPath) : ""
                 sourceSize.width: 960
                 sourceSize.height: 540
@@ -847,7 +1005,7 @@ Rectangle {
                 layer.effect: MultiEffect {
                     blurEnabled: stageRoot.blurPasses > 0
                     blurMax: 64
-                    blur: Math.min(1.0, (stageRoot.blurSize / 10.0) * Math.min(1.0, stageRoot.blurPasses / 2.0))
+                    blur: Math.min(1.0, (stageRoot.blurSize / 10.0) * Math.min(1.0, stageRoot.blurPasses / 2.0)) * stageRoot.animBlurMult
                     contrast: stageRoot.contrast - 1.0
                     brightness: stageRoot.brightness - 1.0
                     saturation: stageRoot.vibrancy
@@ -858,6 +1016,31 @@ Rectangle {
             Rectangle {
                 anchors.fill: parent
                 color: stageRoot.theme.bgOverlay
+                opacity: stageRoot.animBlurMult
+            }
+
+            // Depth / Lens Flash Overlay
+            Rectangle {
+                anchors.fill: parent
+                color: stageRoot.theme.accentPrimary
+                opacity: stageRoot.animFlashOpacity
+                visible: opacity > 0
+                z: 4
+            }
+
+            // Portal Shockwave Ring Overlay
+            Rectangle {
+                x: (simAuthBox.x + simAuthBox.width / 2) - width / 2
+                y: (simAuthBox.y + simAuthBox.height / 2) - height / 2
+                width: stageRoot.animPortalRingRadius * 2
+                height: width
+                radius: width / 2
+                color: "transparent"
+                border.width: 2.5
+                border.color: stageRoot.theme.accentPrimary
+                opacity: stageRoot.animPortalRingOpacity
+                visible: opacity > 0
+                z: 5
             }
 
             // Screen Border simulation (matches user desktop ScreenBorder when active)
@@ -917,6 +1100,9 @@ Rectangle {
                 width: Math.max(simInputW, avatarSize)
                 height: authCol.implicitHeight
                 z: isInputSelected || inputDragArea.drag.active ? 15 : 3
+                scale: stageRoot.animAuthScale
+                opacity: stageRoot.animModsOpacity
+                transform: Translate { y: stageRoot.animAuthOffsetY }
 
                 readonly property real targetX: {
                     const curX = Number(stageRoot.liveInputX) || 0;
@@ -963,6 +1149,19 @@ Rectangle {
                         Layout.alignment: Qt.AlignHCenter
                         width: simAuthBox.avatarSize
                         height: simAuthBox.avatarSize
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: parent.width
+                            height: parent.height
+                            radius: width / 2
+                            color: "transparent"
+                            border.width: 2
+                            border.color: stageRoot.theme.accentGreen
+                            scale: stageRoot.animRippleScale
+                            opacity: stageRoot.animRippleOpacity
+                            visible: opacity > 0
+                        }
 
                         Rectangle {
                             id: avatarCircleBg
@@ -1295,6 +1494,37 @@ Rectangle {
                     }
 
                     z: isSelected || blockDragArea.drag.active ? 15 : 2
+                    opacity: stageRoot.animModsOpacity
+                    scale: stageRoot.animModsScale
+                    transform: Translate {
+                        x: {
+                            let dx = 0;
+                            if (stageRoot.animStaggerProgress !== 0) {
+                                if (blockDelegate.curHalign === "left") dx -= 60 * stageRoot.animStaggerProgress;
+                                else if (blockDelegate.curHalign === "right") dx += 60 * stageRoot.animStaggerProgress;
+                            }
+                            if (stageRoot.animPortalPull !== 0) {
+                                dx += ((simAuthBox.x + simAuthBox.width / 2) - (blockDelegate.x + blockDelegate.width / 2)) * stageRoot.animPortalPull;
+                            }
+                            return dx;
+                        }
+                        y: {
+                            let dy = 0;
+                            if (stageRoot.animStaggerProgress !== 0) {
+                                if (blockDelegate.curValign === "top") dy -= 45 * stageRoot.animStaggerProgress;
+                                else if (blockDelegate.curValign === "bottom") dy += 45 * stageRoot.animStaggerProgress;
+                                else dy += 30 * stageRoot.animStaggerProgress;
+                            }
+                            if (stageRoot.animCurtainSplit !== 0) {
+                                const topHalf = (blockDelegate.y + blockDelegate.height / 2) <= (canvasBox.height / 2);
+                                dy += (topHalf ? -65 : 65) * stageRoot.animCurtainSplit;
+                            }
+                            if (stageRoot.animPortalPull !== 0) {
+                                dy += ((simAuthBox.y + simAuthBox.height / 2) - (blockDelegate.y + blockDelegate.height / 2)) * stageRoot.animPortalPull;
+                            }
+                            return dy;
+                        }
+                    }
 
                     // Drag / Selection Outline in Editor Mode
                     Rectangle {
@@ -1512,6 +1742,38 @@ Rectangle {
                             }
                         }
                     }
+                }
+            }
+
+            // Cinema Curtain Split Preview Overlay
+            Item {
+                anchors.fill: parent
+                visible: stageRoot.animCurtainProgress > 0.001 || stageRoot.animCurtainSeamOpacity > 0.001
+                z: 400
+
+                Rectangle {
+                    width: parent.width
+                    height: (parent.height / 2) * stageRoot.animCurtainProgress
+                    anchors.top: parent.top
+                    color: stageRoot.theme.bgBase
+                    opacity: 0.94
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: (parent.height / 2) * stageRoot.animCurtainProgress
+                    anchors.bottom: parent.bottom
+                    color: stageRoot.theme.bgBase
+                    opacity: 0.94
+                }
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: parent.width * stageRoot.animCurtainSeamWidth
+                    height: 2
+                    radius: 1
+                    color: stageRoot.theme.accentPrimary
+                    opacity: stageRoot.animCurtainSeamOpacity
                 }
             }
         }

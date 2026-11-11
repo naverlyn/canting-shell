@@ -14,6 +14,7 @@ ColumnLayout {
     id: mainCol
     property alias stageSandboxRef: stageSandbox
     property alias modulesPoolRef: modulesPool
+    property var expandedById: ({})
     width: parent.width
     spacing: 20
 
@@ -24,25 +25,73 @@ ColumnLayout {
 
         ColumnLayout {
             spacing: 4
+            Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
 
             Text {
+                Layout.fillWidth: true
                 text: "Lock Screen"
                 font.family: root.font
                 font.pixelSize: 20
                 font.bold: true
                 color: root.theme.textPrimary
+                elide: Text.ElideRight
             }
 
             Text {
+                Layout.fillWidth: true
                 text: "Configure lock screen appearance, visual filters and interactive layout"
                 font.family: root.font
                 font.pixelSize: 12
                 color: root.theme.textSecondary
+                elide: Text.ElideRight
             }
         }
 
         Item { Layout.fillWidth: true }
+
+        Process {
+            id: openBackupProc
+            command: ["qs", "ipc", "call", "settings", "open", "backup"]
+            running: false
+        }
+
+        // Backup & Restore Button
+        Rectangle {
+            id: backupBtn
+            implicitWidth: backupText.implicitWidth + 24
+            height: 32
+            radius: 6
+            color: backupHover.hovered ? root.theme.bgHover : root.theme.bgBase
+            border.color: backupHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
+            border.width: 1
+            scale: backupMouse.pressed ? 0.95 : 1.0
+            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+            Behavior on color { ColorAnimation { duration: 140 } }
+            Behavior on border.color { ColorAnimation { duration: 140 } }
+            Behavior on scale { NumberAnimation { duration: 100 } }
+
+            HoverHandler { id: backupHover }
+
+            Text {
+                id: backupText
+                anchors.centerIn: parent
+                text: "Backup & Restore"
+                font.family: root.font
+                font.pixelSize: 12
+                font.bold: true
+                color: root.theme.textPrimary
+                Behavior on color { ColorAnimation { duration: 140 } }
+            }
+
+            MouseArea {
+                id: backupMouse
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: openBackupProc.running = true
+            }
+        }
 
         // Restore Defaults Button
         Rectangle {
@@ -131,18 +180,23 @@ ColumnLayout {
 
             ColumnLayout {
                 spacing: 2
+                Layout.fillWidth: true
                 Text {
+                    Layout.fillWidth: true
                     text: "Lock Screen Modules & Building Blocks"
                     font.family: root.font
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textSecondary
+                    elide: Text.ElideRight
                 }
                 Text {
+                    Layout.fillWidth: true
                     text: "Drag any building block into the live preview stage below to place it, or click to add"
                     font.family: root.font
                     font.pixelSize: 11
                     color: root.theme.textMuted
+                    elide: Text.ElideRight
                 }
             }
 
@@ -297,16 +351,27 @@ ColumnLayout {
             }
 
             Repeater {
-                model: LockscreenConfig.modules
+                model: LockscreenConfig.modules ? LockscreenConfig.modules.length : 0
 
                 LockscreenModuleCard {
-                    required property var modelData
                     required property int index
+                    readonly property var itemData: (LockscreenConfig.modules && index >= 0 && index < LockscreenConfig.modules.length)
+                        ? LockscreenConfig.modules[index]
+                        : ({})
+                    readonly property string modKey: (itemData && itemData.id) ? String(itemData.id) : ("idx_" + index)
 
-                    moduleData: modelData
+                    moduleData: itemData
                     moduleIndex: index
                     theme: root.theme
                     font: root.font
+                    isExpanded: Boolean(mainCol.expandedById && mainCol.expandedById[modKey])
+
+                    onExpandedToggled: (exp) => {
+                        let mapCopy = Object.assign({}, mainCol.expandedById || {});
+                        if (exp) mapCopy[modKey] = true;
+                        else delete mapCopy[modKey];
+                        mainCol.expandedById = mapCopy;
+                    }
 
                     onModuleSaved: (idx, payload) => {
                         if (root.updateModule) root.updateModule(idx, payload);

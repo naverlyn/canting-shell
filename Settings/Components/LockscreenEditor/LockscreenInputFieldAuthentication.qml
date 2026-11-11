@@ -97,16 +97,206 @@ ColumnLayout {
 
             RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
 
-            // Unlock Success Animation Toggle
+            // Lock & Unlock Animation Toggle
             PreferenceRow {
-                title: "Unlock Success Animation"
-                subtitle: "Play fade-in entrance and exciting ripple, zoom, and fade transition when authentication succeeds"
+                title: "Lock & Unlock Animation"
+                subtitle: "Play entrance and unlock success transitions on the lock screen"
 
                 SwitchToggle {
                     checked: root.unlockAnimation
                     onToggled: (st) => {
                         root.unlockAnimation = st;
                         root.scheduleSave();
+                    }
+                }
+            }
+
+            // Lock Screen Animation Style Preset Selector (Spacious 2-Row Layout)
+            ColumnLayout {
+                visible: root.unlockAnimation
+                Layout.fillWidth: true
+                spacing: 0
+
+                RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 16
+                    Layout.rightMargin: 16
+                    Layout.topMargin: 10
+                    Layout.bottomMargin: 12
+                    spacing: 10
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+
+                        ColumnLayout {
+                            spacing: 2
+                            Layout.fillWidth: true
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: "Lock Screen Animation Style"
+                                font.family: root.font
+                                font.pixelSize: 13
+                                font.bold: true
+                                color: root.theme.textPrimary
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: {
+                                    const st = root.animationStyle || "default";
+                                    if (st === "staggered") return "Modules fly in & cascade out from their screen edges with spring physics";
+                                    if (st === "curtain") return "Cinematic split shutter curtains with glowing horizontal laser seam";
+                                    if (st === "depth") return "Dramatic camera zoom with progressive depth-of-field blur & focus pull";
+                                    if (st === "portal") return "Radial shockwave iris expanding & collapsing from the password box";
+                                    return "Default smooth fade, subtle background zoom, and expanding success ripple";
+                                }
+                                font.family: root.font
+                                font.pixelSize: 11
+                                color: root.theme.textSecondary
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        // Live Preview Button on Stage
+                        Rectangle {
+                            id: previewAnimBtn
+                            implicitWidth: previewAnimText.implicitWidth + 24
+                            height: 30
+                            radius: 6
+                            color: previewAnimHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                            border.color: previewAnimHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
+                            border.width: 1
+                            scale: previewAnimMouse.pressed ? 0.95 : 1.0
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+                            Behavior on color { ColorAnimation { duration: 140 } }
+                            Behavior on border.color { ColorAnimation { duration: 140 } }
+                            Behavior on scale { NumberAnimation { duration: 100 } }
+
+                            HoverHandler { id: previewAnimHover }
+
+                            Text {
+                                id: previewAnimText
+                                anchors.centerIn: parent
+                                text: "Preview on Stage"
+                                font.family: root.font
+                                font.pixelSize: 11
+                                font.bold: true
+                                color: previewAnimHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
+                                Behavior on color { ColorAnimation { duration: 140 } }
+                            }
+
+                            MouseArea {
+                                id: previewAnimMouse
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    if (root.previewLockAnimation) {
+                                        root.previewLockAnimation(root.animationStyle);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Full-Width 5-Preset Segmented Track
+                    Rectangle {
+                        id: animStyleSegmentTrack
+                        Layout.fillWidth: true
+                        height: 34
+                        radius: 7
+                        color: root.theme.bgBase
+                        border.color: root.theme.bgBorder
+                        border.width: 1
+
+                        readonly property var modes: [
+                            { label: "Default", value: "default" },
+                            { label: "Staggered Cascade", value: "staggered" },
+                            { label: "Cinema Curtain", value: "curtain" },
+                            { label: "Zoom & Depth", value: "depth" },
+                            { label: "Portal Iris", value: "portal" }
+                        ]
+
+                        readonly property int activeIdx: {
+                            const st = root.animationStyle || "default";
+                            if (st === "staggered") return 1;
+                            if (st === "curtain") return 2;
+                            if (st === "depth") return 3;
+                            if (st === "portal") return 4;
+                            return 0;
+                        }
+
+                        readonly property real cellWidth: (width - 6 - (modes.length - 1) * 3) / modes.length
+
+                        Rectangle {
+                            visible: animStyleSegmentTrack.activeIdx >= 0
+                            y: 3
+                            height: parent.height - 6
+                            width: animStyleSegmentTrack.cellWidth
+                            x: 3 + Math.max(0, animStyleSegmentTrack.activeIdx) * (animStyleSegmentTrack.cellWidth + 3)
+                            radius: 5
+                            color: root.theme.bgSelected
+                            border.color: root.theme.accentPrimary
+                            border.width: 1
+
+                            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 3
+                            spacing: 3
+
+                            Repeater {
+                                model: animStyleSegmentTrack.modes
+
+                                delegate: Rectangle {
+                                    id: animSegBtn
+                                    required property var modelData
+                                    required property int index
+                                    readonly property bool isSel: animStyleSegmentTrack.activeIdx === animSegBtn.index
+
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    radius: 5
+                                    color: !isSel && animSegHover.hovered ? root.theme.bgHover : "transparent"
+                                    Behavior on color { ColorAnimation { duration: 140 } }
+
+                                    HoverHandler { id: animSegHover }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: animSegBtn.modelData.label
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        font.bold: animSegBtn.isSel
+                                        color: animSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
+                                        opacity: animSegBtn.isSel || animSegHover.hovered ? 1.0 : 0.75
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            root.animationStyle = animSegBtn.modelData.value;
+                                            root.scheduleSave();
+                                            if (root.previewLockAnimation) {
+                                                root.previewLockAnimation(animSegBtn.modelData.value);
+                                            }
+                                            if (root.showStatus) {
+                                                root.showStatus("Lock screen animation set to " + animSegBtn.modelData.label);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -311,17 +501,21 @@ ColumnLayout {
                         spacing: 2
                         Layout.fillWidth: true
                         Text {
+                            Layout.fillWidth: true
                             text: "Password Box Border Color (outer_color)"
                             font.family: root.font
                             font.pixelSize: 13
                             font.bold: true
                             color: root.theme.textPrimary
+                            elide: Text.ElideRight
                         }
                         Text {
+                            Layout.fillWidth: true
                             text: "Outline ring color of the password input box"
                             font.family: root.font
                             font.pixelSize: 11
                             color: root.theme.textSecondary
+                            elide: Text.ElideRight
                         }
                     }
 
@@ -477,17 +671,21 @@ ColumnLayout {
                         spacing: 2
                         Layout.fillWidth: true
                         Text {
+                            Layout.fillWidth: true
                             text: "Password Box Fill & Dots Color (inner_color / font_color)"
                             font.family: root.font
                             font.pixelSize: 13
                             font.bold: true
                             color: root.theme.textPrimary
+                            elide: Text.ElideRight
                         }
                         Text {
+                            Layout.fillWidth: true
                             text: "Inner pill background fill and password character dot color"
                             font.family: root.font
                             font.pixelSize: 11
                             color: root.theme.textSecondary
+                            elide: Text.ElideRight
                         }
                     }
 

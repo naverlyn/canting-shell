@@ -5,7 +5,7 @@ import Quickshell.Io
 import "../../bar"
 import ".."
 
-Item {
+Rectangle {
     id: root
 
     property var theme: DefaultTheme {}
@@ -15,6 +15,10 @@ Item {
     property real scaleFactor: 1.0
 
     property string weatherRawText: ""
+
+    readonly property bool showCard: (moduleData && moduleData.showCard !== undefined)
+        ? Boolean(moduleData.showCard)
+        : true
 
     function resolveColor(colStr) {
         const t = root.theme;
@@ -58,52 +62,63 @@ Item {
 
     readonly property bool isMultiline: (root.moduleData && root.moduleData.displayMode === "compact") ? false : root.weatherRawText.includes("\n")
 
-    implicitWidth: isMultiline ? multilineText.implicitWidth : compactCard.implicitWidth
-    implicitHeight: isMultiline ? multilineText.implicitHeight : compactCard.implicitHeight
+    implicitWidth: isMultiline
+        ? (multilineText.implicitWidth + (root.showCard ? Math.round(24 * root.scaleFactor) : 0))
+        : (compactRow.implicitWidth + (root.showCard ? Math.round(24 * root.scaleFactor) : 0))
 
-    // 1. Detailed multi-line view (matches Image 1)
+    implicitHeight: isMultiline
+        ? (multilineText.implicitHeight + (root.showCard ? Math.round(16 * root.scaleFactor) : 0))
+        : (root.showCard ? Math.max(22, Math.round(38 * root.scaleFactor)) : compactRow.implicitHeight)
+
+    radius: Math.max(6, Math.round(12 * root.scaleFactor))
+    color: root.showCard
+        ? Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
+        : "transparent"
+    border.width: root.showCard ? 1 : 0
+    border.color: root.theme.bgBorder
+
+    // 1. Detailed multi-line view
     Text {
         id: multilineText
         visible: root.isMultiline
+        anchors.centerIn: parent
         text: root.weatherRawText || "Weather loading..."
         font.family: root.font
         font.pixelSize: Math.max(8, Math.round(((root.moduleData && Number(root.moduleData.fontSize)) ? Number(root.moduleData.fontSize) : 12) * root.scaleFactor))
         lineHeight: 1.25
-        color: root.resolveColor(root.moduleData ? root.moduleData.color : "$color10")
-        style: Text.Outline
+        color: root.showCard
+            ? root.theme.textPrimary
+            : root.resolveColor(root.moduleData ? root.moduleData.color : "$color10")
+        style: root.showCard ? Text.Normal : Text.Outline
         styleColor: root.theme.bgOverlay
     }
 
-    // 2. Compact Pill / Card view (if compact mode is selected)
-    Rectangle {
-        id: compactCard
+    // 2. Compact single-line view
+    RowLayout {
+        id: compactRow
         visible: !root.isMultiline
-        implicitWidth: compactRow.implicitWidth + Math.round(20 * root.scaleFactor)
-        implicitHeight: Math.max(22, Math.round(38 * root.scaleFactor))
-        radius: Math.max(6, Math.round(12 * root.scaleFactor))
-        color: Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.75)
-        border.width: 1
-        border.color: root.theme.bgBorder
+        anchors.centerIn: parent
+        spacing: Math.max(4, Math.round(8 * root.scaleFactor))
 
-        RowLayout {
-            id: compactRow
-            anchors.centerIn: parent
-            spacing: Math.max(4, Math.round(8 * root.scaleFactor))
+        Text {
+            text: "󰖕"
+            font.family: root.font
+            font.pixelSize: Math.max(10, Math.round(16 * root.scaleFactor))
+            color: root.theme.accentCyan
+            style: root.showCard ? Text.Normal : Text.Outline
+            styleColor: root.theme.bgOverlay
+        }
 
-            Text {
-                text: "󰖕"
-                font.family: root.font
-                font.pixelSize: Math.max(10, Math.round(16 * root.scaleFactor))
-                color: root.theme.accentCyan
-            }
-
-            Text {
-                text: SystemInfo.weatherInfo || root.weatherRawText || "Weather"
-                font.family: root.font
-                font.pixelSize: Math.max(8, Math.round(12 * root.scaleFactor))
-                font.bold: true
-                color: root.theme.textPrimary
-            }
+        Text {
+            text: SystemInfo.weatherInfo || (root.weatherRawText ? root.weatherRawText.split("\n")[0] : "Weather")
+            font.family: root.font
+            font.pixelSize: Math.max(8, Math.round(((root.moduleData && Number(root.moduleData.fontSize)) ? Number(root.moduleData.fontSize) : 12) * root.scaleFactor))
+            font.bold: true
+            color: root.showCard
+                ? root.theme.textPrimary
+                : root.resolveColor(root.moduleData ? root.moduleData.color : "$text")
+            style: root.showCard ? Text.Normal : Text.Outline
+            styleColor: root.theme.bgOverlay
         }
     }
 }

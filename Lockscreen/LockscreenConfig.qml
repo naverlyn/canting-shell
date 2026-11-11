@@ -18,6 +18,7 @@ Singleton {
     property real vibrancy: 0.21
     property bool general_immediate_render: true
     property bool unlock_animation: true
+    property string animation_style: "default"
 
     property string clock_format: "24h"
     property int clock_font_size: 90
@@ -53,8 +54,9 @@ Singleton {
         { type: "statusInfo", name: "Keyboard & Uptime", icon: "󰌌", desc: "Keyboard layout and system uptime pill" },
         { type: "clock",      name: "Clock & Date",      icon: "", desc: "Large digital clock with day and date" },
         { type: "weather",    name: "Weather",           icon: "󰖐", desc: "Live weather conditions, temperature and summary" },
-        { type: "media",      name: "Media Player",      icon: "󰝚", desc: "Floating MPRIS audio player with controls" },
-        { type: "cpu",        name: "CPU Usage",         icon: "󰻠", desc: "Live processor utilization percentage & bar" },
+        { type: "media",         name: "Media Player",      icon: "󰝚", desc: "Floating MPRIS audio player with controls" },
+        { type: "notifications", name: "Notifications",     icon: "󰂚", desc: "Live notification cards and unread alerts stack" },
+        { type: "cpu",           name: "CPU Usage",         icon: "󰻠", desc: "Live processor utilization percentage & bar" },
         { type: "memory",     name: "Memory (RAM)",      icon: "󰍛", desc: "Live RAM utilization percentage & bar" },
         { type: "disk",       name: "Disk Storage",      icon: "", desc: "Root filesystem storage utilization" },
         { type: "battery",    name: "Battery Status",    icon: "󰁹", desc: "Battery charge percentage & power status" },
@@ -65,11 +67,11 @@ Singleton {
     ]
 
     readonly property var defaultModules: [
-        { id: "clock_1", type: "clock", name: "Clock & Date", enabled: true, halign: "left", valign: "top", position_x: 48, position_y: -44, color: "$text", fontSize: 90, clockFormat: "24h", showDate: true },
+        { id: "clock_1", type: "clock", name: "Clock & Date", enabled: true, halign: "left", valign: "top", position_x: 48, position_y: -44, color: "$text", fontSize: 90, clockFormat: "24h", showDate: true, showCard: false },
         { id: "auth_1", type: "auth", name: "User & Password", enabled: true, halign: "center", valign: "center", position_x: 0, position_y: -85, color: "$accent" },
-        { id: "weather_1", type: "weather", name: "Weather", enabled: true, halign: "left", valign: "bottom", position_x: 36, position_y: 32, color: "$color10", displayMode: "detailed" },
-        { id: "media_1", type: "media", name: "Media Player", enabled: true, halign: "center", valign: "bottom", position_x: 0, position_y: 32, color: "$accent" },
-        { id: "status_1", type: "statusInfo", name: "Keyboard & Uptime", enabled: true, halign: "right", valign: "bottom", position_x: -36, position_y: 32, color: "$accent" }
+        { id: "weather_1", type: "weather", name: "Weather", enabled: true, halign: "left", valign: "bottom", position_x: 36, position_y: 32, color: "$color10", displayMode: "detailed", showCard: true },
+        { id: "media_1", type: "media", name: "Media Player", enabled: true, halign: "center", valign: "bottom", position_x: 0, position_y: 32, color: "$accent", showCard: true },
+        { id: "status_1", type: "statusInfo", name: "Keyboard & Uptime", enabled: true, halign: "right", valign: "bottom", position_x: -36, position_y: 32, color: "$accent", showCard: true }
     ]
 
     property var modules: []
@@ -111,6 +113,7 @@ Singleton {
             type: mType,
             name: def.name,
             enabled: true,
+            showCard: (mType !== "clock" && mType !== "auth" && mType !== "customText"),
             halign: (mType === "clock") ? "left" : ((mType === "media" || mType === "auth") ? "center" : "right"),
             valign: (mType === "clock") ? "top" : ((mType === "auth") ? "center" : "bottom"),
             position_x: (mType === "clock") ? 48 : ((mType === "media" || mType === "auth") ? 0 : -36),
@@ -135,6 +138,15 @@ Singleton {
             newMod.valign = "center";
             newMod.position_x = 0;
             newMod.position_y = -85;
+        } else if (mType === "notifications") {
+            newMod.halign = "left";
+            newMod.valign = "center";
+            newMod.position_x = 36;
+            newMod.position_y = 0;
+            newMod.displayMode = "full";
+            newMod.maxVisible = 3;
+            newMod.showContent = true;
+            newMod.hideWhenEmpty = false;
         }
 
         if (overrides && typeof overrides === "object") {
@@ -273,6 +285,7 @@ Singleton {
             vibrancy: root.vibrancy,
             general_immediate_render: root.general_immediate_render,
             unlock_animation: root.unlock_animation,
+            animation_style: root.animation_style,
             clock_format: root.clock_format,
             clock_font_size: root.clock_font_size,
             show_date: root.show_date,
@@ -315,6 +328,7 @@ Singleton {
         root.vibrancy = 0.21;
         root.general_immediate_render = true;
         root.unlock_animation = true;
+        root.animation_style = "default";
         root.clock_format = "24h";
         root.clock_font_size = 90;
         root.show_date = true;
@@ -351,6 +365,7 @@ Singleton {
         if (cfg.vibrancy !== undefined) root.vibrancy = Number(cfg.vibrancy) || 0.21;
         if (cfg.general_immediate_render !== undefined) root.general_immediate_render = Boolean(cfg.general_immediate_render);
         if (cfg.unlock_animation !== undefined) root.unlock_animation = Boolean(cfg.unlock_animation);
+        if (cfg.animation_style !== undefined) root.animation_style = String(cfg.animation_style) || "default";
         if (cfg.clock_format !== undefined) root.clock_format = cfg.clock_format;
         if (cfg.clock_font_size !== undefined) root.clock_font_size = Number(cfg.clock_font_size) || 90;
         if (cfg.show_date !== undefined) root.show_date = Boolean(cfg.show_date);
@@ -391,6 +406,7 @@ Singleton {
                 else if (nLow === "disk") mType = "disk";
                 else if (nLow === "battery") mType = "battery";
                 else if (nLow === "media") mType = "media";
+                else if (nLow === "notifications" || nLow === "notification") mType = "notifications";
 
                 migrated.push({
                     id: tb.id || (mType + "_" + (i + 1)),

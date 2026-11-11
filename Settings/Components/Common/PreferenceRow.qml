@@ -23,19 +23,23 @@ Item {
             Layout.fillWidth: true
 
             Text {
+                Layout.fillWidth: true
                 text: pr.title
                 font.family: Style.font
                 font.pixelSize: 13
                 font.bold: true
                 color: Style.theme.textPrimary
+                elide: Text.ElideRight
             }
 
             Text {
                 visible: pr.subtitle !== ""
+                Layout.fillWidth: true
                 text: pr.subtitle
                 font.family: Style.font
                 font.pixelSize: 11
                 color: Style.theme.textSecondary
+                elide: Text.ElideRight
             }
         }
 

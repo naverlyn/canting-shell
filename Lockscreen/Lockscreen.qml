@@ -19,7 +19,7 @@ Scope {
 
     Timer {
         id: unlockFinishTimer
-        interval: 540
+        interval: 560
         repeat: false
         onTriggered: {
             root.isUnlocking = false;

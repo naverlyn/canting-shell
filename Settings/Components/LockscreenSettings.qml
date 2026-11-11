@@ -51,6 +51,7 @@ Item {
     property real vibrancy: LockscreenConfig.vibrancy
     property bool generalImmediateRender: LockscreenConfig.general_immediate_render
     property bool unlockAnimation: LockscreenConfig.unlock_animation
+    property string animationStyle: LockscreenConfig.animation_style || "default"
 
     property string clockFormat: LockscreenConfig.clock_format
     property int clockFontSize: LockscreenConfig.clock_font_size
@@ -97,6 +98,7 @@ Item {
             root.vibrancy = LockscreenConfig.vibrancy;
             root.generalImmediateRender = LockscreenConfig.general_immediate_render;
             root.unlockAnimation = LockscreenConfig.unlock_animation;
+            root.animationStyle = LockscreenConfig.animation_style || "default";
             root.clockFormat = LockscreenConfig.clock_format;
             root.clockFontSize = LockscreenConfig.clock_font_size;
             root.backgroundSource = LockscreenConfig.background_source;
@@ -126,6 +128,7 @@ Item {
         LockscreenConfig.vibrancy = root.vibrancy;
         LockscreenConfig.general_immediate_render = root.generalImmediateRender;
         LockscreenConfig.unlock_animation = root.unlockAnimation;
+        LockscreenConfig.animation_style = root.animationStyle || "default";
         LockscreenConfig.clock_format = root.clockFormat;
         LockscreenConfig.clock_font_size = root.clockFontSize;
         LockscreenConfig.show_date = root.showDate;
@@ -238,6 +241,14 @@ Item {
     function selectStageBlock(idx) {
         const sBox = lockScreenInst.stageSandboxRef;
         if (sBox && sBox.selectBlock) sBox.selectBlock(idx);
+    }
+
+    function previewLockAnimation(styleOverride) {
+        const sBox = lockScreenInst.stageSandboxRef;
+        const st = styleOverride || root.animationStyle || "default";
+        if (sBox && sBox.playAnimationPreview) {
+            sBox.playAnimationPreview(st);
+        }
     }
 
     function addCustomBlock() {

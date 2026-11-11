@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import ".."
 
-Item {
+Rectangle {
     id: root
 
     property var theme: DefaultTheme {}
@@ -14,6 +14,10 @@ Item {
     property real scaleFactor: 1.0
 
     property string cmdOutput: ""
+
+    readonly property bool showCard: (moduleData && moduleData.showCard !== undefined)
+        ? Boolean(moduleData.showCard)
+        : false
 
     function resolveColor(colStr) {
         const t = root.theme;
@@ -55,17 +59,29 @@ Item {
         onTriggered: if (root.moduleData && root.moduleData.cmd) cmdProc.running = true
     }
 
-    implicitWidth: lbl.implicitWidth
-    implicitHeight: lbl.implicitHeight
+    implicitWidth: root.showCard
+        ? (lbl.implicitWidth + Math.round(24 * root.scaleFactor))
+        : lbl.implicitWidth
+    implicitHeight: root.showCard
+        ? Math.max(22, lbl.implicitHeight + Math.round(14 * root.scaleFactor))
+        : lbl.implicitHeight
+
+    radius: Math.max(6, Math.round(12 * root.scaleFactor))
+    color: root.showCard
+        ? Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
+        : "transparent"
+    border.width: root.showCard ? 1 : 0
+    border.color: root.theme.bgBorder
 
     Text {
         id: lbl
+        anchors.centerIn: parent
         text: (root.moduleData && root.moduleData.cmd) ? (root.cmdOutput || "...") : (root.moduleData ? (root.moduleData.text || "Custom Text") : "")
         font.family: (root.moduleData && root.moduleData.fontFamily) ? root.moduleData.fontFamily : root.font
         font.pixelSize: Math.max(8, Math.round(((root.moduleData && Number(root.moduleData.fontSize)) ? Number(root.moduleData.fontSize) : 14) * root.scaleFactor))
-        font.bold: false
+        font.bold: root.showCard
         color: root.resolveColor(root.moduleData ? root.moduleData.color : "$text")
-        style: Text.Outline
+        style: root.showCard ? Text.Normal : Text.Outline
         styleColor: root.theme.bgOverlay
     }
 }

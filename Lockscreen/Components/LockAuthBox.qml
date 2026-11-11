@@ -291,7 +291,7 @@ Item {
                     // Left Lock / Status Icon
                     Text {
                         text: authRoot.isSuccess
-                              ? "󰄬"
+                              ? ""
                               : (authRoot.isAuthenticating
                                  ? "󱥸"
                                  : ((authRoot.errorMessage !== "" || authRoot.failActive)

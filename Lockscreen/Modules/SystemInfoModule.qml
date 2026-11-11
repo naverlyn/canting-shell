@@ -18,11 +18,15 @@ Rectangle {
         return isNaN(val) ? 0 : Math.max(0, Math.min(100, val));
     }
 
+    readonly property bool showCard: (moduleData && moduleData.showCard !== undefined) ? Boolean(moduleData.showCard) : true
+
     implicitWidth: Math.max(160, Math.round(260 * root.scaleFactor))
     implicitHeight: mainCol.implicitHeight + Math.round(16 * root.scaleFactor)
     radius: Math.max(8, Math.round(14 * root.scaleFactor))
-    color: Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
-    border.width: 1
+    color: root.showCard
+        ? Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
+        : "transparent"
+    border.width: root.showCard ? 1 : 0
     border.color: root.theme.bgBorder
 
     ColumnLayout {
@@ -39,6 +43,8 @@ Rectangle {
                 font.pixelSize: Math.max(7, Math.round(11 * root.scaleFactor))
                 font.bold: true
                 color: root.theme.textSecondary
+                style: root.showCard ? Text.Normal : Text.Outline
+                styleColor: root.theme.bgOverlay
             }
             Item { Layout.fillWidth: true }
             Text {
@@ -46,6 +52,8 @@ Rectangle {
                 font.family: root.font
                 font.pixelSize: Math.max(7, Math.round(10 * root.scaleFactor))
                 color: root.theme.accentOrange
+                style: root.showCard ? Text.Normal : Text.Outline
+                styleColor: root.theme.bgOverlay
             }
         }
 

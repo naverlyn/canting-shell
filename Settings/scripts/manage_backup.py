@@ -22,6 +22,7 @@ MODULE_FILES = {
     "notifications": ["notifications_config.json"],
     "osd": ["osd_config.json"],
     "controlcenter": ["control_center_config.json"],
+    "lockscreen": ["lockscreen_config.json"],
     "appearance": ["theme.conf", "qml_color.json", "ThemeSwitcher/wallpaper-theme.json"],
     "wallpaper": ["wallpaper.conf", "wallpaper_sync.conf", "wallpaper_dirs.conf", "wallpaper_mode.conf", "wallpaper_displays.json"],
 }
@@ -89,6 +90,44 @@ DEFAULT_CONFIGS = {
         "marginX": 16,
         "marginY": 0,
         "timeoutMs": 1500
+    },
+    "lockscreen_config.json": {
+        "background_source": "wallpaper",
+        "background_custom_path": "",
+        "blur_passes": 2,
+        "blur_size": 3,
+        "contrast": 1.25,
+        "brightness": 0.8,
+        "vibrancy": 0.21,
+        "general_immediate_render": True,
+        "unlock_animation": True,
+        "animation_style": "default",
+        "clock_format": "24h",
+        "clock_font_size": 90,
+        "show_date": True,
+        "show_user": True,
+        "show_layout": True,
+        "show_uptime": True,
+        "show_weather": True,
+        "show_media": True,
+        "input_width": 300,
+        "input_height": 56,
+        "input_outline_thickness": 3,
+        "input_placeholder": "Password",
+        "input_pos_x": 0,
+        "input_pos_y": 0,
+        "input_halign": "center",
+        "input_valign": "center",
+        "input_outer_color": "$accent",
+        "input_inner_color": "$surface0",
+        "input_font_color": "$text",
+        "modules": [
+            {"id": "clock_1", "type": "clock", "name": "Clock & Date", "enabled": True, "halign": "left", "valign": "top", "position_x": 48, "position_y": -44, "color": "$text", "fontSize": 90, "clockFormat": "24h", "showDate": True},
+            {"id": "auth_1", "type": "auth", "name": "User & Password", "enabled": True, "halign": "center", "valign": "center", "position_x": 0, "position_y": -85, "color": "$accent"},
+            {"id": "weather_1", "type": "weather", "name": "Weather", "enabled": True, "halign": "left", "valign": "bottom", "position_x": 36, "position_y": 32, "color": "$color10", "displayMode": "detailed"},
+            {"id": "media_1", "type": "media", "name": "Media Player", "enabled": True, "halign": "center", "valign": "bottom", "position_x": 0, "position_y": 32, "color": "$accent"},
+            {"id": "status_1", "type": "statusInfo", "name": "Keyboard & Uptime", "enabled": True, "halign": "right", "valign": "bottom", "position_x": -36, "position_y": 32, "color": "$accent"}
+        ]
     },
     "theme.conf": "10\n",
     "wallpaper_sync.conf": "true\n",
@@ -461,6 +500,13 @@ def reset_defaults(modules_csv="all"):
             json.dumps(DEFAULT_CONFIGS["osd_config.json"], indent=2) + "\n"
         )
         reset_items.append("OSD")
+
+    if "lockscreen" in selected_modules:
+        atomic_write(
+            os.path.join(BASE_DIR, "lockscreen_config.json"),
+            json.dumps(DEFAULT_CONFIGS["lockscreen_config.json"], indent=2) + "\n"
+        )
+        reset_items.append("Lock Screen")
 
     if "bar" in selected_modules:
         default_bar = {

@@ -25,6 +25,8 @@ Item {
                 case "auth": return authComp;
                 case "statusInfo": return statusInfoComp;
                 case "media": return mediaComp;
+                case "notifications":
+                case "notification": return notificationsComp;
                 case "weather": return weatherComp;
                 case "cpu": return cpuComp;
                 case "memory": return memoryComp;
@@ -53,6 +55,17 @@ Item {
     Component {
         id: mediaComp
         MediaModule {
+            theme: hostRoot.theme
+            font: hostRoot.font
+            moduleData: hostRoot.moduleData
+            previewMode: hostRoot.previewMode
+            scaleFactor: hostRoot.scaleFactor
+        }
+    }
+
+    Component {
+        id: notificationsComp
+        NotificationModule {
             theme: hostRoot.theme
             font: hostRoot.font
             moduleData: hostRoot.moduleData

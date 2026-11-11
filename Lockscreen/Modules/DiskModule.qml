@@ -19,12 +19,15 @@ Rectangle {
     }
 
     readonly property int diskPct: parsePercent(SystemInfo.diskUsage)
+    readonly property bool showCard: (moduleData && moduleData.showCard !== undefined) ? Boolean(moduleData.showCard) : true
 
     implicitWidth: Math.max(90, Math.round(140 * root.scaleFactor))
     implicitHeight: Math.max(22, Math.round(38 * root.scaleFactor))
     radius: Math.max(6, Math.round(12 * root.scaleFactor))
-    color: Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
-    border.width: 1
+    color: root.showCard
+        ? Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.78)
+        : "transparent"
+    border.width: root.showCard ? 1 : 0
     border.color: root.theme.bgBorder
 
     RowLayout {
@@ -37,6 +40,8 @@ Rectangle {
             font.family: root.font
             font.pixelSize: Math.max(10, Math.round(16 * root.scaleFactor))
             color: root.theme.accentGreen
+            style: root.showCard ? Text.Normal : Text.Outline
+            styleColor: root.theme.bgOverlay
         }
 
         ColumnLayout {
@@ -49,6 +54,8 @@ Rectangle {
                     font.pixelSize: Math.max(7, Math.round(10 * root.scaleFactor))
                     font.bold: true
                     color: root.theme.textSecondary
+                    style: root.showCard ? Text.Normal : Text.Outline
+                    styleColor: root.theme.bgOverlay
                 }
                 Text {
                     text: SystemInfo.diskUsage
@@ -56,6 +63,8 @@ Rectangle {
                     font.pixelSize: Math.max(8, Math.round(11 * root.scaleFactor))
                     font.bold: true
                     color: root.theme.textPrimary
+                    style: root.showCard ? Text.Normal : Text.Outline
+                    styleColor: root.theme.bgOverlay
                 }
             }
 

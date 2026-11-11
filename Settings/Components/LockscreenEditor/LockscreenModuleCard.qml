@@ -16,6 +16,7 @@ Rectangle {
 
     signal moduleSaved(int index, var payload)
     signal moduleDeleted(int index)
+    signal expandedToggled(bool expanded)
 
     Layout.fillWidth: true
     implicitHeight: mainLayout.implicitHeight + 24
@@ -47,10 +48,61 @@ Rectangle {
     property int editFontSize: moduleData && moduleData.fontSize ? moduleData.fontSize : (modType === "clock" ? 90 : 13)
     property string editClockFormat: moduleData && moduleData.clockFormat ? moduleData.clockFormat : "24h"
     property bool editShowDate: moduleData && moduleData.showDate !== undefined ? moduleData.showDate : true
-    property string editDisplayMode: moduleData && moduleData.displayMode ? moduleData.displayMode : (modType === "media" ? "compact" : "detailed")
+    property bool editShowCard: (moduleData && moduleData.showCard !== undefined)
+        ? Boolean(moduleData.showCard)
+        : (modType !== "clock" && modType !== "auth" && modType !== "customText")
+    property string editDisplayMode: moduleData && moduleData.displayMode ? moduleData.displayMode : (modType === "media" ? "compact" : (modType === "notifications" ? "full" : "detailed"))
+    property int editMaxVisible: moduleData && moduleData.maxVisible !== undefined ? Number(moduleData.maxVisible) : 3
+    property bool editShowContent: moduleData && moduleData.showContent !== undefined ? Boolean(moduleData.showContent) : true
+    property bool editHideWhenEmpty: moduleData && moduleData.hideWhenEmpty !== undefined ? Boolean(moduleData.hideWhenEmpty) : false
     property string editCmd: moduleData && moduleData.cmd ? moduleData.cmd : ""
     property string editText: moduleData && moduleData.text ? moduleData.text : ""
     property int editInterval: moduleData && moduleData.interval ? Number(moduleData.interval) : 5000
+
+    onModuleDataChanged: {
+        if (!moduleData) return;
+        const nextEnabled = moduleData.enabled !== undefined ? Boolean(moduleData.enabled) : true;
+        const nextName = moduleData.name ? String(moduleData.name) : modDef.name;
+        const nextHalign = moduleData.halign ? String(moduleData.halign) : "center";
+        const nextValign = moduleData.valign ? String(moduleData.valign) : "center";
+        const nextPosX = moduleData.position_x !== undefined ? Number(moduleData.position_x) : 0;
+        const nextPosY = moduleData.position_y !== undefined ? Number(moduleData.position_y) : 0;
+        const nextColor = moduleData.color ? String(moduleData.color) : "$accent";
+        const nextFontSize = moduleData.fontSize ? Number(moduleData.fontSize) : (modType === "clock" ? 90 : 13);
+        const nextClockFormat = moduleData.clockFormat ? String(moduleData.clockFormat) : "24h";
+        const nextShowDate = moduleData.showDate !== undefined ? Boolean(moduleData.showDate) : true;
+        const nextShowCard = moduleData.showCard !== undefined
+            ? Boolean(moduleData.showCard)
+            : (modType !== "clock" && modType !== "auth" && modType !== "customText");
+        const nextDisplayMode = moduleData.displayMode
+            ? String(moduleData.displayMode)
+            : (modType === "media" ? "compact" : (modType === "notifications" ? "full" : "detailed"));
+        const nextMaxVisible = moduleData.maxVisible !== undefined ? Number(moduleData.maxVisible) : 3;
+        const nextShowContent = moduleData.showContent !== undefined ? Boolean(moduleData.showContent) : true;
+        const nextHideWhenEmpty = moduleData.hideWhenEmpty !== undefined ? Boolean(moduleData.hideWhenEmpty) : false;
+        const nextCmd = moduleData.cmd ? String(moduleData.cmd) : "";
+        const nextText = moduleData.text ? String(moduleData.text) : "";
+        const nextInterval = moduleData.interval ? Number(moduleData.interval) : 5000;
+
+        if (editEnabled !== nextEnabled) editEnabled = nextEnabled;
+        if (editName !== nextName) editName = nextName;
+        if (editHalign !== nextHalign) editHalign = nextHalign;
+        if (editValign !== nextValign) editValign = nextValign;
+        if (editPosX !== nextPosX) editPosX = nextPosX;
+        if (editPosY !== nextPosY) editPosY = nextPosY;
+        if (editColor !== nextColor) editColor = nextColor;
+        if (editFontSize !== nextFontSize) editFontSize = nextFontSize;
+        if (editClockFormat !== nextClockFormat) editClockFormat = nextClockFormat;
+        if (editShowDate !== nextShowDate) editShowDate = nextShowDate;
+        if (editShowCard !== nextShowCard) editShowCard = nextShowCard;
+        if (editDisplayMode !== nextDisplayMode) editDisplayMode = nextDisplayMode;
+        if (editMaxVisible !== nextMaxVisible) editMaxVisible = nextMaxVisible;
+        if (editShowContent !== nextShowContent) editShowContent = nextShowContent;
+        if (editHideWhenEmpty !== nextHideWhenEmpty) editHideWhenEmpty = nextHideWhenEmpty;
+        if (editCmd !== nextCmd) editCmd = nextCmd;
+        if (editText !== nextText) editText = nextText;
+        if (editInterval !== nextInterval) editInterval = nextInterval;
+    }
 
     function saveChanges() {
         let payload = {
@@ -64,7 +116,11 @@ Rectangle {
             fontSize: cardRoot.editFontSize,
             clockFormat: cardRoot.editClockFormat,
             showDate: cardRoot.editShowDate,
+            showCard: cardRoot.editShowCard,
             displayMode: cardRoot.editDisplayMode,
+            maxVisible: cardRoot.editMaxVisible,
+            showContent: cardRoot.editShowContent,
+            hideWhenEmpty: cardRoot.editHideWhenEmpty,
             cmd: cardRoot.editCmd,
             text: cardRoot.editText,
             interval: cardRoot.editInterval
@@ -150,7 +206,9 @@ Rectangle {
                     id: editBtnMouse
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: cardRoot.isExpanded = !cardRoot.isExpanded
+                    onClicked: {
+                        cardRoot.expandedToggled(!cardRoot.isExpanded);
+                    }
                 }
             }
         }
@@ -368,6 +426,108 @@ Rectangle {
                 }
             }
 
+            // Card Background Toggle (available for all visual modules)
+            PreferenceRow {
+                visible: cardRoot.modType !== "auth"
+                title: "Show Card Background"
+                subtitle: "Wrap module in a frosted surface card with border"
+                SwitchToggle {
+                    checked: cardRoot.editShowCard
+                    onToggled: (st) => {
+                        cardRoot.editShowCard = st;
+                        cardRoot.saveChanges();
+                    }
+                }
+            }
+
+            // Weather specific options
+            ColumnLayout {
+                visible: cardRoot.modType === "weather"
+                Layout.fillWidth: true
+                spacing: 8
+
+                PreferenceRow {
+                    title: "Weather Layout Style"
+                    subtitle: "Choose between single-line compact badge or detailed multi-line view"
+
+                    Rectangle {
+                        id: weatherLayoutSegmentTrack
+                        width: 200
+                        height: 32
+                        radius: 7
+                        color: cardRoot.theme.bgBase
+                        border.color: cardRoot.theme.bgBorder
+                        border.width: 1
+
+                        readonly property var modes: [
+                            { label: "Compact", value: "compact" },
+                            { label: "Detailed", value: "detailed" }
+                        ]
+
+                        readonly property int activeIdx: cardRoot.editDisplayMode === "compact" ? 0 : 1
+                        readonly property real cellWidth: (width - 6 - (modes.length - 1) * 3) / modes.length
+
+                        Rectangle {
+                            visible: weatherLayoutSegmentTrack.activeIdx >= 0
+                            y: 3
+                            height: parent.height - 6
+                            width: weatherLayoutSegmentTrack.cellWidth
+                            x: 3 + Math.max(0, weatherLayoutSegmentTrack.activeIdx) * (weatherLayoutSegmentTrack.cellWidth + 3)
+                            radius: 5
+                            color: cardRoot.theme.bgSelected
+                            border.color: cardRoot.theme.accentPrimary
+                            border.width: 1
+
+                            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 3
+                            spacing: 3
+
+                            Repeater {
+                                model: weatherLayoutSegmentTrack.modes
+                                delegate: Rectangle {
+                                    id: wSegBtn
+                                    required property var modelData
+                                    required property int index
+                                    readonly property bool isSel: weatherLayoutSegmentTrack.activeIdx === index
+
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    radius: 5
+                                    color: !isSel && wSegHover.hovered ? cardRoot.theme.bgHover : "transparent"
+                                    Behavior on color { ColorAnimation { duration: 140 } }
+
+                                    HoverHandler { id: wSegHover }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: wSegBtn.modelData.label
+                                        font.family: cardRoot.font
+                                        font.pixelSize: 11
+                                        font.bold: wSegBtn.isSel
+                                        color: wSegBtn.isSel ? cardRoot.theme.accentPrimary : cardRoot.theme.textPrimary
+                                        opacity: wSegBtn.isSel || wSegHover.hovered ? 1.0 : 0.75
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            cardRoot.editDisplayMode = wSegBtn.modelData.value;
+                                            cardRoot.saveChanges();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // Clock specific options
             ColumnLayout {
                 visible: cardRoot.modType === "clock"
@@ -569,6 +729,132 @@ Rectangle {
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            // Notifications specific options
+            ColumnLayout {
+                visible: cardRoot.modType === "notifications" || cardRoot.modType === "notification"
+                Layout.fillWidth: true
+                spacing: 8
+
+                PreferenceRow {
+                    title: "Notification Layout Style"
+                    subtitle: "Choose between compact single-line pill or stacked notification list"
+
+                    Rectangle {
+                        id: notifLayoutSegmentTrack
+                        width: 200
+                        height: 32
+                        radius: 7
+                        color: cardRoot.theme.bgBase
+                        border.color: cardRoot.theme.bgBorder
+                        border.width: 1
+
+                        readonly property var modes: [
+                            { label: "Compact", value: "compact" },
+                            { label: "Stack", value: "full" }
+                        ]
+
+                        readonly property int activeIdx: cardRoot.editDisplayMode === "compact" ? 0 : 1
+                        readonly property real cellWidth: (width - 6 - (modes.length - 1) * 3) / modes.length
+
+                        Rectangle {
+                            visible: notifLayoutSegmentTrack.activeIdx >= 0
+                            y: 3
+                            height: parent.height - 6
+                            width: notifLayoutSegmentTrack.cellWidth
+                            x: 3 + Math.max(0, notifLayoutSegmentTrack.activeIdx) * (notifLayoutSegmentTrack.cellWidth + 3)
+                            radius: 5
+                            color: cardRoot.theme.bgSelected
+                            border.color: cardRoot.theme.accentPrimary
+                            border.width: 1
+
+                            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 3
+                            spacing: 3
+
+                            Repeater {
+                                model: notifLayoutSegmentTrack.modes
+                                delegate: Rectangle {
+                                    id: nSegBtn
+                                    required property var modelData
+                                    required property int index
+                                    readonly property bool isSel: notifLayoutSegmentTrack.activeIdx === index
+
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    radius: 5
+                                    color: !isSel && nSegHover.hovered ? cardRoot.theme.bgHover : "transparent"
+                                    Behavior on color { ColorAnimation { duration: 140 } }
+
+                                    HoverHandler { id: nSegHover }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: nSegBtn.modelData.label
+                                        font.family: cardRoot.font
+                                        font.pixelSize: 11
+                                        font.bold: nSegBtn.isSel
+                                        color: nSegBtn.isSel ? cardRoot.theme.accentPrimary : cardRoot.theme.textPrimary
+                                        opacity: nSegBtn.isSel || nSegHover.hovered ? 1.0 : 0.75
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            cardRoot.editDisplayMode = nSegBtn.modelData.value;
+                                            cardRoot.saveChanges();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                PreferenceSlider {
+                    visible: cardRoot.editDisplayMode !== "compact"
+                    title: "Max Visible Notifications"
+                    subtitle: "Maximum number of notification cards shown in the stack"
+                    minVal: 1
+                    maxVal: 6
+                    unit: ""
+                    currentVal: cardRoot.editMaxVisible
+                    onValueChanged: (val) => {
+                        cardRoot.editMaxVisible = val;
+                        cardRoot.saveChanges();
+                    }
+                }
+
+                PreferenceRow {
+                    title: "Show Message Content"
+                    subtitle: "Display notification title and body text (disable to redact content while locked)"
+                    SwitchToggle {
+                        checked: cardRoot.editShowContent
+                        onToggled: (st) => {
+                            cardRoot.editShowContent = st;
+                            cardRoot.saveChanges();
+                        }
+                    }
+                }
+
+                PreferenceRow {
+                    title: "Hide When Empty"
+                    subtitle: "Hide notification card on lock screen when there are no active notifications"
+                    SwitchToggle {
+                        checked: cardRoot.editHideWhenEmpty
+                        onToggled: (st) => {
+                            cardRoot.editHideWhenEmpty = st;
+                            cardRoot.saveChanges();
                         }
                     }
                 }

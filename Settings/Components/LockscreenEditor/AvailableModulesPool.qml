@@ -74,6 +74,8 @@ Rectangle {
             Item { Layout.fillWidth: true }
 
             Text {
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignRight
                 text: poolRoot.isPoolDropTarget
                     ? "Release here to remove from Lock Screen"
                     : "Drag block into live preview above or click to add"
@@ -81,6 +83,7 @@ Rectangle {
                 font.pixelSize: 10
                 font.bold: poolRoot.isPoolDropTarget
                 color: poolRoot.isPoolDropTarget ? hostRoot.theme.accentRed : hostRoot.theme.textMuted
+                elide: Text.ElideRight
             }
         }
 

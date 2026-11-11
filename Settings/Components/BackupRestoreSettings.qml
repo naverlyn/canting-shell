@@ -34,6 +34,7 @@ Item {
     property bool formIncNotif: true
     property bool formIncOsd: true
     property bool formIncCc: true
+    property bool formIncLockscreen: true
     property bool formIncTheme: true
     property bool formIncWallpaper: true
 
@@ -114,6 +115,7 @@ Item {
         if (formIncNotif) mods.push("notifications");
         if (formIncOsd) mods.push("osd");
         if (formIncCc) mods.push("controlcenter");
+        if (formIncLockscreen) mods.push("lockscreen");
         if (formIncTheme) mods.push("appearance");
         if (formIncWallpaper) mods.push("wallpaper");
 
@@ -228,7 +230,7 @@ Item {
                     }
 
                     Text {
-                        text: "Manage snapshots, create backups, and restore configuration settings for Bar, Notifications, OSD, and Control Center."
+                        text: "Manage snapshots, create backups, and restore configuration settings for Bar, Notifications, OSD, Lock Screen, and Control Center."
                         font.family: root.font
                         font.pixelSize: 11
                         color: root.theme.textMuted
@@ -612,7 +614,7 @@ Item {
 
                             // Select All / Deselect All
                             Text {
-                                text: (root.formIncBar && root.formIncNotif && root.formIncOsd && root.formIncCc && root.formIncTheme && root.formIncWallpaper) ? "Deselect All" : "Select All"
+                                text: (root.formIncBar && root.formIncNotif && root.formIncOsd && root.formIncCc && root.formIncLockscreen && root.formIncTheme && root.formIncWallpaper) ? "Deselect All" : "Select All"
                                 font.family: root.font
                                 font.pixelSize: 11
                                 color: root.theme.accentPrimary ?? "#7aa2f7"
@@ -620,11 +622,12 @@ Item {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        const allOn = root.formIncBar && root.formIncNotif && root.formIncOsd && root.formIncCc && root.formIncTheme && root.formIncWallpaper;
+                                        const allOn = root.formIncBar && root.formIncNotif && root.formIncOsd && root.formIncCc && root.formIncLockscreen && root.formIncTheme && root.formIncWallpaper;
                                         root.formIncBar = !allOn;
                                         root.formIncNotif = !allOn;
                                         root.formIncOsd = !allOn;
                                         root.formIncCc = !allOn;
+                                        root.formIncLockscreen = !allOn;
                                         root.formIncTheme = !allOn;
                                         root.formIncWallpaper = !allOn;
                                     }
@@ -706,6 +709,24 @@ Item {
                                     Text { text: "󰕮 Control Center"; font.family: root.font; font.pixelSize: 11; font.bold: true; color: root.theme.textPrimary }
                                 }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.formIncCc = !root.formIncCc }
+                            }
+
+                            // Lock Screen chip
+                            Rectangle {
+                                implicitWidth: lockChipRow.implicitWidth + 20
+                                height: 30
+                                radius: 15
+                                color: root.formIncLockscreen ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2) : root.theme.bgBase
+                                border.color: root.formIncLockscreen ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                                border.width: 1
+                                RowLayout {
+                                    id: lockChipRow
+                                    anchors.centerIn: parent
+                                    spacing: 6
+                                    Text { text: root.formIncLockscreen ? "󰄲" : "󰄱"; font.family: root.font; font.pixelSize: 12; color: root.formIncLockscreen ? root.theme.accentPrimary : root.theme.textMuted }
+                                    Text { text: "󰌾 Lock Screen"; font.family: root.font; font.pixelSize: 11; font.bold: true; color: root.theme.textPrimary }
+                                }
+                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.formIncLockscreen = !root.formIncLockscreen }
                             }
 
                             // Appearance & Theme chip
@@ -1080,6 +1101,7 @@ Item {
                                                             case "notifications": return "󰂚 Notifications";
                                                             case "osd": return "󰍹 OSD";
                                                             case "controlcenter": return "󰕮 Control Center";
+                                                            case "lockscreen": return "󰌾 Lock Screen";
                                                             case "appearance": return "󰏘 Theme";
                                                             case "wallpaper": return "󰸉 Wallpaper";
                                                             default: return modelData;
@@ -1164,6 +1186,12 @@ Item {
                                                 label: "Control Center Only"
                                                 btnHeight: 28
                                                 onClicked: root.restoreSnapshot(snapItemCard.modelData.id, "controlcenter")
+                                            }
+
+                                            ActionButton {
+                                                label: "Lock Screen Only"
+                                                btnHeight: 28
+                                                onClicked: root.restoreSnapshot(snapItemCard.modelData.id, "lockscreen")
                                             }
 
                                             Item { Layout.fillWidth: true }
@@ -1342,8 +1370,21 @@ Item {
                 RowDivider {}
 
                 PreferenceRow {
+                    title: "Reset Lock Screen Configuration"
+                    subtitle: "Restore default lock screen modules, visual filters, and password box layout"
+                    ActionButton {
+                        iconText: "󰁯"
+                        label: "Reset Lock Screen"
+                        danger: true
+                        onClicked: root.resetFactoryDefaults("lockscreen")
+                    }
+                }
+
+                RowDivider {}
+
+                PreferenceRow {
                     title: "Reset All Quickshell Configurations"
-                    subtitle: "Reset Bar, Notifications, and OSD to factory defaults (with safety backup)"
+                    subtitle: "Reset Bar, Notifications, OSD, and Lock Screen to factory defaults (with safety backup)"
                     ActionButton {
                         iconText: "󰑓"
                         label: "Reset All to Defaults"

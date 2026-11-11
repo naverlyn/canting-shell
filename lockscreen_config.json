@@ -1,6 +1,6 @@
 {
   "background_source": "custom",
-  "background_custom_path": "/home/xeana/Pictures/wallpapers/images/10527300_p0.jpg",
+  "background_custom_path": "/home/xeana/Pictures/wallpapers/art/123022066_p0.jpg",
   "blur_passes": 2,
   "blur_size": 1,
   "contrast": 1,
@@ -8,6 +8,7 @@
   "vibrancy": 0.5,
   "general_immediate_render": true,
   "unlock_animation": true,
+  "animation_style": "depth",
   "clock_format": "12h",
   "clock_font_size": 90,
   "show_date": true,
@@ -18,9 +19,9 @@
   "show_media": true,
   "input_width": 250,
   "input_height": 60,
-  "input_outline_thickness": 0,
-  "input_placeholder": "Password",
-  "input_pos_x": 0,
+  "input_outline_thickness": 3,
+  "input_placeholder": "Input",
+  "input_pos_x": 1,
   "input_pos_y": 0,
   "input_halign": "center",
   "input_valign": "center",
@@ -78,7 +79,11 @@
       "displayMode": "compact",
       "interval": 5000,
       "showDate": true,
-      "text": ""
+      "text": "",
+      "showCard": true,
+      "maxVisible": 3,
+      "showContent": true,
+      "hideWhenEmpty": false
     },
     {
       "id": "uptime_1793528121791",
@@ -105,6 +110,29 @@
       "position_y": -31,
       "color": "$accent",
       "fontSize": 13
+    },
+    {
+      "id": "notifications_1793852771691",
+      "index": 5,
+      "type": "notifications",
+      "name": "Notifications",
+      "enabled": true,
+      "halign": "left",
+      "valign": "top",
+      "position_x": 32,
+      "position_y": -32,
+      "color": "$accent",
+      "fontSize": 13,
+      "displayMode": "full",
+      "maxVisible": 6,
+      "showContent": true,
+      "hideWhenEmpty": true,
+      "clockFormat": "24h",
+      "showDate": true,
+      "showCard": true,
+      "cmd": "",
+      "text": "",
+      "interval": 5000
     }
   ]
 }

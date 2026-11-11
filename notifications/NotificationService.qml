@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
+import "SocialApps.js" as SocialApps
 
 Singleton {
     id: root
@@ -11,6 +12,8 @@ Singleton {
     readonly property string configPath: Qt.resolvedUrl("../notifications_config.json").toString().replace(/^file:\/\//, "")
 
     property var notifications: []
+    property var history: []
+    readonly property int historyCount: history.length
     property bool doNotDisturb: false
     property string toastPosition: "top-right" // "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right"
     property int toastMarginX: 10
@@ -825,6 +828,7 @@ Singleton {
         });
 
         root.notifications = [data, ...root.notifications];
+        root.recordToHistory(data);
         while (root.notifications.length > root.maxVisibleToasts) {
             root.notifications[root.notifications.length - 1].dismiss();
         }
@@ -1163,11 +1167,67 @@ Singleton {
             });
 
             root.notifications = [data, ...root.notifications];
+            root.recordToHistory(data);
 
             while (root.notifications.length > root.maxVisibleToasts) {
                 root.notifications[root.notifications.length - 1].dismiss();
             }
         }
+    }
+
+    function recordToHistory(notifData) {
+        if (!notifData) return;
+        const nId = String(notifData.notifId || ("item_" + notifData.seqId));
+        const appName = String(notifData.appName || "Notification");
+        const appIcon = String(notifData.appIcon || "");
+        const summary = String(notifData.summary || "New Notification");
+        const body = String(notifData.body || "");
+        const sApp = notifData.socialApp || SocialApps.detectApp(appName, appIcon, summary, body);
+        const displayAppName = String(notifData.displayAppName || SocialApps.formatAppName(appName, sApp) || appName || "Notification");
+        const displayBody = String(notifData.displayBody || SocialApps.cleanBody(body, sApp) || body);
+        const now = notifData.createdAt || new Date();
+
+        const item = {
+            notifId: nId,
+            seqId: String(notifData.seqId || ""),
+            appName: appName,
+            displayAppName: displayAppName,
+            appIcon: appIcon,
+            customGlyph: String(notifData.customGlyph || ""),
+            summary: summary,
+            body: body,
+            displayBody: displayBody,
+            image: String(notifData.image || ""),
+            urgency: notifData.urgency !== undefined ? notifData.urgency : NotificationUrgency.Normal,
+            createdAt: now,
+            timeStr: Qt.formatTime(now, "hh:mm"),
+            socialApp: sApp
+        };
+
+        const filtered = (root.history || []).filter(function(h) {
+            return h && h.notifId !== nId;
+        });
+        root.history = [item, ...filtered].slice(0, 50);
+    }
+
+    function dismissHistoryItem(notifId) {
+        if (!notifId) return;
+        const targetId = String(notifId);
+        root.history = (root.history || []).filter(function(h) {
+            return h && String(h.notifId) !== targetId;
+        });
+        for (let i = 0; i < root.notifications.length; i++) {
+            const n = root.notifications[i];
+            if (n && String(n.notifId) === targetId) {
+                n.dismiss();
+                break;
+            }
+        }
+    }
+
+    function clearHistory() {
+        root.history = [];
+        root.dismissAll();
     }
 
     function _remove(notifData) {
@@ -1183,6 +1243,7 @@ Singleton {
             return n !== notifData;
         });
         root.notifications = [notifData, ...rest];
+        root.recordToHistory(notifData);
     }
 
     function dismiss(notifData) {
