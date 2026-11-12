@@ -186,6 +186,7 @@
     "customScript"
   ],
   "showAppGrid": true,
+  "appGridIcon": "󰣇",
   "showCpu": true,
   "showMemory": true,
   "showTemp": true,

@@ -594,7 +594,8 @@ def reset_defaults(modules_csv="all"):
                 ["appGrid", "globalMenu", "cpu", "temp", "memory", "disk", "network"],
                 ["windowTitle"],
                 ["tray", "clock", "workspaces", "weather", "idleInhibitor", "controlCenter"]
-            ]
+            ],
+            "appGridIcon": "󰀻"
         }
         atomic_write(
             os.path.join(BASE_DIR, "bar_config.json"),

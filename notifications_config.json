@@ -42,7 +42,7 @@
   "bodyFontSize": 12,
   "bodyMaxLines": 3,
   "bodyAlignment": "left",
-  "imagePosition": "right",
+  "imagePosition": "left",
   "imageSize": 44,
   "imageRadius": 10,
   "buttonStyle": "fill",

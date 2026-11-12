@@ -811,6 +811,10 @@ Item {
                         root: root
                     }
 
+                    AppGridOptionsCard {
+                        root: root
+                    }
+
                     NetworkSpeedOptionsCard {
                         root: root
                     }

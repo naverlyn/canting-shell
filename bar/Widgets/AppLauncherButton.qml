@@ -21,7 +21,7 @@ Rectangle {
   required property var hostScope
   id: appGridButton
   implicitHeight: hostContainer.isVert ? 28 : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : 28
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : Math.max(28, appGridIconTxt.implicitWidth + 14)
   height: implicitHeight
   width: implicitWidth
   scale: appGridMouse.pressed ? 0.92 : 1.0
@@ -52,8 +52,9 @@ Rectangle {
   }
 
   Text {
+    id: appGridIconTxt
     anchors.centerIn: parent
-    text: "󰀻"
+    text: BarConfig.appGridIcon || "󰀻"
     color: hostContainer.wAccent("appGrid", hostRoot.theme.accentPrimary)
     font.pixelSize: 14
     font.family: hostRoot.font

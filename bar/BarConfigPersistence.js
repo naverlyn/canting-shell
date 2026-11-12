@@ -40,6 +40,7 @@ function buildSaveData(root) {
     rightWidgets: primaryPanels.length > 2 ? primaryPanels[2] : [],
     removedWidgets: root.removedWidgets,
     showAppGrid: true,
+    appGridIcon: root.appGridIcon || "󰀻",
     showCpu: true,
     showMemory: true,
     showTemp: true,
@@ -261,6 +262,7 @@ function applyConfig(root, cfg) {
 
   root.removedWidgets = rem;
 
+  if (cfg.appGridIcon !== undefined) root.appGridIcon = String(cfg.appGridIcon).trim() || "󰀻";
   if (cfg.showNetDown !== undefined) root.showNetDown = Boolean(cfg.showNetDown);
   if (cfg.showNetUp !== undefined) root.showNetUp = Boolean(cfg.showNetUp);
   if (cfg.netCompact !== undefined) root.netCompact = Boolean(cfg.netCompact);
@@ -413,6 +415,7 @@ function resetDefaults(root) {
   root.removedWidgets = ["battery", "volume", "media"];
 
   root.showAppGrid = true;
+  root.appGridIcon = "󰀻";
   root.showCpu = true;
   root.showMemory = true;
   root.showTemp = true;
