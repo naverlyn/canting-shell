@@ -309,7 +309,7 @@ ColumnLayout {
                     }
                     font.family: {
                         let f = hostCard.editFontFamily.trim();
-                        if (f === "$font" || f === "") return "JetBrainsMono Nerd Font";
+                        if (f === "$font" || f === "") return (hostCard.theme && hostCard.theme.monoFont) ? hostCard.theme.monoFont : "JetBrainsMono Nerd Font";
                         return f.replace(/\s+\d+$/, "");
                     }
                     font.pixelSize: 10

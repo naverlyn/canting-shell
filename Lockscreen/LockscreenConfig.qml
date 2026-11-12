@@ -11,6 +11,41 @@ Singleton {
 
     property string background_source: "wallpaper"
     property string background_custom_path: ""
+    property string validatedCustomWallpaperPath: ""
+    property string faceIconPath: ""
+
+    onBackground_custom_pathChanged: {
+        const p = root.background_custom_path ? root.background_custom_path.trim() : "";
+        if (!p) {
+            root.validatedCustomWallpaperPath = "";
+            return;
+        }
+        customWpCheckProc.checkPath = p;
+        customWpCheckProc.command = ["sh", "-c", "[ -f \"$1\" ] && printf '%s' \"$1\" || true", "sh", p];
+        customWpCheckProc.running = true;
+    }
+
+    Process {
+        id: customWpCheckProc
+        property string checkPath: ""
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.validatedCustomWallpaperPath = text.trim();
+            }
+        }
+    }
+
+    Process {
+        id: faceIconCheckProc
+        command: ["sh", "-c", "[ -f \"$HOME/.face\" ] && printf '%s/.face' \"$HOME\" || ([ -f \"$HOME/.face.icon\" ] && printf '%s/.face.icon' \"$HOME\" || true)"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.faceIconPath = text.trim();
+            }
+        }
+    }
     property int blur_passes: 2
     property int blur_size: 3
     property real contrast: 1.25

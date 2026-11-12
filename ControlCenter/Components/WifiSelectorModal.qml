@@ -378,10 +378,11 @@ PanelWindow {
                     Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                     Behavior on color { ColorAnimation { duration: 150 } }
 
+                    property string enteredPassword: ""
+
                     onIsExpandedChanged: {
-                        if (isExpanded && modelData.security && !isCurrent) {
-                            pwdInput.forceActiveFocus();
-                        } else if (!isExpanded) {
+                        if (!isExpanded) {
+                            enteredPassword = "";
                             networkListView.forceActiveFocus(); 
                         }
                     }
@@ -463,55 +464,63 @@ PanelWindow {
                             Behavior on opacity { NumberAnimation { duration: 150 } }
                             spacing: 12
 
-                            Rectangle {
+                            Loader {
+                                id: pwdInputLoader
                                 Layout.fillWidth: true
-                                height: 38
-                                radius: 6
-                                visible: modelData.security && !networkDelegate.isCurrent
-                                color: root.theme.bgSurface
-                                border.color: pwdInput.activeFocus 
-                                    ? root.theme.accentPrimary 
-                                    : root.theme.bgBorder
-                                border.width: 1
+                                Layout.preferredHeight: 38
+                                active: networkDelegate.isExpanded && Boolean(modelData.security) && !networkDelegate.isCurrent
+                                visible: active
 
-                                TextInput {
-                                    id: pwdInput
-                                    anchors.fill: parent
-                                    anchors.margins: 10
-                                    color: root.theme.textPrimary
-                                    font.pixelSize: 13
-                                    font.family: root.font
-                                    echoMode: TextInput.Password
-                                    verticalAlignment: TextInput.AlignVCenter
-                                    
-                                    Keys.onEscapePressed: {
-                                        if (pwdInput.text !== "") {
-                                            pwdInput.text = "";
-                                        } else {
+                                sourceComponent: Rectangle {
+                                    radius: 6
+                                    color: root.theme.bgSurface
+                                    border.color: pwdInput.activeFocus 
+                                        ? root.theme.accentPrimary 
+                                        : root.theme.bgBorder
+                                    border.width: 1
+
+                                    Component.onCompleted: pwdInput.forceActiveFocus()
+
+                                    TextInput {
+                                        id: pwdInput
+                                        anchors.fill: parent
+                                        anchors.margins: 10
+                                        color: root.theme.textPrimary
+                                        font.pixelSize: 13
+                                        font.family: root.font
+                                        echoMode: TextInput.Password
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        onTextChanged: networkDelegate.enteredPassword = text
+                                        
+                                        Keys.onEscapePressed: {
+                                            if (pwdInput.text !== "") {
+                                                pwdInput.text = "";
+                                            } else {
+                                                root.expandedSsid = "";
+                                                networkListView.forceActiveFocus();
+                                            }
+                                        }
+                                        
+                                        Keys.onReturnPressed: {
+                                            root.selectedSsid = modelData.ssid;
+                                            root.selectedSsidSecured = modelData.security;
+                                            root.connectToNetwork(pwdInput.text);
                                             root.expandedSsid = "";
+                                            pwdInput.text = "";
                                             networkListView.forceActiveFocus();
                                         }
                                     }
-                                    
-                                    Keys.onReturnPressed: {
-                                        root.selectedSsid = modelData.ssid;
-                                        root.selectedSsidSecured = modelData.security;
-                                        root.connectToNetwork(pwdInput.text);
-                                        root.expandedSsid = "";
-                                        pwdInput.text = "";
-                                        networkListView.forceActiveFocus();
-                                    }
-                                }
 
-                                Text {
-                                    text: "Password"
-                                    color: root.theme.textMuted
-                                    font.pixelSize: 13
-                                    font.family: root.font
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 10
-                                    visible: pwdInput.text === ""
+                                    Text {
+                                        text: "Password"
+                                        color: root.theme.textMuted
+                                        font.pixelSize: 13
+                                        font.family: root.font
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: 10
+                                        visible: pwdInput.text === ""
+                                    }
                                 }
                             }
 
@@ -553,9 +562,9 @@ PanelWindow {
                                         onClicked: {
                                             root.selectedSsid = modelData.ssid;
                                             root.selectedSsidSecured = modelData.security;
-                                            root.connectToNetwork(pwdInput.text);
+                                            root.connectToNetwork(networkDelegate.enteredPassword);
                                             root.expandedSsid = "";
-                                            pwdInput.text = "";
+                                            networkDelegate.enteredPassword = "";
                                         }
                                     }
                                 }

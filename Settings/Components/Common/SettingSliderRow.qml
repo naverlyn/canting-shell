@@ -71,8 +71,12 @@ Item {
                 Text {
                     text: sliderRow.title
                     font.family: Style.font
-                    font.pixelSize: 13
-                    font.bold: true
+                    font.pixelSize: Style.px(13)
+                    font.bold: Style.boldHeadings
+                    font.letterSpacing: Style.letterSpacing
+                    font.hintingPreference: Style.fontHintingEnum
+                    antialiasing: Style.fontAntialiasing
+                    renderType: Style.fontRenderTypeEnum
                     color: Style.theme.textPrimary
                     Layout.fillWidth: true
                     elide: Text.ElideRight
@@ -82,7 +86,12 @@ Item {
                     visible: sliderRow.desc !== ""
                     text: sliderRow.desc
                     font.family: Style.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
+                    font.weight: Style.fontWeightEnum
+                    font.letterSpacing: Style.letterSpacing
+                    font.hintingPreference: Style.fontHintingEnum
+                    antialiasing: Style.fontAntialiasing
+                    renderType: Style.fontRenderTypeEnum
                     color: Style.theme.textSecondary
                     Layout.fillWidth: true
                     elide: Text.ElideRight

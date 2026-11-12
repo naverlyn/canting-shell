@@ -79,7 +79,7 @@ Item {
                     id: faceImg
                     anchors.fill: parent
                     anchors.margins: Math.max(1, Math.round(2 * root.sFactor))
-                    source: "file://" + Quickshell.env("HOME") + "/.face"
+                    source: LockscreenConfig.faceIconPath !== "" ? ("file://" + LockscreenConfig.faceIconPath) : ""
                     fillMode: Image.PreserveAspectCrop
                     smooth: true
                     visible: status === Image.Ready

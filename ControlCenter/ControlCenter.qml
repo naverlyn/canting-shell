@@ -11,7 +11,7 @@ PanelWindow {
     id: controlCenter
 
     property var theme: DefaultTheme {}
-    property string font: "Lato Nerd Font"
+    property string font: (controlCenter.theme && controlCenter.theme.fontFamily) ? controlCenter.theme.fontFamily : "Lato Nerd Font"
     property var anchorTarget
     property string barPosition: BarConfig.position
     property int barThickness: BarConfig.barHeight
@@ -567,6 +567,7 @@ PanelWindow {
                                         Loader {
                                             id: cardLoader
                                             width: cardWrapper.cellWidth
+                                            active: controlCenter.visible || cardWrapper.cardId === "media" || cardWrapper.cardId === "connectivity" || cardWrapper.cardId === "brightness"
                                             sourceComponent: {
                                                 switch (cardWrapper.cardId) {
                                                 case "connectivity": return connectivityComp;

@@ -23,11 +23,23 @@ MODULE_FILES = {
     "osd": ["osd_config.json"],
     "controlcenter": ["control_center_config.json"],
     "lockscreen": ["lockscreen_config.json"],
-    "appearance": ["theme.conf", "qml_color.json", "ThemeSwitcher/wallpaper-theme.json"],
+    "appearance": ["theme.conf", "qml_color.json", "ThemeSwitcher/wallpaper-theme.json", "fonts_config.json"],
+    "fonts": ["fonts_config.json"],
     "wallpaper": ["wallpaper.conf", "wallpaper_sync.conf", "wallpaper_dirs.conf", "wallpaper_mode.conf", "wallpaper_displays.json"],
 }
 
 DEFAULT_CONFIGS = {
+    "fonts_config.json": {
+        "fontFamily": "Lato Nerd Font",
+        "monoFont": "JetBrainsMono Nerd Font",
+        "fontScale": 1.0,
+        "fontWeight": "normal",
+        "boldHeadings": True,
+        "letterSpacing": 0.0,
+        "fontHinting": "default",
+        "fontAntialiasing": True,
+        "fontRenderType": "qt"
+    },
     "app_launcher_config.json": {
         "spotlightWidth": 620,
         "spotlightHeight": 480,
@@ -507,6 +519,13 @@ def reset_defaults(modules_csv="all"):
             json.dumps(DEFAULT_CONFIGS["lockscreen_config.json"], indent=2) + "\n"
         )
         reset_items.append("Lock Screen")
+
+    if "appearance" in selected_modules or "fonts" in selected_modules:
+        atomic_write(
+            os.path.join(BASE_DIR, "fonts_config.json"),
+            json.dumps(DEFAULT_CONFIGS["fonts_config.json"], indent=2) + "\n"
+        )
+        reset_items.append("Fonts")
 
     if "bar" in selected_modules:
         default_bar = {

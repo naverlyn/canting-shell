@@ -163,7 +163,10 @@ ColumnLayout {
                 id: testLockMouse
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.testLockProcRef.running = true
+                onClicked: {
+                    root.forceActiveFocus();
+                    root.testLockProcRef.running = true;
+                }
             }
         }
     }
@@ -214,8 +217,8 @@ ColumnLayout {
             showMedia: root.showMedia
             wallpaperPath: {
                 const home = Quickshell.env("HOME") || "";
-                if (root.backgroundSource === "custom" && root.backgroundCustomPath !== "")
-                    return root.backgroundCustomPath;
+                if (root.backgroundSource === "custom" && LockscreenConfig.validatedCustomWallpaperPath !== "")
+                    return LockscreenConfig.validatedCustomWallpaperPath;
                 if (root.backgroundSource === "effects")
                     return home + "/.cache/quickshell/wallpaper_effects/wallpaper_modified.png";
                 if (root.backgroundSource === "screenshot")
@@ -224,7 +227,7 @@ ColumnLayout {
                     ? (WallpaperService.currentWallpaper || WallpaperService.wallpaperA || "")
                     : "";
                 if (cur !== "") return cur;
-                return home + "/.config/hypr/wallpaper_effects/.wallpaper_current";
+                return "";
             }
             brightness: root.brightness
             contrast: root.contrast

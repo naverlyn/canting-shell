@@ -17,7 +17,7 @@ import "./Widgets"
 Scope {
   id: root
   property var theme: DefaultTheme {}
-  property string font: "Lato Nerd Font"
+  property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
   property bool barVisible: true
   property var activePopupData: null
 
@@ -188,12 +188,12 @@ Scope {
   }
 
   Variants {
-    model: BarConfig.bars
+    model: BarConfig.barIds
 
     Scope {
       id: barInstanceScope
-      required property var modelData
-      readonly property string currentBarId: (modelData && modelData.id !== undefined && modelData.id !== null) ? String(modelData.id) : ""
+      required property string modelData
+      readonly property string currentBarId: String(modelData || "")
       readonly property var currentBarData: {
         void BarConfig.panelsRevision;
         const bList = BarConfig.bars || [];
@@ -202,7 +202,7 @@ Scope {
             return bList[i];
           }
         }
-        return modelData || {};
+        return (bList.length > 0 && bList[0]) ? bList[0] : {};
       }
       readonly property var barCfg: currentBarData
       readonly property string barPos: barCfg.position || "top"
@@ -764,19 +764,80 @@ Scope {
               }
             }
 
+            // 18. GPU Usage Pill
+            Component {
+              id: gpuComp
+              GpuUsagePill {
+                hostRoot: root
+                hostContainer: barContentContainer
+              }
+            }
+
+            // 19. Wi-Fi Pill
+            Component {
+              id: wifiComp
+              WifiPill {
+                hostRoot: root
+                hostContainer: barContentContainer
+              }
+            }
+
+            // 19b. Bluetooth Pill
+            Component {
+              id: bluetoothComp
+              BluetoothPill {
+                hostRoot: root
+                hostContainer: barContentContainer
+              }
+            }
+
+            // 20. Brightness Pill
+            Component {
+              id: brightnessComp
+              BrightnessPill {
+                hostRoot: root
+                hostContainer: barContentContainer
+              }
+            }
+
+            // 21. Hyprland Layout Switcher Pill
+            Component {
+              id: hyprLayoutComp
+              HyprLayoutPill {
+                hostRoot: root
+                hostContainer: barContentContainer
+              }
+            }
+
+            // 22. Custom Script Pill
+            Component {
+              id: customScriptComp
+              CustomScriptPill {
+                hostRoot: root
+                hostContainer: barContentContainer
+              }
+            }
+
             // Widget component resolver
             function getWidgetComponent(widgetId) {
               switch (widgetId) {
                 case "appGrid": return appGridComp;
                 case "cpu": return cpuComp;
+                case "gpu": return gpuComp;
                 case "temp": return tempComp;
                 case "memory": return memoryComp;
                 case "disk": return diskComp;
                 case "network": return networkComp;
+                case "wifi":
+                case "wifiBluetooth": return wifiComp;
+                case "bluetooth": return bluetoothComp;
+                case "brightness": return brightnessComp;
                 case "battery": return batteryComp;
                 case "volume": return volumeComp;
                 case "media": return mediaComp;
                 case "cava": return cavaComp;
+                case "hyprLayout": return hyprLayoutComp;
+                case "customScript": return customScriptComp;
                 case "idleInhibitor": return idleInhibitorComp;
                 case "windowTitle": return windowTitleComp;
                 case "globalMenu": return globalMenuComp;

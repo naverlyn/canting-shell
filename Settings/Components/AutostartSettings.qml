@@ -667,8 +667,7 @@ Item {
 
                                     IconImage {
                                         anchors.centerIn: parent
-                                        width: 24
-                                        height: 24
+                                        implicitSize: 24
                                         source: appIconBox.resolvedIcon
                                         visible: appIconBox.resolvedIcon !== ""
                                     }
@@ -1457,8 +1456,7 @@ Item {
 
                                     IconImage {
                                         anchors.centerIn: parent
-                                        width: 20
-                                        height: 20
+                                        implicitSize: 20
                                         source: mIconBox.resIcon
                                         visible: mIconBox.resIcon !== ""
                                     }

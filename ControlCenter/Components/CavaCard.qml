@@ -132,7 +132,7 @@ Rectangle {
                 visible: BarConfig.cavaStyle === "bars"
 
                 Repeater {
-                    model: (CavaService.values && CavaService.values.length > 0) ? CavaService.values.length : 8
+                    model: root.visible && (CavaService.values && CavaService.values.length > 0) ? CavaService.values.length : 0
                     delegate: Rectangle {
                         required property int index
                         width: Math.max(4, Math.min(14, (parent.parent.width - 40) / Math.max(1, CavaService.values.length) - 4))
@@ -141,7 +141,10 @@ Rectangle {
                         color: root.theme.accentPrimary
                         opacity: CavaService.hasAudio ? 0.95 : 0.25
                         anchors.bottom: parent.bottom
-                        Behavior on height { NumberAnimation { duration: 45 } }
+                        Behavior on height {
+                            enabled: root.visible && CavaService.hasAudio
+                            NumberAnimation { duration: 45 }
+                        }
                     }
                 }
             }
@@ -164,7 +167,7 @@ Rectangle {
                 visible: BarConfig.cavaStyle === "line"
 
                 Repeater {
-                    model: (CavaService.values && CavaService.values.length > 0) ? CavaService.values.length : 8
+                    model: root.visible && (CavaService.values && CavaService.values.length > 0) ? CavaService.values.length : 0
                     delegate: Rectangle {
                         required property int index
                         width: Math.max(3, Math.min(10, (parent.parent.width - 40) / Math.max(1, CavaService.values.length) - 2))
@@ -173,7 +176,10 @@ Rectangle {
                         color: root.theme.accentPrimary
                         opacity: CavaService.hasAudio ? 0.85 : 0.2
                         anchors.bottom: parent.bottom
-                        Behavior on height { NumberAnimation { duration: 40 } }
+                        Behavior on height {
+                            enabled: root.visible && CavaService.hasAudio
+                            NumberAnimation { duration: 40 }
+                        }
                     }
                 }
             }

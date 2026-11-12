@@ -5,7 +5,7 @@ Item {
     id: hostRoot
 
     property var theme: DefaultTheme {}
-    property string font: "JetBrainsMono Nerd Font"
+    property string font: (hostRoot.theme && hostRoot.theme.monoFont) ? hostRoot.theme.monoFont : "JetBrainsMono Nerd Font"
     property var moduleData: ({})
     property bool previewMode: false
     property real scaleFactor: 1.0

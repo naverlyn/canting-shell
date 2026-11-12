@@ -277,6 +277,7 @@ Singleton {
     id: syncConfigFile
     path: root.syncConfPath
     watchChanges: true
+    printErrors: false
     onTextChanged: {
       const saved = syncConfigFile.text().trim();
       root.autoSyncPalette = (saved === "true");
@@ -288,6 +289,7 @@ Singleton {
     id: dirsConfigFile
     path: root.dirsConfigPath
     watchChanges: true
+    printErrors: false
     onTextChanged: root.loadDirectories()
   }
 
@@ -296,6 +298,7 @@ Singleton {
     id: configFile
     path: root.wallpaperConfPath
     watchChanges: true
+    printErrors: false
     onTextChanged: {
       const saved = configFile.text().trim();
       if (saved !== "") {
@@ -314,6 +317,7 @@ Singleton {
     id: modeConfigFile
     path: root.modeConfPath
     watchChanges: true
+    printErrors: false
     onTextChanged: {
       const saved = modeConfigFile.text().trim().toLowerCase();
       if (saved === "crop" || saved === "scale" || saved === "fill") root.resizeMode = "crop";
@@ -353,6 +357,7 @@ Singleton {
     id: configJsonFile
     path: root.configJsonPath
     watchChanges: true
+    printErrors: false
     onTextChanged: root.parseConfigJson(configJsonFile.text().trim())
   }
 
@@ -361,6 +366,7 @@ Singleton {
     id: legacyDisplaysConfigFile
     path: root.legacyDisplaysJsonPath
     watchChanges: true
+    printErrors: false
     onTextChanged: root.parseConfigJson(legacyDisplaysConfigFile.text().trim())
   }
 
@@ -786,19 +792,48 @@ Singleton {
     onExited: root.generatingTheme = false
   }
 
-  // Re-apply saved wallpaper at startup (awww-daemon starts empty)
+  property bool _initialStartupDone: false
+
+  // Re-apply saved wallpaper at startup ONLY if the wallpaper daemon is empty
   Timer {
     id: startupApplyTimer
-    interval: 200
+    interval: 250
     repeat: false
     onTriggered: {
-      if (root.wallpaperA || root.currentWallpaper) root.reapplyWallpapers();
+      root._initialStartupDone = true;
+      if (root.wallpaperA || root.currentWallpaper) {
+        const wA = root.wallpaperA || root.currentWallpaper;
+        startupCheckProc.command = [
+          "sh", "-c",
+          "if command -v awww >/dev/null 2>&1; then " +
+          "  q=$(awww query 2>/dev/null || true); " +
+          "  if [ -n \"$q\" ] && printf '%s' \"$q\" | grep -Fq \"$1\"; then echo 'ALREADY_SET'; exit 0; fi; " +
+          "elif command -v swww >/dev/null 2>&1; then " +
+          "  q=$(swww query 2>/dev/null || true); " +
+          "  if [ -n \"$q\" ] && printf '%s' \"$q\" | grep -Fq \"$1\"; then echo 'ALREADY_SET'; exit 0; fi; " +
+          "fi; echo 'NEED_APPLY'",
+          "check", wA
+        ];
+        startupCheckProc.running = true;
+      }
     }
   }
 
-  // Auto-restore wallpaper when a monitor is connected or powered on
+  Process {
+    id: startupCheckProc
+    running: false
+    stdout: StdioCollector {
+      onStreamFinished: {
+        if (text.trim() === "NEED_APPLY") {
+          root.reapplyWallpapers();
+        }
+      }
+    }
+  }
+
+  // Auto-restore wallpaper when a monitor is connected or powered on after startup
   onActiveScreensChanged: {
-    if (activeScreens && activeScreens.length > 0) {
+    if (root._initialStartupDone && activeScreens && activeScreens.length > 0) {
       screenReconnectTimer.restart();
     }
   }

@@ -70,7 +70,7 @@ Rectangle {
     width: 0
     height: 0
     property Item target: volPill
-    property Item barItem: hostContainer
+    property var barItem: hostContainer
     property var hostRoot: volPill.hostRoot
     property bool hovered: volHover.hovered || volMouse.containsMouse
     property bool pinned: volPill.isPinned
@@ -83,8 +83,8 @@ Rectangle {
     property string icon: ""
     property color accent: hostContainer.wAccent("volume", hostRoot.theme.accentPrimary)
     property bool hideHeader: true
-    property int preferredWidth: 260
-    property int preferredHeight: 112
+    property int preferredWidth: 264
+    property int preferredHeight: 0
     property var rows: []
 
     Timer {
@@ -122,13 +122,30 @@ Rectangle {
     property Component contentComponent: Component {
       ColumnLayout {
         id: volCard
-        spacing: 12
+        spacing: 8
+        readonly property var th: volProvider.theme
+
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 8
+
+          Text {
+            text: "Audio"
+            font.family: volProvider.font
+            font.pixelSize: 13
+            font.bold: true
+            color: th.textPrimary
+          }
+
+          Item { Layout.fillWidth: true }
+        }
+
         Repeater {
           model: [
             { kind: "out", label: "Speaker" },
             { kind: "in", label: "Microphone" }
           ]
-          delegate: ColumnLayout {
+          delegate: Rectangle {
             id: audioRow
             required property var modelData
             readonly property var aud: modelData.kind === "out" ? volPill.sinkAudio : volPill.srcAudio
@@ -136,94 +153,109 @@ Rectangle {
             readonly property real val: aud ? volPill.curVol(aud) : 0
             readonly property var th: volProvider.theme
             Layout.fillWidth: true
-            spacing: 6
+            implicitHeight: audioCardCol.implicitHeight + 16
+            radius: 8
+            color: Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.05)
+            border.color: Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.08)
+            border.width: 1
 
-            Text {
-              text: audioRow.modelData.label
-              font.family: volProvider.font
-              font.pixelSize: 11
-              font.bold: true
-              color: audioRow.th.textSecondary
-              Layout.fillWidth: true
-            }
+            ColumnLayout {
+              id: audioCardCol
+              anchors.left: parent.left
+              anchors.right: parent.right
+              anchors.top: parent.top
+              anchors.margins: 8
+              spacing: 6
 
-            RowLayout {
-              Layout.fillWidth: true
-              spacing: 10
-
-              Rectangle {
-                Layout.preferredWidth: 28
-                Layout.preferredHeight: 28
-                radius: 7
-                color: audioRow.muted
-                  ? Qt.rgba(audioRow.th.accentRed.r, audioRow.th.accentRed.g, audioRow.th.accentRed.b, 0.18)
-                  : Qt.rgba(audioRow.th.textPrimary.r, audioRow.th.textPrimary.g, audioRow.th.textPrimary.b, muteMouse.containsMouse ? 0.1 : 0.06)
-                Behavior on color { ColorAnimation { duration: 140 } }
+              RowLayout {
+                Layout.fillWidth: true
                 Text {
-                  anchors.centerIn: parent
-                  text: audioRow.modelData.kind === "out"
-                    ? (audioRow.muted ? "󰝟" : "󰕾")
-                    : (audioRow.muted ? "󰍭" : "󰍬")
+                  text: audioRow.modelData.label
                   font.family: volProvider.font
-                  font.pixelSize: 15
-                  color: audioRow.muted ? audioRow.th.accentRed : audioRow.th.textPrimary
+                  font.pixelSize: 10
+                  font.bold: true
+                  color: audioRow.th.textSecondary
                 }
-                MouseArea {
-                  id: muteMouse
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: if (audioRow.aud) audioRow.aud.muted = !audioRow.aud.muted
+                Item { Layout.fillWidth: true }
+                Text {
+                  text: audioRow.aud ? (audioRow.muted ? "Muted" : Math.round(audioRow.val * 100) + "%") : "0%"
+                  font.family: volProvider.font
+                  font.pixelSize: 10
+                  font.bold: true
+                  color: audioRow.muted ? audioRow.th.accentRed : volProvider.accent
                 }
               }
 
-              Rectangle {
-                id: sliderBg
+              RowLayout {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 8
-                radius: 4
-                color: Qt.rgba(audioRow.th.textPrimary.r, audioRow.th.textPrimary.g, audioRow.th.textPrimary.b, 0.18)
+                spacing: 8
 
                 Rectangle {
-                  id: sliderFill
-                  height: parent.height
-                  radius: 4
-                  width: Math.min(parent.width, parent.width * audioRow.val)
-                  color: audioRow.th.accentPrimary
-                  Behavior on width {
-                    enabled: !sliderMouse.pressed
-                    NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                  Layout.preferredWidth: 26
+                  Layout.preferredHeight: 26
+                  implicitWidth: 26
+                  implicitHeight: 26
+                  radius: 6
+                  color: audioRow.muted
+                    ? Qt.rgba(audioRow.th.accentRed.r, audioRow.th.accentRed.g, audioRow.th.accentRed.b, 0.18)
+                    : Qt.rgba(audioRow.th.textPrimary.r, audioRow.th.textPrimary.g, audioRow.th.textPrimary.b, muteMouse.containsMouse ? 0.1 : 0.06)
+                  Behavior on color { ColorAnimation { duration: 140 } }
+                  Text {
+                    anchors.centerIn: parent
+                    text: audioRow.modelData.kind === "out"
+                      ? (audioRow.muted ? "󰝟" : "󰕾")
+                      : (audioRow.muted ? "󰍭" : "󰍬")
+                    font.family: volProvider.font
+                    font.pixelSize: 14
+                    color: audioRow.muted ? audioRow.th.accentRed : audioRow.th.textPrimary
+                  }
+                  MouseArea {
+                    id: muteMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: if (audioRow.aud) audioRow.aud.muted = !audioRow.aud.muted
                   }
                 }
-                Rectangle {
-                  width: 14
-                  height: 14
-                  radius: 7
-                  y: (parent.height - height) / 2
-                  x: Math.max(0, Math.min(sliderBg.width - width, sliderFill.width - (width / 2)))
-                  color: audioRow.th.textPrimary
-                }
-                MouseArea {
-                  id: sliderMouse
-                  anchors.fill: parent
-                  anchors.topMargin: -8
-                  anchors.bottomMargin: -8
-                  cursorShape: Qt.PointingHandCursor
-                  onPressed: (m) => volPill.setVol(audioRow.aud, m.x / width)
-                  onPositionChanged: (m) => { if (pressed) volPill.setVol(audioRow.aud, m.x / width) }
-                  onWheel: (w) => volPill.setVol(audioRow.aud, audioRow.val + (w.angleDelta.y > 0 ? 0.05 : -0.05))
-                }
-              }
 
-              Text {
-                text: audioRow.aud ? (audioRow.muted ? "Muted" : Math.round(audioRow.val * 100) + "%") : "0%"
-                font.family: volProvider.font
-                font.pixelSize: 11
-                font.bold: true
-                color: audioRow.th.textSecondary
-                Layout.preferredWidth: 36
-                horizontalAlignment: Text.AlignRight
-                verticalAlignment: Text.AlignVCenter
+                Rectangle {
+                  id: sliderBg
+                  Layout.fillWidth: true
+                  Layout.preferredHeight: 6
+                  implicitHeight: 6
+                  radius: 3
+                  color: Qt.rgba(audioRow.th.textPrimary.r, audioRow.th.textPrimary.g, audioRow.th.textPrimary.b, 0.18)
+
+                  Rectangle {
+                    id: sliderFill
+                    height: parent.height
+                    radius: 3
+                    width: Math.min(parent.width, parent.width * audioRow.val)
+                    color: volProvider.accent
+                    Behavior on width {
+                      enabled: !sliderMouse.pressed
+                      NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
+                    }
+                  }
+                  Rectangle {
+                    width: 14
+                    height: 14
+                    radius: 7
+                    y: (parent.height - height) / 2
+                    x: Math.max(0, Math.min(sliderBg.width - width, sliderFill.width - (width / 2)))
+                    color: audioRow.th.textPrimary
+                  }
+                  MouseArea {
+                    id: sliderMouse
+                    anchors.fill: parent
+                    anchors.topMargin: -8
+                    anchors.bottomMargin: -8
+                    cursorShape: Qt.PointingHandCursor
+                    onPressed: (m) => volPill.setVol(audioRow.aud, m.x / width)
+                    onPositionChanged: (m) => { if (pressed) volPill.setVol(audioRow.aud, m.x / width) }
+                    onWheel: (w) => volPill.setVol(audioRow.aud, audioRow.val + (w.angleDelta.y > 0 ? 0.05 : -0.05))
+                  }
+                }
               }
             }
           }

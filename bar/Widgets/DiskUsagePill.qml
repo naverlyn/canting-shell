@@ -120,6 +120,7 @@ Rectangle {
     font: hostRoot.font
     title: "Disk"
     icon: "\uf0a0"
+    summaryText: SystemInfo.diskUsage
     accent: hostContainer.wAccent("disk", hostRoot.theme.accentPrimary)
     script: "disk"
     barPosition: hostContainer.barPos

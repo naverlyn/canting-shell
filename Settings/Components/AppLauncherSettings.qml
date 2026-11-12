@@ -1365,8 +1365,7 @@ Item {
 
                                             IconImage {
                                                 anchors.centerIn: parent
-                                                width: 22
-                                                height: 22
+                                                implicitSize: 22
                                                 source: appIconBox.resolvedIcon
                                                 visible: appIconBox.resolvedIcon !== ""
                                             }

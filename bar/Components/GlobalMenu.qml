@@ -9,7 +9,7 @@ Item {
 
   required property var barContainer
   property var theme
-  property string font: "Lato Nerd Font"
+  property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
 
   readonly property bool isVert: barContainer.isVert
   readonly property var menus: GlobalMenuService.menus

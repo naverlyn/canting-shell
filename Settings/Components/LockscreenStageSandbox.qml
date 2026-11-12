@@ -1177,7 +1177,7 @@ Rectangle {
                                 id: stageFaceImg
                                 anchors.fill: parent
                                 anchors.margins: 2
-                                source: "file://" + Quickshell.env("HOME") + "/.face"
+                                source: LockscreenConfig.faceIconPath !== "" ? ("file://" + LockscreenConfig.faceIconPath) : ""
                                 fillMode: Image.PreserveAspectCrop
                                 smooth: true
                                 visible: status === Image.Ready
@@ -1553,7 +1553,7 @@ Rectangle {
                         id: moduleHost
                         anchors.centerIn: parent
                         theme: stageRoot.theme
-                        font: stageRoot.font
+                        font: (stageRoot.theme && stageRoot.theme.monoFont) ? stageRoot.theme.monoFont : "JetBrainsMono Nerd Font"
                         moduleData: blockDelegate.blockData
                         previewMode: stageRoot.previewMode
                         scaleFactor: blockDelegate.sFactor

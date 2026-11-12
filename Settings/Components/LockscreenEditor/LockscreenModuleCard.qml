@@ -11,7 +11,7 @@ Rectangle {
     property var moduleData: ({})
     property int moduleIndex: 0
     property var theme: DefaultTheme {}
-    property string font: "JetBrainsMono Nerd Font"
+    property string font: (cardRoot.theme && cardRoot.theme.fontFamily) ? cardRoot.theme.fontFamily : "Lato Nerd Font"
     property bool isExpanded: false
 
     signal moduleSaved(int index, var payload)

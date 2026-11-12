@@ -60,9 +60,9 @@ function toggleSecondaryWidget(root, widgetId) {
 
   if (!exists) {
     let targetIdx = 0;
-    if (["clock", "weather", "battery", "media", "tray", "controlCenter", "idleInhibitor"].indexOf(widgetId) !== -1) {
+    if (["clock", "weather", "battery", "media", "tray", "controlCenter", "idleInhibitor", "wifi", "bluetooth", "brightness"].indexOf(widgetId) !== -1) {
       targetIdx = pList.length - 1;
-    } else if (["windowTitle", "cava"].indexOf(widgetId) !== -1) {
+    } else if (["windowTitle", "cava", "customScript"].indexOf(widgetId) !== -1) {
       targetIdx = Math.floor(pList.length / 2);
     } else {
       targetIdx = 0;
@@ -355,6 +355,7 @@ function setWidgetVisible(root, widgetId, val, barId, skipSave) {
 
 function isWidgetInAnyBar(root, widgetId) {
   if (!root.bars) return false;
+  const hasSecondaryScreen = (typeof Quickshell !== "undefined" && Quickshell.screens && Quickshell.screens.length > 1);
   for (let i = 0; i < root.bars.length; i++) {
     const b = root.bars[i];
     if (b && b.enabled !== false) {
@@ -365,7 +366,9 @@ function isWidgetInAnyBar(root, widgetId) {
           }
         }
       }
-      if (b.secondaryPanels) {
+      const bTarget = b.displayTarget || (b.allMonitors ? "all" : "primary");
+      const secMode = b.secondaryMode || (b.blankOnSecondary ? "blank" : "custom");
+      if (hasSecondaryScreen && bTarget === "all" && secMode === "custom" && b.secondaryPanels) {
         for (let p = 0; p < b.secondaryPanels.length; p++) {
           if (b.secondaryPanels[p] && b.secondaryPanels[p].indexOf(widgetId) !== -1) {
             return true;

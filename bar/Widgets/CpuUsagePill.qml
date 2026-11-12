@@ -63,6 +63,7 @@ Rectangle {
     font: hostRoot.font
     title: "CPU"
     icon: "󰻠"
+    summaryText: SystemInfo.cpuUsage
     accent: hostContainer.wAccent("cpu", hostRoot.theme.accentOrange)
     script: "cpu"
     barPosition: hostContainer.barPos

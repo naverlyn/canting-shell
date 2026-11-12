@@ -77,7 +77,7 @@ Singleton {
   }
 
   // Panel capacity limit
-  readonly property int maxPanelWidgets: 10
+  readonly property int maxPanelWidgets: 12
   signal configWarning(string message)
   signal panelsUpdated()
   property int panelsRevision: 0
@@ -123,6 +123,27 @@ Singleton {
       ]
     }
   ]
+
+  property var barIds: ["bar_1"]
+
+  function _syncBarIds() {
+    const list = root.bars || [];
+    const next = [];
+    for (let i = 0; i < list.length; i++) {
+      const b = list[i];
+      next.push((b && b.id !== undefined && b.id !== null) ? String(b.id) : ("bar_" + (i + 1)));
+    }
+    const cur = root.barIds || [];
+    let changed = (next.length !== cur.length);
+    if (!changed) {
+      for (let j = 0; j < next.length; j++) {
+        if (next[j] !== cur[j]) { changed = true; break; }
+      }
+    }
+    if (changed) root.barIds = next;
+  }
+
+  onBarsChanged: root._syncBarIds()
 
   // Currently selected bar index in Bar Settings UI
   property int selectedBarIndex: 0
@@ -219,6 +240,31 @@ Singleton {
   property int hwAlertThreshold: 85
   property int hwPollInterval: 2
 
+  // GPU Monitor Options
+  property bool gpuShowTemp: false
+
+  // Wi-Fi & Bluetooth Pill Options
+  property string wifiBtMode: "both" // "both" | "wifi" | "bt"
+  property bool wifiBtShowLabels: false
+
+  // Brightness Pill Options
+  property bool brightnessShowPercentage: true
+  property int brightnessStep: 5
+
+  // Hyprland Switcher Options
+  property bool hyprLayoutShowLabel: true
+
+  // Custom Script Pill Options
+  property string customScriptCommand: "echo '{\"text\": \"Ready\", \"tooltip\": \"Custom Script Module\"}'"
+  property string customScriptIcon: "󰆍"
+  property int customScriptInterval: 10
+  property string customScriptOnClick: ""
+  property string customScriptOnRightClick: ""
+  property int customScriptMaxLength: 28
+  property bool customScriptHideWhenEmpty: false
+  property bool customScriptShowPopup: true
+  property int customScriptRevision: 0
+
   // Cava Visualizer Options
   property bool showCava: true
   property string cavaMode: "compact" // "compact" (8 bars) | "medium" (16 bars) | "wide" (24 bars)
@@ -252,14 +298,20 @@ Singleton {
     { id: "weather",       name: "Weather Info",        icon: "󰖐", desc: "Live weather conditions and temperature readout" },
     { id: "appGrid",       name: "Applications",        icon: "󰀻", desc: "Quick access button for the app launcher grid" },
     { id: "cpu",           name: "CPU Monitor",         icon: "󰻠", desc: "Live processor usage pill with details popup" },
+    { id: "gpu",           name: "GPU Monitor",         icon: "󰢮", desc: "Live GPU utilization, VRAM, and temperature pill with details popup" },
     { id: "temp",          name: "CPU Temperature",     icon: "󰔏", desc: "Thermal sensor status pill with details popup" },
     { id: "memory",        name: "Memory (RAM)",        icon: "", desc: "Live memory utilization pill with details popup" },
     { id: "disk",          name: "Disk Usage",          icon: "", desc: "Root partition storage utilization pill" },
     { id: "network",       name: "Network Speed",       icon: "󰓅", desc: "Live network upload & download speed monitor with details popup" },
+    { id: "wifi",          name: "Wi-Fi",               icon: "󰖩", desc: "Wi-Fi status pill with expandable network selector popup" },
+    { id: "bluetooth",     name: "Bluetooth",           icon: "󰂯", desc: "Bluetooth status pill with expandable device manager popup" },
+    { id: "brightness",    name: "Screen Brightness",   icon: "󰃠", desc: "Backlight & Night Light control pill (scroll to adjust, click for slider)" },
     { id: "battery",       name: "Battery Status",      icon: "󰁹", desc: "Live battery percentage and charging indicator pill" },
     { id: "volume",        name: "Audio Volume",        icon: "󰕾", desc: "PipeWire output volume pill (scroll to adjust, click to mute)" },
     { id: "media",         name: "Media Player",        icon: "󰎆", desc: "Active MPRIS media track pill with playback controls" },
     { id: "cava",          name: "Cava Visualizer",     icon: "󰝛", desc: "Live audio spectrum equalizer visualizer pill" },
+    { id: "hyprLayout",    name: "Hyprland Switcher",   icon: "󰕰", desc: "Switch Dwindle, Master, Monocle, and window states (Float, Pseudo, Split)" },
+    { id: "customScript",  name: "Custom Script",       icon: "󰆍", desc: "User-defined shell script output pill with custom icon, interval, and click actions" },
     { id: "idleInhibitor", name: "Idle Inhibitor",      icon: "", desc: "Caffeine toggle to prevent screen idle and sleep" },
     { id: "tray",          name: "System Tray",         icon: "󰖩", desc: "Status indicators and tray context menus" },
     { id: "controlCenter", name: "Control Center",      icon: "", desc: "Quick settings toggle for audio, network, and buttons" }

@@ -12,7 +12,7 @@ FocusScope {
     id: surfaceViewRoot
 
     property var theme: DefaultTheme {}
-    property string font: "JetBrainsMono Nerd Font"
+    property string font: (surfaceViewRoot.theme && surfaceViewRoot.theme.monoFont) ? surfaceViewRoot.theme.monoFont : "JetBrainsMono Nerd Font"
     property alias authBoxRef: authBox
     property bool isAuthenticating: false
     property string errorMessage: ""
@@ -370,8 +370,8 @@ FocusScope {
         source: {
             const home = Quickshell.env("HOME") || "";
             const src = LockscreenConfig.background_source;
-            if (src === "custom" && LockscreenConfig.background_custom_path !== "")
-                return "file://" + LockscreenConfig.background_custom_path;
+            if (src === "custom" && LockscreenConfig.validatedCustomWallpaperPath !== "")
+                return "file://" + LockscreenConfig.validatedCustomWallpaperPath;
             if (src === "effects")
                 return "file://" + home + "/.cache/quickshell/wallpaper_effects/wallpaper_modified.png";
             if (src === "screenshot")
@@ -380,7 +380,7 @@ FocusScope {
                 ? (WallpaperService.currentWallpaper || WallpaperService.wallpaperA || "")
                 : "";
             if (cur !== "") return "file://" + cur;
-            return "file://" + home + "/.config/hypr/wallpaper_effects/.wallpaper_current";
+            return "";
         }
         fillMode: Image.PreserveAspectCrop
         smooth: true

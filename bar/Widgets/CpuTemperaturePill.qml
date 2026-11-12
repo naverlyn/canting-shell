@@ -63,6 +63,7 @@ Rectangle {
     font: hostRoot.font
     title: "Temperature"
     icon: "󰔏"
+    summaryText: SystemInfo.temperature
     accent: hostContainer.wAccent("temp", hostRoot.theme.accentRed)
     script: "temp"
     barPosition: hostContainer.barPos

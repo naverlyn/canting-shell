@@ -85,7 +85,8 @@
           "clock"
         ],
         [
-          "battery",
+          "wifi",
+          "hyprLayout",
           "weather",
           "controlCenter"
         ]
@@ -133,7 +134,9 @@
         [],
         [
           "volume",
+          "brightness",
           "cpu",
+          "gpu",
           "temp",
           "memory",
           "disk",
@@ -152,7 +155,8 @@
       "clock"
     ],
     [
-      "battery",
+      "wifi",
+      "hyprLayout",
       "weather",
       "controlCenter"
     ]
@@ -165,7 +169,8 @@
     "clock"
   ],
   "rightWidgets": [
-    "battery",
+    "wifi",
+    "hyprLayout",
     "weather",
     "controlCenter"
   ],
@@ -175,7 +180,10 @@
     "media",
     "globalMenu",
     "cava",
-    "network"
+    "network",
+    "battery",
+    "bluetooth",
+    "customScript"
   ],
   "showAppGrid": true,
   "showCpu": true,
@@ -219,5 +227,19 @@
   "hwShowIcons": true,
   "hwAlertEnabled": true,
   "hwAlertThreshold": 85,
-  "hwPollInterval": 2
+  "hwPollInterval": 2,
+  "gpuShowTemp": false,
+  "wifiBtMode": "both",
+  "wifiBtShowLabels": false,
+  "brightnessShowPercentage": true,
+  "brightnessStep": 5,
+  "hyprLayoutShowLabel": true,
+  "customScriptCommand": "uptime -p",
+  "customScriptIcon": "",
+  "customScriptInterval": 60,
+  "customScriptOnClick": "",
+  "customScriptOnRightClick": "",
+  "customScriptMaxLength": 28,
+  "customScriptHideWhenEmpty": false,
+  "customScriptShowPopup": false
 }

@@ -81,7 +81,21 @@ function buildSaveData(root) {
     hwShowIcons: root.hwShowIcons,
     hwAlertEnabled: root.hwAlertEnabled,
     hwAlertThreshold: root.hwAlertThreshold,
-    hwPollInterval: root.hwPollInterval
+    hwPollInterval: root.hwPollInterval,
+    gpuShowTemp: root.gpuShowTemp,
+    wifiBtMode: root.wifiBtMode,
+    wifiBtShowLabels: root.wifiBtShowLabels,
+    brightnessShowPercentage: root.brightnessShowPercentage,
+    brightnessStep: root.brightnessStep,
+    hyprLayoutShowLabel: root.hyprLayoutShowLabel,
+    customScriptCommand: root.customScriptCommand,
+    customScriptIcon: root.customScriptIcon,
+    customScriptInterval: root.customScriptInterval,
+    customScriptOnClick: root.customScriptOnClick,
+    customScriptOnRightClick: root.customScriptOnRightClick,
+    customScriptMaxLength: root.customScriptMaxLength,
+    customScriptHideWhenEmpty: root.customScriptHideWhenEmpty,
+    customScriptShowPopup: root.customScriptShowPopup
   };
   return data;
 }
@@ -157,7 +171,24 @@ function applyConfig(root, cfg) {
     return panelArr;
   }
 
-  pList = ensureGlobalMenu(pList);
+  function migrateSplitWifiBt(panelArr) {
+    if (!Array.isArray(panelArr)) return panelArr;
+    return panelArr.map(arr => {
+      if (!Array.isArray(arr)) return [];
+      const out = [];
+      for (let i = 0; i < arr.length; i++) {
+        if (arr[i] === "wifiBluetooth") {
+          if (out.indexOf("wifi") === -1) out.push("wifi");
+          if (out.indexOf("bluetooth") === -1) out.push("bluetooth");
+        } else {
+          out.push(arr[i]);
+        }
+      }
+      return out;
+    });
+  }
+
+  pList = migrateSplitWifiBt(ensureGlobalMenu(pList));
 
   if (Array.isArray(cfg.bars) && cfg.bars.length > 0) {
     const globalOpacity = (cfg.barOpacity !== undefined) ? Number(cfg.barOpacity) : root.barOpacity;
@@ -189,11 +220,11 @@ function applyConfig(root, cfg) {
       barBorder: b.barBorder !== undefined ? Boolean(b.barBorder) : (root.barBorder !== undefined ? Boolean(root.barBorder) : true),
       barBorderWidth: b.barBorderWidth !== undefined ? Number(b.barBorderWidth) : (root.barBorderWidth !== undefined ? Number(root.barBorderWidth) : 1),
       barBorderColor: b.barBorderColor !== undefined ? String(b.barBorderColor) : (root.barBorderColor || ""),
-      panels: ensureGlobalMenu(
+      panels: migrateSplitWifiBt(ensureGlobalMenu(
         Array.isArray(b.panels) && b.panels.length > 0
           ? b.panels.map(arr => Array.isArray(arr) ? arr.slice() : [])
           : pList.map(arr => arr.slice())
-      )
+      ))
     }));
   } else {
     root.bars = [{
@@ -263,6 +294,20 @@ function applyConfig(root, cfg) {
   if (cfg.cavaStereo !== undefined) root.cavaStereo = Boolean(cfg.cavaStereo);
   if (cfg.cavaAutoHide !== undefined) root.cavaAutoHide = Boolean(cfg.cavaAutoHide);
   if (cfg.cavaShowIcon !== undefined) root.cavaShowIcon = Boolean(cfg.cavaShowIcon);
+  if (cfg.gpuShowTemp !== undefined) root.gpuShowTemp = Boolean(cfg.gpuShowTemp);
+  if (cfg.wifiBtMode !== undefined) root.wifiBtMode = String(cfg.wifiBtMode);
+  if (cfg.wifiBtShowLabels !== undefined) root.wifiBtShowLabels = Boolean(cfg.wifiBtShowLabels);
+  if (cfg.brightnessShowPercentage !== undefined) root.brightnessShowPercentage = Boolean(cfg.brightnessShowPercentage);
+  if (cfg.brightnessStep !== undefined) root.brightnessStep = Math.max(1, Math.min(25, Number(cfg.brightnessStep) || 5));
+  if (cfg.hyprLayoutShowLabel !== undefined) root.hyprLayoutShowLabel = Boolean(cfg.hyprLayoutShowLabel);
+  if (cfg.customScriptCommand !== undefined) root.customScriptCommand = String(cfg.customScriptCommand);
+  if (cfg.customScriptIcon !== undefined) root.customScriptIcon = String(cfg.customScriptIcon);
+  if (cfg.customScriptInterval !== undefined) root.customScriptInterval = Math.max(1, Number(cfg.customScriptInterval) || 10);
+  if (cfg.customScriptOnClick !== undefined) root.customScriptOnClick = String(cfg.customScriptOnClick);
+  if (cfg.customScriptOnRightClick !== undefined) root.customScriptOnRightClick = String(cfg.customScriptOnRightClick);
+  if (cfg.customScriptMaxLength !== undefined) root.customScriptMaxLength = Math.max(4, Number(cfg.customScriptMaxLength) || 28);
+  if (cfg.customScriptHideWhenEmpty !== undefined) root.customScriptHideWhenEmpty = Boolean(cfg.customScriptHideWhenEmpty);
+  if (cfg.customScriptShowPopup !== undefined) root.customScriptShowPopup = Boolean(cfg.customScriptShowPopup);
   root.widgetVisibilityChangeCounter++;
   root.panelsRevision++;
   root.panelsUpdated();
@@ -290,6 +335,20 @@ function resetDefaults(root) {
   root.hwAlertEnabled = true;
   root.hwAlertThreshold = 85;
   root.hwPollInterval = 2;
+  root.gpuShowTemp = false;
+  root.wifiBtMode = "both";
+  root.wifiBtShowLabels = false;
+  root.brightnessShowPercentage = true;
+  root.brightnessStep = 5;
+  root.hyprLayoutShowLabel = true;
+  root.customScriptCommand = "echo '{\"text\": \"Ready\", \"tooltip\": \"Custom Script Module\"}'";
+  root.customScriptIcon = "󰆍";
+  root.customScriptInterval = 10;
+  root.customScriptOnClick = "";
+  root.customScriptOnRightClick = "";
+  root.customScriptMaxLength = 28;
+  root.customScriptHideWhenEmpty = false;
+  root.customScriptShowPopup = true;
   root.showCava = true;
   root.cavaMode = "compact";
   root.cavaBars = 8;

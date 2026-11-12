@@ -169,7 +169,7 @@ Item {
                     id: faceImg
                     anchors.fill: parent
                     anchors.margins: 3
-                    source: "file://" + Quickshell.env("HOME") + "/.face"
+                    source: LockscreenConfig.faceIconPath !== "" ? ("file://" + LockscreenConfig.faceIconPath) : ""
                     fillMode: Image.PreserveAspectCrop
                     smooth: true
                     visible: status === Image.Ready
@@ -317,20 +317,17 @@ Item {
                         }
                     }
 
-                    // Password Input
-                    TextInput {
+                    // Password Input (Pure keyboard handler to avoid multi-monitor QWaylandTextInputv3 surface conflicts)
+                    FocusScope {
                         id: pwdInput
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        verticalAlignment: TextInput.AlignVCenter
-                        font.family: authRoot.font
-                        font.pixelSize: 16
-                        color: authRoot.resolvedFont
-                        echoMode: TextInput.Password
-                        passwordCharacter: "●"
                         clip: true
                         enabled: !authRoot.isAuthenticating && !authRoot.isSuccess
                         focus: true
+
+                        property string text: ""
+                        readonly property bool inputMethodComposing: false
 
                         onTextChanged: {
                             if (text.length > 0 && (authRoot.errorMessage !== "" || authRoot.failActive)) {
@@ -340,7 +337,7 @@ Item {
                             }
                         }
 
-                        onAccepted: {
+                        function accepted() {
                             if (text.length > 0 && !authRoot.isAuthenticating && !authRoot.isSuccess) {
                                 authRoot.errorMessage = "";
                                 authRoot.failActive = false;
@@ -349,18 +346,40 @@ Item {
                         }
 
                         Keys.onPressed: event => {
+                            if (!pwdInput.enabled) return;
+
+                            if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                                pwdInput.accepted();
+                                event.accepted = true;
+                                return;
+                            }
                             if (event.key === Qt.Key_Escape) {
-                                text = "";
+                                pwdInput.text = "";
                                 authRoot.errorMessage = "";
                                 authRoot.failActive = false;
                                 event.accepted = true;
                                 return;
                             }
-                            if (event.key === Qt.Key_CapsLock) {
-                                authRoot.capsLockOn = !authRoot.capsLockOn;
+                            if (event.key === Qt.Key_Backspace) {
+                                if (event.modifiers & Qt.ControlModifier) {
+                                    pwdInput.text = "";
+                                } else if (pwdInput.text.length > 0) {
+                                    pwdInput.text = pwdInput.text.slice(0, -1);
+                                }
+                                event.accepted = true;
                                 return;
                             }
-                            if (event.text.length === 1) {
+                            if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_U) {
+                                pwdInput.text = "";
+                                event.accepted = true;
+                                return;
+                            }
+                            if (event.key === Qt.Key_CapsLock) {
+                                authRoot.capsLockOn = !authRoot.capsLockOn;
+                                event.accepted = true;
+                                return;
+                            }
+                            if (event.text && event.text.length === 1 && event.text.charCodeAt(0) >= 32 && event.text.charCodeAt(0) !== 127) {
                                 const c = event.text;
                                 const isUpper = (c >= 'A' && c <= 'Z');
                                 const isLower = (c >= 'a' && c <= 'z');
@@ -369,9 +388,24 @@ Item {
                                 if (isLower && shift) authRoot.capsLockOn = true;
                                 if (isLower && !shift) authRoot.capsLockOn = false;
                                 if (isUpper && shift) authRoot.capsLockOn = false;
+                                pwdInput.text += c;
+                                event.accepted = true;
                             }
                         }
 
+                        // Masked Password Dots Display
+                        Text {
+                            anchors.fill: parent
+                            verticalAlignment: Text.AlignVCenter
+                            visible: pwdInput.text.length > 0
+                            text: "●".repeat(pwdInput.text.length)
+                            font.family: authRoot.font
+                            font.pixelSize: 16
+                            color: authRoot.resolvedFont
+                            elide: Text.ElideLeft
+                        }
+
+                        // Placeholder / Status Text
                         Text {
                             anchors.fill: parent
                             verticalAlignment: Text.AlignVCenter

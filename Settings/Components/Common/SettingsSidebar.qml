@@ -77,8 +77,12 @@ import QtQuick.Layouts
                             Text {
                                 text: "Settings"
                                 font.family: hostApp.font
-                                font.pixelSize: 18
-                                font.bold: true
+                                font.pixelSize: Style.px(18)
+                                font.bold: Style.boldHeadings
+                                font.letterSpacing: Style.letterSpacing
+                                font.hintingPreference: Style.fontHintingEnum
+                                antialiasing: Style.fontAntialiasing
+                                renderType: Style.fontRenderTypeEnum
                                 color: hostApp.theme.textPrimary
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignVCenter
@@ -193,8 +197,13 @@ import QtQuick.Layouts
                                                     Text {
                                                         text: itemRect.modelData.name
                                                         font.family: hostApp.font
-                                                        font.pixelSize: 13
-                                                        font.bold: hostApp.currentTab === itemRect.modelData.pageIndex
+                                                        font.pixelSize: Style.px(13)
+                                                        font.bold: hostApp.currentTab === itemRect.modelData.pageIndex && Style.boldHeadings
+                                                        font.weight: (hostApp.currentTab === itemRect.modelData.pageIndex && Style.boldHeadings) ? Font.Bold : Style.fontWeightEnum
+                                                        font.letterSpacing: Style.letterSpacing
+                                                        font.hintingPreference: Style.fontHintingEnum
+                                                        antialiasing: Style.fontAntialiasing
+                                                        renderType: Style.fontRenderTypeEnum
                                                         color: hostApp.currentTab === itemRect.modelData.pageIndex
                                                             ? hostApp.theme.textPrimary
                                                             : hostApp.theme.textSecondary

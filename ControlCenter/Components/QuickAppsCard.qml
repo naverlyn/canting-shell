@@ -14,6 +14,7 @@ Rectangle {
     signal closeParentRequested()
 
     property bool isPickerOpen: false
+    property string appSearchQuery: ""
     property int targetSlotIndex: -1 // -1 = append/toggle, >= 0 = replace specific slot
     property var appUsage: ({})
     readonly property string usageCachePath: "$HOME/.cache/qs_app_usage.json"
@@ -157,7 +158,7 @@ Rectangle {
     readonly property var filteredDesktopApps: {
         if (!root.isPickerOpen && !ControlCenterConfig.isLiveEdit) return [];
         const all = root.sortedDesktopApps;
-        const q = appSearchInput.text.trim().toLowerCase();
+        const q = root.appSearchQuery.trim().toLowerCase();
         if (q === "") return all;
         const usage = root.appUsage;
         return all.filter(d =>
@@ -484,7 +485,8 @@ Rectangle {
                                     height: 22
 
                                     IconImage {
-                                        anchors.fill: parent
+                                        anchors.centerIn: parent
+                                        implicitSize: 22
                                         visible: appTile.hasSysIcon
                                         source: appTile.hasSysIcon ? Quickshell.iconPath(appTile.modelData.icon, true) : ""
                                     }
@@ -532,241 +534,248 @@ Rectangle {
         }
 
         // Inline AppGrid-Style Application Picker (matches AppLauncher/AppGrid.qml)
-        Rectangle {
-            visible: root.isPickerOpen
+        Loader {
+            active: root.isPickerOpen
+            visible: active
             Layout.fillWidth: true
-            implicitHeight: pickerCol.implicitHeight + 20
-            radius: 10
-            color: root.theme.bgBase
-            border.color: root.theme.accentPrimary
-            border.width: 1
 
-            ColumnLayout {
-                id: pickerCol
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                    top: parent.top
-                    margins: 10
-                }
-                spacing: 8
+            sourceComponent: Rectangle {
+                implicitHeight: pickerCol.implicitHeight + 20
+                radius: 10
+                color: root.theme.bgBase
+                border.color: root.theme.accentPrimary
+                border.width: 1
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-
-                    Text {
-                        text: root.targetSlotIndex >= 0
-                            ? ("Pick app for Slot " + (root.targetSlotIndex + 1) + " (click any tile above to switch slot)")
-                            : "Click an app below to add to Quick Launch"
-                        font.family: root.font
-                        font.pixelSize: 10
-                        font.bold: true
-                        color: root.theme.accentPrimary
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
+                ColumnLayout {
+                    id: pickerCol
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: parent.top
+                        margins: 10
                     }
-
-                    // Open full bar AppGrid button
-                    Rectangle {
-                        height: 20
-                        implicitWidth: openGridTxt.implicitWidth + 12
-                        radius: 5
-                        color: openGridMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
-                        border.color: root.theme.bgBorder
-                        border.width: 1
-
-                        Text {
-                            id: openGridTxt
-                            anchors.centerIn: parent
-                            text: "Full AppGrid"
-                            font.family: root.font
-                            font.pixelSize: 9
-                            font.bold: true
-                            color: root.theme.textSecondary
-                        }
-
-                        MouseArea {
-                            id: openGridMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.closeParentRequested();
-                                appLaunchProc.command = ["qs", "ipc", "call", "appgrid", "toggle"];
-                                appLaunchProc.running = true;
-                            }
-                        }
-                    }
-
-                    // Reset defaults button
-                    Rectangle {
-                        height: 20
-                        implicitWidth: resetAppsTxt.implicitWidth + 12
-                        radius: 5
-                        color: resetAppsMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
-                        border.color: root.theme.bgBorder
-                        border.width: 1
-
-                        Text {
-                            id: resetAppsTxt
-                            anchors.centerIn: parent
-                            text: "Reset"
-                            font.family: root.font
-                            font.pixelSize: 9
-                            font.bold: true
-                            color: root.theme.textSecondary
-                        }
-
-                        MouseArea {
-                            id: resetAppsMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: ControlCenterConfig.resetQuickApps()
-                        }
-                    }
-                }
-
-                // AppGrid Search Bar (uses theme.bgSurface, theme.textPrimary, theme.textMuted)
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 32
-                    radius: 8
-                    color: root.theme.bgSurface
-                    border.color: appSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
-                    border.width: 1
+                    spacing: 8
 
                     RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        spacing: 8
+                        Layout.fillWidth: true
+                        spacing: 6
 
                         Text {
-                            text: "󰍉"
-                            color: root.theme.textMuted
-                            font.pixelSize: 12
+                            text: root.targetSlotIndex >= 0
+                                ? ("Pick app for Slot " + (root.targetSlotIndex + 1) + " (click any tile above to switch slot)")
+                                : "Click an app below to add to Quick Launch"
                             font.family: root.font
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-
-                        Item {
+                            font.pixelSize: 10
+                            font.bold: true
+                            color: root.theme.accentPrimary
+                            elide: Text.ElideRight
                             Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-                            implicitHeight: appSearchInput.implicitHeight
-
-                            TextInput {
-                                id: appSearchInput
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: root.theme.textPrimary
-                                font.pixelSize: 11
-                                font.family: root.font
-                                clip: true
-                                selectByMouse: true
-                            }
-
-                            Text {
-                                text: "Search applications..."
-                                color: root.theme.textMuted
-                                font.pixelSize: 11
-                                font.family: root.font
-                                anchors.verticalCenter: parent.verticalCenter
-                                visible: appSearchInput.text === ""
-                            }
                         }
-                    }
-                }
 
-                // AppGrid GridView of Installed Desktop Applications
-                GridView {
-                    id: pickerGrid
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 168
-                    cellWidth: Math.floor(width / 4)
-                    cellHeight: 56
-                    clip: true
-                    boundsBehavior: Flickable.StopAtBounds
-                    model: root.filteredDesktopApps
-
-                    delegate: Item {
-                        id: pickerCell
-                        required property var modelData
-                        required property int index
-                        width: pickerGrid.cellWidth
-                        height: pickerGrid.cellHeight
-
-                        readonly property bool hasIcon: (pickerCell.modelData.icon ?? "") !== "" && Quickshell.iconPath(pickerCell.modelData.icon ?? "", true) !== ""
-
+                        // Open full bar AppGrid button
                         Rectangle {
-                            anchors.fill: parent
-                            anchors.margins: 2
-                            radius: 8
-                            color: pickerCellMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
-                            border.color: pickerCellMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgBorder
+                            height: 20
+                            implicitWidth: openGridTxt.implicitWidth + 12
+                            radius: 5
+                            color: openGridMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
+                            border.color: root.theme.bgBorder
                             border.width: 1
 
-                            ColumnLayout {
+                            Text {
+                                id: openGridTxt
                                 anchors.centerIn: parent
-                                width: parent.width - 8
-                                spacing: 3
-
-                                Item {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    width: 22
-                                    height: 22
-
-                                    IconImage {
-                                        anchors.fill: parent
-                                        source: pickerCell.hasIcon ? Quickshell.iconPath(pickerCell.modelData.icon ?? "", true) : ""
-                                        visible: pickerCell.hasIcon
-                                    }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "󰀻"
-                                        color: root.theme.accentPrimary
-                                        font.pixelSize: 15
-                                        font.family: root.font
-                                        visible: !pickerCell.hasIcon
-                                    }
-                                }
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: pickerCell.modelData.name ?? ""
-                                    color: pickerCellMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary
-                                    font.pixelSize: 9
-                                    font.family: root.font
-                                    font.bold: pickerCellMouse.containsMouse
-                                    horizontalAlignment: Text.AlignHCenter
-                                    elide: Text.ElideRight
-                                }
+                                text: "Full AppGrid"
+                                font.family: root.font
+                                font.pixelSize: 9
+                                font.bold: true
+                                color: root.theme.textSecondary
                             }
 
                             MouseArea {
-                                id: pickerCellMouse
+                                id: openGridMouse
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
-                                    const entry = pickerCell.modelData;
-                                    const key = root.getAppKey(entry);
-                                    const slot = root.targetSlotIndex >= 0
-                                        ? root.targetSlotIndex
-                                        : Math.min(14, root.displayedApps.length - 1);
-                                    ControlCenterConfig.replaceQuickAppAt(
-                                        slot,
-                                        entry.name || "App",
-                                        entry.icon || "󰀻",
-                                        "",
-                                        key,
-                                        root.displayedApps
-                                    );
-                                    // Advance to next slot automatically for fast assignment
-                                    root.targetSlotIndex = (slot + 1) % ControlCenterConfig.quickAppsMaxCount;
+                                    root.closeParentRequested();
+                                    appLaunchProc.command = ["qs", "ipc", "call", "appgrid", "toggle"];
+                                    appLaunchProc.running = true;
+                                }
+                            }
+                        }
+
+                        // Reset defaults button
+                        Rectangle {
+                            height: 20
+                            implicitWidth: resetAppsTxt.implicitWidth + 12
+                            radius: 5
+                            color: resetAppsMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
+                            border.color: root.theme.bgBorder
+                            border.width: 1
+
+                            Text {
+                                id: resetAppsTxt
+                                anchors.centerIn: parent
+                                text: "Reset"
+                                font.family: root.font
+                                font.pixelSize: 9
+                                font.bold: true
+                                color: root.theme.textSecondary
+                            }
+
+                            MouseArea {
+                                id: resetAppsMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: ControlCenterConfig.resetQuickApps()
+                            }
+                        }
+                    }
+
+                    // AppGrid Search Bar (uses theme.bgSurface, theme.textPrimary, theme.textMuted)
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 32
+                        radius: 8
+                        color: root.theme.bgSurface
+                        border.color: appSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
+                        border.width: 1
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 10
+                            anchors.rightMargin: 10
+                            spacing: 8
+
+                            Text {
+                                text: "󰍉"
+                                color: root.theme.textMuted
+                                font.pixelSize: 12
+                                font.family: root.font
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                implicitHeight: appSearchInput.implicitHeight
+
+                                TextInput {
+                                    id: appSearchInput
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: root.theme.textPrimary
+                                    font.pixelSize: 11
+                                    font.family: root.font
+                                    clip: true
+                                    selectByMouse: true
+                                    onTextChanged: root.appSearchQuery = text
+                                    Component.onDestruction: root.appSearchQuery = ""
+                                }
+
+                                Text {
+                                    text: "Search applications..."
+                                    color: root.theme.textMuted
+                                    font.pixelSize: 11
+                                    font.family: root.font
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: appSearchInput.text === ""
+                                }
+                            }
+                        }
+                    }
+
+                    // AppGrid GridView of Installed Desktop Applications
+                    GridView {
+                        id: pickerGrid
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 168
+                        cellWidth: Math.floor(width / 4)
+                        cellHeight: 56
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+                        model: root.filteredDesktopApps
+
+                        delegate: Item {
+                            id: pickerCell
+                            required property var modelData
+                            required property int index
+                            width: pickerGrid.cellWidth
+                            height: pickerGrid.cellHeight
+
+                            readonly property bool hasIcon: (pickerCell.modelData.icon ?? "") !== "" && Quickshell.iconPath(pickerCell.modelData.icon ?? "", true) !== ""
+
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: 2
+                                radius: 8
+                                color: pickerCellMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
+                                border.color: pickerCellMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgBorder
+                                border.width: 1
+
+                                ColumnLayout {
+                                    anchors.centerIn: parent
+                                    width: parent.width - 8
+                                    spacing: 3
+
+                                    Item {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        width: 22
+                                        height: 22
+
+                                        IconImage {
+                                            anchors.centerIn: parent
+                                            implicitSize: 22
+                                            source: pickerCell.hasIcon ? Quickshell.iconPath(pickerCell.modelData.icon ?? "", true) : ""
+                                            visible: pickerCell.hasIcon
+                                        }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "󰀻"
+                                            color: root.theme.accentPrimary
+                                            font.pixelSize: 15
+                                            font.family: root.font
+                                            visible: !pickerCell.hasIcon
+                                        }
+                                    }
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: pickerCell.modelData.name ?? ""
+                                        color: pickerCellMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary
+                                        font.pixelSize: 9
+                                        font.family: root.font
+                                        font.bold: pickerCellMouse.containsMouse
+                                        horizontalAlignment: Text.AlignHCenter
+                                        elide: Text.ElideRight
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: pickerCellMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        const entry = pickerCell.modelData;
+                                        const key = root.getAppKey(entry);
+                                        const slot = root.targetSlotIndex >= 0
+                                            ? root.targetSlotIndex
+                                            : Math.min(14, root.displayedApps.length - 1);
+                                        ControlCenterConfig.replaceQuickAppAt(
+                                            slot,
+                                            entry.name || "App",
+                                            entry.icon || "󰀻",
+                                            "",
+                                            key,
+                                            root.displayedApps
+                                        );
+                                        // Advance to next slot automatically for fast assignment
+                                        root.targetSlotIndex = (slot + 1) % ControlCenterConfig.quickAppsMaxCount;
+                                    }
                                 }
                             }
                         }

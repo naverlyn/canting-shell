@@ -199,8 +199,8 @@ SectionCard {
                                     id: pCountBadgeTxt
                                     anchors.centerIn: parent
                                     text: panelColumnCard.isMaxedOut
-                                        ? "MAX (10/10)"
-                                        : ("(" + panelColumnCard.currentPanelItems.length + "/10)")
+                                        ? ("MAX (" + (BarConfig.maxPanelWidgets || 12) + "/" + (BarConfig.maxPanelWidgets || 12) + ")")
+                                        : ("(" + panelColumnCard.currentPanelItems.length + "/" + (BarConfig.maxPanelWidgets || 12) + ")")
                                     font.family: root.font
                                     font.pixelSize: 10
                                     font.bold: panelColumnCard.isMaxedOut

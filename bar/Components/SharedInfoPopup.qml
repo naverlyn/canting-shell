@@ -38,24 +38,21 @@ PopupWindow {
     : theme.bgBase
   readonly property real cardBorderWidth: fluidEnabled ? 1 : 2
 
-  // Calculate target dimensions from hidden layout measurer
+  readonly property int padX: fluidEnabled ? (isVert ? 10 : (cornerRad + 10)) : 12
+  readonly property int padY: fluidEnabled ? (!isVert ? 10 : (cornerRad + 10)) : 12
+
   readonly property int baseContentW: (provider && provider.preferredWidth !== undefined && provider.preferredWidth > 0)
     ? provider.preferredWidth
-    : Math.max(contentLayout.implicitWidth + 32, 200)
+    : 264
+  readonly property int measuredContentH: (contentLoader.active && contentLoader.item)
+    ? Math.ceil(contentLoader.item.implicitHeight)
+    : 40
   readonly property int baseContentH: (provider && provider.preferredHeight !== undefined && provider.preferredHeight > 0)
     ? provider.preferredHeight
-    : Math.max(contentLayout.implicitHeight + 20, 56)
+    : Math.max(measuredContentH, 40)
 
-  readonly property int targetCardW: {
-    if (!fluidEnabled) return baseContentW + 16;
-    if (isVert) return baseContentW + 8;
-    return baseContentW + (2 * cornerRad);
-  }
-  readonly property int targetCardH: {
-    if (!fluidEnabled) return baseContentH + 16;
-    if (!isVert) return baseContentH + 8;
-    return baseContentH + (2 * cornerRad);
-  }
+  readonly property int targetCardW: baseContentW + (2 * padX)
+  readonly property int targetCardH: baseContentH + (2 * padY)
 
   property real targetX: 0
   property real targetY: 0
@@ -302,74 +299,19 @@ PopupWindow {
       anchors.fill: parent
       clip: true
 
-      ColumnLayout {
-        id: contentLayout
+      Loader {
+        id: contentLoader
         width: sharedPopup.baseContentW
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.horizontalCenterOffset: sharedPopup.fluidEnabled ? (sharedPopup.barPosition === "right" ? 4 : (sharedPopup.barPosition === "left" ? -4 : 0)) : 0
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: sharedPopup.fluidEnabled ? (sharedPopup.barPosition === "bottom" ? -4 : (sharedPopup.barPosition === "top" ? 4 : 0)) : 0
-        spacing: 8
-
-        Text {
-          visible: !sharedPopup.hideHeader
-          Layout.fillWidth: true
-          horizontalAlignment: Text.AlignHCenter
-          text: sharedPopup.title
-          color: morphCard.animatedAccent
-          font.pixelSize: 13
-          font.bold: true
-          font.family: sharedPopup.font
-        }
-
-        Rectangle {
-          visible: !sharedPopup.hideHeader
-          Layout.fillWidth: true
-          height: 1
-          color: Qt.rgba(sharedPopup.theme.textPrimary.r, sharedPopup.theme.textPrimary.g, sharedPopup.theme.textPrimary.b, 0.12)
-        }
-
-        Loader {
-          Layout.fillWidth: true
-          Layout.fillHeight: active
-          visible: active
-          active: provider && provider.contentComponent !== undefined && provider.contentComponent !== null
-          sourceComponent: provider ? provider.contentComponent : null
-        }
-
-        Text {
-          visible: (!provider || provider.contentComponent === undefined || provider.contentComponent === null) && sharedPopup.rows.length === 0
-          text: "Loading..."
-          color: sharedPopup.theme.textMuted
-          font.pixelSize: 11
-          font.family: sharedPopup.font
-        }
-
-        GridLayout {
-          visible: (!provider || provider.contentComponent === undefined || provider.contentComponent === null) && sharedPopup.rows.length > 0
-          columns: sharedPopup.columnCount
-          columnSpacing: 18
-          rowSpacing: 5
-          Layout.fillWidth: true
-
-          Repeater {
-            model: sharedPopup.cellModel
-
-            Text {
-              required property var modelData
-              Layout.columnSpan: modelData.header ? sharedPopup.columnCount : 1
-              Layout.fillWidth: modelData.header || modelData.col === sharedPopup.columnCount - 1
-              Layout.topMargin: modelData.header ? 4 : 0
-              Layout.maximumWidth: 320
-              text: modelData.text
-              elide: Text.ElideRight
-              horizontalAlignment: (!modelData.header && modelData.col > 0) ? Text.AlignRight : Text.AlignLeft
-              color: modelData.header ? morphCard.animatedAccent
-                   : (modelData.col === 0 ? sharedPopup.theme.textSecondary : sharedPopup.theme.textPrimary)
-              font.pixelSize: 11
-              font.bold: modelData.header
-              font.family: sharedPopup.font
-            }
+        visible: active
+        active: provider && provider.contentComponent !== undefined && provider.contentComponent !== null
+        sourceComponent: provider ? provider.contentComponent : null
+        onLoaded: {
+          if (item && provider && provider.preferredHeight !== undefined && provider.preferredHeight > 0) {
+            item.height = provider.preferredHeight;
           }
         }
       }

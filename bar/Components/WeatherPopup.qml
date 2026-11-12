@@ -13,19 +13,22 @@ PopupWindow {
   property bool hovered: false
   property bool pinned: false
   property var theme: DefaultTheme {}
-  property string font: "Lato Nerd Font"
+  property string font: (popup.theme && popup.theme.fontFamily) ? popup.theme.fontFamily : "Lato Nerd Font"
   readonly property string effectiveNerdFont: {
     const families = Qt.fontFamilies();
+    const monoPref = (popup.theme && popup.theme.monoFont) ? popup.theme.monoFont : "JetBrainsMono Nerd Font";
     const candidates = [
+      monoPref,
       "JetBrainsMono Nerd Font",
       "JetBrainsMonoNL Nerd Font",
       "DroidSansM Nerd Font",
       "FantasqueSansM Nerd Font",
+      popup.font,
       "Lato Nerd Font",
       "monospace"
     ];
     for (let i = 0; i < candidates.length; i++) {
-      if (families.indexOf(candidates[i]) !== -1) return candidates[i];
+      if (candidates[i] && families.indexOf(candidates[i]) !== -1) return candidates[i];
     }
     return popup.font || "monospace";
   }
@@ -311,7 +314,9 @@ PopupWindow {
 
   Component.onCompleted: {
     popup.parseFromSummary(SystemInfo.weatherInfo);
-    popup.refresh(false);
+    if (popup.isWeatherActive) {
+      popup.refresh(false);
+    }
   }
 
   Timer {

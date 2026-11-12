@@ -75,7 +75,7 @@ Rectangle {
                 const fmt = clockFmt === "12h" ? "hh:mm AP" : "hh:mm";
                 return Qt.formatDateTime(root.currentNow, fmt);
             }
-            font.family: (root.moduleData && root.moduleData.fontFamily) ? root.moduleData.fontFamily : root.font
+            font.family: (root.moduleData && root.moduleData.fontFamily && root.moduleData.fontFamily !== "$font") ? root.moduleData.fontFamily : root.font
             font.pixelSize: {
                 const fs = (root.moduleData && Number(root.moduleData.fontSize))
                     ? Number(root.moduleData.fontSize)
@@ -97,7 +97,7 @@ Rectangle {
             }
             Layout.alignment: timeTxt.Layout.alignment
             text: Qt.formatDateTime(root.currentNow, "dddd, dd MMMM yyyy")
-            font.family: (root.moduleData && root.moduleData.fontFamily) ? root.moduleData.fontFamily : root.font
+            font.family: (root.moduleData && root.moduleData.fontFamily && root.moduleData.fontFamily !== "$font") ? root.moduleData.fontFamily : root.font
             font.pixelSize: Math.max(8, Math.round(timeTxt.font.pixelSize * 0.28))
             font.bold: false
             color: root.theme.textSecondary

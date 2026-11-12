@@ -9,7 +9,7 @@ import "../bar"
 Scope {
   id: root
   property var theme: DefaultTheme {}
-  property string font: "Lato Nerd Font"
+  property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
   property int selectedIndex: 0
 
   readonly property int cellSize: AppLauncherConfig.gridCellSize
@@ -96,7 +96,7 @@ Scope {
       }
       root.selectedIndex = 0;
       loadUsageProc.running = true;
-      searchInput.forceActiveFocus();
+      Qt.callLater(() => searchInput.forceActiveFocus());
     }
   }
 
@@ -369,7 +369,7 @@ Scope {
             spacing: 8
 
             Text {
-              text: ""
+              text: "󰍉"
               color: root.theme.textMuted
               font.pixelSize: 13
               font.family: root.font
@@ -379,18 +379,14 @@ Scope {
             Item {
               Layout.fillWidth: true
               Layout.alignment: Qt.AlignVCenter
-              implicitHeight: searchInput.implicitHeight
+              implicitHeight: 20
 
-              TextInput {
+              FocusScope {
                 id: searchInput
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                color: root.theme.textPrimary
-                font.pixelSize: 13
-                font.family: root.font
-                clip: true
-                selectByMouse: true
+                anchors.fill: parent
+                focus: true
+
+                property string text: ""
 
                 onTextChanged: {
                   root.selectedIndex = 0
@@ -403,19 +399,50 @@ Scope {
                   const last = grid.count - 1;
                   const move = (delta) => {
                     event.accepted = true;
+                    if (last < 0) return;
                     root.selectedIndex = Math.max(0, Math.min(root.selectedIndex + delta, last));
                     grid.positionViewAtIndex(root.selectedIndex, GridView.Contain);
                   };
-                  if (event.key === Qt.Key_Down) move(root.columns);
-                  else if (event.key === Qt.Key_Up) move(-root.columns);
-                  else if (event.key === Qt.Key_Tab) move(1);
-                  else if (event.key === Qt.Key_Right && searchInput.cursorPosition === searchInput.text.length) move(1);
-                  else if (event.key === Qt.Key_Left && searchInput.cursorPosition === 0) move(-1);
-                  else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                  if (event.key === Qt.Key_Down) { move(root.columns); return; }
+                  if (event.key === Qt.Key_Up) { move(-root.columns); return; }
+                  if (event.key === Qt.Key_Tab || event.key === Qt.Key_Right) { move(1); return; }
+                  if (event.key === Qt.Key_Left) { move(-1); return; }
+                  if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                     event.accepted = true;
                     if (root.selectedIndex >= 0 && root.selectedIndex < filteredApps.values.length)
                       root.launchApp(filteredApps.values[root.selectedIndex]);
+                    return;
                   }
+                  if (event.key === Qt.Key_Backspace) {
+                    if (event.modifiers & Qt.ControlModifier) {
+                      searchInput.text = "";
+                    } else if (searchInput.text.length > 0) {
+                      searchInput.text = searchInput.text.slice(0, -1);
+                    }
+                    event.accepted = true;
+                    return;
+                  }
+                  if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_U) {
+                    searchInput.text = "";
+                    event.accepted = true;
+                    return;
+                  }
+                  if (event.text && event.text.length === 1 && event.text.charCodeAt(0) >= 32 && event.text.charCodeAt(0) !== 127) {
+                    searchInput.text += event.text;
+                    event.accepted = true;
+                  }
+                }
+
+                Text {
+                  anchors.left: parent.left
+                  anchors.right: parent.right
+                  anchors.verticalCenter: parent.verticalCenter
+                  visible: searchInput.text !== ""
+                  text: searchInput.text
+                  color: root.theme.textPrimary
+                  font.pixelSize: 13
+                  font.family: root.font
+                  elide: Text.ElideLeft
                 }
               }
 
@@ -470,14 +497,15 @@ Scope {
                   anchors.horizontalCenter: parent.horizontalCenter
 
                   IconImage {
-                    anchors.fill: parent
+                    anchors.centerIn: parent
+                    implicitSize: 40
                     source: Quickshell.iconPath(cell.modelData.icon ?? "", true)
                     visible: (cell.modelData.icon ?? "") !== ""
                   }
 
                   Text {
                     anchors.centerIn: parent
-                    text: ""
+                    text: "󰀻"
                     color: root.theme.accentPrimary
                     font.pixelSize: 28
                     font.family: root.font

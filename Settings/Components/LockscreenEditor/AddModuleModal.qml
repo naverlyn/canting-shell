@@ -7,7 +7,7 @@ Item {
     id: modalRoot
 
     property var theme: DefaultTheme {}
-    property string font: "JetBrainsMono Nerd Font"
+    property string font: (modalRoot.theme && modalRoot.theme.fontFamily) ? modalRoot.theme.fontFamily : "Lato Nerd Font"
 
     signal moduleChosen(string modType)
 

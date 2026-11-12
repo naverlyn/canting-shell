@@ -69,8 +69,12 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: actBtn.label
             font.family: Style.font
-            font.pixelSize: 11
-            font.bold: true
+            font.pixelSize: Style.px(11)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
             color: actBtn.danger
                 ? Style.theme.accentRed
                 : (actHover.hovered && actBtn.btnEnabled ? actBtn.activeCol : Style.theme.textPrimary)

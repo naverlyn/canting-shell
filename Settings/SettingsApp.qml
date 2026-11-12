@@ -12,12 +12,12 @@ import "./Components/Common"
 Scope {
     id: root
     property var theme: Theme
-    property string font: "Lato Nerd Font"
+    property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
     
-    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About, 12: Lock Screen, 13: Animations, 14: Hyprland Settings, 15: Wallpaper, 16: OSD, 17: Control Center, 18: Backup & Restore, 19: App Launcher, 20: Autostart, 21: Clipboard
+    // UI state: 0: WiFi, 1: Bluetooth, 2: Sound, 3: Notifications, 4: Power, 5: Mouse, 6: Keyboard, 7: Applications, 8: Display, 9: Appearance, 10: Bar Settings, 11: About, 12: Lock Screen, 13: Animations, 14: Hyprland Settings, 15: Wallpaper, 16: OSD, 17: Control Center, 18: Backup & Restore, 19: App Launcher, 20: Autostart, 21: Clipboard, 22: Fonts
     property int currentTab: 0
-    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About", "Lock Screen", "Animations", "Hyprland Settings", "Wallpaper", "On-Screen Display", "Control Center", "Backup & Restore", "App Launcher", "Autostart", "Clipboard"]
-    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", "", "󰌾", "󰑈", "", "󰸉", "󰍹", "󰕮", "󰁯", "󰀻", "󰐊", "󰅌"]
+    property var tabs: ["Wi-Fi", "Bluetooth", "Sound", "Notifications", "Power", "Mouse", "Keyboard", "Applications", "Display", "Appearance", "Bar Settings", "About", "Lock Screen", "Animations", "Hyprland Settings", "Wallpaper", "On-Screen Display", "Control Center", "Backup & Restore", "App Launcher", "Autostart", "Clipboard", "Fonts"]
+    property var tabIcons: ["󰖩", "󰂯", "󰕾", "󰂚", "󰐥", "󰍽", "󰌌", "󰵆", "󰍹", "󰏘", "󰮲", "", "󰌾", "󰑈", "", "󰸉", "󰍹", "󰕮", "󰁯", "󰀻", "󰐊", "󰅌", "󰛖"]
 
     property var sections: [
         {
@@ -55,6 +55,7 @@ Scope {
                 { id: "clipboard", name: "Clipboard", icon: "󰅌", pageIndex: 21 },
                 { id: "controlcenter", name: "Control Center", icon: "󰕮", pageIndex: 17 },
                 { id: "appearance", name: "Appearance", icon: "󰏘", pageIndex: 9 },
+                { id: "fonts", name: "Fonts", icon: "󰛖", pageIndex: 22 },
                 { id: "wallpaper", name: "Wallpaper", icon: "󰸉", pageIndex: 15 },
                 { id: "notifications", name: "Notifications", icon: "󰂚", pageIndex: 3 },
                 { id: "osd", name: "On-Screen Display", icon: "󰍹", pageIndex: 16 },
@@ -73,6 +74,8 @@ Scope {
         if (root.theme) {
             root.theme.previewIndex = -1;
             root.theme.previewAccent = "";
+            root.theme.previewFontFamily = "";
+            root.theme.previewMonoFont = "";
         }
     }
 
@@ -138,6 +141,8 @@ Scope {
             if (!visible && root.theme) {
                 root.theme.previewIndex = -1;
                 root.theme.previewAccent = "";
+                root.theme.previewFontFamily = "";
+                root.theme.previewMonoFont = "";
             }
             if (visible) {
                 winCard.forceActiveFocus();
@@ -459,6 +464,14 @@ Scope {
                         hostWindow: settingsWindow
                         pageIndex: 21
                         pageComponent: ClipboardSettings { theme: root.theme; font: root.font }
+                    }
+
+                    // 22: Fonts & Typography
+                    SettingsPageContainer {
+                        hostApp: root
+                        hostWindow: settingsWindow
+                        pageIndex: 22
+                        pageComponent: FontSettings { theme: root.theme; font: root.font }
                     }
                 }
             }

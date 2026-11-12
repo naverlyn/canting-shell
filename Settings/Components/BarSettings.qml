@@ -842,6 +842,18 @@ Item {
                     HardwareMonitorOptionsCard {
                         root: root
                     }
+
+                    WifiBluetoothOptionsCard {
+                        root: root
+                    }
+
+                    BrightnessOptionsCard {
+                        root: root
+                    }
+
+                    CustomScriptOptionsCard {
+                        root: root
+                    }
                 }
             }
         }

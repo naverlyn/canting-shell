@@ -102,17 +102,38 @@ Rectangle {
     }
   }
 
-  WeatherPopup {
-    id: weatherPopup
-    target: weatherWidget
-    barItem: hostContainer
-    hovered: weatherHover.hovered
-    pinned: weatherWidget.isPinned
-    theme: hostRoot.theme
-    font: hostRoot.font
-    location: BarConfig.weatherLocation || "Bekasi"
-    accent: hostContainer.wAccent("weather", hostRoot.theme.accentCyan)
-    barPosition: hostContainer.barPos
-    onPinToggled: weatherWidget.isPinned = !weatherWidget.isPinned
+  property bool popupKeepAlive: false
+
+  onIsPinnedChanged: {
+    if (isPinned) popupKeepAlive = true;
+  }
+
+  Connections {
+    target: weatherHover
+    function onHoveredChanged() {
+      if (weatherHover.hovered) weatherWidget.popupKeepAlive = true;
+    }
+  }
+
+  Loader {
+    id: weatherPopupLoader
+    active: weatherHover.hovered || weatherWidget.isPinned || weatherWidget.popupKeepAlive
+    sourceComponent: WeatherPopup {
+      target: weatherWidget
+      barItem: hostContainer
+      hovered: weatherHover.hovered
+      pinned: weatherWidget.isPinned
+      theme: hostRoot.theme
+      font: hostRoot.font
+      location: BarConfig.weatherLocation || "Bekasi"
+      accent: hostContainer.wAccent("weather", hostRoot.theme.accentCyan)
+      barPosition: hostContainer.barPos
+      onPinToggled: weatherWidget.isPinned = !weatherWidget.isPinned
+      onVisibleChanged: {
+        if (!visible && !weatherHover.hovered && !weatherWidget.isPinned) {
+          weatherWidget.popupKeepAlive = false;
+        }
+      }
+    }
   }
 }

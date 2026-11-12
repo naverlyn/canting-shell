@@ -77,7 +77,7 @@ Rectangle {
         id: lbl
         anchors.centerIn: parent
         text: (root.moduleData && root.moduleData.cmd) ? (root.cmdOutput || "...") : (root.moduleData ? (root.moduleData.text || "Custom Text") : "")
-        font.family: (root.moduleData && root.moduleData.fontFamily) ? root.moduleData.fontFamily : root.font
+        font.family: (root.moduleData && root.moduleData.fontFamily && root.moduleData.fontFamily !== "$font") ? root.moduleData.fontFamily : root.font
         font.pixelSize: Math.max(8, Math.round(((root.moduleData && Number(root.moduleData.fontSize)) ? Number(root.moduleData.fontSize) : 14) * root.scaleFactor))
         font.bold: root.showCard
         color: root.resolveColor(root.moduleData ? root.moduleData.color : "$text")

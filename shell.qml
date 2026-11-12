@@ -1,8 +1,11 @@
 //@ pragma UseQApplication
 //@ pragma Env QT_QPA_PLATFORMTHEME=gtk3
+//@ pragma Env QT_IM_MODULE=compose
+//@ pragma Env QT_IM_MODULES=compose
 //@ pragma Env QS_NO_RELOAD_POPUP=1
 //@ pragma Env QSG_RENDER_LOOP=threaded
 //@ pragma Env QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
+//@ pragma Env QT_LOGGING_RULES=qt.svg.warning=false;qt.svg.draw.warning=false;qt.qpa.wayland.textinput.warning=false;qt.qpa.services.warning=false
 
 import Quickshell
 import Quickshell.Io

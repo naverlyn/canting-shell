@@ -9,7 +9,7 @@ import "./Components"
 Scope {
   id: root
   property var theme: Theme
-  property string font: "Lato Nerd Font"
+  property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
 
   property string searchText: ""
   property string previewPath: ""

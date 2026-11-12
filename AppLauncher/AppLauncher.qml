@@ -9,7 +9,7 @@ import QtQuick.Layouts
 Scope {
   id: root
   property var theme: Theme
-  property string font: "Lato Nerd Font"
+  property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
   property bool commandMode: false
   property int selectedIndex: 0
   property bool userExpanded: false
@@ -623,7 +623,8 @@ Scope {
                   height: 24
 
                   IconImage {
-                    anchors.fill: parent
+                    anchors.centerIn: parent
+                    implicitSize: 24
                     source: Quickshell.iconPath(delegateRoot.modelData.icon ?? "", true)
                     visible: (delegateRoot.modelData.icon ?? "") !== ""
                   }

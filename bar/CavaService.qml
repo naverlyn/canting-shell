@@ -67,6 +67,9 @@ Singleton {
           glyphs += root.glyphLevels[idx];
         }
 
+        if (!active && !root.hasAudio) {
+          return;
+        }
         root.values = nums;
         root.hasAudio = active;
         root.glyphText = glyphs;

@@ -284,6 +284,265 @@ Singleton {
     readonly property color batteryWarning:  accentOrange
     readonly property color batteryCritical: accentRed
 
+    // --- Global Typography & Font Configuration ---
+    readonly property string fontsConfigPath: Qt.resolvedUrl("../fonts_config.json").toString().replace(/^file:\/\//, "")
+    property bool _fontsLoaded: false
+
+    property string savedFontFamily: "Lato Nerd Font"
+    property string savedMonoFont: "JetBrainsMono Nerd Font"
+    property string previewFontFamily: ""
+    property string previewMonoFont: ""
+
+    readonly property string fontFamily: previewFontFamily !== "" ? previewFontFamily : (savedFontFamily || "Lato Nerd Font")
+    readonly property string monoFont: previewMonoFont !== "" ? previewMonoFont : (savedMonoFont || "JetBrainsMono Nerd Font")
+
+    property real fontScale: 1.0
+    property string fontWeight: "normal" // "light", "normal", "medium", "demibold", "bold"
+    property bool boldHeadings: true
+    property real letterSpacing: 0.0
+    property string fontHinting: "default" // "default", "none", "vertical", "full"
+    property bool fontAntialiasing: true
+    property string fontRenderType: "qt" // "qt" or "native"
+
+    readonly property int fontWeightEnum: {
+        switch (root.fontWeight) {
+            case "light": return Font.Light;
+            case "medium": return Font.Medium;
+            case "demibold": return Font.DemiBold;
+            case "bold": return Font.Bold;
+            default: return Font.Normal;
+        }
+    }
+
+    readonly property int fontHintingEnum: {
+        switch (root.fontHinting) {
+            case "none": return Font.PreferNoHinting;
+            case "vertical": return Font.PreferVerticalHinting;
+            case "full": return Font.PreferFullHinting;
+            default: return Font.PreferDefaultHinting;
+        }
+    }
+
+    readonly property int fontRenderTypeEnum: root.fontRenderType === "native" ? Text.NativeRendering : Text.QtRendering
+
+    function scaledPx(basePx) {
+        return Math.max(8, Math.round((Number(basePx) || 12) * root.fontScale));
+    }
+
+    function syncApplicationFont() {
+        try {
+            if (Qt.application && Qt.application.font) {
+                Qt.application.font.family = root.fontFamily;
+                Qt.application.font.weight = root.fontWeightEnum;
+                Qt.application.font.letterSpacing = root.letterSpacing;
+                Qt.application.font.hintingPreference = root.fontHintingEnum;
+            }
+        } catch (e) {}
+    }
+
+    onFontFamilyChanged: root.syncApplicationFont()
+    onFontWeightEnumChanged: root.syncApplicationFont()
+    onLetterSpacingChanged: root.syncApplicationFont()
+    onFontHintingEnumChanged: root.syncApplicationFont()
+
+    function setFontFamily(fam) {
+        const clean = String(fam || "").trim();
+        if (!clean) return;
+        root.previewFontFamily = "";
+        if (root.savedFontFamily !== clean) {
+            root.savedFontFamily = clean;
+            root.saveFontsConfig();
+        }
+    }
+
+    function setMonoFont(fam) {
+        const clean = String(fam || "").trim();
+        if (!clean) return;
+        root.previewMonoFont = "";
+        if (root.savedMonoFont !== clean) {
+            root.savedMonoFont = clean;
+            root.saveFontsConfig();
+        }
+    }
+
+    function setFontPairing(primaryFam, monoFam) {
+        const pClean = String(primaryFam || "").trim();
+        const mClean = String(monoFam || "").trim();
+        root.previewFontFamily = "";
+        root.previewMonoFont = "";
+        let changed = false;
+        if (pClean && root.savedFontFamily !== pClean) {
+            root.savedFontFamily = pClean;
+            changed = true;
+        }
+        if (mClean && root.savedMonoFont !== mClean) {
+            root.savedMonoFont = mClean;
+            changed = true;
+        }
+        if (changed) root.saveFontsConfig();
+    }
+
+    function setFontScale(val) {
+        const clamped = Math.round(Math.max(0.85, Math.min(1.25, Number(val) || 1.0)) * 100) / 100;
+        if (Math.abs(root.fontScale - clamped) > 0.001) {
+            root.fontScale = clamped;
+            fontsSaveDebounce.restart();
+        }
+    }
+
+    function setFontWeight(w) {
+        const clean = String(w || "normal").toLowerCase();
+        if (["light", "normal", "medium", "demibold", "bold"].indexOf(clean) !== -1) {
+            if (root.fontWeight !== clean) {
+                root.fontWeight = clean;
+                root.saveFontsConfig();
+            }
+        }
+    }
+
+    function setBoldHeadings(val) {
+        const b = Boolean(val);
+        if (root.boldHeadings !== b) {
+            root.boldHeadings = b;
+            root.saveFontsConfig();
+        }
+    }
+
+    function setLetterSpacing(val) {
+        const clamped = Math.round(Math.max(-0.5, Math.min(2.0, Number(val) || 0.0)) * 10) / 10;
+        if (Math.abs(root.letterSpacing - clamped) > 0.01) {
+            root.letterSpacing = clamped;
+            fontsSaveDebounce.restart();
+        }
+    }
+
+    function setFontHinting(h) {
+        const clean = String(h || "default").toLowerCase();
+        if (["default", "none", "vertical", "full"].indexOf(clean) !== -1) {
+            if (root.fontHinting !== clean) {
+                root.fontHinting = clean;
+                root.saveFontsConfig();
+            }
+        }
+    }
+
+    function setFontAntialiasing(val) {
+        const b = Boolean(val);
+        if (root.fontAntialiasing !== b) {
+            root.fontAntialiasing = b;
+            root.saveFontsConfig();
+        }
+    }
+
+    function setFontRenderType(rt) {
+        const clean = String(rt || "qt").toLowerCase() === "native" ? "native" : "qt";
+        if (root.fontRenderType !== clean) {
+            root.fontRenderType = clean;
+            root.saveFontsConfig();
+        }
+    }
+
+    function resetFontsToDefault() {
+        root.previewFontFamily = "";
+        root.previewMonoFont = "";
+        root.savedFontFamily = "Lato Nerd Font";
+        root.savedMonoFont = "JetBrainsMono Nerd Font";
+        root.fontScale = 1.0;
+        root.fontWeight = "normal";
+        root.boldHeadings = true;
+        root.letterSpacing = 0.0;
+        root.fontHinting = "default";
+        root.fontAntialiasing = true;
+        root.fontRenderType = "qt";
+        root.saveFontsConfig();
+    }
+
+    function applyFontsConfig(cfg) {
+        if (!cfg) return;
+        if (cfg.fontFamily && String(cfg.fontFamily).trim() !== "")
+            root.savedFontFamily = String(cfg.fontFamily).trim();
+        if (cfg.monoFont && String(cfg.monoFont).trim() !== "")
+            root.savedMonoFont = String(cfg.monoFont).trim();
+        if (cfg.fontScale !== undefined)
+            root.fontScale = Math.round(Math.max(0.85, Math.min(1.25, Number(cfg.fontScale) || 1.0)) * 100) / 100;
+        if (cfg.fontWeight !== undefined && ["light", "normal", "medium", "demibold", "bold"].indexOf(String(cfg.fontWeight)) !== -1)
+            root.fontWeight = String(cfg.fontWeight);
+        if (cfg.boldHeadings !== undefined)
+            root.boldHeadings = Boolean(cfg.boldHeadings);
+        if (cfg.letterSpacing !== undefined)
+            root.letterSpacing = Math.round(Math.max(-0.5, Math.min(2.0, Number(cfg.letterSpacing) || 0.0)) * 10) / 10;
+        if (cfg.fontHinting !== undefined && ["default", "none", "vertical", "full"].indexOf(String(cfg.fontHinting)) !== -1)
+            root.fontHinting = String(cfg.fontHinting);
+        if (cfg.fontAntialiasing !== undefined)
+            root.fontAntialiasing = Boolean(cfg.fontAntialiasing);
+        if (cfg.fontRenderType !== undefined)
+            root.fontRenderType = String(cfg.fontRenderType) === "native" ? "native" : "qt";
+    }
+
+    Timer {
+        id: fontsSaveDebounce
+        interval: 250
+        repeat: false
+        onTriggered: root.saveFontsConfig()
+    }
+
+    function saveFontsConfig() {
+        if (!root._fontsLoaded) return;
+        const data = {
+            fontFamily: root.savedFontFamily,
+            monoFont: root.savedMonoFont,
+            fontScale: root.fontScale,
+            fontWeight: root.fontWeight,
+            boldHeadings: root.boldHeadings,
+            letterSpacing: root.letterSpacing,
+            fontHinting: root.fontHinting,
+            fontAntialiasing: root.fontAntialiasing,
+            fontRenderType: root.fontRenderType
+        };
+        const jsonStr = JSON.stringify(data, null, 2);
+        saveFontsProc.command = [
+            "python3", "-c",
+            "import os, sys; p = sys.argv[1]; tmp = p + '.tmp'; open(tmp, 'w', encoding='utf-8').write(sys.argv[2] + '\\n'); os.replace(tmp, p)",
+            root.fontsConfigPath,
+            jsonStr
+        ];
+        saveFontsProc.running = true;
+    }
+
+    Process { id: saveFontsProc; running: false }
+
+    FileView {
+        id: fontsConfigFile
+        path: root.fontsConfigPath
+        watchChanges: true
+        onFileChanged: reload()
+        onTextChanged: {
+            const raw = fontsConfigFile.text();
+            if (!raw) {
+                root._fontsLoaded = true;
+                return;
+            }
+            try {
+                root.applyFontsConfig(JSON.parse(raw));
+            } catch (e) {
+                console.error("Failed to parse fonts_config.json:", e);
+            } finally {
+                root._fontsLoaded = true;
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        try {
+            const raw = fontsConfigFile.text();
+            if (raw && raw.trim().length > 0) {
+                root.applyFontsConfig(JSON.parse(raw));
+            }
+        } catch (e) {}
+        root._fontsLoaded = true;
+        root.syncApplicationFont();
+    }
+
     function hexToRgba(hex) {
         return "rgba(" + hex.toString().replace("#", "") + "ff)";
     }

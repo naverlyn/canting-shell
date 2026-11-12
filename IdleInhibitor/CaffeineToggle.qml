@@ -7,7 +7,7 @@ import "../bar"
 Scope {
   id: root
   property var theme: DefaultTheme {}
-  property string font: "Lato Nerd Font"
+  property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
   readonly property bool active: SystemInfo.idleInhibited
 
   IpcHandler {

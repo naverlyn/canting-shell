@@ -63,8 +63,9 @@ Rectangle {
     pinned: netPill.isPinned
     theme: hostRoot.theme
     font: hostRoot.font
-    title: "Network (" + SystemInfo.networkInfo + ")"
+    title: "Network"
     icon: "󰓅"
+    summaryText: SystemInfo.networkInfo
     accent: hostContainer.wAccent("network", hostRoot.theme.accentCyan)
     script: "net"
     barPosition: hostContainer.barPos

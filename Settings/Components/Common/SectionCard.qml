@@ -25,8 +25,12 @@ ColumnLayout {
         Text {
             text: secCard.title
             font.family: Style.font
-            font.pixelSize: 13
-            font.bold: true
+            font.pixelSize: Style.px(13)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
             color: secCard.titleColor
             Layout.minimumWidth: implicitWidth
             Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
@@ -39,8 +43,12 @@ ColumnLayout {
             visible: secCard.subtitle !== ""
             text: secCard.subtitle
             font.family: Style.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: secCard.subtitleBold
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
             color: secCard.subtitleColor
             elide: Text.ElideRight
             horizontalAlignment: Text.AlignRight

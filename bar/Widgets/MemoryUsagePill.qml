@@ -63,6 +63,7 @@ Rectangle {
     font: hostRoot.font
     title: "Memory"
     icon: "󰍛"
+    summaryText: SystemInfo.memoryUsage
     accent: hostContainer.wAccent("memory", hostRoot.theme.accentPrimary)
     script: "mem"
     barPosition: hostContainer.barPos

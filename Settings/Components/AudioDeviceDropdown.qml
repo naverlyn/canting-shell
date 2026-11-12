@@ -18,7 +18,7 @@ Item {
     id: root
 
     property var theme
-    property string font: "Lato Nerd Font"
+    property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
     property var devices: []
     property var currentDevice: null
     property bool isInput: false

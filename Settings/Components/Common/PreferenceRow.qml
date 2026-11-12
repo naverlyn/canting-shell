@@ -26,8 +26,12 @@ Item {
                 Layout.fillWidth: true
                 text: pr.title
                 font.family: Style.font
-                font.pixelSize: 13
-                font.bold: true
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
                 color: Style.theme.textPrimary
                 elide: Text.ElideRight
             }
@@ -37,7 +41,12 @@ Item {
                 Layout.fillWidth: true
                 text: pr.subtitle
                 font.family: Style.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
+                font.weight: Style.fontWeightEnum
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
                 color: Style.theme.textSecondary
                 elide: Text.ElideRight
             }

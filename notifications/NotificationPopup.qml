@@ -9,7 +9,7 @@ import QtQuick.Layouts
 Scope {
     id: root
     property var theme: DefaultTheme {}
-    property string font: "Lato Nerd Font"
+    property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
 
     IpcHandler {
         target: "notifications"

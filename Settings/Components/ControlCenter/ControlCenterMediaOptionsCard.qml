@@ -562,7 +562,8 @@ ColumnLayout {
                                             height: 24
 
                                             IconImage {
-                                                anchors.fill: parent
+                                                anchors.centerIn: parent
+                                                implicitSize: 24
                                                 visible: previewTile.hasSysIcon
                                                 source: previewTile.hasSysIcon ? Quickshell.iconPath(previewTile.modelData.icon, true) : ""
                                             }
@@ -787,7 +788,8 @@ ColumnLayout {
                                     height: 30
 
                                     IconImage {
-                                        anchors.fill: parent
+                                        anchors.centerIn: parent
+                                        implicitSize: 30
                                         source: appGridCell.hasIcon ? Quickshell.iconPath(appGridCell.modelData.icon ?? "", true) : ""
                                         visible: appGridCell.hasIcon
                                     }

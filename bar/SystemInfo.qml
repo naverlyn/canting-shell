@@ -20,6 +20,9 @@ Singleton {
   property string batteryIcon: "󰂎"
   property bool batteryCharging: false
   property string temperature: "0°C"
+  property string gpuUsage: "0%"
+  property string gpuTemp: "0°C"
+  property string gpuVram: "0%"
   property string diskUsage: "0%"
   property string weatherInfo: "Loading..."
   property bool idleInhibited: false
@@ -153,6 +156,21 @@ Singleton {
             else root.batteryIcon = "󰁺"
           } else if (line.startsWith("TEMP:")) {
             root.temperature = line.substring(5) || "N/A"
+          } else if (line.startsWith("GPU:")) {
+            const gParts = line.substring(4).split(",")
+            if (gParts.length >= 2) {
+              const gu = parseInt((gParts[0] || "0").trim())
+              const gt = parseInt((gParts[1] || "0").trim())
+              root.gpuUsage = (isNaN(gu) ? 0 : gu) + "%"
+              root.gpuTemp = (isNaN(gt) || gt <= 0) ? "N/A" : (gt + "°C")
+              if (gParts.length >= 4) {
+                const mu = parseFloat((gParts[2] || "0").trim())
+                const mt = parseFloat((gParts[3] || "0").trim())
+                if (mt > 0 && !isNaN(mu)) {
+                  root.gpuVram = Math.round((mu / mt) * 100) + "%"
+                }
+              }
+            }
           }
         }
       }
@@ -202,6 +220,46 @@ Singleton {
     diskProc.running = true
   }
 
+  readonly property bool gpuActive: BarConfig.isWidgetInAnyBar("gpu")
+
+  Process {
+    id: gpuProc
+    command: [
+      "sh", "-c",
+      "if command -v nvidia-smi >/dev/null 2>&1; then " +
+      "g=$(nvidia-smi --query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null | head -n1); " +
+      "if [ -n \"$g\" ]; then echo \"GPU:$g\"; fi; " +
+      "else " +
+      "for c in /sys/class/drm/card[0-9]/device; do " +
+      "if [ -f \"$c/gpu_busy_percent\" ]; then " +
+      "gu=$(cat \"$c/gpu_busy_percent\" 2>/dev/null || echo 0); " +
+      "gt=0; for tf in \"$c\"/hwmon/hwmon*/temp1_input; do [ -f \"$tf\" ] && gt=$(($(cat \"$tf\" 2>/dev/null || echo 0)/1000)) && break; done; " +
+      "echo \"GPU:$gu, $gt, 0, 0\"; break; fi; done; fi"
+    ]
+    running: root.gpuActive
+    stdout: StdioCollector {
+      onStreamFinished: {
+        const line = text.trim();
+        if (line.startsWith("GPU:")) {
+          const gParts = line.substring(4).split(",");
+          if (gParts.length >= 2) {
+            const gu = parseInt((gParts[0] || "0").trim());
+            const gt = parseInt((gParts[1] || "0").trim());
+            root.gpuUsage = (isNaN(gu) ? 0 : gu) + "%";
+            root.gpuTemp = (isNaN(gt) || gt <= 0) ? "N/A" : (gt + "°C");
+            if (gParts.length >= 4) {
+              const mu = parseFloat((gParts[2] || "0").trim());
+              const mt = parseFloat((gParts[3] || "0").trim());
+              if (mt > 0 && !isNaN(mu)) {
+                root.gpuVram = Math.round((mu / mt) * 100) + "%";
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   // Update timer (fast polling for CPU, Mem, Net, Battery, Temp)
   Timer {
     interval: Math.max(1, (BarConfig.hwPollInterval || 2)) * 1000
@@ -209,6 +267,7 @@ Singleton {
     repeat: true
     onTriggered: {
       if (!fastStatsProc.running) fastStatsProc.running = true
+      if (root.gpuActive && !gpuProc.running) gpuProc.running = true
     }
   }
 

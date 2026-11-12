@@ -63,19 +63,20 @@ Rectangle {
       height: 16
 
       Repeater {
-        model: CavaService.values
+        model: (cavaPill.visible && !cavaPill.isVert && BarConfig.cavaStyle !== "glyphs") ? CavaService.values.length : 0
         Rectangle {
-          required property int modelData
           required property int index
+          readonly property int val: (CavaService.values && index < CavaService.values.length) ? CavaService.values[index] : 0
 
           width: 3
-          height: Math.max(2, Math.round((modelData / 100) * 16))
+          height: Math.max(2, Math.round((val / 100) * 16))
           radius: 1.5
           color: hostContainer.wAccent("cava", hostRoot.theme.accentPrimary)
           anchors.bottom: (BarConfig.cavaStyle === "line") ? undefined : parent.bottom
           anchors.verticalCenter: (BarConfig.cavaStyle === "line") ? parent.verticalCenter : undefined
 
           Behavior on height {
+            enabled: cavaPill.visible && cavaPill.hasAudio
             NumberAnimation {
               duration: 50
               easing.type: Easing.OutQuad
@@ -104,7 +105,7 @@ Rectangle {
     spacing: 2
 
     Repeater {
-      model: Math.min((BarConfig.cavaBars || 8), CavaService.values.length)
+      model: (cavaPill.visible && cavaPill.isVert) ? Math.min((BarConfig.cavaBars || 8), CavaService.values.length) : 0
       Rectangle {
         required property int index
         readonly property int val: (CavaService.values && CavaService.values.length > index) ? CavaService.values[index] : 0
@@ -115,6 +116,7 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
 
         Behavior on width {
+          enabled: cavaPill.visible && cavaPill.hasAudio
           NumberAnimation {
             duration: 50
             easing.type: Easing.OutQuad

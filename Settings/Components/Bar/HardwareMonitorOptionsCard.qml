@@ -11,18 +11,31 @@ import ".."
 SectionCard {
     required property var root
     id: self
-    title: "Hardware Monitor Options (CPU / RAM / Temp / Disk)"
+    title: "Hardware Monitor Options (CPU / GPU / RAM / Temp / Disk)"
     contentMargins: 8
     contentSpacing: 0
 
     SettingToggleRow {
         title: "Show Sensor Glyphs"
-        desc: "Display icons (CPU, RAM, Temp, Disk) before numerical utilization figures"
+        desc: "Display icons (CPU, GPU, RAM, Temp, Disk) before numerical utilization figures"
         checked: BarConfig.hwShowIcons !== false
         onToggled: (val) => {
             BarConfig.hwShowIcons = val;
             BarConfig.saveConfig();
             root.showToast(val ? "Sensor glyphs visible" : "Sensor glyphs hidden");
+        }
+    }
+
+    RowDivider {}
+
+    SettingToggleRow {
+        title: "Show GPU Temperature on GPU Pill"
+        desc: "Display live GPU thermal readout alongside GPU utilization percentage"
+        checked: Boolean(BarConfig.gpuShowTemp)
+        onToggled: (val) => {
+            BarConfig.gpuShowTemp = val;
+            BarConfig.saveConfig();
+            root.showToast(val ? "GPU temperature visible on pill" : "GPU temperature hidden on pill");
         }
     }
 

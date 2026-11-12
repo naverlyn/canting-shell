@@ -1,0 +1,11 @@
+{
+  "fontFamily": "Lato Nerd Font",
+  "monoFont": "JetBrainsMono Nerd Font",
+  "fontScale": 1.0,
+  "fontWeight": "normal",
+  "boldHeadings": true,
+  "letterSpacing": 0.0,
+  "fontHinting": "default",
+  "fontAntialiasing": true,
+  "fontRenderType": "qt"
+}
