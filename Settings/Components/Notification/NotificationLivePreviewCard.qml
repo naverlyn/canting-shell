@@ -133,13 +133,6 @@ SectionCard {
                     spacing: 6
 
                     Text {
-                        text: "󰂚"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        color: root.theme.bgBase
-                    }
-
-                    Text {
                         text: "Send Live Toast"
                         font.family: root.font
                         font.pixelSize: 11

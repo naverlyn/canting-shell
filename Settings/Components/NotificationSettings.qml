@@ -266,22 +266,11 @@ Item {
                 }
 
                 ActionButton {
-                    iconText: "󰂚"
-                    label: "Send Test Toast"
-                    onClicked: {
-                        NotificationService.sendCustomNotification({});
-                        root.showToast("Dispatched test toast popup (" + root.getPositionLabel(root.toastPos) + ")");
-                    }
-                }
-
-                ActionButton {
-                    iconText: "󰁯"
                     label: "Backup & Restore"
                     onClicked: openBackupProc.running = true
                 }
 
                 ActionButton {
-                    iconText: "󰦛"
                     label: "Reset to Default"
                     onClicked: {
                         NotificationService.resetDefaults();
