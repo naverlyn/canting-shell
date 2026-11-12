@@ -3,3 +3,4 @@ wallpaper.conf
 monitor-manager.conf
 theme-switcher/wallpaper-theme.json
 backups
+*.json
