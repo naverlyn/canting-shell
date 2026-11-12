@@ -42,49 +42,45 @@ Rectangle {
 
             // Active wallpaper thumbnail preview
             Rectangle {
+                id: heroThumbRect
                 Layout.preferredWidth: 116
                 Layout.preferredHeight: 64
                 radius: 6
                 color: root.theme.bgBase
-                clip: true
                 border.color: root.theme.bgBorder
                 border.width: 1
 
-                Image {
+                Item {
+                    id: heroThumbContainer
                     anchors.fill: parent
-                    source: cardRoot.activeDisplayWallpaper ? ("file://" + cardRoot.activeDisplayWallpaper) : ""
-                    fillMode: Image.PreserveAspectCrop
-                    sourceSize.width: 240
-                    sourceSize.height: 140
-                    asynchronous: true
-                    cache: false
+                    anchors.margins: 1
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        maskEnabled: true
+                        maskSource: heroThumbMask
+                    }
+
+                    Image {
+                        anchors.fill: parent
+                        source: cardRoot.activeDisplayWallpaper ? ("file://" + cardRoot.activeDisplayWallpaper) : ""
+                        fillMode: Image.PreserveAspectCrop
+                        sourceSize.width: 240
+                        sourceSize.height: 140
+                        asynchronous: true
+                        cache: false
+                    }
                 }
 
-                // Small badge showing which display's wallpaper is shown
-                Rectangle {
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.margins: 4
-                    height: 16
-                    width: targetBadgeText.implicitWidth + 8
-                    radius: 3
-                    color: Qt.rgba(0, 0, 0, 0.65)
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
+                Item {
+                    id: heroThumbMask
+                    anchors.fill: heroThumbContainer
+                    visible: false
+                    layer.enabled: true
 
-                    Text {
-                        id: targetBadgeText
-                        anchors.centerIn: parent
-                        text: {
-                            if (!WallpaperService.hasMultipleMonitors) return "Active";
-                            if (WallpaperService.targetDisplay === "all") return "All";
-                            if (WallpaperService.targetDisplay === "secondary") return "Secondary";
-                            return "Primary";
-                        }
-                        font.family: root.font
-                        font.pixelSize: 9
-                        font.bold: true
-                        color: root.theme.bgBase
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Math.max(2, heroThumbRect.radius - 1)
+                        color: "black"
                     }
                 }
 
