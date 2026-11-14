@@ -10,8 +10,8 @@ import ".."
 SectionCard {
     required property var root
     id: inspectorSection
-    title: "Building Block Inspector & Styling"
-    subtitle: "Fine-tune typography, dimensions, alignment, and visual styling for each notification building block"
+    title: "Element Styling"
+    subtitle: "Fine-tune the size, typography, and appearance of the selected notification element"
 
     readonly property var inspectorTabs: [
         { id: "icon",        label: "App Icon",       icon: "󰂚" },

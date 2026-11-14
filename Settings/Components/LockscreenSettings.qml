@@ -384,42 +384,14 @@ Item {
         onModuleChosen: (mType) => root.addModule(mType)
     }
 
-    /* Feedback toast notification */
-    Rectangle {
-        id: statusToast
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 24
-        height: 36
-        implicitWidth: toastLabel.implicitWidth + 32
-        radius: 8
-        color: root.theme.bgBase
-        border.color: root.theme.accentPrimary
-        border.width: 1
-        opacity: toastTimer.running ? 1.0 : 0.0
-        visible: opacity > 0
-        z: 999
-
-        Behavior on opacity { NumberAnimation { duration: 160 } }
-
-        Text {
-            id: toastLabel
-            anchors.centerIn: parent
-            font.family: root.font
-            font.pixelSize: 12
-            font.bold: true
-            color: root.theme.textPrimary
-        }
-
-        Timer {
-            id: toastTimer
-            interval: 2200
-            repeat: false
-        }
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
+        durationMs: 2200
     }
 
     function showStatus(msg) {
-        toastLabel.text = msg;
-        toastTimer.restart();
+        toastBanner.show(msg, false);
     }
 }

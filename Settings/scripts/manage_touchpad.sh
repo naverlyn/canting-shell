@@ -31,23 +31,8 @@ get_touchpad_device() {
         fi
     done
 
-    if command -v hyprctl >/dev/null 2>&1; then
-        if command -v jq >/dev/null 2>&1; then
-            dev="$(hyprctl devices -j 2>/dev/null | jq -r '.mice[]? | select(.name | test("touchpad|trackpad|synaptics|elan"; "i")) | .name' 2>/dev/null | head -n1 || true)"
-        elif command -v python3 >/dev/null 2>&1; then
-            dev="$(hyprctl devices -j 2>/dev/null | python3 -c '
-import sys, json, re
-try:
-    data = json.load(sys.stdin)
-    for m in data.get("mice", []):
-        name = m.get("name", "")
-        if re.search(r"touchpad|trackpad|synaptics|elan", name, re.I):
-            print(name)
-            break
-except Exception:
-    pass
-' 2>/dev/null || true)"
-        fi
+    if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+        dev="$(hyprctl devices -j 2>/dev/null | jq -r '.mice[]? | select(.name | test("touchpad|trackpad|synaptics|elan"; "i")) | .name' 2>/dev/null | head -n1 || true)"
         if [[ -n "$dev" && "$dev" != "null" ]]; then
             echo "$dev"
             return 0

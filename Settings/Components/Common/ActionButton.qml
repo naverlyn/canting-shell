@@ -9,11 +9,12 @@ Rectangle {
     property bool danger: false
     property bool btnEnabled: true
     property int btnHeight: 32
+    property int minWidth: 0
     signal clicked()
 
     readonly property color activeCol: danger ? Style.theme.accentRed : Style.theme.accentPrimary
 
-    implicitWidth: actRow.implicitWidth + 24
+    implicitWidth: Math.max(minWidth, actRow.implicitWidth + 24)
     implicitHeight: btnHeight
     width: visible ? implicitWidth : 0
     height: visible ? implicitHeight : 0

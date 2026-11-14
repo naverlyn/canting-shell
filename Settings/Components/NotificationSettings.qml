@@ -28,6 +28,21 @@ Item {
     property int currentSubTab: 0
     property alias subTabContentAnimation: subTabContentAnim
     property string selectedInspectorBlock: "icon"
+    property bool confirmReset: false
+
+    Timer {
+        id: resetConfirmTimer
+        interval: 3500
+        repeat: false
+        onTriggered: root.confirmReset = false
+    }
+
+    function scrollToInspector() {
+        if (!inspectorCard) return;
+        const targetY = Math.max(0, Math.min(inspectorCard.y + subTabContentContainer.y - 12, notifFlickable.contentHeight - notifFlickable.height));
+        scrollAnim.to = targetY;
+        scrollAnim.restart();
+    }
 
     /* Drag & Drop State for Notification Building Blocks */
     property bool isDraggingBlock: false
@@ -221,6 +236,14 @@ Item {
             && !notificationToastPositionPlacementGroupInst.xMarginMouseRef.pressed
             && !notificationToastPositionPlacementGroupInst.yMarginMouseRef.pressed
 
+        NumberAnimation {
+            id: scrollAnim
+            target: notifFlickable
+            property: "contentY"
+            duration: 260
+            easing.type: Easing.OutCubic
+        }
+
         ScrollBar.vertical: ScrollBar {
             policy: ScrollBar.AsNeeded
             contentItem: Rectangle {
@@ -249,7 +272,7 @@ Item {
                         color: root.theme.textPrimary
                     }
                     Text {
-                        text: "Configure modular toast building blocks, live composer, screen placement, and appearance"
+                        text: "Customize how toast notifications look, where they appear, and how they behave"
                         font.family: root.font
                         font.pixelSize: 12
                         color: root.theme.textSecondary
@@ -270,10 +293,18 @@ Item {
                 }
 
                 ActionButton {
-                    label: "Reset to Default"
+                    label: root.confirmReset ? "Confirm Reset?" : "Reset to Default"
+                    danger: true
                     onClicked: {
-                        NotificationService.resetDefaults();
-                        root.showToast("Restored default Notification building blocks & settings");
+                        if (!root.confirmReset) {
+                            root.confirmReset = true;
+                            resetConfirmTimer.restart();
+                        } else {
+                            resetConfirmTimer.stop();
+                            root.confirmReset = false;
+                            NotificationService.resetDefaults();
+                            root.showToast("Restored default notification layout & settings");
+                        }
                     }
                 }
             }
@@ -326,6 +357,7 @@ Item {
                     }
 
                     NotificationBlockInspectorCard {
+                        id: inspectorCard
                         root: root
                     }
                 }

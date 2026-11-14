@@ -2,9 +2,9 @@
  * BackupRestoreSettings.qml
  *
  * Dedicated Settings page for Quickshell configuration backup and restoration.
- * Provides 1-click quick snapshots, custom selective backups (Bar, Notifications,
- * OSD, Control Center, Appearance, Wallpaper), instant zero-risk restore with
- * automatic pre-restore safety backups, export/import, and factory defaults.
+ * Provides 1-click quick snapshots, custom selective backups, intuitive
+ * selective restore, archive import/export with file picker, and confirmed
+ * factory defaults reset.
  */
 
 import QtQuick
@@ -25,18 +25,14 @@ Item {
     property bool showCustomForm: false
     property bool showImportForm: false
     property string selectedRestoreSnapshotId: ""
+    property var restoreSelectedModules: []
     property string confirmDeleteId: ""
+    property string confirmResetModule: "" // "" | "bar" | "notifications" | "osd" | "lockscreen" | "all"
 
     // Form state
     property string formBackupName: ""
     property string formBackupDesc: ""
-    property bool formIncBar: true
-    property bool formIncNotif: true
-    property bool formIncOsd: true
-    property bool formIncCc: true
-    property bool formIncLockscreen: true
-    property bool formIncTheme: true
-    property bool formIncWallpaper: true
+    property var formSelectedModules: ["bar", "notifications", "osd", "controlcenter", "lockscreen", "appearance", "wallpaper"]
 
     property string importFilePath: ""
 
@@ -47,18 +43,99 @@ Item {
 
     readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_backup.py").toString().replace(/^file:\/\//, "")
 
-    Timer {
-        id: toastTimer
-        interval: 3200
-        repeat: false
-        onTriggered: root.statusVisible = false
+    readonly property var moduleDefs: [
+        { id: "bar", label: "Bar", icon: "󰮲" },
+        { id: "notifications", label: "Notifications", icon: "󰂚" },
+        { id: "osd", label: "OSD", icon: "󰍹" },
+        { id: "controlcenter", label: "Control Center", icon: "󰕮" },
+        { id: "lockscreen", label: "Lock Screen", icon: "󰌾" },
+        { id: "appearance", label: "Appearance & Theme", icon: "󰏘" },
+        { id: "wallpaper", label: "Wallpaper", icon: "󰸉" }
+    ]
+
+    readonly property var resetDefs: [
+        { id: "bar", title: "Bar Configuration", subtitle: "Top bar layout, panel arrangements, and widget positions", btnLabel: "Reset" },
+        { id: "notifications", title: "Notification Settings", subtitle: "Toast anchor, position, styling, and margins", btnLabel: "Reset" },
+        { id: "osd", title: "On-Screen Display (OSD)", subtitle: "OSD position, adaptive orientation, and timeout", btnLabel: "Reset" },
+        { id: "lockscreen", title: "Lock Screen Configuration", subtitle: "Lock screen modules, visual filters, and password box layout", btnLabel: "Reset" },
+        { id: "all", title: "All Quickshell Settings", subtitle: "Reset Bar, Notifications, OSD, and Lock Screen together", btnLabel: "Reset All" }
+    ]
+
+    readonly property var filteredSnapshots: {
+        return root.snapshots.filter(s => {
+            if (root.activeFilter === "manual") return s.type === "manual" || s.type === "imported";
+            if (root.activeFilter === "safety") return s.type && s.type.indexOf("auto_pre_") === 0;
+            return true;
+        });
+    }
+
+    function moduleLabel(modId) {
+        for (let i = 0; i < moduleDefs.length; i++) {
+            if (moduleDefs[i].id === modId) return moduleDefs[i].label;
+        }
+        return modId;
+    }
+
+    function moduleIcon(modId) {
+        for (let i = 0; i < moduleDefs.length; i++) {
+            if (moduleDefs[i].id === modId) return moduleDefs[i].icon;
+        }
+        return "󰒓";
+    }
+
+    function availableModulesForSnapshot(snap) {
+        const mods = snap.modules || [];
+        if (mods.length === 0 || mods.indexOf("all") !== -1) {
+            return moduleDefs.map(m => m.id);
+        }
+        // Keep only known modules in canonical order
+        return moduleDefs.map(m => m.id).filter(id => mods.indexOf(id) !== -1);
+    }
+
+    function toggleRestoreModule(modId) {
+        let next = root.restoreSelectedModules.slice();
+        const idx = next.indexOf(modId);
+        if (idx !== -1) {
+            next.splice(idx, 1);
+        } else {
+            next.push(modId);
+        }
+        root.restoreSelectedModules = next;
+    }
+
+    function toggleFormModule(modId) {
+        let next = root.formSelectedModules.slice();
+        const idx = next.indexOf(modId);
+        if (idx !== -1) {
+            next.splice(idx, 1);
+        } else {
+            next.push(modId);
+        }
+        root.formSelectedModules = next;
     }
 
     function showToast(msg, isWarn) {
-        root.statusMessage = msg;
-        root.statusIsWarning = Boolean(isWarn);
-        root.statusVisible = true;
-        toastTimer.restart();
+        toastBanner.show(msg, isWarn);
+    }
+
+    // File picker via zenity
+    Process {
+        id: filePickerProc
+        command: [
+            "zenity", "--file-selection",
+            "--title=Select Quickshell Backup Archive",
+            "--file-filter=Backup Archives (*.tar.gz *.tgz) | *.tar.gz *.tgz",
+            "--file-filter=All Files | *"
+        ]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const picked = text.trim();
+                if (picked) {
+                    root.importFilePath = picked;
+                }
+            }
+        }
     }
 
     // Process to run backup CLI commands
@@ -83,10 +160,9 @@ Item {
                         if (res.message) {
                             root.showToast(res.message, !res.success);
                         }
-                        // Refresh snapshot list after any modification
                         root.refreshSnapshots();
                     }
-                } catch(e) {
+                } catch (e) {
                     console.error("Backup JSON parse error:", e, raw);
                 }
             }
@@ -110,31 +186,41 @@ Item {
     }
 
     function submitCustomBackup() {
-        let mods = [];
-        if (formIncBar) mods.push("bar");
-        if (formIncNotif) mods.push("notifications");
-        if (formIncOsd) mods.push("osd");
-        if (formIncCc) mods.push("controlcenter");
-        if (formIncLockscreen) mods.push("lockscreen");
-        if (formIncTheme) mods.push("appearance");
-        if (formIncWallpaper) mods.push("wallpaper");
-
-        if (mods.length === 0) {
-            root.showToast("Please select at least one component to back up.", true);
+        if (root.formSelectedModules.length === 0) {
+            root.showToast("Select at least one component to back up.", true);
             return;
         }
-
         const name = root.formBackupName.trim();
         const desc = root.formBackupDesc.trim();
-        runBackupCommand(["create", name, mods.join(","), desc], "create");
+        runBackupCommand(["create", name, root.formSelectedModules.join(","), desc], "create");
         root.showCustomForm = false;
         root.formBackupName = "";
         root.formBackupDesc = "";
     }
 
-    function restoreSnapshot(snapId, modulesCsv) {
-        runBackupCommand(["restore", snapId, modulesCsv || "all"], "restore");
+    function openRestoreTray(snap) {
+        if (root.selectedRestoreSnapshotId === snap.id) {
+            root.selectedRestoreSnapshotId = "";
+            root.restoreSelectedModules = [];
+        } else {
+            root.selectedRestoreSnapshotId = snap.id;
+            root.restoreSelectedModules = root.availableModulesForSnapshot(snap);
+            root.confirmDeleteId = "";
+        }
+    }
+
+    function restoreSelected(snap) {
+        if (root.restoreSelectedModules.length === 0) {
+            root.showToast("Select at least one component to restore.", true);
+            return;
+        }
+        const avail = root.availableModulesForSnapshot(snap);
+        const csv = root.restoreSelectedModules.length === avail.length
+            ? "all"
+            : root.restoreSelectedModules.join(",");
+        runBackupCommand(["restore", snap.id, csv], "restore");
         root.selectedRestoreSnapshotId = "";
+        root.restoreSelectedModules = [];
     }
 
     function deleteSnapshot(snapId) {
@@ -149,7 +235,7 @@ Item {
     function submitImport() {
         const path = root.importFilePath.trim();
         if (!path) {
-            root.showToast("Please enter a valid archive path.", true);
+            root.showToast("Choose or enter an archive file path first.", true);
             return;
         }
         runBackupCommand(["import", path], "import");
@@ -157,8 +243,9 @@ Item {
         root.importFilePath = "";
     }
 
-    function resetFactoryDefaults(modulesCsv) {
-        runBackupCommand(["reset_defaults", modulesCsv || "all"], "reset_defaults");
+    function resetFactoryDefaults(modId) {
+        runBackupCommand(["reset_defaults", modId || "all"], "reset_defaults");
+        root.confirmResetModule = "";
     }
 
     Component.onCompleted: {
@@ -188,49 +275,25 @@ Item {
             width: flickable.width - (vertScroll.visible ? 12 : 0)
             spacing: 16
 
-            // Header Row
+            // Unified Header Row
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: 12
 
                 ColumnLayout {
                     spacing: 3
                     Layout.fillWidth: true
 
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-                        Text {
-                            text: "Backup & Restore"
-                            font.family: root.font
-                            font.pixelSize: 20
-                            font.bold: true
-                            color: root.theme.textPrimary
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-                        Rectangle {
-                            height: 20
-                            implicitWidth: snapCountText.implicitWidth + 12
-                            radius: 10
-                            Layout.alignment: Qt.AlignVCenter
-                            color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.15)
-                            border.color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.3)
-                            border.width: 1
-                            Text {
-                                id: snapCountText
-                                anchors.centerIn: parent
-                                text: root.snapshots.length + " saved"
-                                font.family: root.font
-                                font.pixelSize: 10
-                                font.bold: true
-                                color: root.theme.accentPrimary ?? "#7aa2f7"
-                            }
-                        }
-                        Item { Layout.fillWidth: true }
+                    Text {
+                        text: "Backup & Restore"
+                        font.family: root.font
+                        font.pixelSize: 20
+                        font.bold: true
+                        color: root.theme.textPrimary
                     }
 
                     Text {
-                        text: "Manage snapshots, create backups, and restore configuration settings for Bar, Notifications, OSD, Lock Screen, and Control Center."
+                        text: "Save snapshots of your setup, restore previous states, or reset individual components."
                         font.family: root.font
                         font.pixelSize: 11
                         color: root.theme.textMuted
@@ -243,29 +306,39 @@ Item {
                     spacing: 8
                     Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
 
-                    // Quick Snapshot Button
                     ActionButton {
                         iconText: "󰁯"
                         label: "Quick Snapshot"
                         btnHeight: 32
+                        btnEnabled: !root.loading
                         onClicked: root.createQuickSnapshot()
                     }
 
-                    // Custom Backup Button
                     ActionButton {
                         iconText: root.showCustomForm ? "󰅖" : "󰐕"
                         label: root.showCustomForm ? "Cancel" : "New Backup"
                         btnHeight: 32
-                        onClicked: root.showCustomForm = !root.showCustomForm
+                        onClicked: {
+                            root.showCustomForm = !root.showCustomForm;
+                            if (root.showCustomForm) root.showImportForm = false;
+                        }
                     }
 
-                    // Refresh Button (bordered 32x32 matching ActionButton height)
+                    ActionButton {
+                        iconText: root.showImportForm ? "󰅖" : "󰋺"
+                        label: root.showImportForm ? "Cancel" : "Import"
+                        btnHeight: 32
+                        onClicked: {
+                            root.showImportForm = !root.showImportForm;
+                            if (root.showImportForm) root.showCustomForm = false;
+                        }
+                    }
+
+                    // Refresh Button
                     Rectangle {
                         id: headerRefreshBtn
                         implicitWidth: 32
                         implicitHeight: 32
-                        width: 32
-                        height: 32
                         Layout.preferredWidth: 32
                         Layout.preferredHeight: 32
                         Layout.alignment: Qt.AlignVCenter
@@ -302,97 +375,6 @@ Item {
                 }
             }
 
-            // Top Status / Overview Card
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: statusRow.implicitHeight + 28
-                radius: 12
-                color: root.theme.bgSurface
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                border.width: 1
-
-                RowLayout {
-                    id: statusRow
-                    anchors.fill: parent
-                    anchors.margins: 14
-                    spacing: 16
-
-                    // Stat 1: Total Backups
-                    ColumnLayout {
-                        spacing: 3
-                        Layout.alignment: Qt.AlignVCenter
-                        Text {
-                            text: "TOTAL BACKUPS"
-                            font.family: root.font
-                            font.pixelSize: 9
-                            font.bold: true
-                            color: root.theme.textMuted
-                        }
-                        Item {
-                            implicitWidth: totalBackupsVal.implicitWidth
-                            implicitHeight: 20
-                            Text {
-                                id: totalBackupsVal
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: String(root.snapshots.length)
-                                font.family: root.font
-                                font.pixelSize: 15
-                                font.bold: true
-                                color: root.theme.textPrimary
-                            }
-                        }
-                    }
-
-                    Rectangle {
-                        width: 1
-                        height: 32
-                        Layout.alignment: Qt.AlignVCenter
-                        color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
-                    }
-
-                    // Stat 2: Latest Backup
-                    ColumnLayout {
-                        spacing: 3
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-                        Text {
-                            text: "LATEST SNAPSHOT"
-                            font.family: root.font
-                            font.pixelSize: 9
-                            font.bold: true
-                            color: root.theme.textMuted
-                        }
-                        Item {
-                            Layout.fillWidth: true
-                            implicitHeight: 20
-                            Text {
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: root.snapshots.length > 0 ? (root.snapshots[0].name + " (" + root.snapshots[0].dateFormatted + ")") : "None"
-                                font.family: root.font
-                                font.pixelSize: 13
-                                font.bold: true
-                                color: root.theme.accentPrimary ?? "#7aa2f7"
-                                elide: Text.ElideRight
-                            }
-                        }
-                    }
-
-                    // Quick Actions
-                    RowLayout {
-                        spacing: 8
-                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                        ActionButton {
-                            iconText: "󰁞"
-                            label: "Import Archive"
-                            btnHeight: 30
-                            onClicked: root.showImportForm = !root.showImportForm
-                        }
-                    }
-                }
-            }
-
             // Inline Import Archive Card
             Rectangle {
                 visible: root.showImportForm
@@ -400,21 +382,29 @@ Item {
                 implicitHeight: importCol.implicitHeight + 24
                 radius: 12
                 color: root.theme.bgSurface
-                border.color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.4)
+                border.color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.45)
                 border.width: 1
 
                 ColumnLayout {
                     id: importCol
                     anchors.fill: parent
                     anchors.margins: 14
-                    spacing: 12
+                    spacing: 10
 
-                    Text {
-                        text: "Import Configuration Archive (.tar.gz)"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: root.theme.textPrimary
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text {
+                            text: "Import Backup Archive (.tar.gz)"
+                            font.family: root.font
+                            font.pixelSize: 13
+                            font.bold: true
+                            color: root.theme.textPrimary
+                            Layout.fillWidth: true
+                        }
+                        MiniIconButton {
+                            iconText: "󰅖"
+                            onClicked: root.showImportForm = false
+                        }
                     }
 
                     RowLayout {
@@ -446,7 +436,7 @@ Item {
                                     visible: parent.text === "" && !parent.activeFocus
                                     anchors.fill: parent
                                     verticalAlignment: Text.AlignVCenter
-                                    text: "Enter full path to archive, e.g. ~/Downloads/quickshell_backup.tar.gz"
+                                    text: "Choose a .tar.gz archive or paste its path..."
                                     font.family: root.font
                                     font.pixelSize: 11
                                     color: root.theme.textMuted
@@ -455,16 +445,22 @@ Item {
                         }
 
                         ActionButton {
-                            iconText: "󰁞"
-                            label: "Import"
+                            iconText: "󰉋"
+                            label: "Browse..."
                             btnHeight: 32
-                            onClicked: root.submitImport()
+                            onClicked: {
+                                if (!filePickerProc.running) {
+                                    filePickerProc.running = true;
+                                }
+                            }
                         }
 
                         ActionButton {
-                            label: "Cancel"
+                            iconText: "󰋺"
+                            label: "Import"
                             btnHeight: 32
-                            onClicked: root.showImportForm = false
+                            btnEnabled: root.importFilePath.trim() !== ""
+                            onClicked: root.submitImport()
                         }
                     }
                 }
@@ -477,19 +473,19 @@ Item {
                 implicitHeight: formCol.implicitHeight + 28
                 radius: 12
                 color: root.theme.bgSurface
-                border.color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.5)
+                border.color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.45)
                 border.width: 1
 
                 ColumnLayout {
                     id: formCol
                     anchors.fill: parent
                     anchors.margins: 16
-                    spacing: 14
+                    spacing: 12
 
                     RowLayout {
                         Layout.fillWidth: true
                         Text {
-                            text: "Create Custom Backup Snapshot"
+                            text: "Create Custom Backup"
                             font.family: root.font
                             font.pixelSize: 14
                             font.bold: true
@@ -502,17 +498,17 @@ Item {
                         }
                     }
 
-                    // Backup Name input
+                    // Backup Name & Note
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 12
 
                         Text {
-                            text: "Backup Name:"
+                            text: "Name"
                             font.family: root.font
                             font.pixelSize: 12
                             color: root.theme.textSecondary
-                            Layout.preferredWidth: 100
+                            Layout.preferredWidth: 72
                         }
 
                         Rectangle {
@@ -540,7 +536,7 @@ Item {
                                     visible: parent.text === "" && !parent.activeFocus
                                     anchors.fill: parent
                                     verticalAlignment: Text.AlignVCenter
-                                    text: "e.g. Clean Minimal Setup or Before Theme Experiment"
+                                    text: "e.g. Clean Minimal Setup (optional)"
                                     font.family: root.font
                                     font.pixelSize: 11
                                     color: root.theme.textMuted
@@ -549,17 +545,16 @@ Item {
                         }
                     }
 
-                    // Optional Description input
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 12
 
                         Text {
-                            text: "Note / Memo:"
+                            text: "Note"
                             font.family: root.font
                             font.pixelSize: 12
                             color: root.theme.textSecondary
-                            Layout.preferredWidth: 100
+                            Layout.preferredWidth: 72
                         }
 
                         Rectangle {
@@ -587,7 +582,7 @@ Item {
                                     visible: parent.text === "" && !parent.activeFocus
                                     anchors.fill: parent
                                     verticalAlignment: Text.AlignVCenter
-                                    text: "Optional description or context"
+                                    text: "Optional context about what changed"
                                     font.family: root.font
                                     font.pixelSize: 11
                                     color: root.theme.textMuted
@@ -604,7 +599,7 @@ Item {
                         RowLayout {
                             Layout.fillWidth: true
                             Text {
-                                text: "Select Configuration Modules to Include:"
+                                text: "Components to include"
                                 font.family: root.font
                                 font.pixelSize: 12
                                 font.bold: true
@@ -612,9 +607,9 @@ Item {
                                 Layout.fillWidth: true
                             }
 
-                            // Select All / Deselect All
                             Text {
-                                text: (root.formIncBar && root.formIncNotif && root.formIncOsd && root.formIncCc && root.formIncLockscreen && root.formIncTheme && root.formIncWallpaper) ? "Deselect All" : "Select All"
+                                readonly property bool allOn: root.formSelectedModules.length === root.moduleDefs.length
+                                text: allOn ? "Deselect All" : "Select All"
                                 font.family: root.font
                                 font.pixelSize: 11
                                 color: root.theme.accentPrimary ?? "#7aa2f7"
@@ -622,14 +617,11 @@ Item {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
-                                        const allOn = root.formIncBar && root.formIncNotif && root.formIncOsd && root.formIncCc && root.formIncLockscreen && root.formIncTheme && root.formIncWallpaper;
-                                        root.formIncBar = !allOn;
-                                        root.formIncNotif = !allOn;
-                                        root.formIncOsd = !allOn;
-                                        root.formIncCc = !allOn;
-                                        root.formIncLockscreen = !allOn;
-                                        root.formIncTheme = !allOn;
-                                        root.formIncWallpaper = !allOn;
+                                        if (parent.allOn) {
+                                            root.formSelectedModules = [];
+                                        } else {
+                                            root.formSelectedModules = root.moduleDefs.map(m => m.id);
+                                        }
                                     }
                                 }
                             }
@@ -639,139 +631,50 @@ Item {
                             Layout.fillWidth: true
                             spacing: 8
 
-                            // Bar chip
-                            Rectangle {
-                                implicitWidth: barChipRow.implicitWidth + 20
-                                height: 30
-                                radius: 15
-                                color: root.formIncBar ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2) : root.theme.bgBase
-                                border.color: root.formIncBar ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                border.width: 1
-                                RowLayout {
-                                    id: barChipRow
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    Text { text: root.formIncBar ? "󰄲" : "󰄱"; font.family: root.font; font.pixelSize: 12; color: root.formIncBar ? root.theme.accentPrimary : root.theme.textMuted }
-                                    Text { text: "󰮲 Bar"; font.family: root.font; font.pixelSize: 11; font.bold: true; color: root.theme.textPrimary }
-                                }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.formIncBar = !root.formIncBar }
-                            }
+                            Repeater {
+                                model: root.moduleDefs
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    readonly property bool selected: root.formSelectedModules.indexOf(modelData.id) !== -1
+                                    implicitWidth: formChipRow.implicitWidth + 20
+                                    height: 30
+                                    radius: 15
+                                    color: selected ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2) : root.theme.bgBase
+                                    border.color: selected ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                                    border.width: 1
 
-                            // Notifications chip
-                            Rectangle {
-                                implicitWidth: notifChipRow.implicitWidth + 20
-                                height: 30
-                                radius: 15
-                                color: root.formIncNotif ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2) : root.theme.bgBase
-                                border.color: root.formIncNotif ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                border.width: 1
-                                RowLayout {
-                                    id: notifChipRow
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    Text { text: root.formIncNotif ? "󰄲" : "󰄱"; font.family: root.font; font.pixelSize: 12; color: root.formIncNotif ? root.theme.accentPrimary : root.theme.textMuted }
-                                    Text { text: "󰂚 Notifications"; font.family: root.font; font.pixelSize: 11; font.bold: true; color: root.theme.textPrimary }
+                                    RowLayout {
+                                        id: formChipRow
+                                        anchors.centerIn: parent
+                                        spacing: 6
+                                        Text {
+                                            text: selected ? "󰄲" : "󰄱"
+                                            font.family: root.font
+                                            font.pixelSize: 12
+                                            color: selected ? root.theme.accentPrimary : root.theme.textMuted
+                                        }
+                                        Text {
+                                            text: modelData.icon + " " + modelData.label
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: root.theme.textPrimary
+                                        }
+                                    }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.toggleFormModule(modelData.id)
+                                    }
                                 }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.formIncNotif = !root.formIncNotif }
-                            }
-
-                            // OSD chip
-                            Rectangle {
-                                implicitWidth: osdChipRow.implicitWidth + 20
-                                height: 30
-                                radius: 15
-                                color: root.formIncOsd ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2) : root.theme.bgBase
-                                border.color: root.formIncOsd ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                border.width: 1
-                                RowLayout {
-                                    id: osdChipRow
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    Text { text: root.formIncOsd ? "󰄲" : "󰄱"; font.family: root.font; font.pixelSize: 12; color: root.formIncOsd ? root.theme.accentPrimary : root.theme.textMuted }
-                                    Text { text: "󰍹 OSD"; font.family: root.font; font.pixelSize: 11; font.bold: true; color: root.theme.textPrimary }
-                                }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.formIncOsd = !root.formIncOsd }
-                            }
-
-                            // Control Center chip
-                            Rectangle {
-                                implicitWidth: ccChipRow.implicitWidth + 20
-                                height: 30
-                                radius: 15
-                                color: root.formIncCc ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2) : root.theme.bgBase
-                                border.color: root.formIncCc ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                border.width: 1
-                                RowLayout {
-                                    id: ccChipRow
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    Text { text: root.formIncCc ? "󰄲" : "󰄱"; font.family: root.font; font.pixelSize: 12; color: root.formIncCc ? root.theme.accentPrimary : root.theme.textMuted }
-                                    Text { text: "󰕮 Control Center"; font.family: root.font; font.pixelSize: 11; font.bold: true; color: root.theme.textPrimary }
-                                }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.formIncCc = !root.formIncCc }
-                            }
-
-                            // Lock Screen chip
-                            Rectangle {
-                                implicitWidth: lockChipRow.implicitWidth + 20
-                                height: 30
-                                radius: 15
-                                color: root.formIncLockscreen ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2) : root.theme.bgBase
-                                border.color: root.formIncLockscreen ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                border.width: 1
-                                RowLayout {
-                                    id: lockChipRow
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    Text { text: root.formIncLockscreen ? "󰄲" : "󰄱"; font.family: root.font; font.pixelSize: 12; color: root.formIncLockscreen ? root.theme.accentPrimary : root.theme.textMuted }
-                                    Text { text: "󰌾 Lock Screen"; font.family: root.font; font.pixelSize: 11; font.bold: true; color: root.theme.textPrimary }
-                                }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.formIncLockscreen = !root.formIncLockscreen }
-                            }
-
-                            // Appearance & Theme chip
-                            Rectangle {
-                                implicitWidth: themeChipRow.implicitWidth + 20
-                                height: 30
-                                radius: 15
-                                color: root.formIncTheme ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2) : root.theme.bgBase
-                                border.color: root.formIncTheme ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                border.width: 1
-                                RowLayout {
-                                    id: themeChipRow
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    Text { text: root.formIncTheme ? "󰄲" : "󰄱"; font.family: root.font; font.pixelSize: 12; color: root.formIncTheme ? root.theme.accentPrimary : root.theme.textMuted }
-                                    Text { text: "󰏘 Appearance & Theme"; font.family: root.font; font.pixelSize: 11; font.bold: true; color: root.theme.textPrimary }
-                                }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.formIncTheme = !root.formIncTheme }
-                            }
-
-                            // Wallpaper chip
-                            Rectangle {
-                                implicitWidth: wallChipRow.implicitWidth + 20
-                                height: 30
-                                radius: 15
-                                color: root.formIncWallpaper ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2) : root.theme.bgBase
-                                border.color: root.formIncWallpaper ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                                border.width: 1
-                                RowLayout {
-                                    id: wallChipRow
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    Text { text: root.formIncWallpaper ? "󰄲" : "󰄱"; font.family: root.font; font.pixelSize: 12; color: root.formIncWallpaper ? root.theme.accentPrimary : root.theme.textMuted }
-                                    Text { text: "󰸉 Wallpaper"; font.family: root.font; font.pixelSize: 11; font.bold: true; color: root.theme.textPrimary }
-                                }
-                                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.formIncWallpaper = !root.formIncWallpaper }
                             }
                         }
                     }
 
-                    // Form Action Buttons
                     RowLayout {
                         Layout.fillWidth: true
                         Layout.topMargin: 4
-                        spacing: 10
+                        spacing: 8
 
                         Item { Layout.fillWidth: true }
 
@@ -783,7 +686,7 @@ Item {
 
                         ActionButton {
                             iconText: "󰐕"
-                            label: "Save Snapshot"
+                            label: "Save Backup"
                             btnHeight: 32
                             onClicked: root.submitCustomBackup()
                         }
@@ -791,103 +694,71 @@ Item {
                 }
             }
 
-            // Snapshots List Section
+            // Saved Snapshots Section
             SectionCard {
                 title: "Saved Snapshots"
-                subtitle: root.snapshots.length + " snapshots available"
+                subtitle: root.snapshots.length === 0
+                    ? "None saved yet"
+                    : (root.snapshots.length === 1 ? "1 snapshot" : root.snapshots.length + " snapshots")
 
                 // Filter Bar
                 RowLayout {
+                    visible: root.snapshots.length > 0
                     Layout.fillWidth: true
                     spacing: 8
 
                     Text {
-                        text: "Filter:"
+                        text: "Show:"
                         font.family: root.font
                         font.pixelSize: 11
                         color: root.theme.textMuted
                         Layout.alignment: Qt.AlignVCenter
                     }
 
-                    // "All" filter
-                    Rectangle {
-                        implicitWidth: allFilterText.implicitWidth + 16
-                        height: 24
-                        radius: 12
-                        Layout.alignment: Qt.AlignVCenter
-                        color: root.activeFilter === "all" ? root.theme.bgSelected : "transparent"
-                        border.color: root.activeFilter === "all" ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                        border.width: 1
-                        Text {
-                            id: allFilterText
-                            anchors.centerIn: parent
-                            text: "All (" + root.snapshots.length + ")"
-                            font.family: root.font
-                            font.pixelSize: 10
-                            font.bold: root.activeFilter === "all"
-                            color: root.activeFilter === "all" ? root.theme.accentPrimary : root.theme.textSecondary
-                        }
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.activeFilter = "all" }
-                    }
+                    Repeater {
+                        model: [
+                            { id: "all", label: "All", count: root.snapshots.length },
+                            { id: "manual", label: "Manual", count: root.snapshots.filter(s => s.type === "manual" || s.type === "imported").length },
+                            { id: "safety", label: "Safety Backups", count: root.snapshots.filter(s => s.type && s.type.indexOf("auto_pre_") === 0).length }
+                        ]
+                        delegate: Rectangle {
+                            required property var modelData
+                            readonly property bool active: root.activeFilter === modelData.id
+                            implicitWidth: filterPillText.implicitWidth + 16
+                            height: 24
+                            radius: 12
+                            Layout.alignment: Qt.AlignVCenter
+                            color: active ? root.theme.bgSelected : "transparent"
+                            border.color: active ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                            border.width: 1
 
-                    // "Manual" filter
-                    Rectangle {
-                        readonly property int count: root.snapshots.filter(s => s.type === "manual").length
-                        implicitWidth: manualFilterText.implicitWidth + 16
-                        height: 24
-                        radius: 12
-                        Layout.alignment: Qt.AlignVCenter
-                        color: root.activeFilter === "manual" ? root.theme.bgSelected : "transparent"
-                        border.color: root.activeFilter === "manual" ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                        border.width: 1
-                        Text {
-                            id: manualFilterText
-                            anchors.centerIn: parent
-                            text: "Manual (" + parent.count + ")"
-                            font.family: root.font
-                            font.pixelSize: 10
-                            font.bold: root.activeFilter === "manual"
-                            color: root.activeFilter === "manual" ? root.theme.accentPrimary : root.theme.textSecondary
+                            Text {
+                                id: filterPillText
+                                anchors.centerIn: parent
+                                text: modelData.label + " (" + modelData.count + ")"
+                                font.family: root.font
+                                font.pixelSize: 10
+                                font.bold: active
+                                color: active ? root.theme.accentPrimary : root.theme.textSecondary
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.activeFilter = modelData.id
+                            }
                         }
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.activeFilter = "manual" }
-                    }
-
-                    // "Safety Backups" filter
-                    Rectangle {
-                        readonly property int count: root.snapshots.filter(s => s.type && s.type.indexOf("auto_pre_") === 0).length
-                        implicitWidth: safetyFilterText.implicitWidth + 16
-                        height: 24
-                        radius: 12
-                        Layout.alignment: Qt.AlignVCenter
-                        color: root.activeFilter === "safety" ? root.theme.bgSelected : "transparent"
-                        border.color: root.activeFilter === "safety" ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
-                        border.width: 1
-                        Text {
-                            id: safetyFilterText
-                            anchors.centerIn: parent
-                            text: "Safety Backups (" + parent.count + ")"
-                            font.family: root.font
-                            font.pixelSize: 10
-                            font.bold: root.activeFilter === "safety"
-                            color: root.activeFilter === "safety" ? root.theme.accentPrimary : root.theme.textSecondary
-                        }
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.activeFilter = "safety" }
                     }
 
                     Item { Layout.fillWidth: true }
                 }
 
-                // Snapshots List Repeater
+                // Snapshots List
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
 
                     Repeater {
-                        model: root.snapshots.filter(s => {
-                            if (root.activeFilter === "manual") return s.type === "manual";
-                            if (root.activeFilter === "safety") return s.type && s.type.indexOf("auto_pre_") === 0;
-                            return true;
-                        })
+                        model: root.filteredSnapshots
 
                         delegate: Rectangle {
                             id: snapItemCard
@@ -897,14 +768,15 @@ Item {
                             readonly property bool isSelectedForRestore: root.selectedRestoreSnapshotId === snapItemCard.modelData.id
                             readonly property bool isConfirmDelete: root.confirmDeleteId === snapItemCard.modelData.id
                             readonly property bool isSafetyBackup: snapItemCard.modelData.type && snapItemCard.modelData.type.indexOf("auto_pre_") === 0
-                            readonly property var mods: snapItemCard.modelData.modules || []
+                            readonly property bool isImported: snapItemCard.modelData.type === "imported"
+                            readonly property var availMods: root.availableModulesForSnapshot(snapItemCard.modelData)
 
                             Layout.fillWidth: true
                             implicitHeight: snapCol.implicitHeight + 24
                             radius: 10
                             color: isSelectedForRestore
-                                ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.12)
-                                : (isConfirmDelete ? Style.withAlpha(root.theme.accentRed ?? "#f7768e", 0.12) : root.theme.bgBase)
+                                ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.10)
+                                : (isConfirmDelete ? Style.withAlpha(root.theme.accentRed ?? "#f7768e", 0.10) : root.theme.bgBase)
                             border.color: isSelectedForRestore
                                 ? (root.theme.accentPrimary ?? "#7aa2f7")
                                 : (isConfirmDelete ? (root.theme.accentRed ?? "#f7768e") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
@@ -920,31 +792,34 @@ Item {
                                 anchors.margins: 12
                                 spacing: 10
 
-                                // Top row: Name, Type tag, Date, Size, Action buttons
+                                // Top Row
                                 RowLayout {
                                     Layout.fillWidth: true
                                     spacing: 10
 
-                                    // Icon indicator
                                     Text {
                                         Layout.preferredWidth: 20
-                                        Layout.alignment: Qt.AlignVCenter
+                                        Layout.alignment: Qt.AlignTop
+                                        Layout.topMargin: 2
                                         horizontalAlignment: Text.AlignHCenter
-                                        text: snapItemCard.isSafetyBackup ? "󰌢" : "󰁯"
+                                        text: snapItemCard.isSafetyBackup ? "󰌢" : (snapItemCard.isImported ? "󰋺" : "󰁯")
                                         font.family: root.font
-                                        font.pixelSize: 15
-                                        color: snapItemCard.isSafetyBackup ? (root.theme.accentOrange ?? "#ff9e64") : (root.theme.accentPrimary ?? "#7aa2f7")
+                                        font.pixelSize: 16
+                                        color: snapItemCard.isSafetyBackup
+                                            ? (root.theme.accentOrange ?? "#ff9e64")
+                                            : (snapItemCard.isImported ? (root.theme.accentGreen ?? "#9ece6a") : (root.theme.accentPrimary ?? "#7aa2f7"))
                                     }
 
-                                    // Snapshot Name & Metadata
+                                    // Name, Badge, Metadata & Description
                                     ColumnLayout {
-                                        spacing: 3
+                                        spacing: 4
                                         Layout.fillWidth: true
                                         Layout.alignment: Qt.AlignVCenter
 
                                         RowLayout {
                                             Layout.fillWidth: true
                                             spacing: 8
+
                                             Text {
                                                 text: snapItemCard.modelData.name || snapItemCard.modelData.id
                                                 font.family: root.font
@@ -952,23 +827,23 @@ Item {
                                                 font.bold: true
                                                 color: root.theme.textPrimary
                                                 elide: Text.ElideRight
+                                                Layout.maximumWidth: 420
                                                 Layout.alignment: Qt.AlignVCenter
                                             }
 
-                                            // Type badge
                                             Rectangle {
                                                 height: 18
                                                 implicitWidth: typeBadgeText.implicitWidth + 10
                                                 radius: 9
                                                 Layout.alignment: Qt.AlignVCenter
                                                 color: snapItemCard.isSafetyBackup
-                                                    ? Style.withAlpha(root.theme.accentOrange ?? "#ff9e64", 0.2)
-                                                    : (snapItemCard.modelData.type === "imported"
-                                                        ? Style.withAlpha(root.theme.accentGreen ?? "#9ece6a", 0.2)
-                                                        : Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2))
+                                                    ? Style.withAlpha(root.theme.accentOrange ?? "#ff9e64", 0.18)
+                                                    : (snapItemCard.isImported
+                                                        ? Style.withAlpha(root.theme.accentGreen ?? "#9ece6a", 0.18)
+                                                        : Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.18))
                                                 border.color: snapItemCard.isSafetyBackup
                                                     ? (root.theme.accentOrange ?? "#ff9e64")
-                                                    : (snapItemCard.modelData.type === "imported"
+                                                    : (snapItemCard.isImported
                                                         ? (root.theme.accentGreen ?? "#9ece6a")
                                                         : (root.theme.accentPrimary ?? "#7aa2f7"))
                                                 border.width: 1
@@ -976,88 +851,79 @@ Item {
                                                 Text {
                                                     id: typeBadgeText
                                                     anchors.centerIn: parent
-                                                    text: snapItemCard.isSafetyBackup ? "Safety Backup" : (snapItemCard.modelData.type === "imported" ? "Imported" : "Manual")
+                                                    text: snapItemCard.isSafetyBackup ? "Safety" : (snapItemCard.isImported ? "Imported" : "Manual")
                                                     font.family: root.font
                                                     font.pixelSize: 9
                                                     font.bold: true
                                                     color: snapItemCard.isSafetyBackup
                                                         ? (root.theme.accentOrange ?? "#ff9e64")
-                                                        : (snapItemCard.modelData.type === "imported" ? (root.theme.accentGreen ?? "#9ece6a") : (root.theme.accentPrimary ?? "#7aa2f7"))
+                                                        : (snapItemCard.isImported ? (root.theme.accentGreen ?? "#9ece6a") : (root.theme.accentPrimary ?? "#7aa2f7"))
                                                 }
                                             }
 
                                             Item { Layout.fillWidth: true }
                                         }
 
-                                        // Date & ID
+                                        // Date, Size, Module count
                                         RowLayout {
                                             Layout.fillWidth: true
-                                            spacing: 8
+                                            spacing: 6
+
                                             Text {
-                                                text: "󰸗 " + (snapItemCard.modelData.dateFormatted || "")
+                                                text: snapItemCard.modelData.dateFormatted || ""
                                                 font.family: root.font
                                                 font.pixelSize: 10
                                                 color: root.theme.textMuted
-                                                Layout.alignment: Qt.AlignVCenter
                                             }
+                                            Text { text: "•"; font.family: root.font; font.pixelSize: 10; color: root.theme.textMuted }
                                             Text {
-                                                text: "•"
+                                                text: snapItemCard.modelData.sizeFormatted || ""
                                                 font.family: root.font
                                                 font.pixelSize: 10
                                                 color: root.theme.textMuted
-                                                Layout.alignment: Qt.AlignVCenter
                                             }
+                                            Text { text: "•"; font.family: root.font; font.pixelSize: 10; color: root.theme.textMuted }
                                             Text {
-                                                text: "󰋊 " + (snapItemCard.modelData.sizeFormatted || "")
+                                                text: snapItemCard.availMods.length === root.moduleDefs.length
+                                                    ? "All components"
+                                                    : (snapItemCard.availMods.length + " component" + (snapItemCard.availMods.length === 1 ? "" : "s"))
                                                 font.family: root.font
                                                 font.pixelSize: 10
                                                 color: root.theme.textMuted
-                                                Layout.alignment: Qt.AlignVCenter
                                             }
-                                            Text {
-                                                visible: Boolean(snapItemCard.modelData.description)
-                                                text: "• " + (snapItemCard.modelData.description || "")
-                                                font.family: root.font
-                                                font.pixelSize: 10
-                                                color: root.theme.textMuted
-                                                elide: Text.ElideRight
-                                                Layout.fillWidth: true
-                                                Layout.alignment: Qt.AlignVCenter
-                                            }
-                                            Item {
-                                                visible: !Boolean(snapItemCard.modelData.description)
-                                                Layout.fillWidth: true
-                                            }
+                                        }
+
+                                        // Full wrapped description (if any)
+                                        Text {
+                                            visible: Boolean(snapItemCard.modelData.description)
+                                            text: snapItemCard.modelData.description || ""
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            color: root.theme.textSecondary
+                                            wrapMode: Text.WordWrap
+                                            Layout.fillWidth: true
                                         }
                                     }
 
-                                    // Action Buttons (Right-aligned)
+                                    // Clear, Labeled Action Buttons
                                     RowLayout {
                                         spacing: 6
                                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
 
-                                        // Restore Button
                                         ActionButton {
-                                            iconText: "󰁯"
-                                            label: snapItemCard.isSelectedForRestore ? "Cancel" : "Restore"
+                                            iconText: snapItemCard.isSelectedForRestore ? "󰅖" : "󰁯"
+                                            label: snapItemCard.isSelectedForRestore ? "Close" : "Restore"
                                             btnHeight: 28
-                                            onClicked: {
-                                                if (root.selectedRestoreSnapshotId === snapItemCard.modelData.id) {
-                                                    root.selectedRestoreSnapshotId = "";
-                                                } else {
-                                                    root.selectedRestoreSnapshotId = snapItemCard.modelData.id;
-                                                    root.confirmDeleteId = "";
-                                                }
-                                            }
+                                            onClicked: root.openRestoreTray(snapItemCard.modelData)
                                         }
 
-                                        // Export Button
-                                        MiniIconButton {
-                                            iconText: "󰁞"
+                                        ActionButton {
+                                            iconText: "󰇚"
+                                            label: "Export"
+                                            btnHeight: 28
                                             onClicked: root.exportSnapshot(snapItemCard.modelData.id)
                                         }
 
-                                        // Delete Button
                                         MiniIconButton {
                                             iconText: "󰆴"
                                             dangerHover: true
@@ -1073,51 +939,7 @@ Item {
                                     }
                                 }
 
-                                // Module Pills row (hidden by default so card rows stay compact and vertically centered)
-                                Flow {
-                                    visible: false
-                                    Layout.fillWidth: true
-                                    spacing: 6
-
-                                    Repeater {
-                                        model: snapItemCard.mods
-                                        delegate: Rectangle {
-                                            required property string modelData
-                                            implicitWidth: pillText.implicitWidth + 14
-                                            height: 20
-                                            radius: 10
-                                            color: Style.withAlpha(root.theme.bgSurface, 0.9)
-                                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                                            border.width: 1
-
-                                            RowLayout {
-                                                anchors.centerIn: parent
-                                                spacing: 4
-                                                Text {
-                                                    id: pillText
-                                                    text: {
-                                                        switch (modelData) {
-                                                            case "bar": return "󰮲 Bar";
-                                                            case "notifications": return "󰂚 Notifications";
-                                                            case "osd": return "󰍹 OSD";
-                                                            case "controlcenter": return "󰕮 Control Center";
-                                                            case "lockscreen": return "󰌾 Lock Screen";
-                                                            case "appearance": return "󰏘 Theme";
-                                                            case "wallpaper": return "󰸉 Wallpaper";
-                                                            default: return modelData;
-                                                        }
-                                                    }
-                                                    font.family: root.font
-                                                    font.pixelSize: 9
-                                                    font.bold: true
-                                                    color: root.theme.textSecondary
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Expandable Restore Options Tray
+                                // Expandable Selective Restore Tray
                                 Rectangle {
                                     visible: snapItemCard.isSelectedForRestore
                                     Layout.fillWidth: true
@@ -1131,23 +953,81 @@ Item {
                                         id: restoreOptionsCol
                                         anchors.fill: parent
                                         anchors.margins: 10
-                                        spacing: 8
+                                        spacing: 10
 
                                         RowLayout {
                                             Layout.fillWidth: true
                                             Text {
-                                                text: "Choose what to restore from this snapshot:"
+                                                text: "Select components to restore"
                                                 font.family: root.font
                                                 font.pixelSize: 11
                                                 font.bold: true
                                                 color: root.theme.accentPrimary ?? "#7aa2f7"
                                                 Layout.fillWidth: true
                                             }
+
                                             Text {
-                                                text: "A safety backup of your current setup will be taken automatically."
+                                                visible: snapItemCard.availMods.length > 1
+                                                readonly property bool allChecked: root.restoreSelectedModules.length === snapItemCard.availMods.length
+                                                text: allChecked ? "Select None" : "Select All"
                                                 font.family: root.font
                                                 font.pixelSize: 10
-                                                color: root.theme.textMuted
+                                                color: root.theme.accentPrimary ?? "#7aa2f7"
+                                                MouseArea {
+                                                    anchors.fill: parent
+                                                    cursorShape: Qt.PointingHandCursor
+                                                    onClicked: {
+                                                        if (parent.allChecked) {
+                                                            root.restoreSelectedModules = [];
+                                                        } else {
+                                                            root.restoreSelectedModules = snapItemCard.availMods.slice();
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        Flow {
+                                            Layout.fillWidth: true
+                                            spacing: 6
+
+                                            Repeater {
+                                                model: snapItemCard.availMods
+                                                delegate: Rectangle {
+                                                    required property string modelData
+                                                    readonly property bool checked: root.restoreSelectedModules.indexOf(modelData) !== -1
+                                                    implicitWidth: restoreChipRow.implicitWidth + 16
+                                                    height: 26
+                                                    radius: 13
+                                                    color: checked ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.22) : root.theme.bgBase
+                                                    border.color: checked ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                                                    border.width: 1
+
+                                                    RowLayout {
+                                                        id: restoreChipRow
+                                                        anchors.centerIn: parent
+                                                        spacing: 5
+                                                        Text {
+                                                            text: checked ? "󰄲" : "󰄱"
+                                                            font.family: root.font
+                                                            font.pixelSize: 11
+                                                            color: checked ? root.theme.accentPrimary : root.theme.textMuted
+                                                        }
+                                                        Text {
+                                                            text: root.moduleIcon(modelData) + " " + root.moduleLabel(modelData)
+                                                            font.family: root.font
+                                                            font.pixelSize: 10
+                                                            font.bold: true
+                                                            color: root.theme.textPrimary
+                                                        }
+                                                    }
+
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: root.toggleRestoreModule(modelData)
+                                                    }
+                                                }
                                             }
                                         }
 
@@ -1155,46 +1035,33 @@ Item {
                                             Layout.fillWidth: true
                                             spacing: 8
 
-                                            // Restore Everything
+                                            Text {
+                                                text: "󰌢 Your current setup is backed up automatically before restoring."
+                                                font.family: root.font
+                                                font.pixelSize: 10
+                                                color: root.theme.textMuted
+                                                Layout.fillWidth: true
+                                                wrapMode: Text.WordWrap
+                                            }
+
+                                            ActionButton {
+                                                label: "Cancel"
+                                                btnHeight: 28
+                                                onClicked: {
+                                                    root.selectedRestoreSnapshotId = "";
+                                                    root.restoreSelectedModules = [];
+                                                }
+                                            }
+
                                             ActionButton {
                                                 iconText: "󰁯"
-                                                label: "Restore All Settings"
+                                                label: root.restoreSelectedModules.length === snapItemCard.availMods.length
+                                                    ? "Restore All"
+                                                    : ("Restore (" + root.restoreSelectedModules.length + ")")
                                                 btnHeight: 28
-                                                onClicked: root.restoreSnapshot(snapItemCard.modelData.id, "all")
+                                                btnEnabled: root.restoreSelectedModules.length > 0 && !root.loading
+                                                onClicked: root.restoreSelected(snapItemCard.modelData)
                                             }
-
-                                            // Granular pills
-                                            ActionButton {
-                                                label: "Bar Only"
-                                                btnHeight: 28
-                                                onClicked: root.restoreSnapshot(snapItemCard.modelData.id, "bar")
-                                            }
-
-                                            ActionButton {
-                                                label: "Notifications Only"
-                                                btnHeight: 28
-                                                onClicked: root.restoreSnapshot(snapItemCard.modelData.id, "notifications")
-                                            }
-
-                                            ActionButton {
-                                                label: "OSD Only"
-                                                btnHeight: 28
-                                                onClicked: root.restoreSnapshot(snapItemCard.modelData.id, "osd")
-                                            }
-
-                                            ActionButton {
-                                                label: "Control Center Only"
-                                                btnHeight: 28
-                                                onClicked: root.restoreSnapshot(snapItemCard.modelData.id, "controlcenter")
-                                            }
-
-                                            ActionButton {
-                                                label: "Lock Screen Only"
-                                                btnHeight: 28
-                                                onClicked: root.restoreSnapshot(snapItemCard.modelData.id, "lockscreen")
-                                            }
-
-                                            Item { Layout.fillWidth: true }
                                         }
                                     }
                                 }
@@ -1216,12 +1083,13 @@ Item {
                                         spacing: 12
 
                                         Text {
-                                            text: "Permanently delete this snapshot (" + (snapItemCard.modelData.name || snapItemCard.modelData.id) + ")?"
+                                            text: "Delete '" + (snapItemCard.modelData.name || snapItemCard.modelData.id) + "' permanently?"
                                             font.family: root.font
                                             font.pixelSize: 11
                                             font.bold: true
                                             color: root.theme.accentRed ?? "#f7768e"
                                             Layout.fillWidth: true
+                                            wrapMode: Text.WordWrap
                                         }
 
                                         ActionButton {
@@ -1232,7 +1100,7 @@ Item {
 
                                         ActionButton {
                                             iconText: "󰆴"
-                                            label: "Confirm Delete"
+                                            label: "Delete"
                                             danger: true
                                             btnHeight: 26
                                             onClicked: root.deleteSnapshot(snapItemCard.modelData.id)
@@ -1243,11 +1111,11 @@ Item {
                         }
                     }
 
-                    // Empty State
+                    // Empty State (no snapshots at all OR filter has 0 results)
                     Rectangle {
-                        visible: root.snapshots.length === 0
+                        visible: root.filteredSnapshots.length === 0
                         Layout.fillWidth: true
-                        height: 90
+                        height: 84
                         radius: 10
                         color: root.theme.bgBase
                         border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
@@ -1255,17 +1123,21 @@ Item {
 
                         ColumnLayout {
                             anchors.centerIn: parent
-                            spacing: 6
+                            spacing: 5
                             Text {
                                 Layout.alignment: Qt.AlignHCenter
-                                text: "󰁯"
+                                text: root.activeFilter === "safety" ? "󰌢" : "󰁯"
                                 font.family: root.font
-                                font.pixelSize: 22
+                                font.pixelSize: 20
                                 color: root.theme.textMuted
                             }
                             Text {
                                 Layout.alignment: Qt.AlignHCenter
-                                text: "No snapshots saved yet. Click 'Quick Snapshot' above to create one."
+                                text: root.snapshots.length === 0
+                                    ? "No snapshots yet. Click 'Quick Snapshot' above to save your current setup."
+                                    : (root.activeFilter === "safety"
+                                        ? "No safety backups yet — they are created automatically before any restore or reset."
+                                        : "No manual snapshots match this filter.")
                                 font.family: root.font
                                 font.pixelSize: 11
                                 color: root.theme.textMuted
@@ -1275,169 +1147,68 @@ Item {
                 }
             }
 
-            // Zero-Risk Protection Info Card
-            Rectangle {
-                Layout.fillWidth: true
-                implicitHeight: infoRow.implicitHeight + 28
-                radius: 12
-                color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.06)
-                border.color: Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.2)
-                border.width: 1
-
-                RowLayout {
-                    id: infoRow
-                    anchors.fill: parent
-                    anchors.margins: 14
-                    spacing: 12
-
-                    Text {
-                        text: "󰋼"
-                        font.family: root.font
-                        font.pixelSize: 22
-                        color: root.theme.accentPrimary ?? "#7aa2f7"
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    ColumnLayout {
-                        spacing: 2
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Text {
-                            text: "Automatic Pre-Restore Safety Snapshots"
-                            font.family: root.font
-                            font.pixelSize: 12
-                            font.bold: true
-                            color: root.theme.textPrimary
-                        }
-
-                        Text {
-                            text: "Every restore or reset operation automatically creates a safety snapshot before modifying configuration files. Your current layout and customizations can be restored at any time with zero risk."
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-                }
-            }
-
-            // Factory Defaults & Reset Section
+            // Factory Defaults Section (with safe inline confirmation)
             SectionCard {
                 title: "Factory Defaults"
-                subtitle: "Reset configuration components back to clean default states"
+                subtitle: "Reset components to clean defaults (saves a safety backup first)"
                 contentMargins: 4
                 contentSpacing: 0
 
-                PreferenceRow {
-                    title: "Reset Bar Configuration"
-                    subtitle: "Restore default top bar layout, panel arrangements, and widget positions"
-                    ActionButton {
-                        iconText: "󰁯"
-                        label: "Reset Bar"
-                        danger: true
-                        onClicked: root.resetFactoryDefaults("bar")
-                    }
-                }
+                Repeater {
+                    model: root.resetDefs
 
-                RowDivider {}
+                    delegate: ColumnLayout {
+                        required property var modelData
+                        required property int index
+                        readonly property bool isConfirming: root.confirmResetModule === modelData.id
 
-                PreferenceRow {
-                    title: "Reset Notification Settings"
-                    subtitle: "Restore default toast notification anchor, position, and margins"
-                    ActionButton {
-                        iconText: "󰁯"
-                        label: "Reset Notifications"
-                        danger: true
-                        onClicked: root.resetFactoryDefaults("notifications")
-                    }
-                }
+                        Layout.fillWidth: true
+                        spacing: 0
 
-                RowDivider {}
+                        RowDivider { visible: index > 0 }
 
-                PreferenceRow {
-                    title: "Reset On-Screen Display (OSD)"
-                    subtitle: "Restore default OSD position, adaptive orientation, and timeout"
-                    ActionButton {
-                        iconText: "󰁯"
-                        label: "Reset OSD"
-                        danger: true
-                        onClicked: root.resetFactoryDefaults("osd")
-                    }
-                }
+                        PreferenceRow {
+                            title: modelData.title
+                            subtitle: modelData.subtitle
 
-                RowDivider {}
+                            ActionButton {
+                                visible: !isConfirming
+                                iconText: "󰑓"
+                                label: modelData.btnLabel
+                                minWidth: 104
+                                danger: true
+                                onClicked: root.confirmResetModule = modelData.id
+                            }
 
-                PreferenceRow {
-                    title: "Reset Lock Screen Configuration"
-                    subtitle: "Restore default lock screen modules, visual filters, and password box layout"
-                    ActionButton {
-                        iconText: "󰁯"
-                        label: "Reset Lock Screen"
-                        danger: true
-                        onClicked: root.resetFactoryDefaults("lockscreen")
-                    }
-                }
+                            RowLayout {
+                                visible: isConfirming
+                                spacing: 6
 
-                RowDivider {}
+                                ActionButton {
+                                    label: "Cancel"
+                                    btnHeight: 28
+                                    onClicked: root.confirmResetModule = ""
+                                }
 
-                PreferenceRow {
-                    title: "Reset All Quickshell Configurations"
-                    subtitle: "Reset Bar, Notifications, OSD, and Lock Screen to factory defaults (with safety backup)"
-                    ActionButton {
-                        iconText: "󰑓"
-                        label: "Reset All to Defaults"
-                        danger: true
-                        onClicked: root.resetFactoryDefaults("all")
+                                ActionButton {
+                                    iconText: "󰑓"
+                                    label: "Confirm Reset"
+                                    danger: true
+                                    btnHeight: 28
+                                    onClicked: root.resetFactoryDefaults(modelData.id)
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
-    /* Feedback Toast Notification Banner */
-    Rectangle {
-        id: statusToast
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 16
-        z: 100
-        implicitWidth: toastText.implicitWidth + 32
-        height: 36
-        radius: 18
-        color: root.statusIsWarning
-            ? (root.theme.bgSurface ?? "#24283b")
-            : (root.theme.bgSelected ?? "#283457")
-        border.color: root.statusIsWarning
-            ? (root.theme.accentOrange ?? "#ff9e64")
-            : (root.theme.accentPrimary ?? "#7aa2f7")
-        border.width: 1
-        opacity: root.statusVisible ? 1.0 : 0.0
-        scale: root.statusVisible ? 1.0 : 0.92
-
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-        RowLayout {
-            anchors.centerIn: parent
-            spacing: 8
-
-            Text {
-                text: root.statusIsWarning ? "󰀪" : "󰄬"
-                font.family: root.font
-                font.pixelSize: 13
-                color: root.statusIsWarning ? (root.theme.accentOrange ?? "#ff9e64") : (root.theme.accentGreen ?? "#9ece6a")
-            }
-
-            Text {
-                id: toastText
-                text: root.statusMessage
-                font.family: root.font
-                font.pixelSize: 11
-                font.bold: true
-                color: root.theme.textPrimary ?? "#c0caf5"
-            }
-        }
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
+        durationMs: 3400
     }
 }

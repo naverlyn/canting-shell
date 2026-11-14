@@ -10,8 +10,8 @@ import ".."
 SectionCard {
     required property var root
     id: self
-    title: "Notification Card Zones & Building Blocks"
-    subtitle: "Drag and drop building blocks across Header, Main Content, and Footer zones — or click any badge to cycle its mode"
+    title: "Card Layout"
+    subtitle: "Drag items between Header, Content, and Footer — or click any item to customize it"
 
     property alias zone1Card: z1Panel
     property alias zone2Card: z2Panel

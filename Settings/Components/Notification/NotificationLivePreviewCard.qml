@@ -11,10 +11,10 @@ import ".."
 SectionCard {
     required property var root
     id: previewSection
-    title: "Interactive Notification Stage & Live Composer"
-    subtitle: "Click any building block on the preview toast to inspect its style · Customize icon, title, body, and buttons to test live"
+    title: "Live Preview"
+    subtitle: "Click any part of the preview toast to customize its style below"
 
-    property bool composerExpanded: true
+    property bool composerExpanded: false
 
     // =========================================================================
     // 1. TOP PRESETS & LIVE TEST BAR
@@ -109,7 +109,7 @@ SectionCard {
 
             ActionButton {
                 iconText: previewSection.composerExpanded ? "󰅃" : "󰏫"
-                label: previewSection.composerExpanded ? "Hide Composer" : "Edit Content"
+                label: previewSection.composerExpanded ? "Hide Test Editor" : "Customize Test"
                 btnHeight: 28
                 onClicked: previewSection.composerExpanded = !previewSection.composerExpanded
             }
@@ -177,18 +177,20 @@ SectionCard {
             border.width: 1
         }
 
-        // Corner badge showing active inspector selection
+        // Corner badge showing active inspector selection (click to jump to styling)
         Rectangle {
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.margins: 12
             height: 22
-            implicitWidth: selBadgeRow.implicitWidth + 14
+            implicitWidth: selBadgeRow.implicitWidth + 16
             radius: 11
-            color: root.withAlpha(root.theme.bgSurface, 0.9)
-            border.color: root.withAlpha(root.theme.accentPrimary, 0.35)
+            color: selBadgeHover.hovered ? root.withAlpha(root.theme.accentPrimary, 0.16) : root.withAlpha(root.theme.bgSurface, 0.9)
+            border.color: root.withAlpha(root.theme.accentPrimary, selBadgeHover.hovered ? 0.65 : 0.35)
             border.width: 1
             z: 5
+
+            HoverHandler { id: selBadgeHover }
 
             RowLayout {
                 id: selBadgeRow
@@ -201,12 +203,18 @@ SectionCard {
                 }
 
                 Text {
-                    text: "Inspecting: " + root.getInspectorLabel(root.selectedInspectorBlock)
+                    text: "Selected: " + root.getInspectorLabel(root.selectedInspectorBlock) + " 󰁅"
                     font.family: root.font
                     font.pixelSize: 10
                     font.bold: true
-                    color: root.theme.textSecondary
+                    color: selBadgeHover.hovered ? root.theme.accentPrimary : root.theme.textSecondary
                 }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.scrollToInspector()
             }
         }
 
@@ -226,7 +234,7 @@ SectionCard {
             Text {
                 id: dimTxt
                 anchors.centerIn: parent
-                text: NotificationService.toastWidth + "px  ·  R" + NotificationService.cardRadius
+                text: NotificationService.toastWidth + "px wide  ·  " + NotificationService.cardRadius + "px radius"
                 font.family: root.font
                 font.pixelSize: 10
                 color: root.theme.textMuted
@@ -918,7 +926,7 @@ SectionCard {
                 spacing: 8
 
                 Text {
-                    text: "󰏫  Custom Notification Payload Builder"
+                    text: "󰏫  Test Notification Content"
                     font.family: root.font
                     font.pixelSize: 12
                     font.bold: true
@@ -926,7 +934,7 @@ SectionCard {
                 }
 
                 Text {
-                    text: "·  Compose custom icon, title, body message, thumbnail, and action buttons"
+                    text: "·  Customize the sample icon, text, and buttons before sending a live test"
                     font.family: root.font
                     font.pixelSize: 11
                     color: root.theme.textMuted

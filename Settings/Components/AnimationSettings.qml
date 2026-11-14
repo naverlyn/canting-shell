@@ -263,23 +263,10 @@ Item {
         { id: "Fades & Borders", label: "Fades & Borders", count: root.getRulesForCategory("Fades & Borders").length }
     ]
 
-    /* Status Toast State */
-    property string statusMessage: ""
-    property bool statusVisible: false
-
     readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_animations.sh").toString().replace(/^file:\/\//, "")
 
-    Timer {
-        id: statusTimer
-        interval: 2500
-        repeat: false
-        onTriggered: root.statusVisible = false
-    }
-
     function showStatus(msg) {
-        root.statusMessage = msg;
-        root.statusVisible = true;
-        statusTimer.restart();
+        toastBanner.show(msg, false);
     }
 
     /* Query Animation Status */
@@ -560,36 +547,9 @@ Item {
         }
     }
 
-    // Feedback Toast (bottom floating notification)
-    Rectangle {
-        id: statusToast
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 14
-        implicitWidth: toastText.implicitWidth + 28
-        height: 36
-        radius: 18
-        color: root.theme.bgSelected ?? "#283457"
-        border.color: root.theme.accentPrimary ?? "#7aa2f7"
-        border.width: 1
-        opacity: root.statusVisible ? 1.0 : 0.0
-        scale: root.statusVisible ? 1.0 : 0.92
-        visible: opacity > 0
-
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-        RowLayout {
-            anchors.centerIn: parent
-
-            Text {
-                id: toastText
-                text: root.statusMessage
-                font.family: root.font
-                font.pixelSize: 11
-                font.bold: true
-                color: root.theme.textPrimary
-            }
-        }
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
     }
 }

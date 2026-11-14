@@ -105,21 +105,8 @@ Item {
     property int vrrMode: 0          /* 0 = Off, 1 = On, 2 = Fullscreen only */
     property bool allowTearing: false
 
-    /* Feedback toast state */
-    property string statusMessage: ""
-    property bool statusVisible: false
-
-    Timer {
-        id: statusTimer
-        interval: 2600
-        repeat: false
-        onTriggered: root.statusVisible = false
-    }
-
     function showStatus(msg) {
-        root.statusMessage = msg;
-        root.statusVisible = true;
-        statusTimer.restart();
+        toastBanner.show(msg, false);
     }
 
     function closeAllDropdowns() {
@@ -754,33 +741,10 @@ Item {
         }
     }
 
-    /* Non-intrusive bottom feedback toast */
-    Rectangle {
-        id: statusToast
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 16
-        implicitWidth: toastText.implicitWidth + 24
-        height: 34
-        radius: 17
-        color: root.theme.bgSelected
-        border.color: root.theme.accentPrimary
-        border.width: 1
-        opacity: root.statusVisible ? 1.0 : 0.0
-        scale: root.statusVisible ? 1.0 : 0.92
-        visible: opacity > 0
-
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-        Text {
-            id: toastText
-            anchors.centerIn: parent
-            text: root.statusMessage
-            font.family: root.font
-            font.pixelSize: 12
-            font.bold: true
-            color: root.theme.textPrimary
-        }
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
+        durationMs: 2600
     }
 }

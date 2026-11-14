@@ -61,21 +61,8 @@ Item {
         if (!visible) closeAllDropdowns();
     }
 
-    /* Feedback toast notification state */
-    property string statusMessage: ""
-    property bool statusVisible: false
-
-    Timer {
-        id: statusTimer
-        interval: 2600
-        repeat: false
-        onTriggered: root.statusVisible = false
-    }
-
     function showStatus(msg) {
-        root.statusMessage = msg;
-        root.statusVisible = true;
-        statusTimer.restart();
+        toastBanner.show(msg, false);
     }
 
     /* Helper to get display name from options list */
@@ -576,32 +563,10 @@ Item {
         }
     }
 
-    /* Feedback toast notification */
-    Rectangle {
-        id: statusToast
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 16
-        implicitWidth: toastText.implicitWidth + 24
-        height: 34
-        radius: 17
-        color: root.theme.bgSelected ?? "#283457"
-        border.color: root.theme.accentPrimary ?? "#7aa2f7"
-        border.width: 1
-        opacity: root.statusVisible ? 1.0 : 0.0
-        scale: root.statusVisible ? 1.0 : 0.92
-
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-        Text {
-            id: toastText
-            anchors.centerIn: parent
-            text: root.statusMessage
-            font.family: root.font
-            font.pixelSize: 12
-            font.bold: true
-            color: root.theme.textPrimary ?? "#c0caf5"
-        }
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
+        durationMs: 2600
     }
 }
