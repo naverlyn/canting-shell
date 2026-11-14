@@ -21,6 +21,7 @@ import Quickshell
 import Quickshell.Io
 import ".."
 import "./Keyboard"
+import "./Common"
 
 Item {
     id: root
@@ -36,21 +37,8 @@ Item {
 
     readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_keybind.sh").toString().replace(/^file:\/\//, "")
 
-    /* Feedback toast state */
-    property string toastMessage: ""
-    property bool toastVisible: false
-
-    Timer {
-        id: toastTimer
-        interval: 2600
-        repeat: false
-        onTriggered: root.toastVisible = false
-    }
-
-    function showToast(msg) {
-        root.toastMessage = msg;
-        root.toastVisible = true;
-        toastTimer.restart();
+    function showToast(msg, isWarn) {
+        toastBanner.show(msg, isWarn);
     }
 
     /* Keybindings State */
@@ -646,33 +634,10 @@ Item {
         }
     }
     /* Non-intrusive bottom feedback toast */
-    Rectangle {
-        id: keybindToast
-        z: 10000
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 16
-        implicitWidth: keybindToastText.implicitWidth + 32
-        height: 38
-        radius: 19
-        color: root.theme.bgSelected ?? "#283457"
-        border.color: root.theme.accentPrimary ?? "#7aa2f7"
-        border.width: 1.5
-        opacity: root.toastVisible ? 1.0 : 0.0
-        scale: root.toastVisible ? 1.0 : 0.92
-        visible: opacity > 0
-
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-        Text {
-            id: keybindToastText
-            anchors.centerIn: parent
-            text: root.toastMessage
-            font.family: root.font
-            font.pixelSize: 11
-            font.bold: true
-            color: root.theme.textPrimary
-        }
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
+        durationMs: 2600
     }
 }

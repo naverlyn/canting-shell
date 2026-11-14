@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import "../../bar"
 import ".."
+import "../../utils/FormatUtils.js" as FormatUtils
 
 Rectangle {
     id: root
@@ -22,11 +23,7 @@ Rectangle {
         NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
     }
 
-    function parsePercent(str) {
-        if (!str) return 0;
-        const val = parseInt(str.toString().replace("%", "").trim());
-        return isNaN(val) ? 0 : Math.max(0, Math.min(100, val));
-    }
+    function parsePercent(str) { return FormatUtils.parsePercent(str); }
 
     ColumnLayout {
         id: statsCol

@@ -13,6 +13,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import "../../utils/ColorUtils.js" as ColorUtils
 
 Item {
     id: root
@@ -42,13 +43,7 @@ Item {
     readonly property bool isOpen: dropdownPopup.opened
 
     function colorWithAlpha(c, alpha) {
-        if (!c) return Qt.rgba(1, 1, 1, alpha);
-        try {
-            let col = Qt.color(c);
-            return Qt.rgba(col.r, col.g, col.b, alpha);
-        } catch (e) {
-            return Qt.rgba(1, 1, 1, alpha);
-        }
+        return ColorUtils.withAlpha(c, alpha);
     }
 
     readonly property var currentOption: {

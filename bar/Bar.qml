@@ -13,6 +13,7 @@ import QtQuick.Effects
 import "../ControlCenter"
 import "./Components"
 import "./Widgets"
+import "../utils/ColorUtils.js" as ColorUtils
 
 Scope {
   id: root
@@ -22,37 +23,11 @@ Scope {
   property var activePopupData: null
 
   function withAlpha(col, alpha) {
-    if (!col) return Qt.rgba(0, 0, 0, alpha);
-    const c = Qt.color(col);
-    return Qt.rgba(c.r, c.g, c.b, alpha);
+    return ColorUtils.withAlpha(col, alpha);
   }
 
   function resolveThemeSpec(spec, fallbackColor) {
-    if (!spec || String(spec).trim() === "") return fallbackColor !== undefined ? fallbackColor : root.theme.bgBase;
-    const s = String(spec).trim();
-    try {
-      if (s.indexOf("theme:") === 0) {
-        const parts = s.split(":");
-        if (parts.length >= 3) {
-          const tName = parts.slice(1, parts.length - 1).join(":");
-          const roleKey = parts[parts.length - 1];
-          const tList = (root.theme && root.theme.themes) ? root.theme.themes : [];
-          for (let i = 0; i < tList.length; i++) {
-            if (tList[i] && tList[i].name === tName && tList[i][roleKey]) {
-              return Qt.color(String(tList[i][roleKey]));
-            }
-          }
-        }
-      }
-      if (root.theme && root.theme[s] !== undefined && typeof root.theme[s] !== "function") {
-        return root.theme[s];
-      }
-      if (root.theme && root.theme.current && root.theme.current[s]) {
-        return Qt.color(String(root.theme.current[s]));
-      }
-      if (s.charAt(0) === "#") return Qt.color(s);
-    } catch (e) {}
-    return fallbackColor !== undefined ? fallbackColor : root.theme.bgBase;
+    return ColorUtils.resolveThemeSpec(root.theme, spec, fallbackColor);
   }
 
   function isDockedBarActive(pos, currentBarId, screenIdx) {
@@ -512,42 +487,18 @@ Scope {
               return "";
             }
 
-            function resolveThemeSpec(spec) {
+            function resolveWidgetThemeSpec(spec) {
               _trackThemeDeps();
               if (!spec) return "";
-              try {
-                const s = String(spec).trim();
-                if (s === "") return "";
-                if (s.indexOf("theme:") === 0) {
-                  const parts = s.split(":");
-                  if (parts.length >= 3) {
-                    const tName = parts.slice(1, parts.length - 1).join(":");
-                    const roleKey = parts[parts.length - 1];
-                    const tList = (root.theme && root.theme.themes) ? root.theme.themes : [];
-                    for (let i = 0; i < tList.length; i++) {
-                      if (tList[i] && tList[i].name === tName && tList[i][roleKey]) {
-                        return Qt.color(String(tList[i][roleKey]));
-                      }
-                    }
-                  }
-                }
-                if (root.theme && root.theme[s] !== undefined && typeof root.theme[s] !== "function") {
-                  return root.theme[s];
-                }
-                if (root.theme && root.theme.current && root.theme.current[s]) {
-                  return Qt.color(String(root.theme.current[s]));
-                }
-                if (s.charAt(0) === "#") return Qt.color(s);
-              } catch (e) {}
-              return "";
+              return ColorUtils.resolveThemeSpec(root.theme, spec, "");
             }
 
             function hasCustomColor(widgetId) {
-              return resolveThemeSpec(wSpec(widgetId)) !== "";
+              return resolveWidgetThemeSpec(wSpec(widgetId)) !== "";
             }
 
             function wAccent(widgetId, fallbackColor) {
-              const resolved = resolveThemeSpec(wSpec(widgetId));
+              const resolved = resolveWidgetThemeSpec(wSpec(widgetId));
               return resolved !== "" ? resolved : fallbackColor;
             }
 
@@ -564,7 +515,7 @@ Scope {
                 : Math.max(0.0, Math.min(1.0, barContentContainer.pillOpacity));
               try {
                 const baseRgb = _toRgb(base);
-                const resolved = resolveThemeSpec(wSpec(widgetId));
+                const resolved = resolveWidgetThemeSpec(wSpec(widgetId));
                 if (resolved === "") {
                   return baseRgb ? Qt.rgba(baseRgb.r, baseRgb.g, baseRgb.b, alpha) : base;
                 }
@@ -585,7 +536,7 @@ Scope {
             function wBorder(widgetId) {
               if (barContentContainer.activeStyle === "underline" || barContentContainer.hidePill) return "transparent";
               try {
-                const resolved = resolveThemeSpec(wSpec(widgetId));
+                const resolved = resolveWidgetThemeSpec(wSpec(widgetId));
                 if (resolved === "") return "transparent";
                 const rgb = _toRgb(resolved);
                 if (!rgb) return "transparent";

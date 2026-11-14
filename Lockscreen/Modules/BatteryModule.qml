@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import "../../bar"
 import ".."
+import "../../utils/FormatUtils.js" as FormatUtils
 
 Rectangle {
     id: root
@@ -12,11 +13,7 @@ Rectangle {
     property bool previewMode: false
     property real scaleFactor: 1.0
 
-    function parsePercent(str) {
-        if (!str) return 0;
-        const val = parseInt(str.toString().replace("%", "").trim());
-        return isNaN(val) ? 0 : Math.max(0, Math.min(100, val));
-    }
+    function parsePercent(str) { return FormatUtils.parsePercent(str); }
 
     readonly property int batPct: parsePercent(SystemInfo.batteryLevel)
     readonly property bool showCard: (moduleData && moduleData.showCard !== undefined) ? Boolean(moduleData.showCard) : true

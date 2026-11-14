@@ -36,21 +36,8 @@ Item {
     property var monoFontSet: ({})
     property bool fontsLoading: false
 
-    // Toast feedback state
-    property string toastMessage: ""
-    property bool toastVisible: false
-
-    Timer {
-        id: toastTimer
-        interval: 2600
-        repeat: false
-        onTriggered: root.toastVisible = false
-    }
-
-    function showToast(msg) {
-        root.toastMessage = msg;
-        root.toastVisible = true;
-        toastTimer.restart();
+    function showToast(msg, isWarn) {
+        toastBanner.show(msg, isWarn);
     }
 
     Connections {
@@ -1878,43 +1865,10 @@ Item {
     }
 
     // Floating Bottom Toast Pill
-    Rectangle {
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 16
-        z: 999
-        visible: opacity > 0.01
-        opacity: root.toastVisible ? 1.0 : 0.0
-        height: 34
-        radius: 17
-        implicitWidth: toastRow.implicitWidth + 28
-        color: root.theme.bgSelected
-        border.color: root.theme.accentPrimary
-        border.width: 1
-
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-        Row {
-            id: toastRow
-            anchors.centerIn: parent
-            spacing: 8
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: "󰄬"
-                font.family: Style.font
-                font.pixelSize: 13
-                color: root.theme.accentPrimary
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.toastMessage
-                font.family: Style.font
-                font.pixelSize: Style.px(11)
-                font.bold: true
-                color: root.theme.textPrimary
-            }
-        }
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: Style.font
+        durationMs: 2600
     }
 }

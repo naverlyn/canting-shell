@@ -17,6 +17,7 @@ import ".."
 import "./Notification"
 import "./Bar"
 import "./Common"
+import "../../utils/ColorUtils.js" as ColorUtils
 
 Item {
     id: root
@@ -60,9 +61,7 @@ Item {
     }
 
     function withAlpha(col, alpha) {
-        if (!col) return Qt.rgba(0, 0, 0, alpha);
-        const c = Qt.color(col);
-        return Qt.rgba(c.r, c.g, c.b, alpha);
+        return ColorUtils.withAlpha(col, alpha);
     }
 
     function getInspectorLabel(blockId) {

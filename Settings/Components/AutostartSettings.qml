@@ -46,21 +46,8 @@ Item {
     property string newCmdName: ""
     property string newCmdExec: ""
 
-    /* Toast notification */
-    property string toastMessage: ""
-    property bool toastVisible: false
-
-    Timer {
-        id: toastTimer
-        interval: 2500
-        repeat: false
-        onTriggered: root.toastVisible = false
-    }
-
-    function showToast(msg) {
-        root.toastMessage = msg;
-        root.toastVisible = true;
-        toastTimer.restart();
+    function showToast(msg, isWarn) {
+        toastBanner.show(msg, isWarn);
     }
 
     readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_autostart.py").toString().replace(/^file:\/\//, "")
@@ -1713,34 +1700,9 @@ Item {
     // =========================================================================
     // FLOATING TOAST
     // =========================================================================
-    Rectangle {
-        id: toastPill
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 18
-        anchors.horizontalCenter: parent.horizontalCenter
-        implicitWidth: toastText.implicitWidth + 32
-        height: 36
-        radius: 18
-        color: (root.theme && root.theme.bgSurface) ? root.theme.bgSurface : "#1e1e2e"
-        border.color: (root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7"
-        border.width: 1
-        opacity: root.toastVisible ? 1.0 : 0.0
-        scale: root.toastVisible ? 1.0 : 0.95
-        visible: opacity > 0
-
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-        RowLayout {
-            anchors.centerIn: parent
-            Text {
-                id: toastText
-                text: root.toastMessage
-                font.family: root.font
-                font.pixelSize: 11
-                font.bold: true
-                color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
-            }
-        }
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
     }
 }

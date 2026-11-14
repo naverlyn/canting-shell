@@ -10,6 +10,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
+import "../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
 import Quickshell.Io
 import Quickshell.Widgets
 import "../../AppLauncher"
@@ -27,26 +28,13 @@ Item {
     // Preview mode: "spotlight" or "grid"
     property string previewMode: "spotlight"
 
-    // Feedback toast state matching HyprlandSettings
-    property string toastMessage: ""
-    property bool toastVisible: false
-
-    Timer {
-        id: toastTimer
-        interval: 2500
-        repeat: false
-        onTriggered: root.toastVisible = false
-    }
-
     Connections {
         target: Style
         function onToast(msg) { root.showToast(msg); }
     }
 
-    function showToast(msg) {
-        root.toastMessage = msg;
-        root.toastVisible = true;
-        toastTimer.restart();
+    function showToast(msg, isWarn) {
+        toastBanner.show(msg, isWarn);
     }
 
     Connections {
@@ -75,8 +63,7 @@ Item {
     readonly property int hiddenCount: (AppLauncherConfig.hiddenApps || []).length
 
     function getAppKey(app) {
-        if (!app) return "";
-        return app.id || app.name || "";
+        return AppFrecencyUtils.getAppKey(app);
     }
 
     readonly property var filteredAppsList: {
@@ -1530,35 +1517,9 @@ Item {
     }
 
     /* Feedback Toast (Bottom floating notification strictly matching HyprlandSettings) */
-    Rectangle {
-        id: statusToast
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 14
-        implicitWidth: toastText.implicitWidth + 28
-        height: 36
-        radius: 18
-        color: root.theme.bgSelected
-        border.color: root.theme.accentPrimary
-        border.width: 1
-        opacity: root.toastVisible ? 1.0 : 0.0
-        scale: root.toastVisible ? 1.0 : 0.92
-        visible: opacity > 0
-
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-        RowLayout {
-            anchors.centerIn: parent
-
-            Text {
-                id: toastText
-                text: root.toastMessage
-                font.family: root.font
-                font.pixelSize: 11
-                font.bold: true
-                color: root.theme.textPrimary
-            }
-        }
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
     }
 }

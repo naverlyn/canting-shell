@@ -8,6 +8,7 @@ import "../../MonitorManager"
 import ".."
 import "./Common"
 import "./Bar"
+import "../../utils/ColorUtils.js" as ColorUtils
 
 Item {
     id: root
@@ -415,9 +416,7 @@ Item {
     }
 
     function withAlpha(col, alpha) {
-        if (!col) return Qt.rgba(0, 0, 0, alpha);
-        const c = Qt.color(col);
-        return Qt.rgba(c.r, c.g, c.b, alpha);
+        return ColorUtils.withAlpha(col, alpha);
     }
 
     readonly property int _colorRevision: {
@@ -530,31 +529,7 @@ Item {
     function resolveThemeSpec(spec, fallbackColor) {
         _trackColorDeps();
         const fb = fallbackColor !== undefined ? fallbackColor : root.theme.accentPrimary;
-        if (!spec || String(spec).trim() === "") return fb;
-        const s = String(spec).trim();
-        try {
-            if (s.indexOf("theme:") === 0) {
-                const parts = s.split(":");
-                if (parts.length >= 3) {
-                    const tName = parts.slice(1, parts.length - 1).join(":");
-                    const roleKey = parts[parts.length - 1];
-                    const tList = (root.theme && root.theme.themes) ? root.theme.themes : [];
-                    for (let i = 0; i < tList.length; i++) {
-                        if (tList[i] && tList[i].name === tName && tList[i][roleKey]) {
-                            return Qt.color(String(tList[i][roleKey]));
-                        }
-                    }
-                }
-            }
-            if (root.theme && root.theme[s] !== undefined && typeof root.theme[s] !== "function") {
-                return root.theme[s];
-            }
-            if (root.theme && root.theme.current && root.theme.current[s]) {
-                return Qt.color(String(root.theme.current[s]));
-            }
-            if (s.charAt(0) === "#") return Qt.color(s);
-        } catch (e) {}
-        return fb;
+        return ColorUtils.resolveThemeSpec(root.theme, spec, fb);
     }
 
     function getSpecLabel(spec) {

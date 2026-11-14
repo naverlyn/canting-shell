@@ -7,6 +7,7 @@ import Quickshell.Services.Notifications
 import "../../notifications"
 import "../../notifications/SocialApps.js" as SocialApps
 import ".."
+import "../../utils/ColorUtils.js" as ColorUtils
 
 Item {
     id: root
@@ -80,21 +81,7 @@ Item {
 
     readonly property bool shouldHideOnLock: !root.isStageEditor && root.hideWhenEmpty && root.activeList.length === 0
 
-    function resolveColor(colStr) {
-        const t = root.theme;
-        if (!colStr) return t.accentPrimary;
-        const str = String(colStr).trim();
-        if (str.startsWith("#")) return str;
-        if (str === "$accent" || str === "$accentPrimary" || str === "$mauve" || str === "$pink" || str === "$color5" || str === "$color13") return t.accentPrimary;
-        if (str === "$blue" || str === "$cyan" || str === "$sapphire" || str === "$sky" || str === "$lavender" || str === "$color4" || str === "$color6" || str === "$color12") return t.accentCyan;
-        if (str === "$green" || str === "$teal" || str === "$color2" || str === "$color14") return t.accentGreen;
-        if (str === "$yellow" || str === "$orange" || str === "$peach" || str === "$color3" || str === "$color11") return t.accentOrange;
-        if (str === "$red" || str === "$maroon" || str === "$flamingo" || str === "$color1" || str === "$color9") return t.accentRed;
-        if (str === "$text" || str === "$rosewater" || str === "$color15" || str === "$foreground") return t.textPrimary;
-        if (str === "$secondary" || str === "$subtext1" || str === "$color10" || str === "$color7") return t.textSecondary;
-        if (str === "$muted" || str === "$subtext0" || str === "$overlay2" || str === "$color8") return t.textMuted;
-        return t.accentPrimary;
-    }
+    function resolveColor(colStr) { return ColorUtils.resolveColorToken(root.theme, colStr, root.theme.accentPrimary); }
 
     readonly property color moduleAccent: resolveColor(root.moduleData ? root.moduleData.color : "$accent")
 

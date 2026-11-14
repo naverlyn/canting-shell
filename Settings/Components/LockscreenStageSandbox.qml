@@ -13,6 +13,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Effects
+import "../../utils/ColorUtils.js" as ColorUtils
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Mpris
@@ -268,51 +269,7 @@ Rectangle {
     // Internal live block working state
     property var liveBlocks: []
 
-    function resolveColor(colStr) {
-        const t = stageRoot.theme;
-        if (!colStr) return t.textPrimary;
-        let str = String(colStr).trim();
-        if (str.startsWith("#")) return str;
-        if (str.startsWith("rgb(") || str.startsWith("rgba(")) {
-            let m = str.match(/rgba?\(\s*([0-9a-fA-F]{6})\s*\)/);
-            if (m) return "#" + m[1];
-            let m2 = str.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
-            if (m2) return Qt.rgba(parseInt(m2[1])/255, parseInt(m2[2])/255, parseInt(m2[3])/255, 1);
-        }
-        const pHex   = t.accentPrimary;
-        const cHex   = t.accentCyan;
-        const gHex   = t.accentGreen;
-        const oHex   = t.accentOrange;
-        const rHex   = t.accentRed;
-        const bgBase = t.bgBase;
-        const bgSurf = t.bgSurface;
-        const bgHov  = t.bgHover;
-        const bgSel  = t.bgSelected;
-        const txtPri = t.textPrimary;
-        const txtSec = t.textSecondary;
-        const txtMut = t.textMuted;
-
-        const colorMap = {
-            "$color0": bgSurf, "$color1": rHex, "$color2": gHex, "$color3": oHex,
-            "$color4": cHex, "$color5": pHex, "$color6": cHex, "$color7": txtSec,
-            "$color8": txtMut, "$color9": rHex, "$color10": txtSec, "$color11": oHex,
-            "$color12": cHex, "$color13": pHex, "$color14": gHex, "$color15": txtPri,
-            "$foreground": txtPri, "$background": bgBase,
-            "$accentPrimary": pHex, "$accent": pHex,
-            "$mauve": pHex, "$pink": pHex,
-            "$blue": cHex, "$sapphire": cHex, "$sky": cHex, "$lavender": cHex,
-            "$teal": gHex, "$green": gHex,
-            "$yellow": oHex, "$peach": oHex,
-            "$maroon": rHex, "$red": rHex, "$flamingo": rHex,
-            "$rosewater": txtPri,
-            "$text": txtPri, "$subtext1": txtSec, "$subtext0": txtMut,
-            "$surface2": bgSel, "$surface1": bgHov, "$surface0": bgSurf,
-            "$overlay2": txtMut, "$overlay1": bgSel, "$overlay0": bgHov,
-            "$base": bgBase, "$mantle": bgBase, "$crust": bgBase
-        };
-        if (colorMap[str]) return colorMap[str];
-        return t.textPrimary;
-    }
+    function resolveColor(colStr) { return ColorUtils.resolveColorToken(stageRoot.theme, colStr, stageRoot.theme.textPrimary); }
 
     function formatBlockText(blockData, cmdOutput) {
         if (!blockData) return "";

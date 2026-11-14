@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
 import ".."
+import "../../utils/ColorUtils.js" as ColorUtils
 
 Item {
     id: root
@@ -19,25 +20,7 @@ Item {
 
     signal submitPassword(string password)
 
-    function resolveColor(colStr, fallbackColor) {
-        const t = root.theme;
-        if (!colStr) return fallbackColor;
-        const str = String(colStr).trim();
-        if (str.startsWith("#")) return str;
-        if (str === "$accent" || str === "$accentPrimary" || str === "$mauve" || str === "$pink" || str === "$color5" || str === "$color13") return t.accentPrimary;
-        if (str === "$blue" || str === "$cyan" || str === "$sapphire" || str === "$sky" || str === "$lavender" || str === "$color4" || str === "$color6" || str === "$color12") return t.accentCyan;
-        if (str === "$green" || str === "$teal" || str === "$color2" || str === "$color14") return t.accentGreen;
-        if (str === "$yellow" || str === "$orange" || str === "$peach" || str === "$color3" || str === "$color11") return t.accentOrange;
-        if (str === "$red" || str === "$maroon" || str === "$flamingo" || str === "$color1" || str === "$color9") return t.accentRed;
-        if (str === "$text" || str === "$rosewater" || str === "$color15" || str === "$foreground") return t.textPrimary;
-        if (str === "$secondary" || str === "$subtext1" || str === "$color10" || str === "$color7") return t.textSecondary;
-        if (str === "$muted" || str === "$subtext0" || str === "$overlay2" || str === "$color8") return t.textMuted;
-        if (str === "$surface2" || str === "$overlay1") return t.bgSelected;
-        if (str === "$surface1" || str === "$overlay0") return t.bgHover;
-        if (str === "$surface0" || str === "$color0") return t.bgSurface;
-        if (str === "$base" || str === "$mantle" || str === "$crust" || str === "$background") return t.bgBase;
-        return fallbackColor;
-    }
+    function resolveColor(colStr, fallbackColor) { return ColorUtils.resolveColorToken(root.theme, colStr, fallbackColor); }
 
     readonly property color resolvedOuter: resolveColor((root.moduleData && root.moduleData.color) ? root.moduleData.color : LockscreenConfig.input_outer_color, root.theme.accentPrimary)
     readonly property color resolvedInner: resolveColor(LockscreenConfig.input_inner_color, root.theme.bgSurface)

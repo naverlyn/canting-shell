@@ -298,26 +298,13 @@ Item {
     property bool miscMiddleClickPaste: false
     property int miscNoHardwareCursors: 2
 
-    /* Toast notification state */
-    property string toastMessage: ""
-    property bool toastVisible: false
-
-    Timer {
-        id: toastTimer
-        interval: 2500
-        repeat: false
-        onTriggered: root.toastVisible = false
-    }
-
     Connections {
         target: Style
         function onToast(msg) { root.showToast(msg); }
     }
 
-    function showToast(msg) {
-        root.toastMessage = msg;
-        root.toastVisible = true;
-        toastTimer.restart();
+    function showToast(msg, isWarn) {
+        toastBanner.show(msg, isWarn);
     }
 
     /* Helper: Set variable via manage_hyprland.sh */
@@ -457,36 +444,10 @@ Item {
         }
 }
 
-    // Feedback Toast (bottom floating notification matching AnimationSettings)
-    Rectangle {
-        id: statusToast
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottomMargin: 14
-        implicitWidth: toastText.implicitWidth + 28
-        height: 36
-        radius: 18
-        color: root.theme.bgSelected ?? "#283457"
-        border.color: root.theme.accentPrimary ?? "#7aa2f7"
-        border.width: 1
-        opacity: root.toastVisible ? 1.0 : 0.0
-        scale: root.toastVisible ? 1.0 : 0.92
-        visible: opacity > 0
-
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-        Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-        RowLayout {
-            anchors.centerIn: parent
-
-            Text {
-                id: toastText
-                text: root.toastMessage
-                font.family: root.font
-                font.pixelSize: 11
-                font.bold: true
-                color: root.theme.textPrimary
-            }
-        }
+    // Feedback Toast
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
     }
 }
