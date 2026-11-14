@@ -65,12 +65,25 @@ Rectangle {
     }
   }
 
+  Timer {
+    id: unloadCcTimer
+    interval: 250
+    repeat: false
+    onTriggered: {
+      if (controlCenterLoader.item && !controlCenterLoader.item.visible && !ControlCenterConfig.isLiveEdit) {
+        controlCenterLoader.active = false;
+        Qt.callLater(() => gc());
+      }
+    }
+  }
+
   MouseArea {
     id: controlCenterArea
     anchors.fill: parent
     hoverEnabled: true
     cursorShape: Qt.PointingHandCursor
     onClicked: {
+      unloadCcTimer.stop();
       if (!controlCenterLoader.active) {
         controlCenterLoader.active = true;
       } else if (controlCenterLoader.item) {
@@ -93,6 +106,10 @@ Rectangle {
         barWindowWidth: hostWindow.width
         barWindowHeight: hostWindow.height
         Component.onCompleted: visible = true
+        onVisibleChanged: {
+          if (!visible) unloadCcTimer.restart();
+          else unloadCcTimer.stop();
+        }
       }
     }
   }

@@ -383,6 +383,9 @@ FocusScope {
             return "";
         }
         fillMode: Image.PreserveAspectCrop
+        sourceSize.width: Math.max(1, surfaceViewRoot.width)
+        sourceSize.height: Math.max(1, surfaceViewRoot.height)
+        cache: false
         smooth: true
         scale: surfaceViewRoot.bgZoom
         asynchronous: !LockscreenConfig.general_immediate_render

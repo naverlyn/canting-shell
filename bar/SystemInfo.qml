@@ -277,7 +277,8 @@ Singleton {
     running: true
     repeat: true
     onTriggered: {
-      diskProc.running = true
+      diskProc.running = true;
+      gc();
     }
   }
 

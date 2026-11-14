@@ -33,13 +33,11 @@ PopupWindow {
   readonly property color barColor: (barContainer && barContainer.barColor !== undefined)
     ? barContainer.barColor
     : (theme ? Qt.rgba(theme.bgBase.r, theme.bgBase.g, theme.bgBase.b, BarConfig.barOpacity) : "#1a1b26")
-  readonly property color cardBorderColor: fluidEnabled
-    ? Qt.rgba(theme.textPrimary.r, theme.textPrimary.g, theme.textPrimary.b, 0.15)
-    : theme.bgBase
-  readonly property real cardBorderWidth: fluidEnabled ? 1 : 2
+  readonly property color cardBorderColor: Qt.rgba(theme.textPrimary.r, theme.textPrimary.g, theme.textPrimary.b, 0.15)
+  readonly property real cardBorderWidth: 1
 
-  readonly property int padX: fluidEnabled ? (isVert ? 10 : (cornerRad + 10)) : 12
-  readonly property int padY: fluidEnabled ? (!isVert ? 10 : (cornerRad + 10)) : 12
+  readonly property int padX: fluidEnabled ? (isVert ? 16 : (cornerRad + 12)) : 12
+  readonly property int padY: fluidEnabled ? (!isVert ? 16 : (cornerRad + 12)) : 12
 
   readonly property int baseContentW: (provider && provider.preferredWidth !== undefined && provider.preferredWidth > 0)
     ? provider.preferredWidth
@@ -117,11 +115,26 @@ PopupWindow {
     }
   }
 
-  onTargetPillChanged: updateTargetPosition()
-  onTargetCardWChanged: updateTargetPosition()
-  onTargetCardHChanged: updateTargetPosition()
-  onFluidEnabledChanged: updateTargetPosition()
-  onBarPositionChanged: updateTargetPosition()
+  onTargetPillChanged: {
+    updateTargetPosition();
+    if (sharedPopup.fluidEnabled) syncShadowCutout();
+  }
+  onTargetCardWChanged: {
+    updateTargetPosition();
+    if (sharedPopup.fluidEnabled) syncShadowCutout();
+  }
+  onTargetCardHChanged: {
+    updateTargetPosition();
+    if (sharedPopup.fluidEnabled) syncShadowCutout();
+  }
+  onFluidEnabledChanged: {
+    updateTargetPosition();
+    syncShadowCutout();
+  }
+  onBarPositionChanged: {
+    updateTargetPosition();
+    if (sharedPopup.fluidEnabled) syncShadowCutout();
+  }
 
   onIsDetailsActiveChanged: {
     if (isDetailsActive) {
@@ -135,9 +148,25 @@ PopupWindow {
     }
   }
 
+  Component.onCompleted: {
+    if (isDetailsActive) {
+      updateTargetPosition();
+      wasVisible = true;
+      BarConfig.notifyPopupActive(sharedPopup);
+      syncShadowCutout();
+    }
+  }
+
+  Component.onDestruction: {
+    BarConfig.notifyPopupInactive(sharedPopup);
+    if (hostRoot && hostRoot.activePopupData && hostRoot.activePopupData.target === sharedPopup) {
+      hostRoot.activePopupData = null;
+    }
+  }
+
   function syncShadowCutout() {
     if (!hostRoot) return;
-    if (!isDetailsActive && morphCard.opacity <= 0.01) {
+    if (!sharedPopup.fluidEnabled || !isDetailsActive) {
       if (hostRoot.activePopupData && hostRoot.activePopupData.target === sharedPopup) {
         hostRoot.activePopupData = null;
       }
@@ -149,10 +178,10 @@ PopupWindow {
       active: isDetailsActive,
       fluidEnabled: sharedPopup.fluidEnabled,
       barPos: sharedPopup.barPosition,
-      x: Math.round(sharedPopup.isVert ? (sharedPopup.barPosition === "left" ? barWindow.width : 0) : morphCard.x),
-      y: Math.round(!sharedPopup.isVert ? (sharedPopup.barPosition === "top" ? barWindow.height : 0) : morphCard.y),
-      width: Math.round(morphCard.width),
-      height: Math.round(morphCard.height),
+      x: Math.round(sharedPopup.isVert ? (sharedPopup.barPosition === "left" ? barWindow.width : 0) : sharedPopup.targetX),
+      y: Math.round(!sharedPopup.isVert ? (sharedPopup.barPosition === "top" ? barWindow.height : 0) : sharedPopup.targetY),
+      width: Math.round(sharedPopup.targetCardW),
+      height: Math.round(sharedPopup.targetCardH),
       screen: scr,
       joinTop: sharedPopup.joinTop,
       joinBottom: sharedPopup.joinBottom,
@@ -196,14 +225,10 @@ PopupWindow {
   }
   anchor.onAnchoring: {
     if (!barWindow) return;
-    if (barPosition === "top") {
-      anchor.rect = Qt.rect(0, barWindow.height, implicitWidth, 0);
-    } else if (barPosition === "bottom") {
-      anchor.rect = Qt.rect(0, 0, implicitWidth, 0);
-    } else if (barPosition === "left") {
-      anchor.rect = Qt.rect(barWindow.width, 0, 0, implicitHeight);
+    if (barPosition === "top" || barPosition === "bottom") {
+      anchor.rect = Qt.rect(0, 0, Math.max(1, implicitWidth), Math.max(1, barWindow.height));
     } else {
-      anchor.rect = Qt.rect(0, 0, 0, implicitHeight);
+      anchor.rect = Qt.rect(0, 0, Math.max(1, barWindow.width), Math.max(1, implicitHeight));
     }
     updateTargetPosition();
   }
@@ -243,24 +268,6 @@ PopupWindow {
       NumberAnimation { duration: 170; easing.type: Easing.OutCubic }
     }
 
-    onXChanged: {
-      cardBg.requestRepaint();
-      sharedPopup.syncShadowCutout();
-    }
-    onYChanged: {
-      cardBg.requestRepaint();
-      sharedPopup.syncShadowCutout();
-    }
-    onWidthChanged: {
-      cardBg.requestRepaint();
-      sharedPopup.syncShadowCutout();
-    }
-    onHeightChanged: {
-      cardBg.requestRepaint();
-      sharedPopup.syncShadowCutout();
-    }
-    onOpacityChanged: sharedPopup.syncShadowCutout()
-
     transform: Translate {
       x: {
         if (sharedPopup.barPosition === "right") return sharedPopup.isDetailsActive ? 0 : 8;
@@ -286,7 +293,7 @@ PopupWindow {
       fluidEnabled: sharedPopup.fluidEnabled
       barPosition: sharedPopup.barPosition
       cornerRadius: sharedPopup.cornerRad
-      cardColor: sharedPopup.fluidEnabled ? sharedPopup.barColor : sharedPopup.theme.bgSurface
+      cardColor: sharedPopup.barColor
       borderColor: sharedPopup.cardBorderColor
       borderWidth: sharedPopup.cardBorderWidth
       joinTop: sharedPopup.joinTop
@@ -305,7 +312,7 @@ PopupWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.horizontalCenterOffset: sharedPopup.fluidEnabled ? (sharedPopup.barPosition === "right" ? 4 : (sharedPopup.barPosition === "left" ? -4 : 0)) : 0
         anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: sharedPopup.fluidEnabled ? (sharedPopup.barPosition === "bottom" ? -4 : (sharedPopup.barPosition === "top" ? 4 : 0)) : 0
+        anchors.verticalCenterOffset: sharedPopup.fluidEnabled ? (sharedPopup.barPosition === "bottom" ? 4 : (sharedPopup.barPosition === "top" ? -4 : 0)) : 0
         visible: active
         active: provider && provider.contentComponent !== undefined && provider.contentComponent !== null
         sourceComponent: provider ? provider.contentComponent : null

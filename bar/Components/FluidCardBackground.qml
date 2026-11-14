@@ -23,25 +23,39 @@ Item {
   property color shadowColor: Qt.rgba(0, 0, 0, 0.36)
 
   function requestRepaint() {
-    if (canvas && canvas.visible) canvas.requestPaint();
+    if (canvasLoader.item && canvasLoader.item.visible) canvasLoader.item.requestPaint();
   }
 
-  onFluidEnabledChanged: if (canvas.visible) canvas.requestPaint()
-  onBarPositionChanged: if (canvas.visible) canvas.requestPaint()
-  onJoinTopChanged: if (canvas.visible) canvas.requestPaint()
-  onJoinBottomChanged: if (canvas.visible) canvas.requestPaint()
-  onJoinLeftChanged: if (canvas.visible) canvas.requestPaint()
-  onJoinRightChanged: if (canvas.visible) canvas.requestPaint()
-  onCornerRadiusChanged: if (canvas.visible) canvas.requestPaint()
-  onCardColorChanged: if (canvas.visible) canvas.requestPaint()
-  onBorderColorChanged: if (canvas.visible) canvas.requestPaint()
-  onBorderWidthChanged: if (canvas.visible) canvas.requestPaint()
-  onShadowEnabledChanged: if (canvas.visible) canvas.requestPaint()
-  onShadowPadChanged: if (canvas.visible) canvas.requestPaint()
-  onShadowBlurChanged: if (canvas.visible) canvas.requestPaint()
-  onShadowColorChanged: if (canvas.visible) canvas.requestPaint()
-  onWidthChanged: if (canvas.visible) canvas.requestPaint()
-  onHeightChanged: if (canvas.visible) canvas.requestPaint()
+  onFluidEnabledChanged: requestRepaint()
+  onBarPositionChanged: requestRepaint()
+  onJoinTopChanged: requestRepaint()
+  onJoinBottomChanged: requestRepaint()
+  onJoinLeftChanged: requestRepaint()
+  onJoinRightChanged: requestRepaint()
+  onCornerRadiusChanged: requestRepaint()
+  onCardColorChanged: requestRepaint()
+  onBorderColorChanged: requestRepaint()
+  onBorderWidthChanged: requestRepaint()
+  onShadowEnabledChanged: requestRepaint()
+  onShadowPadChanged: requestRepaint()
+  onShadowBlurChanged: requestRepaint()
+  onShadowColorChanged: requestRepaint()
+  property int _lastW: -1
+  property int _lastH: -1
+  onWidthChanged: {
+    const rw = Math.round(width);
+    if (rw !== _lastW) {
+      _lastW = rw;
+      requestRepaint();
+    }
+  }
+  onHeightChanged: {
+    const rh = Math.round(height);
+    if (rh !== _lastH) {
+      _lastH = rh;
+      requestRepaint();
+    }
+  }
 
   // --- Flyout Mode (Standard Rounded Rectangle) ---
   Rectangle {
@@ -55,10 +69,16 @@ Item {
   }
 
   // --- Fluid Mode (Single-pass Canvas vector path for body + inner corners + integrated shadow) ---
+  Loader {
+    id: canvasLoader
+    anchors.fill: parent
+    active: root.fluidEnabled
+    sourceComponent: Component {
   Canvas {
     id: canvas
     visible: root.fluidEnabled
-    anchors.fill: parent
+    width: Math.round(parent.width)
+    height: Math.round(parent.height)
     antialiasing: true
     onAvailableChanged: if (available) requestPaint()
     onVisibleChanged: if (visible) requestPaint()
@@ -303,8 +323,6 @@ Item {
 
       // 1. Outset-only Drop Shadow
       // Clipped with evenodd so the shadow NEVER penetrates the card interior.
-      // This guarantees that the semi-transparent fill is 100% free of darkening
-      // and maintains pure 1:1 opacity match with the host bar!
       if (root.shadowEnabled && root.shadowBlur > 0) {
         ctx.save();
         ctx.beginPath();
@@ -342,6 +360,8 @@ Item {
         strokeFluidBorder(ctx, w, h, r, s, pos);
         ctx.restore();
       }
+    }
+  }
     }
   }
 }

@@ -13,34 +13,34 @@ Scope {
   property bool commandMode: false
   property int selectedIndex: 0
   property bool userExpanded: false
+  property bool panelVisible: false
+  property string searchQuery: ""
+  property string commandQuery: ""
 
   // Stores { "<appId>": { count: Number, lastUsed: Number } }
   property var appUsage: ({})
   readonly property string usageCachePath: "$HOME/.cache/qs_app_usage.json"
 
   readonly property bool isExpanded: root.commandMode
-    ? (commandInput.text.trim().length > 0)
-    : (searchInput.text.trim().length > 0 || root.userExpanded)
+    ? (root.commandQuery.trim().length > 0)
+    : (root.searchQuery.trim().length > 0 || root.userExpanded)
 
   IpcHandler {
     target: "launcher"
 
     function toggle() {
-      launcherPanel.visible = !launcherPanel.visible
-      if (launcherPanel.visible) {
+      root.panelVisible = !root.panelVisible
+      if (root.panelVisible) {
         root.userExpanded = false
         root.commandMode = (AppLauncherConfig.defaultMode === "command")
         if (AppLauncherConfig.clearSearchOnClose) {
-          searchInput.text = ""
-          commandInput.text = ""
+          root.searchQuery = ""
+          root.commandQuery = ""
         }
         selectedIndex = 0
         loadUsageProc.running = true
-        if (root.commandMode) {
-          commandInput.forceActiveFocus()
-        } else {
-          searchInput.forceActiveFocus()
-        }
+      } else {
+        Qt.callLater(() => gc())
       }
     }
   }
@@ -125,31 +125,29 @@ Scope {
     if (trimmed !== "") {
       cmdRunner.command = ["sh", "-c", trimmed];
       cmdRunner.running = true;
-      launcherPanel.visible = false;
+      root.panelVisible = false;
     }
   }
+
+  signal modeSwitched(bool toCommandMode)
 
   function switchMode(toCommandMode) {
     if (root.commandMode === toCommandMode) return;
     root.commandMode = toCommandMode;
-    if (toCommandMode) {
-      commandInput.forceActiveFocus();
-    } else {
-      searchInput.forceActiveFocus();
-    }
+    root.modeSwitched(toCommandMode);
   }
 
   ScriptModel {
     id: filteredApps
     objectProp: "id"
     values: {
-      if (!launcherPanel.visible) return [];
+      if (!root.panelVisible) return [];
       const usage = root.appUsage;
       const all = [...DesktopEntries.applications.values].filter(d => {
         const key = root.getAppKey(d);
         return !AppLauncherConfig.isAppHidden(key);
       });
-      const q = searchInput.text.trim().toLowerCase();
+      const q = root.searchQuery.trim().toLowerCase();
       const matchGen = AppLauncherConfig.matchGenericName;
       const matchKw = AppLauncherConfig.matchKeywords;
       const matchCat = AppLauncherConfig.matchCategories;
@@ -219,15 +217,43 @@ Scope {
     if (entry) {
       recordAppLaunch(entry);
       entry.execute();
-      launcherPanel.visible = false;
+      root.panelVisible = false;
     }
   }
 
+  Loader {
+    active: root.panelVisible
+    sourceComponent: Component {
   PanelWindow {
     id: launcherPanel
-    visible: false
+    visible: true
     focusable: true
     color: "transparent"
+
+    Component.onCompleted: {
+      searchInput.text = root.searchQuery;
+      commandInput.text = root.commandQuery;
+      if (root.commandMode) {
+        commandInput.forceActiveFocus();
+      } else {
+        searchInput.forceActiveFocus();
+      }
+    }
+
+    onVisibleChanged: {
+      if (!visible) {
+        root.panelVisible = false;
+        Qt.callLater(() => gc());
+      }
+    }
+
+    Connections {
+      target: root
+      function onModeSwitched(toCommandMode) {
+        if (toCommandMode) commandInput.forceActiveFocus();
+        else searchInput.forceActiveFocus();
+      }
+    }
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
@@ -355,6 +381,7 @@ Scope {
                   Accessible.name: "Search applications"
 
                   onTextChanged: {
+                    root.searchQuery = searchInput.text
                     root.selectedIndex = 0
                     if (resultsList.count > 0) {
                       resultsList.positionViewAtIndex(0, ListView.Beginning)
@@ -429,6 +456,7 @@ Scope {
                   selectByMouse: true
                   Accessible.role: Accessible.EditableText
                   Accessible.name: "Execute shell command"
+                  onTextChanged: root.commandQuery = commandInput.text
 
                   Keys.onEscapePressed: launcherPanel.visible = false
 
@@ -832,6 +860,8 @@ Scope {
           }
         }
       }
+    }
+  }
     }
   }
 }

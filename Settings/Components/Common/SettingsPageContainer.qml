@@ -25,5 +25,8 @@ Item {
         anchors.fill: parent
         active: hostWindow.visible && (hostApp.currentTab === pageContainer.pageIndex || pageContainer.opacity > 0)
         sourceComponent: pageContainer.pageComponent
+        onActiveChanged: {
+            if (!active) Qt.callLater(() => gc());
+        }
     }
 }

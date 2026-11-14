@@ -11,6 +11,8 @@ Scope {
   property var theme: DefaultTheme {}
   property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
   property int selectedIndex: 0
+  property bool panelVisible: false
+  property string searchQuery: ""
 
   readonly property int cellSize: AppLauncherConfig.gridCellSize
   readonly property int columns: AppLauncherConfig.gridColumns
@@ -89,14 +91,15 @@ Scope {
   }
 
   function openOrToggle() {
-    gridPanel.visible = !gridPanel.visible;
-    if (gridPanel.visible) {
+    root.panelVisible = !root.panelVisible;
+    if (root.panelVisible) {
       if (AppLauncherConfig.clearSearchOnClose) {
-        searchInput.text = "";
+        root.searchQuery = "";
       }
       root.selectedIndex = 0;
       loadUsageProc.running = true;
-      Qt.callLater(() => searchInput.forceActiveFocus());
+    } else {
+      Qt.callLater(() => gc());
     }
   }
 
@@ -111,14 +114,14 @@ Scope {
     target: "appgrid"
 
     function toggle() {
-      if (!gridPanel.visible) {
+      if (!root.panelVisible) {
         root.resolveDefaultPlacement();
       }
       root.openOrToggle();
     }
 
     function toggleAt(barPos: string, normX: string, normY: string, clearance: string) {
-      if (!gridPanel.visible) {
+      if (!root.panelVisible) {
         root.activeBarPos = barPos || "top";
         const nx = parseFloat(normX);
         const ny = parseFloat(normY);
@@ -184,7 +187,7 @@ Scope {
     if (entry) {
       recordAppLaunch(entry);
       entry.execute();
-      gridPanel.visible = false;
+      root.panelVisible = false;
     }
   }
 
@@ -192,13 +195,13 @@ Scope {
     id: filteredApps
     objectProp: "id"
     values: {
-      if (!gridPanel.visible) return [];
+      if (!root.panelVisible) return [];
       const usage = root.appUsage;
       const all = [...DesktopEntries.applications.values].filter(d => {
         const key = root.getAppKey(d);
         return !AppLauncherConfig.isAppHidden(key);
       });
-      const q = searchInput.text.trim().toLowerCase();
+      const q = root.searchQuery.trim().toLowerCase();
       const matchGen = AppLauncherConfig.matchGenericName;
       const matchKw = AppLauncherConfig.matchKeywords;
       const matchCat = AppLauncherConfig.matchCategories;
@@ -264,11 +267,26 @@ Scope {
     }
   }
 
+  Loader {
+    active: root.panelVisible
+    sourceComponent: Component {
   PanelWindow {
     id: gridPanel
-    visible: false
+    visible: true
     focusable: true
     color: "transparent"
+
+    Component.onCompleted: {
+      searchInput.text = root.searchQuery;
+      Qt.callLater(() => searchInput.forceActiveFocus());
+    }
+
+    onVisibleChanged: {
+      if (!visible) {
+        root.panelVisible = false;
+        Qt.callLater(() => gc());
+      }
+    }
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
@@ -389,6 +407,7 @@ Scope {
                 property string text: ""
 
                 onTextChanged: {
+                  root.searchQuery = searchInput.text
                   root.selectedIndex = 0
                   grid.positionViewAtIndex(0, GridView.Beginning)
                 }
@@ -548,6 +567,8 @@ Scope {
           }
         }
       }
+    }
+  }
     }
   }
 }

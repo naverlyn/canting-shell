@@ -80,13 +80,16 @@ Scope {
     }
 
     property bool windowActive: false
+    property bool windowMounted: false
 
     function openSettings() {
         closeTimer.stop();
-        settingsWindow.visible = true;
+        root.windowMounted = true;
         Qt.callLater(() => {
             root.windowActive = true;
-            winCard.forceActiveFocus();
+            if (settingsWinLoader.item && settingsWinLoader.item.winCardRef) {
+                settingsWinLoader.item.winCardRef.forceActiveFocus();
+            }
         });
     }
 
@@ -100,14 +103,15 @@ Scope {
         interval: 180
         repeat: false
         onTriggered: {
-            settingsWindow.visible = false;
+            root.windowMounted = false;
+            Qt.callLater(() => gc());
         }
     }
 
     IpcHandler {
         target: "settings"
         function toggle() {
-            if (settingsWindow.visible && root.windowActive) {
+            if (root.windowMounted && root.windowActive) {
                 root.closeSettings();
             } else {
                 root.openSettings();
@@ -131,11 +135,25 @@ Scope {
         }
     }
 
+    Loader {
+        id: settingsWinLoader
+        active: root.windowMounted
+        sourceComponent: Component {
     PanelWindow {
         id: settingsWindow
-        visible: false
+        property alias winCardRef: winCard
+        visible: true
         focusable: true
         color: "transparent"
+
+        Component.onDestruction: {
+            if (root.theme) {
+                root.theme.previewIndex = -1;
+                root.theme.previewAccent = "";
+                root.theme.previewFontFamily = "";
+                root.theme.previewMonoFont = "";
+            }
+        }
 
         onVisibleChanged: {
             if (!visible && root.theme) {
@@ -480,6 +498,8 @@ Scope {
             SettingsResizeHandles {
                 winCard: winCard
             }
+        }
+    }
         }
     }
 }

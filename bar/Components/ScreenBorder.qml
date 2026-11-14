@@ -73,25 +73,34 @@ Item {
     return Qt.rgba(baseCol.r, baseCol.g, baseCol.b, alpha);
   }
 
-  onShadowSizeChanged: shadowCanvas.requestPaint()
-  onHasShadowChanged: shadowCanvas.requestPaint()
-  onShowTopLeftCornerChanged: shadowCanvas.requestPaint()
-  onShowTopRightCornerChanged: shadowCanvas.requestPaint()
-  onShowBottomLeftCornerChanged: shadowCanvas.requestPaint()
-  onShowBottomRightCornerChanged: shadowCanvas.requestPaint()
-  onEffectiveDockedTopChanged: shadowCanvas.requestPaint()
-  onEffectiveDockedBottomChanged: shadowCanvas.requestPaint()
-  onEffectiveDockedLeftChanged: shadowCanvas.requestPaint()
-  onEffectiveDockedRightChanged: shadowCanvas.requestPaint()
+  function requestShadowPaint() {
+    if (innerOverlayLoader.item && innerOverlayLoader.item.shadowCanvasRef) {
+      innerOverlayLoader.item.shadowCanvasRef.requestPaint();
+    }
+  }
+
+  onShadowSizeChanged: requestShadowPaint()
+  onHasShadowChanged: requestShadowPaint()
+  onShowTopLeftCornerChanged: requestShadowPaint()
+  onShowTopRightCornerChanged: requestShadowPaint()
+  onShowBottomLeftCornerChanged: requestShadowPaint()
+  onShowBottomRightCornerChanged: requestShadowPaint()
+  onEffectiveDockedTopChanged: requestShadowPaint()
+  onEffectiveDockedBottomChanged: requestShadowPaint()
+  onEffectiveDockedLeftChanged: requestShadowPaint()
+  onEffectiveDockedRightChanged: requestShadowPaint()
 
   readonly property var activePopupData: (barRoot && barRoot.activePopupData) ? barRoot.activePopupData : null
-  onActivePopupDataChanged: shadowCanvas.requestPaint()
+  onActivePopupDataChanged: requestShadowPaint()
 
   // Top Border Strip (active when no docked top bar is present)
+  Loader {
+    active: borderRoot.barRoot.barVisible && Boolean(BarConfig.screenBorder) && !borderRoot.hasDockedTop
+    sourceComponent: Component {
   PanelWindow {
     id: topBorderWindow
     screen: borderRoot.screen
-    visible: borderRoot.barRoot.barVisible && Boolean(BarConfig.screenBorder) && !borderRoot.hasDockedTop
+    visible: true
     color: "transparent"
     mask: Region {}
 
@@ -109,12 +118,17 @@ Item {
       Behavior on color { ColorAnimation { duration: 180 } }
     }
   }
+    }
+  }
 
   // Bottom Border Strip (active when no docked bottom bar is present)
+  Loader {
+    active: borderRoot.barRoot.barVisible && Boolean(BarConfig.screenBorder) && !borderRoot.hasDockedBottom
+    sourceComponent: Component {
   PanelWindow {
     id: bottomBorderWindow
     screen: borderRoot.screen
-    visible: borderRoot.barRoot.barVisible && Boolean(BarConfig.screenBorder) && !borderRoot.hasDockedBottom
+    visible: true
     color: "transparent"
     mask: Region {}
 
@@ -132,12 +146,17 @@ Item {
       Behavior on color { ColorAnimation { duration: 180 } }
     }
   }
+    }
+  }
 
   // Left Border Strip (active when no docked left bar is present)
+  Loader {
+    active: borderRoot.barRoot.barVisible && Boolean(BarConfig.screenBorder) && !borderRoot.hasDockedLeft
+    sourceComponent: Component {
   PanelWindow {
     id: leftBorderWindow
     screen: borderRoot.screen
-    visible: borderRoot.barRoot.barVisible && Boolean(BarConfig.screenBorder) && !borderRoot.hasDockedLeft
+    visible: true
     color: "transparent"
     mask: Region {}
 
@@ -155,12 +174,17 @@ Item {
       Behavior on color { ColorAnimation { duration: 180 } }
     }
   }
+    }
+  }
 
   // Right Border Strip (active when no docked right bar is present)
+  Loader {
+    active: borderRoot.barRoot.barVisible && Boolean(BarConfig.screenBorder) && !borderRoot.hasDockedRight
+    sourceComponent: Component {
   PanelWindow {
     id: rightBorderWindow
     screen: borderRoot.screen
-    visible: borderRoot.barRoot.barVisible && Boolean(BarConfig.screenBorder) && !borderRoot.hasDockedRight
+    visible: true
     color: "transparent"
     mask: Region {}
 
@@ -178,14 +202,21 @@ Item {
       Behavior on color { ColorAnimation { duration: 180 } }
     }
   }
+    }
+  }
 
   // Full-Screen Inner Corners & Curved Inner Shadow Overlay
   // Uses ExclusionMode.Ignore (without exclusiveZone) so Hyprland never shifts or shrinks this window;
   // it always maps 1:1 to physical screen coordinates (0, 0, screen.width, screen.height).
+  Loader {
+    id: innerOverlayLoader
+    active: borderRoot.barRoot.barVisible && (borderRoot.anyCornerVisible || (borderRoot.hasShadow && borderRoot.anyEdgeActive))
+    sourceComponent: Component {
   PanelWindow {
     id: innerOverlayWindow
+    readonly property var shadowCanvasRef: shadowCanvasLoader.item
     screen: borderRoot.screen
-    visible: borderRoot.barRoot.barVisible && (borderRoot.anyCornerVisible || (borderRoot.hasShadow && borderRoot.anyEdgeActive))
+    visible: true
     color: "transparent"
     mask: Region {}
     exclusionMode: ExclusionMode.Ignore
@@ -205,6 +236,11 @@ Item {
       anchors.leftMargin: borderRoot.effectiveDockedLeft
       anchors.rightMargin: borderRoot.effectiveDockedRight
 
+      Loader {
+        id: shadowCanvasLoader
+        anchors.fill: parent
+        active: borderRoot.hasShadow && borderRoot.anyEdgeActive
+        sourceComponent: Component {
       Canvas {
         id: shadowCanvas
         anchors.fill: parent
@@ -394,7 +430,7 @@ Item {
           }
           ctx.clip("evenodd");
 
-          const steps = Math.min(32, Math.max(16, s));
+          const steps = Math.min(14, Math.max(8, Math.round(s * 0.75)));
           for (let i = 1; i <= steps; i++) {
             const u = i / steps;
             const inset = s * u;
@@ -421,6 +457,8 @@ Item {
             ctx.fill();
           }
           ctx.restore();
+        }
+      }
         }
       }
 
@@ -467,6 +505,8 @@ Item {
         anchors.bottom: parent.bottom
         anchors.right: parent.right
       }
+    }
+  }
     }
   }
 }

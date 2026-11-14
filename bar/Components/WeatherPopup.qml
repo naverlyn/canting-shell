@@ -363,10 +363,10 @@ PopupWindow {
       NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
     }
 
-    color: popup.theme.bgSurface
+    color: (popup.barItem && popup.barItem.barColor !== undefined) ? popup.barItem.barColor : popup.theme.bgBase
     radius: 12
-    border.color: popup.theme.bgBase
-    border.width: 2
+    border.color: Qt.rgba(popup.theme.textPrimary.r, popup.theme.textPrimary.g, popup.theme.textPrimary.b, 0.15)
+    border.width: 1
 
     HoverHandler {
       id: boxHoverHandler
@@ -415,7 +415,7 @@ PopupWindow {
           width: 26
           height: 26
           radius: 6
-          color: pinHover.hovered ? popup.theme.bgBase : "transparent"
+          color: pinHover.hovered ? popup.theme.bgSurface : "transparent"
           scale: pinHover.hovered ? 1.05 : 1.0
           Behavior on scale { NumberAnimation { duration: 120 } }
           Behavior on color { ColorAnimation { duration: 120 } }
@@ -440,7 +440,7 @@ PopupWindow {
           width: 26
           height: 26
           radius: 6
-          color: refHover.hovered ? popup.theme.bgBase : "transparent"
+          color: refHover.hovered ? popup.theme.bgSurface : "transparent"
           scale: refHover.hovered ? 1.05 : 1.0
           Behavior on scale { NumberAnimation { duration: 120 } }
           Behavior on color { ColorAnimation { duration: 120 } }
@@ -472,7 +472,7 @@ PopupWindow {
       Rectangle {
         Layout.fillWidth: true
         height: 1
-        color: popup.theme.bgBase
+        color: Qt.rgba(popup.theme.textPrimary.r, popup.theme.textPrimary.g, popup.theme.textPrimary.b, 0.08)
       }
 
       // Hero Banner (styled identically to Control Center Weather Card with interactive hover polish)

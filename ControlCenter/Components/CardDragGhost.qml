@@ -7,6 +7,7 @@ import ".."
     required property var hostCenter
     required property var hostMainRect
             readonly property bool active: hostCenter.isDraggingCard && hostCenter.draggedCardId !== ""
+            readonly property var cardDef: ControlCenterConfig.getCardDef(hostCenter.draggedCardId)
             visible: opacity > 0.01
             z: 9999
             width: 200
@@ -31,7 +32,7 @@ import ".."
                     font.family: hostCenter.font
                     font.pixelSize: 14
                     color: hostCenter.theme.accentPrimary
-                    text: ControlCenterConfig.getCardDef(hostCenter.draggedCardId).icon
+                    text: cardDragGhost.cardDef ? cardDragGhost.cardDef.icon : ""
                 }
 
                 Text {
@@ -39,7 +40,7 @@ import ".."
                     font.pixelSize: 12
                     font.bold: true
                     color: hostCenter.theme.textPrimary
-                    text: ControlCenterConfig.getCardDef(hostCenter.draggedCardId).label
+                    text: cardDragGhost.cardDef ? cardDragGhost.cardDef.label : ""
                 }
 
                 Text {

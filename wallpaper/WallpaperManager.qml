@@ -14,18 +14,20 @@ Scope {
   property string searchText: ""
   property string previewPath: ""
   property bool browsingFolders: false
+  property bool panelVisible: false
 
   IpcHandler {
     target: "wallpaper"
 
     function toggle() {
-      wallpaperPanel.visible = !wallpaperPanel.visible;
-      if (wallpaperPanel.visible) {
+      root.panelVisible = !root.panelVisible;
+      if (root.panelVisible) {
         root.searchText = "";
         root.previewPath = "";
         root.browsingFolders = false;
-        pickerGridSection.searchInput.forceActiveFocus();
         if (WallpaperService.wallpapers.length === 0) WallpaperService.rescan();
+      } else {
+        Qt.callLater(() => gc());
       }
     }
 
@@ -43,7 +45,7 @@ Scope {
   }
 
   property var filteredWallpapers: {
-    if (!wallpaperPanel.visible) return [];
+    if (!root.panelVisible) return [];
     const q = searchText.toLowerCase().trim();
     let list = WallpaperService.wallpapers || [];
     if (q !== "") {
@@ -65,16 +67,25 @@ Scope {
     return list;
   }
 
+  Loader {
+    active: root.panelVisible
+    sourceComponent: Component {
   PanelWindow {
     id: wallpaperPanel
-    visible: false
+    visible: true
     focusable: true
     color: "transparent"
+
+    Component.onCompleted: {
+      pickerGridSection.searchInput.forceActiveFocus();
+    }
 
     onVisibleChanged: {
       if (!visible) {
         root.previewPath = "";
         root.browsingFolders = false;
+        root.panelVisible = false;
+        Qt.callLater(() => gc());
       }
     }
 
@@ -161,6 +172,8 @@ Scope {
     // Preview overlay
     WallpaperPreviewOverlay {
       hostRoot: root
+    }
+  }
     }
   }
 }

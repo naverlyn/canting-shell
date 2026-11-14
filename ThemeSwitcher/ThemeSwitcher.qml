@@ -24,9 +24,8 @@ Scope {
         }
 
         function toggle(): void {
-            themePanel.visible = !themePanel.visible;
-            if (themePanel.visible) {
-                searchInput.text = "";
+            root.panelVisible = !root.panelVisible;
+            if (root.panelVisible) {
                 searchText = "";
                 selectedIndex = 0;
                 for (var i = 0; i < filteredThemes.length; i++) {
@@ -35,29 +34,25 @@ Scope {
                         break;
                     }
                 }
-                if (root.theme.wallpaperMode) {
-                    paletteView.forceActiveFocus();
-                } else {
-                    themeList.positionViewAtIndex(selectedIndex, ListView.Center);
-                    searchInput.forceActiveFocus();
-                }
             } else {
                 root.theme.previewIndex = -1;
+                Qt.callLater(() => gc());
             }
         }
     }
 
     property int selectedIndex: 0
     property string searchText: ""
+    property bool panelVisible: false
 
     onSelectedIndexChanged: {
-        if (themePanel.visible && !root.theme.wallpaperMode && filteredThemes.length > 0 && selectedIndex >= 0 && selectedIndex < filteredThemes.length) {
+        if (root.panelVisible && !root.theme.wallpaperMode && filteredThemes.length > 0 && selectedIndex >= 0 && selectedIndex < filteredThemes.length) {
             root.theme.previewIndex = filteredThemes[selectedIndex].originalIndex;
         }
     }
 
     property var filteredThemes: {
-        if (!themePanel.visible) return [];
+        if (!root.panelVisible) return [];
         var query = searchText.toLowerCase();
         var result = [];
         for (var i = 0; i < root.theme.themes.length; i++) {
@@ -69,11 +64,31 @@ Scope {
         return result;
     }
 
+    Loader {
+        active: root.panelVisible
+        sourceComponent: Component {
     PanelWindow {
         id: themePanel
-        visible: false
+        visible: true
         focusable: true
         color: "transparent"
+
+        Component.onCompleted: {
+            if (root.theme.wallpaperMode) {
+                paletteView.forceActiveFocus();
+            } else {
+                themeList.positionViewAtIndex(root.selectedIndex, ListView.Center);
+                searchInput.forceActiveFocus();
+            }
+        }
+
+        onVisibleChanged: {
+            if (!visible) {
+                root.theme.previewIndex = -1;
+                root.panelVisible = false;
+                Qt.callLater(() => gc());
+            }
+        }
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
@@ -653,6 +668,8 @@ Scope {
                     Item { Layout.fillWidth: true }
                 }
             }
+        }
+    }
         }
     }
 }

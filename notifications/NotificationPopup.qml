@@ -36,7 +36,7 @@ Scope {
     }
 
     Variants {
-        model: Quickshell.screens
+        model: NotificationService.notifications.length > 0 ? Quickshell.screens : []
 
         PanelWindow {
             id: notifWindow

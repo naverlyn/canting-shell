@@ -26,6 +26,7 @@ Scope {
       editState = [];
       _openSnapshot = [];
       selectedIndex = -1;
+      Qt.callLater(() => gc());
     }
   }
 
@@ -213,9 +214,12 @@ Scope {
     }
   }
 
+  Loader {
+    active: root.isOpen
+    sourceComponent: Component {
   PanelWindow {
     id: overlay
-    visible: root.isOpen
+    visible: true
     focusable: true
     color: "transparent"
 
@@ -562,6 +566,8 @@ Scope {
           }
         }
       }
+    }
+  }
     }
   }
 }

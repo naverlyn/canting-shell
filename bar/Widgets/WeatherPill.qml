@@ -118,6 +118,9 @@ Rectangle {
   Loader {
     id: weatherPopupLoader
     active: weatherHover.hovered || weatherWidget.isPinned || weatherWidget.popupKeepAlive
+    onActiveChanged: {
+      if (!active) Qt.callLater(() => gc());
+    }
     sourceComponent: WeatherPopup {
       target: weatherWidget
       barItem: hostContainer

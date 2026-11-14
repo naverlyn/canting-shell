@@ -13,13 +13,14 @@ Scope {
 
     property int selectedIndex: 0
     property bool confirmWipe: false
+    property bool panelVisible: false
 
     IpcHandler {
         target: "clipboard"
 
         function toggle() {
-            clipboardPanel.visible = !clipboardPanel.visible;
-            if (clipboardPanel.visible) {
+            root.panelVisible = !root.panelVisible;
+            if (root.panelVisible) {
                 if (ClipboardConfig.clearSearchOnClose) {
                     ClipboardService.searchText = "";
                 }
@@ -27,12 +28,11 @@ Scope {
                 ClipboardService.refresh();
                 root.selectedIndex = 0;
                 root.confirmWipe = false;
-                searchInput.forceActiveFocus();
             }
         }
 
         function open() {
-            clipboardPanel.visible = true;
+            root.panelVisible = true;
             if (ClipboardConfig.clearSearchOnClose) {
                 ClipboardService.searchText = "";
             }
@@ -40,23 +40,35 @@ Scope {
             ClipboardService.refresh();
             root.selectedIndex = 0;
             root.confirmWipe = false;
-            searchInput.forceActiveFocus();
         }
 
         function close() {
-            clipboardPanel.visible = false;
+            root.panelVisible = false;
         }
     }
 
+    Loader {
+        active: root.panelVisible
+        sourceComponent: Component {
     PanelWindow {
         id: clipboardPanel
-        visible: false
+        visible: true
         focusable: true
         color: "transparent"
+
+        Component.onCompleted: {
+            searchInput.forceActiveFocus();
+        }
+
+        Component.onDestruction: {
+            ClipboardService.releaseMemory();
+        }
 
         onVisibleChanged: {
             if (!visible) {
                 ClipboardService.releaseMemory();
+                root.panelVisible = false;
+                Qt.callLater(() => gc());
             }
         }
 
@@ -817,6 +829,8 @@ Scope {
                     }
                 }
             }
+        }
+    }
         }
     }
 }

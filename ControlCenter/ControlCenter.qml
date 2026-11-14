@@ -626,7 +626,7 @@ PanelWindow {
                                             horizontalAlignment: Text.AlignHCenter
                                             font.family: controlCenter.font
                                             font.pixelSize: 10
-                                            color: controlCenter.theme.textTertiary
+                                            color: controlCenter.theme.textMuted
                                         }
 
                                         Flow {

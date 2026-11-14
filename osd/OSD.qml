@@ -121,8 +121,38 @@ Scope {
     onTriggered: root.showBrightness = false
   }
 
+  property bool osdMounted: false
+  onShowVolumeChanged: {
+    if (showVolume) {
+      osdUnloadTimer.stop();
+      osdMounted = true;
+    } else if (!showBrightness) {
+      osdUnloadTimer.restart();
+    }
+  }
+  onShowBrightnessChanged: {
+    if (showBrightness) {
+      osdUnloadTimer.stop();
+      osdMounted = true;
+    } else if (!showVolume) {
+      osdUnloadTimer.restart();
+    }
+  }
+
+  Timer {
+    id: osdUnloadTimer
+    interval: 220
+    repeat: false
+    onTriggered: {
+      if (!root.showVolume && !root.showBrightness) {
+        root.osdMounted = false;
+        Qt.callLater(() => gc());
+      }
+    }
+  }
+
   Variants {
-    model: Quickshell.screens
+    model: (root.showVolume || root.showBrightness || root.osdMounted) ? Quickshell.screens : []
 
     PanelWindow {
       id: osdWindow
