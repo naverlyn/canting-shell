@@ -11,6 +11,13 @@ PopupWindow {
   required property var hostRoot
 
   readonly property Item provider: barContainer ? barContainer.activeInfoProvider : null
+  property Item _prevProvider: null
+  onProviderChanged: {
+    if (_prevProvider && _prevProvider !== provider && _prevProvider.effectiveHovered !== undefined && !_prevProvider.hovered) {
+      _prevProvider.effectiveHovered = false;
+    }
+    _prevProvider = provider;
+  }
   readonly property Item targetPill: provider ? provider.target : null
   readonly property bool isDetailsActive: provider !== null && provider.isDetailsActive
   property bool cardHovered: cardHoverHandler.hovered
@@ -201,7 +208,7 @@ PopupWindow {
 
   color: "transparent"
 
-  readonly property int maxPopupExtent: 560
+  readonly property int maxPopupExtent: 640
   implicitWidth: isVert ? maxPopupExtent : (barWindow && barWindow.screen ? barWindow.screen.width : 1920)
   implicitHeight: !isVert ? maxPopupExtent : (barWindow && barWindow.screen ? barWindow.screen.height : 1080)
 
@@ -249,11 +256,11 @@ PopupWindow {
     Behavior on animatedAccent { ColorAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
     Behavior on x {
-      enabled: sharedPopup.wasVisible
+      enabled: sharedPopup.wasVisible && !sharedPopup.isVert
       NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
     }
     Behavior on y {
-      enabled: sharedPopup.wasVisible
+      enabled: sharedPopup.wasVisible && sharedPopup.isVert
       NumberAnimation { duration: 220; easing.type: Easing.OutCubic }
     }
     Behavior on width {
@@ -309,10 +316,11 @@ PopupWindow {
       Loader {
         id: contentLoader
         width: sharedPopup.baseContentW
+        height: (provider && provider.preferredHeight !== undefined && provider.preferredHeight > 0) ? provider.preferredHeight : implicitHeight
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.horizontalCenterOffset: sharedPopup.fluidEnabled ? (sharedPopup.barPosition === "right" ? 4 : (sharedPopup.barPosition === "left" ? -4 : 0)) : 0
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: sharedPopup.fluidEnabled ? (sharedPopup.barPosition === "bottom" ? 4 : (sharedPopup.barPosition === "top" ? -4 : 0)) : 0
+        anchors.top: parent.top
+        anchors.topMargin: sharedPopup.padY + (sharedPopup.fluidEnabled ? (sharedPopup.barPosition === "bottom" ? 4 : (sharedPopup.barPosition === "top" ? -4 : 0)) : 0)
         visible: active
         active: provider && provider.contentComponent !== undefined && provider.contentComponent !== null
         sourceComponent: provider ? provider.contentComponent : null

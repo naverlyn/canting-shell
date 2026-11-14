@@ -52,10 +52,13 @@ Item {
   onHoveredChanged: {
     if (hovered) {
       closeGraceTimer.stop();
+      effectiveHovered = true;
       if (barItem) {
+        if (barItem.activeInfoProvider && barItem.activeInfoProvider !== provider) {
+          barItem.activeInfoProvider.effectiveHovered = false;
+        }
         barItem.activeInfoProvider = provider;
       }
-      effectiveHovered = true;
       if (!proc.running && provider.script) {
         proc.running = true;
       }
@@ -127,6 +130,13 @@ Item {
             : { header: false, cells: l.split("\t").map(s => s.trim()) });
       }
     }
+  }
+
+  Timer {
+    interval: 600
+    repeat: false
+    running: provider.script !== ""
+    onTriggered: if (!proc.running && provider.script) proc.running = true
   }
 
   Timer {

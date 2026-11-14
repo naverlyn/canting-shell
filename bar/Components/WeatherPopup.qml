@@ -5,11 +5,15 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import ".."
 
-PopupWindow {
+Item {
   id: popup
+  visible: false
+  width: 0
+  height: 0
 
   required property Item target
   property Item barItem: null
+  property var hostRoot: (target && target.hostRoot !== undefined) ? target.hostRoot : null
   property bool hovered: false
   property bool pinned: false
   property var theme: DefaultTheme {}
@@ -35,25 +39,82 @@ PopupWindow {
   property string location: "Bekasi"
   property color accent: "#ffffff"
   property string barPosition: BarConfig.position
+  property string title: "Weather"
+  property string icon: "󰖐"
+  property bool hideHeader: true
+
+  readonly property int preferredWidth: {
+    const scr = (target && target.QsWindow && target.QsWindow.window && target.QsWindow.window.screen) ? target.QsWindow.window.screen : null;
+    return scr ? Math.min(592, scr.width - 52) : 592;
+  }
+  readonly property int preferredHeight: {
+    const scr = (target && target.QsWindow && target.QsWindow.window && target.QsWindow.window.screen) ? target.QsWindow.window.screen : null;
+    const isAll = (popup.selectedDayIndex === 3);
+    const targetH = isAll ? 572 : 452;
+    return scr ? Math.min(targetH, scr.height - 118) : targetH;
+  }
 
   signal pinToggled()
 
   property bool effectiveHovered: false
-  readonly property bool isWeatherActive: effectiveHovered || pinned
+  readonly property bool isSharedCardHovered: Boolean(
+    barItem && barItem.activeInfoProvider === popup && barItem.sharedInfoPopup && barItem.sharedInfoPopup.cardHovered
+  )
+  readonly property bool isDetailsActive: effectiveHovered || pinned || isSharedCardHovered
+  readonly property bool isWeatherActive: isDetailsActive
 
   Timer {
     id: closeGraceTimer
-    interval: 180
+    interval: 150
     repeat: false
-    onTriggered: popup.effectiveHovered = false
+    onTriggered: {
+      if (!popup.hovered && !popup.isSharedCardHovered) {
+        popup.effectiveHovered = false;
+        if (popup.barItem && popup.barItem.activeInfoProvider === popup && !popup.pinned) {
+          popup.barItem.activeInfoProvider = null;
+        }
+      }
+    }
   }
 
   onHoveredChanged: {
     if (hovered) {
       closeGraceTimer.stop();
       effectiveHovered = true;
-    } else if (!boxHoverHandler.hovered) {
+      if (barItem) {
+        if (barItem.activeInfoProvider && barItem.activeInfoProvider !== popup) {
+          barItem.activeInfoProvider.effectiveHovered = false;
+        }
+        barItem.activeInfoProvider = popup;
+      }
+    } else if (!isSharedCardHovered) {
       closeGraceTimer.restart();
+    }
+  }
+
+  onIsSharedCardHoveredChanged: {
+    if (isSharedCardHovered) {
+      closeGraceTimer.stop();
+      effectiveHovered = true;
+    } else if (!hovered) {
+      closeGraceTimer.restart();
+    }
+  }
+
+  onPinnedChanged: {
+    if (pinned && barItem) {
+      if (barItem.activeInfoProvider && barItem.activeInfoProvider !== popup && barItem.activeInfoProvider.target && barItem.activeInfoProvider.target.isPinned !== undefined) {
+        barItem.activeInfoProvider.target.isPinned = false;
+      }
+      barItem.activeInfoProvider = popup;
+    } else if (!pinned && !hovered && !isSharedCardHovered && barItem && barItem.activeInfoProvider === popup) {
+      barItem.activeInfoProvider = null;
+    }
+  }
+
+  Component.onDestruction: {
+    if (barItem && barItem.activeInfoProvider === popup) {
+      barItem.activeInfoProvider = null;
     }
   }
   property bool isLoading: false
@@ -75,54 +136,6 @@ PopupWindow {
   // Forecast state: array of 3 day objects
   property var forecastDays: []
   property int selectedDayIndex: (BarConfig.weatherMode === "full") ? 3 : 0
-
-  visible: isWeatherActive || box.opacity > 0
-  color: "transparent"
-  implicitWidth: box.implicitWidth + 12
-  implicitHeight: box.implicitHeight + 12
-
-  anchor.window: target.QsWindow.window
-  anchor.edges: {
-    if (popup.barPosition === "bottom") return Edges.Top;
-    if (popup.barPosition === "left") return Edges.Right;
-    if (popup.barPosition === "right") return Edges.Left;
-    return Edges.Bottom;
-  }
-  anchor.gravity: {
-    if (popup.barPosition === "bottom") return Edges.Top;
-    if (popup.barPosition === "left") return Edges.Right;
-    if (popup.barPosition === "right") return Edges.Left;
-    return Edges.Bottom;
-  }
-  anchor.adjustment: PopupAdjustment.Slide | PopupAdjustment.Flip
-  anchor.onAnchoring: {
-    const win = target.QsWindow.window;
-    if (!win) return;
-    const widgetRect = win.contentItem.mapFromItem(target, 0, 0, target.width, target.height);
-    if (popup.barItem) {
-      const bRect = win.contentItem.mapFromItem(popup.barItem, 0, 0, popup.barItem.width, popup.barItem.height);
-      const scr = win.screen;
-      if (popup.barPosition === "top" || popup.barPosition === "bottom") {
-        const widgetCenter = widgetRect.x + (widgetRect.width / 2);
-        const popupW = popup.implicitWidth;
-        const desiredX = Math.round(widgetCenter - (popupW / 2));
-        const scrW = scr ? scr.width : 1920;
-        const pad = 12;
-        const clampedX = Math.max(pad, Math.min(Math.max(pad, scrW - popupW - pad), desiredX));
-        anchor.rect = Qt.rect(clampedX, bRect.y, popupW, bRect.height);
-      } else {
-        const widgetCenter = widgetRect.y + (widgetRect.height / 2);
-        const popupH = popup.implicitHeight;
-        const desiredY = Math.round(widgetCenter - (popupH / 2));
-        const scrH = scr ? scr.height : 1080;
-        const pad = 12;
-        const clampedY = Math.max(pad, Math.min(Math.max(pad, scrH - popupH - pad), desiredY));
-        anchor.rect = Qt.rect(bRect.x, clampedY, bRect.width, popupH);
-      }
-    } else {
-      anchor.rect = widgetRect;
-    }
-  }
 
   function getWeatherIcon(cond, isNight) {
     const c = (cond || "").toLowerCase();
@@ -320,70 +333,33 @@ PopupWindow {
   }
 
   Timer {
+    interval: 900
+    repeat: false
+    running: true
+    onTriggered: {
+      if (!popup.hasValidData && !popup.isLoading) {
+        popup.refresh(false);
+      }
+    }
+  }
+
+  Timer {
     interval: Math.max(5, BarConfig.weatherIntervalMinutes || 15) * 60 * 1000
     repeat: true
     running: true
     onTriggered: popup.refresh(false)
   }
 
-  Rectangle {
-    id: box
-    opacity: popup.isWeatherActive ? 1 : 0
-    x: popup.barPosition === "left"
-      ? (popup.isWeatherActive ? 6 : 0)
-      : (popup.barPosition === "right" ? (popup.isWeatherActive ? 6 : 12) : 6)
-    y: popup.barPosition === "top"
-      ? (popup.isWeatherActive ? 6 : 0)
-      : (popup.barPosition === "bottom" ? (popup.isWeatherActive ? 6 : 12) : 6)
-    transformOrigin: {
-      if (popup.barPosition === "bottom") return Item.Bottom;
-      if (popup.barPosition === "left") return Item.Left;
-      if (popup.barPosition === "right") return Item.Right;
-      return Item.Top;
-    }
-    scale: popup.isWeatherActive ? 1 : 0.96
-
-    Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-    Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-    Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-    Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-
-    implicitWidth: {
-      const scr = (target && target.QsWindow && target.QsWindow.window && target.QsWindow.window.screen) ? target.QsWindow.window.screen : null;
-      return scr ? Math.min(620, scr.width - 24) : 620;
-    }
-    implicitHeight: {
-      const scr = (target && target.QsWindow && target.QsWindow.window && target.QsWindow.window.screen) ? target.QsWindow.window.screen : null;
-      const isAll = (popup.selectedDayIndex === 3);
-      const targetH = isAll ? 600 : 480;
-      return scr ? Math.min(targetH, scr.height - 90) : targetH;
-    }
-
-    Behavior on implicitHeight {
-      NumberAnimation { duration: 240; easing.type: Easing.OutCubic }
-    }
-
-    color: (popup.barItem && popup.barItem.barColor !== undefined) ? popup.barItem.barColor : popup.theme.bgBase
-    radius: 12
-    border.color: Qt.rgba(popup.theme.textPrimary.r, popup.theme.textPrimary.g, popup.theme.textPrimary.b, 0.15)
-    border.width: 1
-
-    HoverHandler {
-      id: boxHoverHandler
-      onHoveredChanged: {
-        if (hovered) {
-          closeGraceTimer.stop();
-          popup.effectiveHovered = true;
-        } else if (!popup.hovered) {
-          closeGraceTimer.restart();
-        }
-      }
-    }
+  property Component contentComponent: Component {
+    Item {
+      width: popup.preferredWidth
+      height: popup.preferredHeight
+      implicitWidth: popup.preferredWidth
+      implicitHeight: popup.preferredHeight
 
     ColumnLayout {
       id: mainCol
       anchors.fill: parent
-      anchors.margins: 14
       spacing: 10
 
       // Header Bar
@@ -1271,6 +1247,7 @@ PopupWindow {
           }
         }
       }
+    }
     }
   }
 }
