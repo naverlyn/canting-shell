@@ -62,7 +62,7 @@ Rectangle {
     width: Math.max(13, countBadgeText.implicitWidth + 5)
     height: 13
     radius: height / 2
-    color: hostRoot.theme.accentPrimary
+    color: hostRoot.theme.accentRed
     anchors.top: notifIcon.top
     anchors.left: notifIcon.right
     anchors.topMargin: -2
