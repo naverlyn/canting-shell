@@ -638,6 +638,15 @@ SectionCard {
                     ]
                     onValueModified: (val) => NotificationService.setImageRadius(val)
                 }
+
+                RowDivider {}
+
+                SettingToggleRow {
+                    title: "Show Image Background"
+                    desc: "Display a soft tinted fill inside the image container"
+                    checked: NotificationService.imageShowBg
+                    onToggled: (val) => NotificationService.setImageShowBg(val)
+                }
             }
 
             // =================================================================

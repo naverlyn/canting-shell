@@ -86,6 +86,7 @@ Singleton {
     property string imagePosition: "right" // "right" | "left" | "banner"
     property int imageSize: 44
     property int imageRadius: 10
+    property bool imageShowBg: true
 
     // Action Buttons Block ("buttons")
     property string buttonStyle: "pill" // "pill" | "fill" | "ghost"
@@ -649,6 +650,14 @@ Singleton {
         }
     }
 
+    function setImageShowBg(val) {
+        const b = Boolean(val);
+        if (root.imageShowBg !== b) {
+            root.imageShowBg = b;
+            root.saveConfig();
+        }
+    }
+
     function setButtonStyle(style) {
         const valid = ["pill", "fill", "ghost"];
         const clean = String(style || "pill").toLowerCase();
@@ -885,6 +894,7 @@ Singleton {
         root.imagePosition = "right";
         root.imageSize = 44;
         root.imageRadius = 10;
+        root.imageShowBg = true;
 
         root.buttonStyle = "pill";
         root.buttonHeight = 28;
@@ -937,6 +947,7 @@ Singleton {
             imagePosition: root.imagePosition,
             imageSize: root.imageSize,
             imageRadius: root.imageRadius,
+            imageShowBg: root.imageShowBg,
             buttonStyle: root.buttonStyle,
             buttonHeight: root.buttonHeight,
             buttonRadius: root.buttonRadius,
@@ -1033,6 +1044,7 @@ Singleton {
         }
         if (cfg.imageSize !== undefined) root.imageSize = Math.max(28, Math.min(110, Math.round(Number(cfg.imageSize) || 44)));
         if (cfg.imageRadius !== undefined) root.imageRadius = Math.max(0, Math.min(48, Math.round(isNaN(Number(cfg.imageRadius)) ? 10 : Number(cfg.imageRadius))));
+        if (cfg.imageShowBg !== undefined) root.imageShowBg = Boolean(cfg.imageShowBg);
 
         if (cfg.buttonStyle !== undefined) {
             const bs = String(cfg.buttonStyle).toLowerCase();

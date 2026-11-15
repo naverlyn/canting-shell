@@ -572,7 +572,7 @@ Rectangle {
                 Layout.alignment: Qt.AlignTop
                 radius: NotificationService.imageRadius
                 antialiasing: true
-                color: Qt.alpha(notifCard.urgencyColor, 0.14)
+                color: NotificationService.imageShowBg ? Qt.alpha(notifCard.urgencyColor, 0.14) : "transparent"
                 border.color: Qt.alpha(notifCard.urgencyColor, 0.3)
                 border.width: 1
                 visible: parent.showThumb
@@ -634,7 +634,7 @@ Rectangle {
             height: implicitHeight
             radius: NotificationService.imageRadius
             antialiasing: true
-            color: Qt.alpha(notifCard.urgencyColor, 0.14)
+            color: NotificationService.imageShowBg ? Qt.alpha(notifCard.urgencyColor, 0.14) : "transparent"
             border.color: Qt.alpha(notifCard.urgencyColor, 0.3)
             border.width: 1
             visible: showThumb

@@ -41,10 +41,35 @@ PanelWindow {
     focusable: true
     color: "transparent"
 
-    Component.onCompleted: searchInput.forceActiveFocus()
+    property bool closing: false
+
+    function requestClose() {
+        if (root.closing) return;
+        root.closing = true;
+        openAnim.stop();
+        closeAnim.start();
+    }
+
+    Component.onCompleted: {
+        openAnim.start();
+        Qt.callLater(() => searchInput.forceActiveFocus());
+    }
 
     onVisibleChanged: {
         if (!visible) root.overlayClosed();
+    }
+
+    ParallelAnimation {
+        id: openAnim
+        NumberAnimation { target: card; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+        NumberAnimation { target: card; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+    }
+
+    ParallelAnimation {
+        id: closeAnim
+        NumberAnimation { target: card; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+        NumberAnimation { target: card; property: "scale"; to: 0.97; duration: 110; easing.type: Easing.InCubic }
+        onFinished: root.visible = false
     }
 
     WlrLayershell.layer: WlrLayer.Overlay
@@ -62,7 +87,7 @@ PanelWindow {
     // Undimmed transparent backdrop
     MouseArea {
         anchors.fill: parent
-        onClicked: root.visible = false
+        onClicked: root.requestClose()
     }
 
     Rectangle {
@@ -75,6 +100,8 @@ PanelWindow {
         border.color: root.theme.bgBorder
         border.width: 1
         clip: true
+        opacity: 0.0
+        scale: 0.96
 
         // Absorb clicks inside the card
         MouseArea { anchors.fill: parent }
@@ -157,7 +184,7 @@ PanelWindow {
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.visible = false
+                            onClicked: root.requestClose()
                         }
 
                         Text {
@@ -215,7 +242,7 @@ PanelWindow {
                                 if (searchInput.text !== "") {
                                     searchInput.text = "";
                                 } else {
-                                    root.visible = false;
+                                    root.requestClose();
                                 }
                             }
 

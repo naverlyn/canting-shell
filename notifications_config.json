@@ -10,9 +10,9 @@
     "closeBtn"
   ],
   "contentBlocks": [
-    "image",
     "title",
-    "body"
+    "body",
+    "image"
   ],
   "footerBlocks": [
     "buttons",
@@ -45,6 +45,7 @@
   "imagePosition": "left",
   "imageSize": 56,
   "imageRadius": 48,
+  "imageShowBg": false,
   "buttonStyle": "fill",
   "buttonHeight": 28,
   "buttonRadius": 18,

@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import "Components"
 
 Scope {
     id: root
@@ -19,6 +20,10 @@ Scope {
         target: "clipboard"
 
         function toggle() {
+            if (root.panelVisible && clipLoader.item) {
+                clipLoader.item.requestClose();
+                return;
+            }
             root.panelVisible = !root.panelVisible;
             if (root.panelVisible) {
                 if (ClipboardConfig.clearSearchOnClose) {
@@ -43,11 +48,16 @@ Scope {
         }
 
         function close() {
-            root.panelVisible = false;
+            if (clipLoader.item) {
+                clipLoader.item.requestClose();
+            } else {
+                root.panelVisible = false;
+            }
         }
     }
 
     Loader {
+        id: clipLoader
         active: root.panelVisible
         sourceComponent: Component {
     PanelWindow {
@@ -56,8 +66,18 @@ Scope {
         focusable: true
         color: "transparent"
 
+        property bool closing: false
+
+        function requestClose() {
+            if (clipboardPanel.closing) return;
+            clipboardPanel.closing = true;
+            openAnim.stop();
+            closeAnim.start();
+        }
+
         Component.onCompleted: {
-            searchInput.forceActiveFocus();
+            openAnim.start();
+            Qt.callLater(() => searchInput.forceActiveFocus());
         }
 
         Component.onDestruction: {
@@ -72,6 +92,19 @@ Scope {
             }
         }
 
+        ParallelAnimation {
+            id: openAnim
+            NumberAnimation { target: mainCard; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+            NumberAnimation { target: mainCard; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+        }
+
+        ParallelAnimation {
+            id: closeAnim
+            NumberAnimation { target: mainCard; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+            NumberAnimation { target: mainCard; property: "scale"; to: 0.97; duration: 110; easing.type: Easing.InCubic }
+            onFinished: clipboardPanel.visible = false
+        }
+
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
         WlrLayershell.namespace: "quickshell-clipboard"
@@ -84,16 +117,11 @@ Scope {
             right: true
         }
 
-        // Dark overlay backdrop
+        // Undimmed transparent backdrop
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.ArrowCursor
-            onClicked: clipboardPanel.visible = false
-
-            Rectangle {
-                anchors.fill: parent
-                color: root.theme.bgOverlay ?? Qt.rgba(0, 0, 0, 0.65)
-            }
+            onClicked: clipboardPanel.requestClose()
         }
 
         // Main modal dialog container
@@ -107,6 +135,8 @@ Scope {
             border.color: root.theme.bgBorder
             border.width: 1
             clip: true
+            opacity: 0.0
+            scale: 0.96
 
             Behavior on color { ColorAnimation { duration: 150 } }
             Behavior on border.color { ColorAnimation { duration: 150 } }
@@ -278,7 +308,7 @@ Scope {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: clipboardPanel.visible = false
+                            onClicked: clipboardPanel.requestClose()
                         }
                     }
                 }
@@ -340,14 +370,14 @@ Scope {
                                 if (ClipboardService.filteredItems.length > 0 && root.selectedIndex >= 0 && root.selectedIndex < ClipboardService.filteredItems.length) {
                                     const it = ClipboardService.filteredItems[root.selectedIndex];
                                     ClipboardService.copyItem(it.id, it.preview);
-                                    if (ClipboardConfig.closeOnCopy) clipboardPanel.visible = false;
+                                    if (ClipboardConfig.closeOnCopy) clipboardPanel.requestClose();
                                 }
                             }
                             Keys.onEnterPressed: {
                                 if (ClipboardService.filteredItems.length > 0 && root.selectedIndex >= 0 && root.selectedIndex < ClipboardService.filteredItems.length) {
                                     const it = ClipboardService.filteredItems[root.selectedIndex];
                                     ClipboardService.copyItem(it.id, it.preview);
-                                    if (ClipboardConfig.closeOnCopy) clipboardPanel.visible = false;
+                                    if (ClipboardConfig.closeOnCopy) clipboardPanel.requestClose();
                                 }
                             }
                             Keys.onDeletePressed: {
@@ -360,7 +390,7 @@ Scope {
                                 if (text !== "") {
                                     text = "";
                                 } else {
-                                    clipboardPanel.visible = false;
+                                    clipboardPanel.requestClose();
                                 }
                             }
                         }
@@ -528,303 +558,85 @@ Scope {
                             }
                         }
 
-                        delegate: Rectangle {
-                            id: itemCard
-                            required property var modelData
-                            required property int index
+                        remove: Transition {
+                            NumberAnimation { property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+                        }
+                        displaced: Transition {
+                            NumberAnimation { properties: "x,y"; duration: 150; easing.type: Easing.OutCubic }
+                        }
 
-                            readonly property bool isSelected: root.selectedIndex === itemCard.index
-                            readonly property string category: modelData.category || "text"
-                            readonly property bool isImage: modelData.isBinary || category === "image"
-                            readonly property bool isColor: category === "color"
-                            readonly property bool isHovered: cardMouse.containsMouse || copyBtnMouse.containsMouse || delBtnMouse.containsMouse
-
+                        delegate: ClipboardItemCard {
                             width: clipListView.width - (clipScrollBar.visible ? 10 : 0)
-                            height: isImage ? 76 : (isColor ? 54 : (previewTextItem.lineCount > 1 ? 64 : 52))
-                            radius: 8
+                            theme: root.theme
+                            font: root.font
+                            isSelected: root.selectedIndex === index
+                            panelVisible: clipboardPanel.visible
 
-                            color: isSelected
-                                ? (root.theme.bgSelected ?? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.18))
-                                : (itemCard.isHovered ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.08) : root.theme.bgSurface)
-                            border.color: isSelected ? root.theme.accentPrimary : (itemCard.isHovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.45) : root.theme.bgBorder)
-                            border.width: isSelected ? 1.5 : 1
-
-                            Behavior on color { ColorAnimation { duration: 150; easing.type: Easing.OutQuad } }
-                            Behavior on border.color { ColorAnimation { duration: 150; easing.type: Easing.OutQuad } }
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 12
-                                anchors.rightMargin: 12
-                                spacing: 12
-
-                                // Left Visual: Image Thumbnail / Color Circle (only when present)
-                                Item {
-                                    visible: itemCard.isImage || itemCard.isColor
-                                    width: itemCard.isImage ? 64 : 28
-                                    height: itemCard.isImage ? 56 : 28
-                                    Layout.alignment: Qt.AlignVCenter
-
-                                    // Image Thumbnail
-                                    Rectangle {
-                                        visible: itemCard.isImage
-                                        anchors.fill: parent
-                                        radius: 6
-                                        color: Qt.rgba(0, 0, 0, 0.25)
-                                        border.color: root.theme.bgBorder
-                                        border.width: 1
-                                        clip: true
-
-                                        Image {
-                                            anchors.fill: parent
-                                            source: (clipboardPanel.visible && itemCard.modelData.thumbPath) ? ("file://" + itemCard.modelData.thumbPath) : ""
-                                            sourceSize.width: 128
-                                            sourceSize.height: 112
-                                            cache: false
-                                            fillMode: Image.PreserveAspectCrop
-                                            asynchronous: true
-                                            smooth: true
-                                        }
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "IMAGE"
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: true
-                                            color: root.theme.textMuted
-                                            visible: !itemCard.modelData.thumbPath
-                                        }
-                                    }
-
-                                    // Color Circle Swatch
-                                    Rectangle {
-                                        visible: itemCard.isColor
-                                        anchors.centerIn: parent
-                                        width: 28
-                                        height: 28
-                                        radius: 14
-                                        color: itemCard.modelData.preview.trim()
-                                        border.color: "#ffffff"
-                                        border.width: 1.5
-                                    }
-                                }
-
-                                // Center Content Info
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 3
-                                    Layout.alignment: Qt.AlignVCenter
-
-                                    // Top row: Category tag & Image Meta
-                                    RowLayout {
-                                        spacing: 6
-                                        visible: itemCard.isImage || itemCard.category === "link" || itemCard.category === "code" || itemCard.isColor
-
-                                        Text {
-                                            text: {
-                                                if (itemCard.isImage) return itemCard.modelData.imgMeta || "IMAGE";
-                                                if (itemCard.isColor) return "COLOR SWATCH";
-                                                if (itemCard.category === "link") return "LINK / URL";
-                                                if (itemCard.category === "code") return "CODE SNIPPET";
-                                                return "";
-                                            }
-                                            font.family: root.font
-                                            font.pixelSize: 9
-                                            font.bold: true
-                                            color: {
-                                                if (itemCard.category === "link") return root.theme.accentCyan;
-                                                if (itemCard.category === "code") return root.theme.accentPrimary;
-                                                return root.theme.textMuted;
-                                            }
-                                        }
-                                    }
-
-                                    // Preview Text
-                                    Text {
-                                        id: previewTextItem
-                                        Layout.fillWidth: true
-                                        text: itemCard.isImage ? (itemCard.modelData.imgMeta || "Image from clipboard") : itemCard.modelData.preview
-                                        font.family: (itemCard.category === "code" || itemCard.isColor) ? "monospace" : root.font
-                                        font.pixelSize: itemCard.category === "code" ? 11 : 12
-                                        font.bold: itemCard.isSelected
-                                        color: itemCard.category === "link"
-                                            ? root.theme.accentCyan
-                                            : (itemCard.isSelected ? root.theme.textPrimary : root.theme.textSecondary)
-                                        elide: Text.ElideRight
-                                        maximumLineCount: itemCard.isImage ? 1 : 2
-                                        wrapMode: Text.WrapAnywhere
-                                    }
-                                }
-
-                                // Right Action Buttons (visible on hover or when selected)
-                                RowLayout {
-                                    spacing: 6
-                                    opacity: (itemCard.isHovered || itemCard.isSelected) ? 1.0 : 0.0
-                                    Behavior on opacity { NumberAnimation { duration: 120 } }
-                                    Layout.alignment: Qt.AlignVCenter
-
-                                    // Copy Button
-                                    Rectangle {
-                                        implicitWidth: copyBtnLabel.implicitWidth + 16
-                                        height: 26
-                                        radius: 5
-                                        color: copyBtnMouse.containsMouse ? root.theme.accentPrimary : Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.22)
-                                        border.color: root.theme.accentPrimary
-                                        border.width: 1
-                                        Behavior on color { ColorAnimation { duration: 150; easing.type: Easing.OutQuad } }
-
-                                        Text {
-                                            id: copyBtnLabel
-                                            anchors.centerIn: parent
-                                            text: "Copy"
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: true
-                                            color: copyBtnMouse.containsMouse ? root.theme.bgBase : root.theme.accentPrimary
-                                        }
-
-                                        MouseArea {
-                                            id: copyBtnMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                ClipboardService.copyItem(itemCard.modelData.id, itemCard.modelData.preview);
-                                                if (ClipboardConfig.closeOnCopy) clipboardPanel.visible = false;
-                                            }
-                                        }
-                                    }
-
-                                    // Delete Button
-                                    Rectangle {
-                                        implicitWidth: delBtnLabel.implicitWidth + 14
-                                        height: 26
-                                        radius: 5
-                                        color: delBtnMouse.containsMouse ? (root.theme.accentRed ?? "#e05252") : Qt.rgba(1, 1, 1, 0.08)
-                                        border.color: delBtnMouse.containsMouse ? root.theme.accentRed : root.theme.bgBorder
-                                        border.width: 1
-                                        Behavior on color { ColorAnimation { duration: 150; easing.type: Easing.OutQuad } }
-
-                                        Text {
-                                            id: delBtnLabel
-                                            anchors.centerIn: parent
-                                            text: "Delete"
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: true
-                                            color: delBtnMouse.containsMouse ? "#ffffff" : root.theme.textMuted
-                                        }
-
-                                        MouseArea {
-                                            id: delBtnMouse
-                                            anchors.fill: parent
-                                            hoverEnabled: true
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                ClipboardService.deleteItem(itemCard.modelData.id);
-                                            }
-                                        }
-                                    }
-                                }
+                            onCardClicked: (idx, item) => {
+                                root.selectedIndex = idx;
+                                ClipboardService.copyItem(item.id, item.preview);
+                                if (ClipboardConfig.closeOnCopy) clipboardPanel.requestClose();
                             }
-
-                            // Click card to copy & close
-                            MouseArea {
-                                id: cardMouse
-                                anchors.fill: parent
-                                anchors.rightMargin: 130
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.selectedIndex = itemCard.index;
-                                    ClipboardService.copyItem(itemCard.modelData.id, itemCard.modelData.preview);
-                                    if (ClipboardConfig.closeOnCopy) clipboardPanel.visible = false;
-                                }
+                            onCopyClicked: item => {
+                                ClipboardService.copyItem(item.id, item.preview);
+                                if (ClipboardConfig.closeOnCopy) clipboardPanel.requestClose();
+                            }
+                            onDeleteClicked: item => {
+                                ClipboardService.deleteItem(item.id);
                             }
                         }
                     }
                 }
 
                 // Footer Status Bar & Shortcut Legend
-                RowLayout {
+                Rectangle {
                     Layout.fillWidth: true
-                    spacing: 12
+                    Layout.leftMargin: -18
+                    Layout.rightMargin: -18
+                    Layout.bottomMargin: -18
+                    height: 32
+                    color: root.theme.bgSurface
 
-                    Text {
-                        text: {
-                            if (ClipboardService.filteredItems.length === 0) return "No items";
-                            return `Item ${root.selectedIndex + 1} of ${ClipboardService.filteredItems.length}`;
-                        }
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textMuted
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    // Shortcut Legend Pills
                     RowLayout {
-                        spacing: 8
+                        anchors.fill: parent
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 16
+                        spacing: 16
 
-                        // Enter Copy
-                        RowLayout {
+                        Row {
                             spacing: 4
-                            Rectangle {
-                                height: 18
-                                implicitWidth: k1.implicitWidth + 8
-                                radius: 4
-                                color: Qt.rgba(1, 1, 1, 0.08)
-                                border.color: root.theme.bgBorder
-                                border.width: 1
-                                Text { id: k1; anchors.centerIn: parent; text: "↵ Enter"; font.family: root.font; font.pixelSize: 9; color: root.theme.textSecondary; }
-                            }
-                            Text { text: "Copy"; font.family: root.font; font.pixelSize: 10; color: root.theme.textMuted; }
+                            Text { text: "↵ Enter"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                            Text { text: "copy"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
                         }
 
-                        // Del Delete
-                        RowLayout {
+                        Row {
                             spacing: 4
-                            Rectangle {
-                                height: 18
-                                implicitWidth: k2.implicitWidth + 8
-                                radius: 4
-                                color: Qt.rgba(1, 1, 1, 0.08)
-                                border.color: root.theme.bgBorder
-                                border.width: 1
-                                Text { id: k2; anchors.centerIn: parent; text: "Del"; font.family: root.font; font.pixelSize: 9; color: root.theme.textSecondary; }
-                            }
-                            Text { text: "Delete"; font.family: root.font; font.pixelSize: 10; color: root.theme.textMuted; }
+                            Text { text: "Del"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                            Text { text: "delete"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
                         }
 
-                        // Esc Close
-                        RowLayout {
+                        Row {
                             spacing: 4
-                            Rectangle {
-                                height: 18
-                                implicitWidth: k3.implicitWidth + 8
-                                radius: 4
-                                color: Qt.rgba(1, 1, 1, 0.08)
-                                border.color: root.theme.bgBorder
-                                border.width: 1
-                                Text { id: k3; anchors.centerIn: parent; text: "Esc"; font.family: root.font; font.pixelSize: 9; color: root.theme.textSecondary; }
-                            }
-                            Text { text: "Close"; font.family: root.font; font.pixelSize: 10; color: root.theme.textMuted; }
+                            Text { text: "↑↓"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                            Text { text: "navigate"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
                         }
 
-                        // Up Down Navigate
-                        RowLayout {
+                        Row {
                             spacing: 4
-                            Rectangle {
-                                height: 18
-                                implicitWidth: k4.implicitWidth + 8
-                                radius: 4
-                                color: Qt.rgba(1, 1, 1, 0.08)
-                                border.color: root.theme.bgBorder
-                                border.width: 1
-                                Text { id: k4; anchors.centerIn: parent; text: "↑ ↓"; font.family: root.font; font.pixelSize: 9; color: root.theme.textSecondary; }
+                            Text { text: "esc"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                            Text { text: "close"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        Text {
+                            text: {
+                                if (ClipboardService.filteredItems.length === 0) return "No items";
+                                return `Item ${root.selectedIndex + 1} of ${ClipboardService.filteredItems.length}`;
                             }
-                            Text { text: "Navigate"; font.family: root.font; font.pixelSize: 10; color: root.theme.textMuted; }
+                            font.family: root.font
+                            font.pixelSize: 10
+                            color: root.theme.textMuted
                         }
                     }
                 }

@@ -41,12 +41,37 @@ PanelWindow {
   focusable: true
   color: "transparent"
 
-  Component.onCompleted: searchBar.initAndFocus()
+  property bool closing: false
+
+  function requestClose() {
+    if (root.closing) return;
+    root.closing = true;
+    openAnim.stop();
+    closeAnim.start();
+  }
+
+  Component.onCompleted: {
+    openAnim.start();
+    Qt.callLater(() => searchBar.initAndFocus());
+  }
 
   onVisibleChanged: {
     if (!visible) {
       root.overlayClosed();
     }
+  }
+
+  ParallelAnimation {
+    id: openAnim
+    NumberAnimation { target: launcherBox; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+    NumberAnimation { target: launcherBox; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+  }
+
+  ParallelAnimation {
+    id: closeAnim
+    NumberAnimation { target: launcherBox; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+    NumberAnimation { target: launcherBox; property: "scale"; to: 0.97; duration: 110; easing.type: Easing.InCubic }
+    onFinished: root.visible = false
   }
 
   WlrLayershell.layer: WlrLayer.Overlay
@@ -65,7 +90,7 @@ PanelWindow {
   // Undimmed transparent backdrop (dismisses on click outside)
   MouseArea {
     anchors.fill: parent
-    onClicked: root.visible = false
+    onClicked: root.requestClose()
   }
 
   // Centered Spotlight Runner Box
@@ -80,6 +105,8 @@ PanelWindow {
     border.color: root.theme.bgBorder
     border.width: 1
     clip: true
+    opacity: 0.0
+    scale: 0.96
 
     Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
     Behavior on y { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }

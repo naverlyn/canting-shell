@@ -42,14 +42,41 @@ PanelWindow {
         right: true
     }
 
+    property bool closing: false
+
+    function requestClose() {
+        if (!root.visible || root.closing) return;
+        root.closing = true;
+        openAnim.stop();
+        closeAnim.start();
+    }
+
+    ParallelAnimation {
+        id: openAnim
+        NumberAnimation { target: wifiMainRect; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+        NumberAnimation { target: wifiMainRect; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+    }
+
+    ParallelAnimation {
+        id: closeAnim
+        NumberAnimation { target: wifiMainRect; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+        NumberAnimation { target: wifiMainRect; property: "scale"; to: 0.97; duration: 110; easing.type: Easing.InCubic }
+        onFinished: {
+            root.closing = false;
+            root.visible = false;
+        }
+    }
+
     // Reset state and grab keyboard focus when opened
     onVisibleChanged: {
         if (visible) {
+            root.closing = false;
             selectedIndex = 0;
             expandedSsid = "";
             activeSsidProc.running = true;
             scanWifi();
-            networkListView.forceActiveFocus();
+            openAnim.start();
+            Qt.callLater(() => networkListView.forceActiveFocus());
         } else {
             networkList = [];
             expandedSsid = "";
@@ -177,15 +204,10 @@ PanelWindow {
         disconnectWifiProc.running = true;
     }
 
-    // Dark overlay backdrop
+    // Undimmed transparent backdrop
     MouseArea {
         anchors.fill: parent
-        onClicked: root.visible = false
-
-        Rectangle {
-            anchors.fill: parent
-            color: root.theme.bgOverlay
-        }
+        onClicked: root.requestClose()
     }
 
     // Centered selection box
@@ -198,6 +220,9 @@ PanelWindow {
         color: root.theme.bgBase
         border.color: root.theme.bgBorder
         border.width: 1
+        clip: true
+        opacity: 0.0
+        scale: 0.96
 
         // Keyboard navigation
         Keys.onPressed: (event) => {
@@ -227,17 +252,9 @@ PanelWindow {
                 }
             } else if (event.key === Qt.Key_Escape) {
                 event.accepted = true;
-                root.visible = false;
+                root.requestClose();
             }
         }
-
-        // Slide in from right to left animation
-        transform: Translate {
-            x: root.visible ? 0 : 40
-            Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-        }
-        opacity: root.visible ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 200 } }
 
         ColumnLayout {
             anchors.fill: parent
@@ -683,66 +700,40 @@ PanelWindow {
             }
 
             // Footer Hints
-            RowLayout {
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.topMargin: 4
-                spacing: 16
+                Layout.leftMargin: -16
+                Layout.rightMargin: -16
+                Layout.bottomMargin: -16
+                height: 32
+                color: root.theme.bgSurface
 
-                Row {
-                    spacing: 4
-                    Rectangle {
-                        width: hintUp.width + 8; height: 18; radius: 4
-                        color: root.theme.bgSurface
-                        Text { 
-                            id: hintUp; anchors.centerIn: parent; text: "↑↓"
-                            color: root.theme.textMuted
-                            font.pixelSize: 10; font.family: root.font 
-                        }
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 16
+                    anchors.rightMargin: 16
+                    spacing: 16
+
+                    Row {
+                        spacing: 4
+                        Text { text: "↑↓"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: "navigate"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
                     }
-                    Text { 
-                        text: "navigate"; 
-                        color: root.theme.textMuted
-                        font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter 
+
+                    Row {
+                        spacing: 4
+                        Text { text: "⏎"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: "select"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
                     }
+
+                    Row {
+                        spacing: 4
+                        Text { text: "esc"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                        Text { text: "close"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                    }
+
+                    Item { Layout.fillWidth: true }
                 }
-
-                Row {
-                    spacing: 4
-                    Rectangle {
-                        width: hintEnter.width + 8; height: 18; radius: 4
-                        color: root.theme.bgSurface
-                        Text { 
-                            id: hintEnter; anchors.centerIn: parent; text: "⏎"
-                            color: root.theme.textMuted
-                            font.pixelSize: 10; font.family: root.font 
-                        }
-                    }
-                    Text { 
-                        text: "select"
-                        color: root.theme.textMuted
-                        font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter 
-                    }
-                }
-
-                Row {
-                    spacing: 4
-                    Rectangle {
-                        width: hintEsc.width + 8; height: 18; radius: 4
-                        color: root.theme.bgSurface
-                        Text { 
-                            id: hintEsc; anchors.centerIn: parent; text: "esc"
-                            color: root.theme.textMuted
-                            font.pixelSize: 10; font.family: root.font 
-                        }
-                    }
-                    Text { 
-                        text: "close"
-                        color: root.theme.textMuted
-                        font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter 
-                    }
-                }
-
-                Item { Layout.fillWidth: true }
             }
         }
     }

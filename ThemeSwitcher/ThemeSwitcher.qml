@@ -73,13 +73,25 @@ Scope {
         focusable: true
         color: "transparent"
 
+        property bool closing: false
+
+        function requestClose() {
+            if (themePanel.closing) return;
+            themePanel.closing = true;
+            openAnim.stop();
+            closeAnim.start();
+        }
+
         Component.onCompleted: {
-            if (root.theme.wallpaperMode) {
-                paletteView.forceActiveFocus();
-            } else {
-                themeList.positionViewAtIndex(root.selectedIndex, ListView.Center);
-                searchInput.forceActiveFocus();
-            }
+            openAnim.start();
+            Qt.callLater(() => {
+                if (root.theme.wallpaperMode) {
+                    paletteView.forceActiveFocus();
+                } else {
+                    themeList.positionViewAtIndex(root.selectedIndex, ListView.Center);
+                    searchInput.forceActiveFocus();
+                }
+            });
         }
 
         onVisibleChanged: {
@@ -88,6 +100,19 @@ Scope {
                 root.panelVisible = false;
                 Qt.callLater(() => gc());
             }
+        }
+
+        ParallelAnimation {
+            id: openAnim
+            NumberAnimation { target: themeBox; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+            NumberAnimation { target: themeBox; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+        }
+
+        ParallelAnimation {
+            id: closeAnim
+            NumberAnimation { target: themeBox; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+            NumberAnimation { target: themeBox; property: "scale"; to: 0.97; duration: 110; easing.type: Easing.InCubic }
+            onFinished: themePanel.visible = false
         }
 
         WlrLayershell.layer: WlrLayer.Overlay
@@ -103,17 +128,12 @@ Scope {
             right: true
         }
 
-        // Dark overlay backdrop
+        // Undimmed transparent backdrop
         MouseArea {
             anchors.fill: parent
             onClicked: {
                 root.theme.previewIndex = -1;
-                themePanel.visible = false;
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: root.theme.bgOverlay
+                themePanel.requestClose();
             }
         }
 
@@ -127,6 +147,9 @@ Scope {
             color: root.theme.bgBase
             border.color: root.theme.bgBorder
             border.width: 1
+            clip: true
+            opacity: 0.0
+            scale: 0.96
 
             Behavior on color { ColorAnimation { duration: 150 } }
             Behavior on border.color { ColorAnimation { duration: 150 } }
@@ -629,43 +652,42 @@ Scope {
                 }
 
                 // Footer hints
-                RowLayout {
+                Rectangle {
                     Layout.fillWidth: true
-                    spacing: 16
+                    Layout.leftMargin: -16
+                    Layout.rightMargin: -16
+                    Layout.bottomMargin: -16
+                    height: 32
+                    color: root.theme.bgSurface
 
-                    Row {
-                        spacing: 4
-                        visible: !root.theme.wallpaperMode
-                        Rectangle {
-                            width: hintNav.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                            Text { id: hintNav; anchors.centerIn: parent; text: "↑↓"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 16
+                        anchors.rightMargin: 16
+                        spacing: 16
+
+                        Row {
+                            spacing: 4
+                            visible: !root.theme.wallpaperMode
+                            Text { text: "↑↓"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                            Text { text: "navigate"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
                         }
-                        Text { text: "navigate"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-                    }
 
-                    Row {
-                        spacing: 4
-                        visible: !root.theme.wallpaperMode
-                        Rectangle {
-                            width: hintEnter.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                            Text { id: hintEnter; anchors.centerIn: parent; text: "⏎"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
+                        Row {
+                            spacing: 4
+                            visible: !root.theme.wallpaperMode
+                            Text { text: "⏎"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                            Text { text: "select"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
                         }
-                        Text { text: "select"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-                    }
 
-                    Row {
-                        spacing: 4
-                        Rectangle {
-                            width: hintEsc.width + 8; height: 18; radius: 4; color: root.theme.bgSurface
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                            Text { id: hintEsc; anchors.centerIn: parent; text: "esc"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font }
+                        Row {
+                            spacing: 4
+                            Text { text: "esc"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
+                            Text { text: "close"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
                         }
-                        Text { text: "close"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-                    }
 
-                    Item { Layout.fillWidth: true }
+                        Item { Layout.fillWidth: true }
+                    }
                 }
             }
         }

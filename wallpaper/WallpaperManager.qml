@@ -76,8 +76,18 @@ Scope {
     focusable: true
     color: "transparent"
 
+    property bool closing: false
+
+    function requestClose() {
+      if (wallpaperPanel.closing) return;
+      wallpaperPanel.closing = true;
+      openAnim.stop();
+      closeAnim.start();
+    }
+
     Component.onCompleted: {
-      pickerGridSection.searchInput.forceActiveFocus();
+      openAnim.start();
+      Qt.callLater(() => pickerGridSection.searchInput.forceActiveFocus());
     }
 
     onVisibleChanged: {
@@ -87,6 +97,19 @@ Scope {
         root.panelVisible = false;
         Qt.callLater(() => gc());
       }
+    }
+
+    ParallelAnimation {
+      id: openAnim
+      NumberAnimation { target: wallpaperCard; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+      NumberAnimation { target: wallpaperCard; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+    }
+
+    ParallelAnimation {
+      id: closeAnim
+      NumberAnimation { target: wallpaperCard; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+      NumberAnimation { target: wallpaperCard; property: "scale"; to: 0.97; duration: 110; easing.type: Easing.InCubic }
+      onFinished: wallpaperPanel.visible = false
     }
 
     WlrLayershell.layer: WlrLayer.Overlay
@@ -102,25 +125,21 @@ Scope {
       right: true
     }
 
-    // Dark overlay backdrop
+    // Undimmed transparent backdrop
     MouseArea {
       anchors.fill: parent
       onClicked: {
         if (root.previewPath !== "") {
           root.previewPath = "";
         } else {
-          wallpaperPanel.visible = false;
+          wallpaperPanel.requestClose();
         }
-      }
-
-      Rectangle {
-        anchors.fill: parent
-        color: root.theme.bgOverlay
       }
     }
 
     // Main wallpaper box
     Rectangle {
+      id: wallpaperCard
       anchors.centerIn: parent
       width: 840
       height: 640
@@ -128,6 +147,9 @@ Scope {
       color: root.theme.bgBase
       border.color: root.theme.bgBorder
       border.width: 1
+      clip: true
+      opacity: 0.0
+      scale: 0.96
 
       Behavior on color { ColorAnimation { duration: 150 } }
       Behavior on border.color { ColorAnimation { duration: 150 } }

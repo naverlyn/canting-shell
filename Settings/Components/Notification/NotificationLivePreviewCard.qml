@@ -727,7 +727,7 @@ SectionCard {
                         Layout.preferredHeight: NotificationService.imageSize
                         Layout.alignment: Qt.AlignTop
                         radius: NotificationService.imageRadius
-                        color: Qt.alpha(simCard.urgencyCol, 0.15)
+                        color: NotificationService.imageShowBg ? Qt.alpha(simCard.urgencyCol, 0.15) : "transparent"
                         border.color: root.selectedInspectorBlock === "image"
                             ? root.theme.accentPrimary
                             : Qt.alpha(simCard.urgencyCol, 0.35)
@@ -759,7 +759,7 @@ SectionCard {
                     implicitHeight: isBanner ? Math.max(56, NotificationService.imageSize) : NotificationService.imageSize
                     height: implicitHeight
                     radius: NotificationService.imageRadius
-                    color: Qt.alpha(simCard.urgencyCol, 0.15)
+                    color: NotificationService.imageShowBg ? Qt.alpha(simCard.urgencyCol, 0.15) : "transparent"
                     border.color: root.selectedInspectorBlock === "image"
                         ? root.theme.accentPrimary
                         : Qt.alpha(simCard.urgencyCol, 0.35)
