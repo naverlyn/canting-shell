@@ -544,25 +544,28 @@ PanelWindow {
                                         }
 
                                         // Card Component Loader
-                                        Loader {
+                                        ControlCenterCardLoader {
                                             id: cardLoader
                                             width: cardWrapper.cellWidth
-                                            active: true
-                                            sourceComponent: {
-                                                switch (cardWrapper.cardId) {
-                                                case "connectivity": return connectivityComp;
-                                                case "quickSettings": return quickSettingsComp;
-                                                case "quickSettings2": return quickSettings2Comp;
-                                                case "brightness": return brightnessComp;
-                                                case "audio": return audioComp;
-                                                case "media": return mediaComp;
-                                                case "systemInfo": return systemInfoComp;
-                                                case "cava": return cavaComp;
-                                                case "weather": return weatherComp;
-                                                case "quickApps": return quickAppsComp;
-                                                case "notifications": return notificationsComp;
-                                                default: return null;
+                                            cardId: cardWrapper.cardId
+                                            theme: controlCenter.theme
+                                            font: controlCenter.font
+                                            onCloseParentRequested: controlCenter.visible = false
+                                            onOpenWifiRequested: {
+                                                controlCenter.visible = false;
+                                                if (!wifiModalLoader.active) {
+                                                    wifiModalLoader.active = true;
+                                                } else if (wifiModalLoader.item) {
+                                                    wifiModalLoader.item.visible = true;
                                                 }
+                                            }
+                                            onQuickSettingsReady: ref => {
+                                                if (cardWrapper.cardId === "connectivity" || !controlCenter.quickSettingsRef) {
+                                                    controlCenter.quickSettingsRef = ref;
+                                                }
+                                            }
+                                            onBrightnessSliderReady: ref => {
+                                                controlCenter.brightnessSliderRef = ref;
                                             }
                                         }
                                     }
@@ -680,138 +683,6 @@ PanelWindow {
             id: cardDragGhost
             hostCenter: controlCenter
             hostMainRect: ccMainRect
-        }
-    }
-
-    // Card Component Templates
-    Component {
-        id: connectivityComp
-        QuickSettingsGrid {
-            id: connGrid
-            mode: "connectivity"
-            theme: controlCenter.theme
-            font: controlCenter.font
-            onCloseParentRequested: controlCenter.visible = false
-            onOpenWifiRequested: {
-                controlCenter.visible = false;
-                if (!wifiModalLoader.active) {
-                    wifiModalLoader.active = true;
-                } else if (wifiModalLoader.item) {
-                    wifiModalLoader.item.visible = true;
-                }
-            }
-            Component.onCompleted: controlCenter.quickSettingsRef = connGrid
-        }
-    }
-
-    Component {
-        id: quickSettingsComp
-        QuickSettingsGrid {
-            id: qsGrid
-            mode: "tiles"
-            theme: controlCenter.theme
-            font: controlCenter.font
-            onCloseParentRequested: controlCenter.visible = false
-            onOpenWifiRequested: {
-                controlCenter.visible = false;
-                if (!wifiModalLoader.active) {
-                    wifiModalLoader.active = true;
-                } else if (wifiModalLoader.item) {
-                    wifiModalLoader.item.visible = true;
-                }
-            }
-            Component.onCompleted: {
-                if (!controlCenter.quickSettingsRef) controlCenter.quickSettingsRef = qsGrid;
-            }
-        }
-    }
-
-    Component {
-        id: quickSettings2Comp
-        QuickSettingsGrid {
-            id: qs2Grid
-            mode: "tiles2"
-            theme: controlCenter.theme
-            font: controlCenter.font
-            onCloseParentRequested: controlCenter.visible = false
-            onOpenWifiRequested: {
-                controlCenter.visible = false;
-                if (!wifiModalLoader.active) {
-                    wifiModalLoader.active = true;
-                } else if (wifiModalLoader.item) {
-                    wifiModalLoader.item.visible = true;
-                }
-            }
-            Component.onCompleted: {
-                if (!controlCenter.quickSettingsRef) controlCenter.quickSettingsRef = qs2Grid;
-            }
-        }
-    }
-
-    Component {
-        id: brightnessComp
-        BrightnessSlider {
-            id: bSlider
-            theme: controlCenter.theme
-            font: controlCenter.font
-            Component.onCompleted: controlCenter.brightnessSliderRef = bSlider
-        }
-    }
-
-    Component {
-        id: audioComp
-        AudioSection {
-            theme: controlCenter.theme
-            font: controlCenter.font
-        }
-    }
-
-    Component {
-        id: mediaComp
-        MediaControl {
-            theme: controlCenter.theme
-            font: controlCenter.font
-        }
-    }
-
-    Component {
-        id: systemInfoComp
-        SystemInfoCard {
-            theme: controlCenter.theme
-            font: controlCenter.font
-        }
-    }
-
-    Component {
-        id: cavaComp
-        CavaCard {
-            theme: controlCenter.theme
-            font: controlCenter.font
-        }
-    }
-
-    Component {
-        id: weatherComp
-        WeatherCard {
-            theme: controlCenter.theme
-            font: controlCenter.font
-        }
-    }
-
-    Component {
-        id: quickAppsComp
-        QuickAppsCard {
-            theme: controlCenter.theme
-            font: controlCenter.font
-            onCloseParentRequested: controlCenter.visible = false
-        }
-    }
-
-    Component {
-        id: notificationsComp
-        NotificationsCard {
-            theme: controlCenter.theme
-            font: controlCenter.font
         }
     }
 
