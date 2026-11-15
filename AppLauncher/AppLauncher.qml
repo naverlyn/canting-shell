@@ -1,11 +1,10 @@
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
-import Quickshell.Widgets
+import Quickshell.Hyprland
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
 import "../utils/AppFrecencyUtils.js" as AppFrecencyUtils
+import "LauncherModes.js" as LauncherModes
+import "Components"
 
 Scope {
   id: root
@@ -17,16 +16,73 @@ Scope {
   property bool panelVisible: false
   property string searchQuery: ""
   property string commandQuery: ""
+  property string copyFeedbackText: ""
 
   // Stores { "<appId>": { count: Number, lastUsed: Number } }
   property var appUsage: ({})
   readonly property string usageCachePath: "$HOME/.cache/qs_app_usage.json"
 
-  readonly property bool isExpanded: root.commandMode
-    ? (root.commandQuery.trim().length > 0)
-    : (root.searchQuery.trim().length > 0 || root.userExpanded)
+  // Stores most-recent shell commands (newest first)
+  property var commandHistory: []
+  readonly property string cmdHistoryPath: "$HOME/.cache/qs_cmd_history.json"
+
+  readonly property string prefixMode: root.commandMode
+    ? "command"
+    : LauncherModes.detectPrefixMode(root.searchQuery)
+
+  readonly property var smartResults: {
+    if (!root.panelVisible || root.commandMode) return [];
+    if (root.prefixMode === "calc") {
+      const expr = LauncherModes.stripPrefix(root.searchQuery);
+      const res = LauncherModes.evalMath(expr);
+      return [{
+        kind: "calc",
+        ok: res.ok,
+        title: res.ok ? ("= " + res.result) : "Calculator",
+        subtitle: res.hint,
+        value: res.result,
+        glyph: "󰃬"
+      }];
+    }
+    if (root.prefixMode === "window") {
+      const q = LauncherModes.stripPrefix(root.searchQuery).toLowerCase();
+      return [...Hyprland.toplevels.values]
+        .filter(t => {
+          if (!t || !t.address) return false;
+          if (q === "") return true;
+          const title = (t.title || "").toLowerCase();
+          const cls = ((t.lastIpcObject && (t.lastIpcObject.class || t.lastIpcObject.initialClass)) || "").toLowerCase();
+          return title.indexOf(q) !== -1 || cls.indexOf(q) !== -1;
+        })
+        .sort((a, b) => {
+          const wsA = a.workspace ? a.workspace.id : 999;
+          const wsB = b.workspace ? b.workspace.id : 999;
+          if (wsA !== wsB) return wsA - wsB;
+          return (a.title || "").localeCompare(b.title || "");
+        })
+        .map(t => {
+          const cls = (t.lastIpcObject && (t.lastIpcObject.class || t.lastIpcObject.initialClass)) || "";
+          const de = cls !== "" ? DesktopEntries.heuristicLookup(cls) : null;
+          return {
+            kind: "window",
+            title: t.title || cls || "Window",
+            subtitle: cls !== "" ? cls : "Window",
+            wsId: t.workspace ? t.workspace.id : -1,
+            iconName: (de && de.icon) ? de.icon : "",
+            toplevel: t,
+            glyph: "󰖯"
+          };
+        });
+    }
+    return [];
+  }
+
+  readonly property bool isExpanded: !root.commandMode
+    && (root.searchQuery.trim().length > 0 || root.userExpanded)
 
   function resetSearchIfNeeded() {
+    copyFeedbackTimer.stop();
+    root.copyFeedbackText = "";
     if (AppLauncherConfig.clearSearchOnClose) {
       root.searchQuery = "";
       root.commandQuery = "";
@@ -43,6 +99,7 @@ Scope {
         root.commandMode = (AppLauncherConfig.defaultMode === "command");
         root.resetSearchIfNeeded();
         loadUsageProc.running = true;
+        loadCmdHistoryProc.running = true;
         root.panelVisible = true;
       } else {
         root.panelVisible = false;
@@ -84,6 +141,42 @@ Scope {
     running: false
   }
 
+  // Load saved shell command history on demand
+  Process {
+    id: loadCmdHistoryProc
+    command: ["sh", "-c", `cat "${root.cmdHistoryPath}" 2>/dev/null || echo '[]'`]
+    running: false
+    stdout: StdioCollector {
+      onStreamFinished: {
+        try {
+          const parsed = JSON.parse(text.trim() || "[]");
+          if (Array.isArray(parsed)) {
+            root.commandHistory = parsed;
+          }
+        } catch (e) {
+          root.commandHistory = [];
+        }
+      }
+    }
+  }
+
+  // Save updated shell command history to disk
+  Process {
+    id: saveCmdHistoryProc
+    running: false
+  }
+
+  Timer {
+    id: copyFeedbackTimer
+    interval: 420
+    repeat: false
+    onTriggered: {
+      root.copyFeedbackText = "";
+      root.panelVisible = false;
+      root.resetSearchIfNeeded();
+    }
+  }
+
   // Runner process for executing Linux commands
   Process {
     id: cmdRunner
@@ -121,9 +214,22 @@ Scope {
     saveUsageProc.running = true;
   }
 
+  function recordCommand(cmdText) {
+    const next = [cmdText].concat(root.commandHistory.filter(c => c !== cmdText)).slice(0, 50);
+    root.commandHistory = next;
+    const jsonPayload = JSON.stringify(next);
+    saveCmdHistoryProc.command = [
+      "python3", "-c",
+      "import os, sys; p = os.path.expanduser('~/.cache/qs_cmd_history.json'); open(p, 'w').write(sys.argv[1])",
+      jsonPayload
+    ];
+    saveCmdHistoryProc.running = true;
+  }
+
   function runCommand(cmdText) {
     const trimmed = cmdText.trim();
     if (trimmed !== "") {
+      recordCommand(trimmed);
       cmdRunner.command = ["sh", "-c", trimmed];
       cmdRunner.running = true;
       root.panelVisible = false;
@@ -137,6 +243,7 @@ Scope {
     if (root.commandMode === toCommandMode) return;
     root.commandMode = toCommandMode;
     root.modeSwitched(toCommandMode);
+    if (overlayLoader.item) overlayLoader.item.focusActiveInput();
   }
 
   ScriptModel {
@@ -224,648 +331,86 @@ Scope {
     }
   }
 
-  Loader {
-    active: root.panelVisible
-    sourceComponent: Component {
-  PanelWindow {
-    id: launcherPanel
-    visible: true
-    focusable: true
-    color: "transparent"
+  function copyToClipboard(textVal) {
+    if (!textVal) return;
+    Quickshell.execDetached(["wl-copy", String(textVal)]);
+    root.copyFeedbackText = "Copied!";
+    copyFeedbackTimer.restart();
+  }
 
-    Component.onCompleted: {
-      searchInput.text = root.searchQuery;
-      commandInput.text = root.commandQuery;
-      if (root.commandMode) {
-        commandInput.forceActiveFocus();
-      } else {
-        searchInput.forceActiveFocus();
-      }
+  function focusWindow(toplevel) {
+    if (!toplevel) return;
+    const wsObj = toplevel.workspace;
+    const addr = toplevel.address
+      ? (String(toplevel.address).startsWith("0x") ? toplevel.address : ("0x" + toplevel.address))
+      : "";
+    root.panelVisible = false;
+    root.resetSearchIfNeeded();
+    if (wsObj && typeof wsObj.activate === "function") {
+      wsObj.activate();
     }
-
-    onVisibleChanged: {
-      if (!visible) {
-        root.panelVisible = false;
-        root.resetSearchIfNeeded();
-        Qt.callLater(() => gc());
-      }
+    if (toplevel.wayland && typeof toplevel.wayland.activate === "function") {
+      toplevel.wayland.activate();
     }
-
-    Connections {
-      target: root
-      function onModeSwitched(toCommandMode) {
-        if (toCommandMode) commandInput.forceActiveFocus();
-        else searchInput.forceActiveFocus();
-      }
-    }
-
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-    WlrLayershell.namespace: "quickshell-launcher"
-
-    exclusionMode: ExclusionMode.Ignore
-
-    anchors {
-      top: true
-      bottom: true
-      left: true
-      right: true
-    }
-
-    // Undimmed transparent backdrop (dismisses on click outside)
-    MouseArea {
-      anchors.fill: parent
-      onClicked: launcherPanel.visible = false
-    }
-
-    // Centered Spotlight Runner Box
-    Rectangle {
-      id: launcherBox
-      anchors.horizontalCenter: parent.horizontalCenter
-      y: Math.max(80, (launcherPanel.height - height) / 2 - (root.isExpanded ? 0 : 60))
-      width: AppLauncherConfig.spotlightWidth
-      height: root.isExpanded ? AppLauncherConfig.spotlightHeight : 60
-      radius: 16
-      color: root.theme.bgBase
-      border.color: root.theme.bgBorder
-      border.width: 1
-      clip: true
-
-      Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-      Behavior on y { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-      Behavior on color { ColorAnimation { duration: 150 } }
-      Behavior on border.color { ColorAnimation { duration: 150 } }
-
-      // Absorb clicks inside the card so it doesn't dismiss
-      MouseArea { anchors.fill: parent }
-
-      ColumnLayout {
-        anchors.fill: parent
-        spacing: 0
-
-        // ==============================================================
-        // 1. TOP SPOTLIGHT SEARCH BAR (Always Visible, Height: 60px)
-        // ==============================================================
-        Rectangle {
-          Layout.fillWidth: true
-          Layout.preferredHeight: 60
-          height: 60
-          color: "transparent"
-
-          RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 18
-            anchors.rightMargin: 16
-            spacing: 14
-
-            // Left Search / Mode Icon with smooth morph/rotation animation
-            Item {
-              implicitWidth: 20
-              implicitHeight: 20
-              Layout.alignment: Qt.AlignVCenter
-
-              Text {
-                id: searchIcon
-                anchors.centerIn: parent
-                text: "󰍉"
-                color: root.theme.accentPrimary
-                font.pixelSize: 20
-                font.family: root.font
-                font.bold: true
-                opacity: root.commandMode ? 0.0 : 1.0
-                scale: root.commandMode ? 0.6 : 1.0
-                rotation: root.commandMode ? -90 : 0
-                Behavior on opacity { NumberAnimation { duration: 180 } }
-                Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                Behavior on color { ColorAnimation { duration: 150 } }
-              }
-
-              Text {
-                id: cmdPromptIcon
-                anchors.centerIn: parent
-                text: "$"
-                color: root.theme.accentPrimary
-                font.pixelSize: 20
-                font.family: root.font
-                font.bold: true
-                opacity: root.commandMode ? 1.0 : 0.0
-                scale: root.commandMode ? 1.0 : 0.6
-                rotation: root.commandMode ? 0 : 90
-                Behavior on opacity { NumberAnimation { duration: 180 } }
-                Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                Behavior on color { ColorAnimation { duration: 150 } }
-              }
-            }
-
-            // Central Search Input Field
-            Item {
-              Layout.fillWidth: true
-              Layout.fillHeight: true
-
-              // Applications Input
-              Item {
-                anchors.fill: parent
-                opacity: root.commandMode ? 0.0 : 1.0
-                visible: opacity > 0.01
-                Behavior on opacity { NumberAnimation { duration: 160 } }
-
-                TextInput {
-                  id: searchInput
-                  anchors.fill: parent
-                  verticalAlignment: Text.AlignVCenter
-                  enabled: !root.commandMode
-                  color: root.theme.textPrimary
-                  font.pixelSize: 15
-                  font.family: root.font
-                  clip: true
-                  selectByMouse: true
-                  Accessible.role: Accessible.EditableText
-                  Accessible.name: "Search applications"
-
-                  onTextChanged: {
-                    root.searchQuery = searchInput.text
-                    root.selectedIndex = 0
-                    if (resultsList.count > 0) {
-                      resultsList.positionViewAtIndex(0, ListView.Beginning)
-                    }
-                  }
-
-                  Keys.onEscapePressed: launcherPanel.visible = false
-
-                  Keys.onPressed: event => {
-                    if (event.key === Qt.Key_Right && searchInput.cursorPosition === searchInput.text.length) {
-                      event.accepted = true;
-                      root.switchMode(true);
-                    } else if (event.key === Qt.Key_Down) {
-                      event.accepted = true;
-                      if (!root.userExpanded && searchInput.text === "") {
-                        root.userExpanded = true;
-                        root.selectedIndex = 0;
-                      } else {
-                        root.selectedIndex = Math.min(root.selectedIndex + 1, resultsList.count - 1);
-                        resultsList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
-                      }
-                    } else if (event.key === Qt.Key_Up) {
-                      event.accepted = true;
-                      if (root.selectedIndex === 0 && searchInput.text === "") {
-                        root.userExpanded = false;
-                      } else {
-                        root.selectedIndex = Math.max(root.selectedIndex - 1, 0);
-                        resultsList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
-                      }
-                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                      event.accepted = true;
-                      if (root.selectedIndex >= 0 && root.selectedIndex < filteredApps.values.length) {
-                        const entry = filteredApps.values[root.selectedIndex];
-                        if (entry) root.launchApp(entry);
-                      }
-                    } else if (event.key === Qt.Key_Tab) {
-                      event.accepted = true;
-                      root.switchMode(true);
-                    }
-                  }
-                }
-
-                // Applications Placeholder Text
-                Text {
-                  anchors.fill: parent
-                  verticalAlignment: Text.AlignVCenter
-                  text: "Search applications, or press ↓ to browse..."
-                  color: root.theme.textMuted
-                  font.pixelSize: 15
-                  font.family: root.font
-                  visible: searchInput.text === ""
-                  Behavior on color { ColorAnimation { duration: 150 } }
-                }
-              }
-
-              // Commands Input
-              Item {
-                anchors.fill: parent
-                opacity: root.commandMode ? 1.0 : 0.0
-                visible: opacity > 0.01
-                Behavior on opacity { NumberAnimation { duration: 160 } }
-
-                TextInput {
-                  id: commandInput
-                  anchors.fill: parent
-                  verticalAlignment: Text.AlignVCenter
-                  enabled: root.commandMode
-                  color: root.theme.textPrimary
-                  font.pixelSize: 15
-                  font.family: root.font
-                  clip: true
-                  selectByMouse: true
-                  Accessible.role: Accessible.EditableText
-                  Accessible.name: "Execute shell command"
-                  onTextChanged: root.commandQuery = commandInput.text
-
-                  Keys.onEscapePressed: launcherPanel.visible = false
-
-                  Keys.onPressed: event => {
-                    if (event.key === Qt.Key_Left && commandInput.cursorPosition === 0) {
-                      event.accepted = true;
-                      root.switchMode(false);
-                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                      event.accepted = true;
-                      root.runCommand(commandInput.text);
-                    } else if (event.key === Qt.Key_Tab) {
-                      event.accepted = true;
-                      root.switchMode(false);
-                    }
-                  }
-                }
-
-                // Commands Placeholder Text
-                Text {
-                  anchors.fill: parent
-                  verticalAlignment: Text.AlignVCenter
-                  text: "Type shell command (e.g. btop, kitty, reboot)..."
-                  color: root.theme.textMuted
-                  font.pixelSize: 15
-                  font.family: root.font
-                  visible: commandInput.text === ""
-                  Behavior on color { ColorAnimation { duration: 150 } }
-                }
-              }
-            }
-
-            // Right Mode Switcher Text Indicator (Clean inline text without icon, animated mode transition)
-            Item {
-              id: modeIndicator
-              implicitWidth: modeRow.implicitWidth
-              implicitHeight: 24
-              Layout.alignment: Qt.AlignVCenter
-
-              HoverHandler { id: modeHover }
-              MouseArea {
-                anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.switchMode(!root.commandMode)
-              }
-
-              Row {
-                id: modeRow
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 6
-
-                // Animated mode label container (Apps <-> Command crossfade and slide)
-                Item {
-                  id: modeLabelWrap
-                  implicitWidth: Math.max(appsLabel.implicitWidth, cmdLabel.implicitWidth)
-                  implicitHeight: Math.max(appsLabel.implicitHeight, cmdLabel.implicitHeight)
-                  anchors.verticalCenter: parent.verticalCenter
-                  clip: true
-
-                  Text {
-                    id: appsLabel
-                    text: "Apps"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    font.bold: true
-                    color: modeHover.hovered ? root.theme.textPrimary : root.theme.textSecondary
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: root.commandMode ? -14 : 0
-                    opacity: root.commandMode ? 0.0 : 1.0
-                    Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                    Behavior on opacity { NumberAnimation { duration: 180 } }
-                    Behavior on color { ColorAnimation { duration: 120 } }
-                  }
-
-                  Text {
-                    id: cmdLabel
-                    text: "Command"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    font.bold: true
-                    color: modeHover.hovered ? root.theme.textPrimary : root.theme.textSecondary
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: root.commandMode ? 0 : 14
-                    opacity: root.commandMode ? 1.0 : 0.0
-                    Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                    Behavior on opacity { NumberAnimation { duration: 180 } }
-                    Behavior on color { ColorAnimation { duration: 120 } }
-                  }
-                }
-
-                Text {
-                  anchors.verticalCenter: parent.verticalCenter
-                  text: "Tab"
-                  font.family: root.font
-                  font.pixelSize: 10
-                  color: root.theme.textMuted
-                  opacity: 0.8
-                }
-              }
-            }
-          }
-        }
-
-        // ==============================================================
-        // 2. DIVIDER LINE (Visible when results expand)
-        // ==============================================================
-        Rectangle {
-          Layout.fillWidth: true
-          height: 1
-          color: root.theme.bgBorder
-          opacity: root.isExpanded ? 1.0 : 0.0
-          Behavior on opacity { NumberAnimation { duration: 150 } }
-        }
-
-        // ==============================================================
-        // 3. EXPANDED CONTENT AREA (Applications & Commands with Slide Transition)
-        // ==============================================================
-        Item {
-          id: contentArea
-          Layout.fillWidth: true
-          Layout.fillHeight: true
-          Layout.topMargin: 8
-          Layout.bottomMargin: 4
-          Layout.leftMargin: 8
-          Layout.rightMargin: 8
-          visible: root.isExpanded
-          clip: true
-
-          // Applications Results List View
-          Item {
-            anchors.fill: parent
-            opacity: root.commandMode ? 0.0 : 1.0
-            visible: opacity > 0.01
-            x: root.commandMode ? -16 : 0
-            Behavior on opacity { NumberAnimation { duration: 180 } }
-            Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-            ListView {
-              id: resultsList
-              anchors.fill: parent
-              model: filteredApps
-              clip: true
-              spacing: 2
-              boundsBehavior: Flickable.StopAtBounds
-              currentIndex: root.selectedIndex
-              highlightMoveDuration: 150
-              highlightMoveVelocity: -1
-
-              highlight: Rectangle {
-                radius: 8
-                color: root.theme.bgSelected
-                visible: resultsList.count > 0 && root.selectedIndex >= 0
-
-                Behavior on color { ColorAnimation { duration: 150 } }
-
-                Rectangle {
-                  width: 3
-                  height: 24
-                  radius: 2
-                  color: root.theme.accentPrimary
-                  anchors.left: parent.left
-                  anchors.leftMargin: 2
-                  anchors.verticalCenter: parent.verticalCenter
-                  Behavior on color { ColorAnimation { duration: 150 } }
-                }
-              }
-
-              delegate: Rectangle {
-                id: delegateRoot
-                required property var modelData
-                required property int index
-                readonly property string appKey: root.getAppKey(modelData)
-                readonly property int launchCount: (appKey && root.appUsage[appKey]) ? (root.appUsage[appKey].count || 0) : 0
-                readonly property bool isFav: AppLauncherConfig.isAppFavorite(appKey)
-                readonly property string subTitle: delegateRoot.modelData.genericName ?? delegateRoot.modelData.comment ?? ""
-
-                Accessible.role: Accessible.Button
-                Accessible.name: (modelData.name ?? "Application") + (delegateRoot.subTitle ? " - " + delegateRoot.subTitle : "")
-
-                width: resultsList.width
-                height: 44
-                radius: 8
-                color: hoverArea.containsMouse && root.selectedIndex !== index ? root.theme.bgHover : "transparent"
-                Behavior on color { ColorAnimation { duration: 100 } }
-
-                // App icon on left
-                Item {
-                  id: iconContainer
-                  anchors.left: parent.left
-                  anchors.leftMargin: 12
-                  anchors.verticalCenter: parent.verticalCenter
-                  width: 24
-                  height: 24
-
-                  IconImage {
-                    anchors.centerIn: parent
-                    implicitSize: 24
-                    source: Quickshell.iconPath(delegateRoot.modelData.icon ?? "", true)
-                    visible: (delegateRoot.modelData.icon ?? "") !== ""
-                  }
-
-                  // Fallback icon
-                  Text {
-                    anchors.centerIn: parent
-                    text: "󰀻"
-                    color: root.theme.accentPrimary
-                    font.pixelSize: 16
-                    font.family: root.font
-                    visible: (delegateRoot.modelData.icon ?? "") === ""
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                  }
-                }
-
-                // Right-side indicators (Recent / frequent clock)
-                Row {
-                  id: rightIndicators
-                  anchors.right: parent.right
-                  anchors.rightMargin: 14
-                  anchors.verticalCenter: parent.verticalCenter
-                  spacing: 6
-
-                  Text {
-                    visible: delegateRoot.launchCount > 0
-                    text: "󰋚"
-                    color: root.selectedIndex === delegateRoot.index ? root.theme.accentPrimary : root.theme.textMuted
-                    font.pixelSize: 12
-                    font.family: root.font
-                    opacity: 0.75
-                  }
-                }
-
-                // App info container anchored directly to icon and right indicators
-                Item {
-                  anchors.left: iconContainer.right
-                  anchors.leftMargin: 12
-                  anchors.right: rightIndicators.left
-                  anchors.rightMargin: 8
-                  anchors.verticalCenter: parent.verticalCenter
-                  height: delegateRoot.subTitle !== "" ? 34 : 20
-
-                  Row {
-                    id: titleRow
-                    anchors.left: parent.left
-                    anchors.top: delegateRoot.subTitle !== "" ? parent.top : undefined
-                    anchors.verticalCenter: delegateRoot.subTitle === "" ? parent.verticalCenter : undefined
-                    spacing: 6
-
-                    Text {
-                      text: delegateRoot.modelData.name ?? ""
-                      color: root.selectedIndex === delegateRoot.index ? root.theme.textPrimary : root.theme.textSecondary
-                      font.pixelSize: 13
-                      font.family: root.font
-                      font.bold: root.selectedIndex === delegateRoot.index
-                      elide: Text.ElideRight
-                      Behavior on color { ColorAnimation { duration: 150 } }
-                    }
-
-                    // Favorite indicator
-                    Text {
-                      visible: delegateRoot.isFav
-                      text: "󰓎"
-                      font.family: root.font
-                      font.pixelSize: 10
-                      color: "#e5c07b"
-                      anchors.verticalCenter: parent.verticalCenter
-                    }
-                  }
-
-                  Text {
-                    visible: delegateRoot.subTitle !== ""
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    anchors.bottom: parent.bottom
-                    text: delegateRoot.subTitle
-                    color: root.theme.textMuted
-                    font.pixelSize: 11
-                    font.family: root.font
-                    elide: Text.ElideRight
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                  }
-                }
-
-                MouseArea {
-                  id: hoverArea
-                  anchors.fill: parent
-                  hoverEnabled: true
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: root.launchApp(delegateRoot.modelData)
-                  onEntered: root.selectedIndex = delegateRoot.index
-                }
-              }
-
-              // Empty state placeholder
-              Text {
-                anchors.centerIn: parent
-                text: "No applications found"
-                color: root.theme.textMuted
-                font.pixelSize: 13
-                font.family: root.font
-                visible: resultsList.count === 0 && searchInput.text !== ""
-                Behavior on color { ColorAnimation { duration: 150 } }
-              }
-            }
-          }
-
-          // Command Mode Runner Preview
-          Item {
-            anchors.fill: parent
-            opacity: root.commandMode ? 1.0 : 0.0
-            visible: opacity > 0.01
-            x: root.commandMode ? 0 : 16
-            Behavior on opacity { NumberAnimation { duration: 180 } }
-            Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-
-            ColumnLayout {
-              anchors.centerIn: parent
-              spacing: 8
-
-              Rectangle {
-                Layout.alignment: Qt.AlignHCenter
-                width: cmdInfoRow.implicitWidth + 24
-                height: 38
-                radius: 8
-                color: root.theme.bgSurface
-                border.color: root.theme.accentPrimary
-                border.width: 1
-
-                RowLayout {
-                  id: cmdInfoRow
-                  anchors.centerIn: parent
-                  spacing: 8
-
-                  Text {
-                    text: "⏎"
-                    color: root.theme.accentPrimary
-                    font.pixelSize: 14
-                    font.bold: true
-                    font.family: root.font
-                  }
-
-                  Text {
-                    text: "Run: " + commandInput.text
-                    color: root.theme.textPrimary
-                    font.pixelSize: 13
-                    font.bold: true
-                    font.family: root.font
-                  }
-                }
-              }
-
-              Text {
-                text: "Press Return to execute command in shell"
-                color: root.theme.textMuted
-                font.pixelSize: 12
-                font.family: root.font
-                Layout.alignment: Qt.AlignHCenter
-              }
-            }
-          }
-        }
-
-        // ==============================================================
-        // 5. FOOTER SHORTCUT HINTS (Visible when results expand)
-        // ==============================================================
-        Rectangle {
-          Layout.fillWidth: true
-          height: 32
-          color: root.theme.bgSurface
-          visible: root.isExpanded
-
-          RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 16
-            anchors.rightMargin: 16
-            spacing: 16
-
-            Row {
-              spacing: 4
-              Text { text: "↑↓"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-              Text { text: "navigate"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-            }
-
-            Row {
-              spacing: 4
-              Text { text: "Tab"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-              Text { text: "switch mode"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-            }
-
-            Row {
-              spacing: 4
-              Text { text: "⏎"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-              Text { text: root.commandMode ? "execute" : "launch"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-            }
-
-            Row {
-              spacing: 4
-              Text { text: "esc"; color: root.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-              Text { text: "close"; color: root.theme.textMuted; font.pixelSize: 10; font.family: root.font; anchors.verticalCenter: parent.verticalCenter }
-            }
-
-            Item { Layout.fillWidth: true }
-          }
-        }
+    if (addr !== "") {
+      try {
+        Hyprland.dispatch('hl.dsp.focus({ window = "address:' + addr + '" })');
+      } catch (e) {
+        Hyprland.dispatch("focuswindow address:" + addr);
       }
     }
   }
+
+  function activateSmartItem(item) {
+    if (!item) return;
+    if (item.kind === "calc" && item.ok) {
+      copyToClipboard(item.value);
+    } else if (item.kind === "window" && item.toplevel) {
+      focusWindow(item.toplevel);
+    }
+  }
+
+  Loader {
+    id: overlayLoader
+    active: root.panelVisible
+    sourceComponent: Component {
+      SpotlightOverlay {
+        theme: root.theme
+        font: root.font
+        commandMode: root.commandMode
+        prefixMode: root.prefixMode
+        searchQuery: root.searchQuery
+        commandQuery: root.commandQuery
+        selectedIndex: root.selectedIndex
+        userExpanded: root.userExpanded
+        isExpanded: root.isExpanded
+        appsModel: filteredApps
+        appUsage: root.appUsage
+        smartResults: root.smartResults
+        commandHistory: root.commandHistory
+        copyFeedbackText: root.copyFeedbackText
+
+        onOverlayClosed: {
+          root.panelVisible = false;
+          root.resetSearchIfNeeded();
+          Qt.callLater(() => gc());
+        }
+        onSearchQueryUpdated: text => {
+          root.searchQuery = text;
+          root.selectedIndex = 0;
+        }
+        onCommandQueryUpdated: text => root.commandQuery = text
+        onModeSwitchRequested: toCommandMode => root.switchMode(toCommandMode)
+        onExpandRequested: {
+          root.userExpanded = true;
+          root.selectedIndex = 0;
+        }
+        onCollapseRequested: root.userExpanded = false
+        onSelectionRequested: index => root.selectedIndex = index
+        onAppLaunched: entry => root.launchApp(entry)
+        onSmartItemActivated: item => root.activateSmartItem(item)
+        onCommandExecuteRequested: cmd => root.runCommand(cmd)
+      }
     }
   }
 }
