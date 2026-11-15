@@ -1,14 +1,14 @@
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
 import QtQuick
-import QtQuick.Layouts
+import "../ThemeSwitcher" as TS
 import "Components"
 
 Scope {
   id: root
 
-  property var theme: Theme
+  TS.DefaultTheme { id: defaultTheme }
+  property var theme: defaultTheme
   property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
   property bool panelVisible: false
   property bool annotateSwappy: false
@@ -56,31 +56,47 @@ Scope {
     const swappyFlag = root.annotateSwappy ? "1" : "0";
     const delayArg = (mode === "region" && root.delaySeconds > 0) ? String(root.delaySeconds) : "0";
     const script = [
-      "set -e",
-      "sleep 0.18",
+      "sleep 0.2",
       "dir=\"$(xdg-user-dir PICTURES 2>/dev/null || echo \"$HOME/Pictures\")/Screenshots\"",
       "mkdir -p \"$dir\"",
-      "file=\"$dir/Screenshot_$(date +%Y-%m-%d_%H-%M-%S).png\"",
+      "time=$(date \"+%d-%b_%H-%M-%S\")",
+      "file=\"$dir/Screenshot_${time}_${RANDOM}.png\"",
+      "iDIR=\"$HOME/.config/swaync/icons\"",
+      "sDIR=\"$HOME/.config/hypr/Scripts\"",
+      "[ ! -d \"$sDIR\" ] && sDIR=\"$HOME/.config/hypr/scripts\"",
       "mode=\"" + mode + "\"",
       "if [ \"$mode\" = \"region\" ]; then",
-      "  geom=$(slurp) || exit 0",
-      "  [ \"" + delayArg + "\" -gt 0 ] && sleep " + delayArg,
-      "  grim -g \"$geom\" \"$file\"",
+      "  geom=$(slurp 2>&1) || exit 0",
+      "  if [ \"" + delayArg + "\" -gt 0 ]; then sleep " + delayArg + "; fi",
+      "  err=$(grim -g \"$geom\" \"$file\" 2>&1) || { notify-send -u critical -a \"Screenshot\" \"Screenshot Failed\" \"$err\"; exit 1; }",
       "elif [ \"$mode\" = \"window\" ]; then",
-      "  geom=$(hyprctl activewindow -j | python3 -c \"import json,sys; d=json.load(sys.stdin); a=d.get('at',[0,0]); s=d.get('size',[0,0]); print(f'{a[0]},{a[1]} {s[0]}x{s[1]}')\" 2>/dev/null) || exit 1",
-      "  grim -g \"$geom\" \"$file\"",
+      "  geom=$(hyprctl activewindow -j 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); a=d.get('at',[0,0]); s=d.get('size',[0,0]); print(f'{a[0]},{a[1]} {s[0]}x{s[1]}') if s[0]>0 and s[1]>0 else sys.exit(1)\" 2>/dev/null) || geom=\"\"",
+      "  if [ -n \"$geom\" ]; then",
+      "    err=$(grim -g \"$geom\" \"$file\" 2>&1) || { notify-send -u critical -a \"Screenshot\" \"Screenshot Failed\" \"$err\"; exit 1; }",
+      "  else",
+      "    err=$(grim \"$file\" 2>&1) || { notify-send -u critical -a \"Screenshot\" \"Screenshot Failed\" \"$err\"; exit 1; }",
+      "  fi",
       "else",
-      "  grim \"$file\"",
+      "  err=$(grim \"$file\" 2>&1) || { notify-send -u critical -a \"Screenshot\" \"Screenshot Failed\" \"$err\"; exit 1; }",
       "fi",
-      "wl-copy < \"$file\"",
+      "wl-copy --type image/png < \"$file\" >/dev/null 2>&1 &",
+      "[ -x \"$sDIR/Sounds.sh\" ] && \"$sDIR/Sounds.sh\" --screenshot >/dev/null 2>&1 &",
+      "notify_base=\"notify-send -t 10000 -A action1=Open -A action2=Delete -h string:x-canonical-private-synchronous:shot-notify -i $iDIR/picture.png\"",
       "if [ \"" + swappyFlag + "\" = \"1\" ]; then",
-      "  swappy -f \"$file\" &",
+      "  resp=$($notify_base \" Screenshot:\" \" Captured by Swappy\")",
+      "  case \"$resp\" in",
+      "    action1) swappy -f \"$file\" >/dev/null 2>&1 & ;;",
+      "    action2) rm -f \"$file\" ;;",
+      "  esac",
       "else",
-      "  notify-send -a \"Screenshot\" \"Screenshot Saved\" \"$file\"",
+      "  resp=$(timeout 10 $notify_base \" Screenshot\" \" Saved\")",
+      "  case \"$resp\" in",
+      "    action1) xdg-open \"$file\" >/dev/null 2>&1 & ;;",
+      "    action2) rm -f \"$file\" ;;",
+      "  esac",
       "fi"
     ].join("\n");
-    captureProc.command = ["sh", "-c", script];
-    captureProc.running = true;
+    Quickshell.execDetached(["bash", "-c", script]);
   }
 
   Timer {
@@ -99,197 +115,23 @@ Scope {
     }
   }
 
-  Process {
-    id: captureProc
-    running: false
-  }
-
   Loader {
     active: root.panelVisible
     sourceComponent: Component {
-      PanelWindow {
-        id: hudWin
-        visible: true
-        focusable: true
-        color: "transparent"
+      ScreenshotWindow {
+        theme: root.theme
+        font: root.font
+        delaySeconds: root.delaySeconds
+        countdownRemaining: root.countdownRemaining
+        annotateSwappy: root.annotateSwappy
 
-        Component.onCompleted: hudCard.forceActiveFocus()
-        onVisibleChanged: {
-          if (!visible) {
-            root.cancelCountdown();
-            root.panelVisible = false;
-          }
+        onCloseRequested: {
+          root.cancelCountdown();
+          root.panelVisible = false;
         }
-
-        WlrLayershell.layer: WlrLayer.Overlay
-        WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-        WlrLayershell.namespace: "quickshell-screenshot"
-        exclusionMode: ExclusionMode.Ignore
-
-        anchors {
-          top: true
-          bottom: true
-          left: true
-          right: true
-        }
-
-        MouseArea {
-          anchors.fill: parent
-          onClicked: hudWin.visible = false
-        }
-
-        Rectangle {
-          id: hudCard
-          anchors.horizontalCenter: parent.horizontalCenter
-          anchors.bottom: parent.bottom
-          anchors.bottomMargin: 48
-          width: mainCol.implicitWidth + 28
-          height: mainCol.implicitHeight + 24
-          radius: 16
-          color: root.theme.bgBase
-          border.color: root.theme.bgBorder
-          border.width: 1
-
-          focus: true
-          Keys.onEscapePressed: hudWin.visible = false
-          Keys.onPressed: event => {
-            if (event.key === Qt.Key_1) {
-              event.accepted = true;
-              root.startCapture("region");
-            } else if (event.key === Qt.Key_2) {
-              event.accepted = true;
-              root.startCapture("window");
-            } else if (event.key === Qt.Key_3) {
-              event.accepted = true;
-              root.startCapture("screen");
-            } else if (event.key === Qt.Key_A) {
-              event.accepted = true;
-              root.annotateSwappy = !root.annotateSwappy;
-            } else if (event.key === Qt.Key_D) {
-              event.accepted = true;
-              root.cycleDelay();
-            }
-          }
-
-          MouseArea { anchors.fill: parent }
-
-          ColumnLayout {
-            id: mainCol
-            anchors.centerIn: parent
-            spacing: 10
-
-            RowLayout {
-              Layout.fillWidth: true
-              spacing: 8
-
-              Text {
-                text: "󰄄"
-                font.family: root.font
-                font.pixelSize: 15
-                color: root.theme.accentPrimary
-              }
-
-              Text {
-                text: root.countdownRemaining > 0
-                  ? ("Capturing in " + root.countdownRemaining + "s...")
-                  : "Screenshot"
-                font.family: root.font
-                font.pixelSize: 13
-                font.bold: true
-                color: root.theme.textPrimary
-              }
-
-              Item { Layout.fillWidth: true }
-
-              // Delay toggle pill
-              Rectangle {
-                implicitWidth: delayLbl.implicitWidth + 14
-                height: 24
-                radius: 12
-                color: root.delaySeconds > 0
-                  ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.24)
-                  : root.theme.bgSurface
-                border.color: root.delaySeconds > 0 ? root.theme.accentPrimary : root.theme.bgBorder
-                border.width: 1
-
-                MouseArea {
-                  anchors.fill: parent
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: root.cycleDelay()
-                }
-
-                Text {
-                  id: delayLbl
-                  anchors.centerIn: parent
-                  text: root.delaySeconds > 0 ? ("󰔛 " + root.delaySeconds + "s") : "󰔛 0s"
-                  font.family: root.font
-                  font.pixelSize: 11
-                  font.bold: root.delaySeconds > 0
-                  color: root.delaySeconds > 0 ? root.theme.accentPrimary : root.theme.textSecondary
-                }
-              }
-
-              // Annotate (Swappy) toggle pill
-              Rectangle {
-                implicitWidth: annotLbl.implicitWidth + 14
-                height: 24
-                radius: 12
-                color: root.annotateSwappy
-                  ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.24)
-                  : root.theme.bgSurface
-                border.color: root.annotateSwappy ? root.theme.accentPrimary : root.theme.bgBorder
-                border.width: 1
-
-                MouseArea {
-                  anchors.fill: parent
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: root.annotateSwappy = !root.annotateSwappy
-                }
-
-                Text {
-                  id: annotLbl
-                  anchors.centerIn: parent
-                  text: "󰏫 Annotate"
-                  font.family: root.font
-                  font.pixelSize: 11
-                  font.bold: root.annotateSwappy
-                  color: root.annotateSwappy ? root.theme.accentPrimary : root.theme.textSecondary
-                }
-              }
-            }
-
-            RowLayout {
-              spacing: 10
-
-              ScreenshotActionButton {
-                theme: root.theme
-                font: root.font
-                iconText: "󰆞"
-                label: "Region"
-                shortcutHint: "1"
-                onTriggered: root.startCapture("region")
-              }
-
-              ScreenshotActionButton {
-                theme: root.theme
-                font: root.font
-                iconText: "󰖯"
-                label: "Window"
-                shortcutHint: "2"
-                onTriggered: root.startCapture("window")
-              }
-
-              ScreenshotActionButton {
-                theme: root.theme
-                font: root.font
-                iconText: "󰹑"
-                label: "Screen"
-                shortcutHint: "3"
-                onTriggered: root.startCapture("screen")
-              }
-            }
-          }
-        }
+        onCaptureRequested: mode => root.startCapture(mode)
+        onCycleDelayRequested: root.cycleDelay()
+        onToggleAnnotateRequested: root.annotateSwappy = !root.annotateSwappy
       }
     }
   }
