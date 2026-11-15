@@ -53,32 +53,23 @@ PanelWindow {
 
     Component.onCompleted: {
         Qt.callLater(() => authForm.focusInput());
-        fadeInAnim.start();
+        openAnim.start();
     }
 
-    NumberAnimation {
-        id: fadeInAnim
-        target: overlayRoot
-        property: "opacity"
-        from: 0.0
-        to: 1.0
-        duration: 130
-        easing.type: Easing.OutCubic
+    ParallelAnimation {
+        id: openAnim
+        NumberAnimation { target: card; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+        NumberAnimation { target: card; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
     }
 
     Item {
         id: overlayRoot
         anchors.fill: parent
-        opacity: 0.0
 
-        Rectangle {
+        // Undimmed transparent backdrop
+        MouseArea {
             anchors.fill: parent
-            color: Qt.rgba(0, 0, 0, 0.56)
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: polkitWindow.cancelled()
-            }
+            onClicked: polkitWindow.cancelled()
         }
 
         FocusScope {
@@ -91,10 +82,12 @@ PanelWindow {
                 anchors.centerIn: parent
                 width: polkitWindow.width > 0 ? Math.min(460, polkitWindow.width - 48) : 460
                 height: cardCol.implicitHeight + 48
-                radius: 20
+                radius: 16
                 color: polkitWindow.theme.bgBase
                 border.width: 1
                 border.color: polkitWindow.theme.bgBorder
+                opacity: 0.0
+                scale: 0.96
 
                 MouseArea { anchors.fill: parent }
 

@@ -274,7 +274,17 @@ Scope {
 
     Component.onCompleted: {
       searchInput.text = root.searchQuery;
+      openAnim.start();
       Qt.callLater(() => searchInput.forceActiveFocus());
+    }
+
+    property bool closing: false
+
+    function requestClose() {
+      if (gridPanel.closing) return;
+      gridPanel.closing = true;
+      openAnim.stop();
+      closeAnim.start();
     }
 
     onVisibleChanged: {
@@ -282,6 +292,19 @@ Scope {
         root.panelVisible = false;
         Qt.callLater(() => gc());
       }
+    }
+
+    ParallelAnimation {
+      id: openAnim
+      NumberAnimation { target: box; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+      NumberAnimation { target: box; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+    }
+
+    ParallelAnimation {
+      id: closeAnim
+      NumberAnimation { target: box; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+      NumberAnimation { target: box; property: "scale"; to: 0.97; duration: 110; easing.type: Easing.InCubic }
+      onFinished: gridPanel.visible = false
     }
 
     WlrLayershell.layer: WlrLayer.Overlay
@@ -300,7 +323,7 @@ Scope {
     // Transparent click-outside-to-close area
     MouseArea {
       anchors.fill: parent
-      onClicked: gridPanel.visible = false
+      onClicked: gridPanel.requestClose()
     }
 
     Rectangle {
@@ -359,6 +382,8 @@ Scope {
       color: root.theme.bgBase
       border.color: root.theme.bgBorder
       border.width: 1
+      opacity: 0.0
+      scale: 0.96
 
       MouseArea { anchors.fill: parent }
 

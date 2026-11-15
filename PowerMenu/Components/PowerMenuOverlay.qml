@@ -40,17 +40,13 @@ PanelWindow {
 
     Component.onCompleted: {
         Qt.callLater(() => keyHandler.forceActiveFocus());
-        fadeInAnim.start();
+        openAnim.start();
     }
 
-    NumberAnimation {
-        id: fadeInAnim
-        target: overlayRoot
-        property: "opacity"
-        from: 0.0
-        to: 1.0
-        duration: 130
-        easing.type: Easing.OutCubic
+    ParallelAnimation {
+        id: openAnim
+        NumberAnimation { target: card; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+        NumberAnimation { target: card; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
     }
 
     function handleKeyPress(event) {
@@ -106,16 +102,11 @@ PanelWindow {
     Item {
         id: overlayRoot
         anchors.fill: parent
-        opacity: 0.0
 
-        Rectangle {
+        // Undimmed transparent backdrop
+        MouseArea {
             anchors.fill: parent
-            color: Qt.rgba(0, 0, 0, 0.56)
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: powerWindow.closeRequested()
-            }
+            onClicked: powerWindow.closeRequested()
         }
 
         FocusScope {
@@ -129,10 +120,12 @@ PanelWindow {
                 anchors.centerIn: parent
                 width: powerWindow.width > 0 ? Math.min(540, powerWindow.width - 48) : 540
                 height: cardCol.implicitHeight + 48
-                radius: 20
+                radius: 16
                 color: powerWindow.theme.bgBase
                 border.width: 1
                 border.color: powerWindow.theme.bgBorder
+                opacity: 0.0
+                scale: 0.96
 
                 MouseArea { anchors.fill: parent }
 
