@@ -33,10 +33,10 @@ RowLayout {
         }
     }
 
-    // wlogout Process
+    // Native Power Menu Process
     Process {
-        id: wlogoutProc
-        command: ["sh", "-c", "pidof wlogout || wlogout"]
+        id: powerMenuProc
+        command: ["qs", "ipc", "call", "powermenu", "toggle"]
         running: false
     }
 
@@ -54,9 +54,9 @@ RowLayout {
         running: false
     }
 
-    function openWlogout() {
+    function openPowerMenu() {
         root.closeRequested();
-        wlogoutProc.running = true;
+        powerMenuProc.running = true;
     }
 
     function openSettings() {
@@ -219,7 +219,7 @@ RowLayout {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.openWlogout()
+            onClicked: root.openPowerMenu()
         }
     }
 }

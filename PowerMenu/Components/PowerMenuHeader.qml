@@ -1,0 +1,85 @@
+import QtQuick
+import QtQuick.Layouts
+
+RowLayout {
+    id: root
+
+    required property var theme
+    required property string font
+    required property string userName
+    required property string uptimeText
+
+    signal closeRequested()
+
+    Layout.fillWidth: true
+    spacing: 12
+
+    Rectangle {
+        width: 38
+        height: 38
+        radius: 19
+        color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.16)
+        border.width: 1
+        border.color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.45)
+
+        Text {
+            anchors.centerIn: parent
+            text: root.userName.charAt(0).toUpperCase()
+            font.family: root.font
+            font.pixelSize: 16
+            font.bold: true
+            color: root.theme.accentPrimary
+        }
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 2
+
+        Text {
+            text: "Session & Power"
+            font.family: root.font
+            font.pixelSize: 16
+            font.bold: true
+            color: root.theme.textPrimary
+        }
+
+        Text {
+            text: root.uptimeText !== ""
+                ? (root.userName + "  •  up " + root.uptimeText)
+                : root.userName
+            font.family: root.font
+            font.pixelSize: 12
+            color: root.theme.textSecondary
+            maximumLineCount: 1
+            elide: Text.ElideRight
+            Layout.fillWidth: true
+        }
+    }
+
+    Rectangle {
+        width: 30
+        height: 30
+        radius: 15
+        color: closeMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
+        border.width: 1
+        border.color: root.theme.bgBorder
+        Behavior on color { ColorAnimation { duration: 120 } }
+
+        Text {
+            anchors.centerIn: parent
+            text: ""
+            font.family: root.font
+            font.pixelSize: 14
+            color: root.theme.textSecondary
+        }
+
+        MouseArea {
+            id: closeMouse
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.closeRequested()
+        }
+    }
+}
