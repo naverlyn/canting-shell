@@ -186,6 +186,7 @@ PanelWindow {
 
     property var quickSettingsRef: null
     property var brightnessSliderRef: null
+    readonly property bool hasOpenModal: wifiModalLoader.item ? wifiModalLoader.item.visible : false
 
     // Card Drag & Drop State for Live Edit Mode (supports cross-panel drag & drop)
     property bool isDraggingCard: false
@@ -285,7 +286,7 @@ PanelWindow {
         radius: controlCenter.fluidEnabled ? 16 : 12
         color: controlCenter.fluidEnabled
             ? Qt.rgba(controlCenter.theme.bgBase.r, controlCenter.theme.bgBase.g, controlCenter.theme.bgBase.b, (BarConfig.barOpacity !== undefined ? BarConfig.barOpacity : 0.85))
-            : controlCenter.theme.bgSurface
+            : controlCenter.theme.bgBase
         border.color: controlCenter.theme.bgBorder
         border.width: 1
         clip: false
@@ -327,7 +328,7 @@ PanelWindow {
             color: parent.color
         }
 
-        Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+        Behavior on height { enabled: controlCenter.visible; NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
         focus: true
         Keys.onEscapePressed: controlCenter.visible = false
@@ -362,7 +363,7 @@ PanelWindow {
                 implicitHeight: Math.min(controlCenter.maxContentAreaHeight, controlCenterView.implicitHeight)
                 height: implicitHeight
                 clip: true
-                Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+                Behavior on height { enabled: controlCenter.visible; NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
                 // Control Center View (Scrollable Flickable with WheelHandler & ScrollBar)
                 Flickable {
@@ -546,7 +547,7 @@ PanelWindow {
                                         Loader {
                                             id: cardLoader
                                             width: cardWrapper.cellWidth
-                                            active: controlCenter.visible || cardWrapper.cardId === "media" || cardWrapper.cardId === "connectivity" || cardWrapper.cardId === "brightness" || cardWrapper.cardId === "notifications"
+                                            active: true
                                             sourceComponent: {
                                                 switch (cardWrapper.cardId) {
                                                 case "connectivity": return connectivityComp;

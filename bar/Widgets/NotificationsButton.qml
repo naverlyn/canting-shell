@@ -18,9 +18,12 @@ Rectangle {
   readonly property bool popupOpen: notifPopupLoader.item ? notifPopupLoader.item.visible : false
 
   implicitHeight: hostContainer.isVert ? 28 : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : 28
+  implicitWidth: hostContainer.isVert
+    ? hostContainer.vertPillWidth
+    : ((notifButton.historyCount > 9 && !notifButton.isDnd) ? 34 : 28)
   height: implicitHeight
   width: implicitWidth
+  Behavior on implicitWidth { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
   scale: notifArea.pressed ? 0.92 : 1.0
   Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
   radius: hostContainer.pillRadius
@@ -30,7 +33,9 @@ Rectangle {
   border.width: hostContainer.hasCustomColor("notifications") ? 1 : 0
   Behavior on color { ColorAnimation { duration: 150 } }
   Accessible.role: Accessible.Button
-  Accessible.name: notifButton.isDnd ? "Notifications (Do Not Disturb)" : "Notifications"
+  Accessible.name: notifButton.isDnd
+    ? "Notifications (Do Not Disturb)"
+    : (notifButton.historyCount > 0 ? "Notifications (" + notifButton.historyCount + ")" : "Notifications")
 
   PillIndicator {
     hostRoot: notifButton.hostRoot
@@ -54,14 +59,24 @@ Rectangle {
 
   Rectangle {
     visible: notifButton.historyCount > 0 && !notifButton.isDnd
-    width: 6
-    height: 6
-    radius: 3
+    width: Math.max(13, countBadgeText.implicitWidth + 5)
+    height: 13
+    radius: height / 2
     color: hostRoot.theme.accentPrimary
     anchors.top: notifIcon.top
-    anchors.right: notifIcon.right
-    anchors.topMargin: 1
-    anchors.rightMargin: -2
+    anchors.left: notifIcon.right
+    anchors.topMargin: -2
+    anchors.leftMargin: -4
+
+    Text {
+      id: countBadgeText
+      anchors.centerIn: parent
+      text: notifButton.historyCount > 99 ? "99+" : String(notifButton.historyCount)
+      color: hostRoot.theme.bgBase
+      font.family: hostRoot.font
+      font.pixelSize: 8
+      font.bold: true
+    }
   }
 
   Rectangle {

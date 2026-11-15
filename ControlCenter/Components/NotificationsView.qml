@@ -74,23 +74,38 @@ Column {
     width: parent ? parent.width : 300
     spacing: 12
 
-    // Clear All Button Row
+    // Header Row: Notifications Title + Clear All Button
     RowLayout {
         width: parent.width
-        Item { Layout.fillWidth: true } 
+        spacing: 8
+
+        Text {
+            text: "Notifications"
+            color: root.theme.textPrimary
+            font.family: root.font
+            font.pixelSize: 13
+            font.bold: true
+            Layout.alignment: Qt.AlignVCenter
+        }
+
+        Item { Layout.fillWidth: true }
         Rectangle {
-            width: 70; height: 26; radius: 4
+            width: 70; height: 26; radius: 6
             color: root.theme.accentPrimary
+            opacity: root.historyModel.length > 0 ? 1.0 : 0.45
+            Behavior on opacity { NumberAnimation { duration: 150 } }
             Text {
                 anchors.centerIn: parent
                 text: "Clear all"
                 color: root.theme.bgBase
                 font.family: root.font
                 font.pixelSize: 11
+                font.bold: true
             }
             MouseArea {
                 anchors.fill: parent
-                cursorShape: Qt.PointingHandCursor
+                enabled: root.historyModel.length > 0
+                cursorShape: root.historyModel.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: root.clearAll()
             }
         }

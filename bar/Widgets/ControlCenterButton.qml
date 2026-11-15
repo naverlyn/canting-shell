@@ -70,9 +70,19 @@ Rectangle {
     interval: 250
     repeat: false
     onTriggered: {
-      if (controlCenterLoader.item && !controlCenterLoader.item.visible && !ControlCenterConfig.isLiveEdit) {
+      if (controlCenterLoader.item && !controlCenterLoader.item.visible && !controlCenterLoader.item.hasOpenModal && !ControlCenterConfig.isLiveEdit) {
         controlCenterLoader.active = false;
         Qt.callLater(() => gc());
+      }
+    }
+  }
+
+  Connections {
+    target: controlCenterLoader.item
+    ignoreUnknownSignals: true
+    function onHasOpenModalChanged() {
+      if (controlCenterLoader.item && !controlCenterLoader.item.visible && !controlCenterLoader.item.hasOpenModal) {
+        unloadCcTimer.restart();
       }
     }
   }

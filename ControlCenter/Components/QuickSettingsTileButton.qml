@@ -67,9 +67,12 @@ import ".."
                             : Qt.rgba(hostGrid.theme.accentRed.r, hostGrid.theme.accentRed.g, hostGrid.theme.accentRed.b, 0.22);
                     }
                     if (isActive) {
-                        return isHovered
-                            ? Qt.lighter(hostGrid.theme.accentPrimary, 1.12)
-                            : hostGrid.theme.accentPrimary;
+                        return Qt.rgba(
+                            hostGrid.theme.accentPrimary.r,
+                            hostGrid.theme.accentPrimary.g,
+                            hostGrid.theme.accentPrimary.b,
+                            isHovered ? 0.42 : 0.32
+                        );
                     }
                     if (isHovered) {
                         return Qt.rgba(hostGrid.theme.textPrimary.r, hostGrid.theme.textPrimary.g, hostGrid.theme.textPrimary.b, 0.12);
@@ -87,7 +90,7 @@ import ".."
                     if ((tileBtn.tid === "mic" && hostGrid.micMuted) || (tileBtn.tid === "mute" && hostGrid.sinkMuted)) {
                         return hostGrid.theme.accentRed;
                     }
-                    if (isActive) return "transparent";
+                    if (isActive) return Qt.rgba(hostGrid.theme.accentPrimary.r, hostGrid.theme.accentPrimary.g, hostGrid.theme.accentPrimary.b, 0.85);
                     return hostGrid.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08);
                 }
                 border.width: (isDropTarget || ControlCenterConfig.isLiveEdit) ? 1.5 : 1
@@ -110,7 +113,7 @@ import ".."
                             if ((tileBtn.tid === "mic" && hostGrid.micMuted) || (tileBtn.tid === "mute" && hostGrid.sinkMuted)) {
                                 return hostGrid.theme.accentRed;
                             }
-                            return tileBtn.isActive ? hostGrid.theme.bgBase : hostGrid.theme.textPrimary;
+                            return hostGrid.theme.textPrimary;
                         }
                         text: {
                             switch (tileBtn.tid) {
@@ -144,7 +147,7 @@ import ".."
                             if ((tileBtn.tid === "mic" && hostGrid.micMuted) || (tileBtn.tid === "mute" && hostGrid.sinkMuted)) {
                                 return hostGrid.theme.accentRed;
                             }
-                            return tileBtn.isActive ? hostGrid.theme.bgBase : hostGrid.theme.textPrimary;
+                            return hostGrid.theme.textPrimary;
                         }
                         text: {
                             switch (tileBtn.tid) {

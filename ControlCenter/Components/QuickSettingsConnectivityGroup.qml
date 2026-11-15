@@ -51,10 +51,19 @@ import ".."
                     color: {
                         if (groupTileBtn.tid === "mic" && hostGrid.micMuted) return Qt.rgba(hostGrid.theme.accentRed.r, hostGrid.theme.accentRed.g, hostGrid.theme.accentRed.b, 0.25);
                         if (groupTileBtn.tid === "mute" && hostGrid.sinkMuted) return Qt.rgba(hostGrid.theme.accentRed.r, hostGrid.theme.accentRed.g, hostGrid.theme.accentRed.b, 0.25);
-                        if (isActive) return isHovered ? Qt.lighter(hostGrid.theme.accentPrimary, 1.12) : hostGrid.theme.accentPrimary;
+                        if (isActive) {
+                            return Qt.rgba(
+                                hostGrid.theme.accentPrimary.r,
+                                hostGrid.theme.accentPrimary.g,
+                                hostGrid.theme.accentPrimary.b,
+                                isHovered ? 0.42 : 0.32
+                            );
+                        }
                         return isHovered ? Qt.rgba(hostGrid.theme.textPrimary.r, hostGrid.theme.textPrimary.g, hostGrid.theme.textPrimary.b, 0.12) : Qt.rgba(hostGrid.theme.textPrimary.r, hostGrid.theme.textPrimary.g, hostGrid.theme.textPrimary.b, 0.06);
                     }
-                    border.color: isActive ? "transparent" : (hostGrid.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                    border.color: isActive
+                        ? Qt.rgba(hostGrid.theme.accentPrimary.r, hostGrid.theme.accentPrimary.g, hostGrid.theme.accentPrimary.b, 0.85)
+                        : (hostGrid.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
                     border.width: 1
 
                     Behavior on color { ColorAnimation { duration: 130 } }
@@ -71,14 +80,16 @@ import ".."
                             width: 32
                             height: 32
                             radius: 16
-                            color: groupTileBtn.isActive ? Qt.rgba(1, 1, 1, 0.22) : Qt.rgba(hostGrid.theme.textPrimary.r, hostGrid.theme.textPrimary.g, hostGrid.theme.textPrimary.b, 0.10)
+                            color: groupTileBtn.isActive
+                                ? Qt.rgba(hostGrid.theme.accentPrimary.r, hostGrid.theme.accentPrimary.g, hostGrid.theme.accentPrimary.b, 0.38)
+                                : Qt.rgba(hostGrid.theme.textPrimary.r, hostGrid.theme.textPrimary.g, hostGrid.theme.textPrimary.b, 0.10)
                             Layout.alignment: Qt.AlignVCenter
 
                             Text {
                                 anchors.centerIn: parent
                                 font.family: hostGrid.font
                                 font.pixelSize: 14
-                                color: groupTileBtn.isActive ? (hostGrid.theme.bgBase ?? "#ffffff") : hostGrid.theme.textPrimary
+                                color: hostGrid.theme.textPrimary
                                 text: hostGrid.getTileIcon(groupTileBtn.tid)
                             }
                         }
@@ -93,7 +104,7 @@ import ".."
                                 font.family: hostGrid.font
                                 font.pixelSize: 11
                                 font.bold: true
-                                color: groupTileBtn.isActive ? (hostGrid.theme.bgBase ?? "#ffffff") : hostGrid.theme.textPrimary
+                                color: hostGrid.theme.textPrimary
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
@@ -109,7 +120,7 @@ import ".."
                                 }
                                 font.family: hostGrid.font
                                 font.pixelSize: 9
-                                color: groupTileBtn.isActive ? Qt.rgba(1, 1, 1, 0.75) : hostGrid.theme.textMuted
+                                color: groupTileBtn.isActive ? hostGrid.theme.accentPrimary : hostGrid.theme.textMuted
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
