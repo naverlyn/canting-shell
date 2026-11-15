@@ -639,9 +639,9 @@ Rectangle {
             // 4. Interactive Draggable Authentication Box (Avatar, Username, & Password Field)
             LockscreenStageAuthBox {
                 id: simAuthBox
-                stageRoot: stageRoot
-                canvasBox: canvasBox
-                dragGuides: dragGuides
+                hostStage: stageRoot
+                hostCanvas: canvasBox
+                hostGuides: dragGuides
             }
 
             // 5. Active Crosshair & Magnetic Snap Guide Lines for Dragged Element
@@ -710,10 +710,10 @@ Rectangle {
                 model: stageRoot.liveBlocks
 
                 delegate: LockscreenStageBlockDelegate {
-                    stageRoot: stageRoot
-                    canvasBox: canvasBox
-                    dragGuides: dragGuides
-                    simAuthBox: simAuthBox
+                    hostStage: stageRoot
+                    hostCanvas: canvasBox
+                    hostGuides: dragGuides
+                    hostAuthBox: simAuthBox
                 }
             }
 

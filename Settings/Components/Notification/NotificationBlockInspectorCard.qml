@@ -139,16 +139,19 @@ SectionCard {
             spacing: 0
 
             NotificationInspectorIconHeaderGroup {
+                visible: inspectorSection.activeTabId === "icon" || inspectorSection.activeTabId === "appName"
                 root: inspectorSection.root
                 activeTabId: inspectorSection.activeTabId
             }
 
             NotificationInspectorTextMediaGroup {
+                visible: inspectorSection.activeTabId === "title" || inspectorSection.activeTabId === "body" || inspectorSection.activeTabId === "image"
                 root: inspectorSection.root
                 activeTabId: inspectorSection.activeTabId
             }
 
             NotificationInspectorActionsChromeGroup {
+                visible: inspectorSection.activeTabId === "buttons" || inspectorSection.activeTabId === "progressBar" || inspectorSection.activeTabId === "card"
                 root: inspectorSection.root
                 activeTabId: inspectorSection.activeTabId
             }

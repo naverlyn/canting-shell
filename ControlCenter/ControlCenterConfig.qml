@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "ControlCenterConfigUtils.js" as ConfigUtils
 
 Singleton {
     id: root
@@ -568,117 +569,31 @@ Singleton {
     }
 
     function addQuickApp(label, icon, cmd, desktopId) {
-        const cleanLabel = String(label || "App").trim() || "App";
-        const cleanIcon = String(icon || "󰀻").trim() || "󰀻";
-        const cleanCmd = String(cmd || "").trim();
-        const cleanDesktop = String(desktopId || "").trim();
-        if (!cleanCmd && !cleanDesktop) return false;
-        let copy = [...root.quickApps];
-        if (copy.length >= 15) return false;
-        copy.push({
-            id: cleanDesktop || ("app_" + Date.now() + "_" + copy.length),
-            desktopId: cleanDesktop,
-            label: cleanLabel,
-            icon: cleanIcon,
-            cmd: cleanCmd
-        });
-        root.quickApps = copy;
-        if (copy.length > root.quickAppsMaxCount) {
-            root.quickAppsMaxCount = Math.min(15, Math.max(3, copy.length));
-        }
-        root.saveConfig();
-        return true;
+        return ConfigUtils.addQuickApp(root, label, icon, cmd, desktopId);
     }
 
     function replaceQuickAppAt(index, label, icon, cmd, desktopId, fallbackList) {
-        let copy = (fallbackList && fallbackList.length > root.quickApps.length)
-            ? fallbackList.map(a => ({
-                id: a.id || a.desktopId || ("app_" + Math.random()),
-                desktopId: a.desktopId || "",
-                label: a.label || "App",
-                icon: a.icon || "󰀻",
-                cmd: a.cmd || ""
-            }))
-            : [...root.quickApps];
-        if (index < 0 || index >= 15) return false;
-        const item = {
-            id: String(desktopId || ("app_" + Date.now() + "_" + index)),
-            desktopId: String(desktopId || ""),
-            label: String(label || "App").trim() || "App",
-            icon: String(icon || "󰀻").trim() || "󰀻",
-            cmd: String(cmd || "").trim()
-        };
-        if (index < copy.length) {
-            copy[index] = item;
-        } else {
-            copy.push(item);
-        }
-        root.quickApps = copy.slice(0, 15);
-        root.saveConfig();
-        return true;
+        return ConfigUtils.replaceQuickAppAt(root, index, label, icon, cmd, desktopId, fallbackList);
     }
 
     function moveQuickAppInFullList(fromIdx, toIdx, fallbackList) {
-        let copy = (fallbackList && fallbackList.length > root.quickApps.length)
-            ? fallbackList.map(a => ({
-                id: a.id || a.desktopId || ("app_" + Math.random()),
-                desktopId: a.desktopId || "",
-                label: a.label || "App",
-                icon: a.icon || "󰀻",
-                cmd: a.cmd || ""
-            }))
-            : [...root.quickApps];
-        if (fromIdx < 0 || fromIdx >= copy.length) return;
-        if (toIdx < 0 || toIdx >= copy.length) return;
-        if (fromIdx === toIdx) return;
-        const item = copy.splice(fromIdx, 1)[0];
-        copy.splice(toIdx, 0, item);
-        root.quickApps = copy.slice(0, 15);
-        root.saveConfig();
+        ConfigUtils.moveQuickAppInFullList(root, fromIdx, toIdx, fallbackList);
     }
 
     function updateQuickApp(index, label, icon, cmd, desktopId) {
-        if (index < 0 || index >= root.quickApps.length) return false;
-        let copy = [...root.quickApps];
-        const prev = copy[index];
-        copy[index] = {
-            id: prev.id || ("app_" + index),
-            desktopId: desktopId !== undefined ? String(desktopId) : (prev.desktopId || ""),
-            label: String(label !== undefined ? label : prev.label).trim() || "App",
-            icon: String(icon !== undefined ? icon : prev.icon).trim() || "󰀻",
-            cmd: String(cmd !== undefined ? cmd : prev.cmd).trim()
-        };
-        root.quickApps = copy;
-        root.saveConfig();
-        return true;
+        return ConfigUtils.updateQuickApp(root, index, label, icon, cmd, desktopId);
     }
 
     function removeQuickApp(index) {
-        if (index < 0 || index >= root.quickApps.length) return;
-        let copy = [...root.quickApps];
-        copy.splice(index, 1);
-        root.quickApps = copy;
-        if (root.quickAppsMaxCount > Math.max(3, copy.length) && copy.length >= 3) {
-            root.quickAppsMaxCount = copy.length;
-        }
-        root.saveConfig();
+        ConfigUtils.removeQuickApp(root, index);
     }
 
     function moveQuickApp(fromIdx, toIdx) {
-        if (fromIdx < 0 || fromIdx >= root.quickApps.length) return;
-        if (toIdx < 0 || toIdx >= root.quickApps.length) return;
-        if (fromIdx === toIdx) return;
-        let copy = [...root.quickApps];
-        const item = copy.splice(fromIdx, 1)[0];
-        copy.splice(toIdx, 0, item);
-        root.quickApps = copy;
-        root.saveConfig();
+        ConfigUtils.moveQuickApp(root, fromIdx, toIdx);
     }
 
     function resetQuickApps() {
-        root.quickAppsMaxCount = 8;
-        root.quickApps = JSON.parse(JSON.stringify(root.defaultQuickApps));
-        root.saveConfig();
+        ConfigUtils.resetQuickApps(root);
     }
 
     function setMediaWidgetStyle(style) {
@@ -853,40 +768,7 @@ Singleton {
     }
 
     function resetDefaults() {
-        root.panelWidth = 320;
-        root.panelLayout = "horizontal";
-        root.panelCount = 3;
-        root.panel1 = ["connectivity", "quickSettings", "systemInfo"];
-        root.panel2 = ["brightness", "media"];
-        root.panel3 = ["audio", "notifications"];
-        root.groupTilesEnabled = true;
-        root.groupedTileIds = ["wifi", "bluetooth", "dnd", "airplane"];
-        root.secondaryTileIds = ["mute", "gamemode", "clipboard", "darkmode"];
-        root.quickAppsMaxCount = 8;
-        root.quickApps = JSON.parse(JSON.stringify(root.defaultQuickApps));
-        root.mediaWidgetStyle = "auto";
-        root.showHeader = true;
-        root.mediaAutoHide = true;
-        root.mediaShowCava = false;
-        root.tiles = [
-            { id: "wifi", enabled: true },
-            { id: "nightlight", enabled: true },
-            { id: "caffeine", enabled: true },
-            { id: "dnd", enabled: true },
-            { id: "mic", enabled: true },
-            { id: "screenshot", enabled: true },
-            { id: "lock", enabled: true },
-            { id: "mute", enabled: false },
-            { id: "gamemode", enabled: false },
-            { id: "clipboard", enabled: false },
-            { id: "darkmode", enabled: false },
-            { id: "emoji", enabled: false },
-            { id: "bluetooth", enabled: true },
-            { id: "airplane", enabled: true }
-        ];
-        root.cardOrderRevision++;
-        root.cardsUpdated();
-        root.saveConfig();
+        ConfigUtils.resetDefaults(root);
     }
 
     property bool _loaded: false
@@ -894,27 +776,7 @@ Singleton {
 
     function saveConfig() {
         if (!root._loaded) return;
-        const data = {
-            width: root.panelWidth,
-            panelLayout: root.panelLayout,
-            panelCount: root.panelCount,
-            panel1: root.panel1,
-            panel2: root.panel2,
-            panel3: root.panel3,
-            groupTilesEnabled: root.groupTilesEnabled,
-            groupedTileIds: root.groupedTileIds,
-            secondaryTileIds: root.secondaryTileIds,
-            quickAppsMaxCount: root.quickAppsMaxCount,
-            quickApps: root.quickApps,
-            mediaWidgetStyle: root.mediaWidgetStyle,
-            cards: {
-                header: root.showHeader
-            },
-            mediaAutoHide: root.mediaAutoHide,
-            mediaShowCava: root.mediaShowCava,
-            tiles: root.tiles
-        };
-        const jsonStr = JSON.stringify(data, null, 2);
+        const jsonStr = JSON.stringify(ConfigUtils.buildConfigData(root), null, 2);
         root._lastSavedJson = jsonStr;
         saveProcess.command = [
             "python3", "-c",
@@ -926,99 +788,11 @@ Singleton {
     }
 
     function sanitizePanelList(arr, seenMap) {
-        let res = [];
-        if (!Array.isArray(arr)) return res;
-        for (let i = 0; i < arr.length; i++) {
-            const cid = arr[i];
-            if (cid && root.getCardDef(cid) && !seenMap[cid]) {
-                res.push(cid);
-                seenMap[cid] = true;
-            }
-        }
-        return res;
+        return ConfigUtils.sanitizePanelList(root, arr, seenMap);
     }
 
     function applyConfig(cfg) {
-        if (!cfg) return;
-        if (cfg.width !== undefined) {
-            root.panelWidth = Math.max(280, Math.min(460, Math.round(Number(cfg.width) || 320)));
-        }
-        if (cfg.panelLayout !== undefined) {
-            root.panelLayout = (cfg.panelLayout === "horizontal") ? "horizontal" : "vertical";
-        }
-        if (cfg.panelCount !== undefined) {
-            root.panelCount = Math.max(1, Math.min(3, Math.round(Number(cfg.panelCount) || 3)));
-        }
-        if (cfg.groupTilesEnabled !== undefined) {
-            root.groupTilesEnabled = Boolean(cfg.groupTilesEnabled);
-        }
-        if (Array.isArray(cfg.groupedTileIds)) {
-            root.groupedTileIds = cfg.groupedTileIds;
-        }
-        if (Array.isArray(cfg.secondaryTileIds)) {
-            root.secondaryTileIds = cfg.secondaryTileIds;
-        }
-        if (cfg.quickAppsMaxCount !== undefined) {
-            root.quickAppsMaxCount = Math.max(3, Math.min(15, Math.round(Number(cfg.quickAppsMaxCount) || 8)));
-        }
-        if (Array.isArray(cfg.quickApps) && cfg.quickApps.length > 0) {
-            root.quickApps = cfg.quickApps.slice(0, 15);
-        }
-        if (cfg.mediaWidgetStyle !== undefined) {
-            root.mediaWidgetStyle = (cfg.mediaWidgetStyle === "full") ? "full" : ((cfg.mediaWidgetStyle === "compact") ? "compact" : "auto");
-        }
-        if (cfg.cards) {
-            if (cfg.cards.header !== undefined) root.showHeader = Boolean(cfg.cards.header);
-        }
-        if (cfg.mediaAutoHide !== undefined) root.mediaAutoHide = Boolean(cfg.mediaAutoHide);
-        if (cfg.mediaShowCava !== undefined) root.mediaShowCava = Boolean(cfg.mediaShowCava);
-
-        if (Array.isArray(cfg.panel1) || Array.isArray(cfg.panel2) || Array.isArray(cfg.panel3)) {
-            let seen = {};
-            root.panel1 = root.sanitizePanelList(cfg.panel1, seen);
-            root.panel2 = root.sanitizePanelList(cfg.panel2, seen);
-            root.panel3 = root.sanitizePanelList(cfg.panel3, seen);
-            root.cardOrderRevision++;
-            root.cardsUpdated();
-        } else if (cfg.cards) {
-            // Migrate legacy single-list config into 3 balanced panel columns
-            let p0 = [];
-            let p1 = [];
-            let p2 = [];
-            if (cfg.cards.quickSettings !== false) {
-                if (root.groupTilesEnabled) p0.push("connectivity");
-                p0.push("quickSettings");
-            }
-            if (cfg.cards.systemInfo) p0.push("systemInfo");
-            if (cfg.cards.brightness) p1.push("brightness");
-            if (cfg.cards.media !== false) p1.push("media");
-            if (cfg.cards.audio !== false) p2.push("audio");
-            root.panel1 = p0;
-            root.panel2 = p1;
-            root.panel3 = p2;
-            root.panelCount = root.panelLayout === "horizontal" ? 3 : 1;
-            root.cardOrderRevision++;
-            root.cardsUpdated();
-        }
-
-        if (Array.isArray(cfg.tiles)) {
-            let knownMap = {};
-            let merged = [];
-            for (let i = 0; i < cfg.tiles.length; i++) {
-                const t = cfg.tiles[i];
-                if (t && t.id && root.getTileDef(t.id)) {
-                    merged.push({ id: t.id, enabled: Boolean(t.enabled) });
-                    knownMap[t.id] = true;
-                }
-            }
-            for (let j = 0; j < root.allTileDefs.length; j++) {
-                const defId = root.allTileDefs[j].id;
-                if (!knownMap[defId]) {
-                    merged.push({ id: defId, enabled: false });
-                }
-            }
-            root.tiles = merged;
-        }
+        ConfigUtils.applyConfig(root, cfg);
     }
 
     FileView {

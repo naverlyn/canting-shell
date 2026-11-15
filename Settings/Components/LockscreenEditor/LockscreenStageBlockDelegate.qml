@@ -5,22 +5,22 @@ import "../../../Lockscreen/Modules"
 
 Item {
     id: blockDelegate
-    required property var stageRoot
-    required property var canvasBox
-    required property var dragGuides
-    required property var simAuthBox
+    required property var hostStage
+    required property var hostCanvas
+    required property var hostGuides
+    required property var hostAuthBox
     required property var modelData
     required property int index
     property var blockData: modelData
     property int blockIdx: index
-    readonly property bool isSelected: stageRoot.selectedIndex === blockIdx
-    readonly property real sFactor: canvasBox.scaleFactor
+    readonly property bool isSelected: blockDelegate.hostStage.selectedIndex === blockIdx
+    readonly property real sFactor: blockDelegate.hostCanvas.scaleFactor
 
     // In Preview Mode, hide disabled blocks just like real lockscreen
-    visible: !stageRoot.previewMode || (blockData && blockData.enabled)
+    visible: !blockDelegate.hostStage.previewMode || (blockData && blockData.enabled)
 
-    width: Math.max(20, Math.round(moduleHost.implicitWidth + (stageRoot.previewMode ? 0 : 6)))
-    height: Math.max(20, Math.round(moduleHost.implicitHeight + (stageRoot.previewMode ? 0 : 6)))
+    width: Math.max(20, Math.round(moduleHost.implicitWidth + (blockDelegate.hostStage.previewMode ? 0 : 6)))
+    height: Math.max(20, Math.round(moduleHost.implicitHeight + (blockDelegate.hostStage.previewMode ? 0 : 6)))
 
     // Explicit reactive coordinate properties
     property int curPosX: blockData && blockData.position_x !== undefined ? Number(blockData.position_x) : 0
@@ -41,9 +41,9 @@ Item {
         if (curHalign === "left") {
             return curPosX * sFactor;
         } else if (curHalign === "right") {
-            return canvasBox.width - width + (curPosX * sFactor);
+            return blockDelegate.hostCanvas.width - width + (curPosX * sFactor);
         } else {
-            return (canvasBox.width - width) / 2 + (curPosX * sFactor);
+            return (blockDelegate.hostCanvas.width - width) / 2 + (curPosX * sFactor);
         }
     }
 
@@ -51,50 +51,50 @@ Item {
         if (curValign === "top") {
             return -(curPosY * sFactor);
         } else if (curValign === "bottom") {
-            return canvasBox.height - height - (curPosY * sFactor);
+            return blockDelegate.hostCanvas.height - height - (curPosY * sFactor);
         } else {
-            return (canvasBox.height - height) / 2 - (curPosY * sFactor);
+            return (blockDelegate.hostCanvas.height - height) / 2 - (curPosY * sFactor);
         }
     }
 
     Binding on x {
         when: !blockDragArea.drag.active
-        value: Math.max(2, Math.min(canvasBox.width - blockDelegate.width - 2, Math.round(blockDelegate.targetX)))
+        value: Math.max(2, Math.min(blockDelegate.hostCanvas.width - blockDelegate.width - 2, Math.round(blockDelegate.targetX)))
     }
 
     Binding on y {
         when: !blockDragArea.drag.active
-        value: Math.max(2, Math.min(canvasBox.height - blockDelegate.height - 2, Math.round(blockDelegate.targetY)))
+        value: Math.max(2, Math.min(blockDelegate.hostCanvas.height - blockDelegate.height - 2, Math.round(blockDelegate.targetY)))
     }
 
     z: isSelected || blockDragArea.drag.active ? 15 : 2
-    opacity: stageRoot.animModsOpacity
-    scale: stageRoot.animModsScale
+    opacity: blockDelegate.hostStage.animModsOpacity
+    scale: blockDelegate.hostStage.animModsScale
     transform: Translate {
         x: {
             let dx = 0;
-            if (stageRoot.animStaggerProgress !== 0) {
-                if (blockDelegate.curHalign === "left") dx -= 60 * stageRoot.animStaggerProgress;
-                else if (blockDelegate.curHalign === "right") dx += 60 * stageRoot.animStaggerProgress;
+            if (blockDelegate.hostStage.animStaggerProgress !== 0) {
+                if (blockDelegate.curHalign === "left") dx -= 60 * blockDelegate.hostStage.animStaggerProgress;
+                else if (blockDelegate.curHalign === "right") dx += 60 * blockDelegate.hostStage.animStaggerProgress;
             }
-            if (stageRoot.animPortalPull !== 0) {
-                dx += ((simAuthBox.x + simAuthBox.width / 2) - (blockDelegate.x + blockDelegate.width / 2)) * stageRoot.animPortalPull;
+            if (blockDelegate.hostStage.animPortalPull !== 0) {
+                dx += ((blockDelegate.hostAuthBox.x + blockDelegate.hostAuthBox.width / 2) - (blockDelegate.x + blockDelegate.width / 2)) * blockDelegate.hostStage.animPortalPull;
             }
             return dx;
         }
         y: {
             let dy = 0;
-            if (stageRoot.animStaggerProgress !== 0) {
-                if (blockDelegate.curValign === "top") dy -= 45 * stageRoot.animStaggerProgress;
-                else if (blockDelegate.curValign === "bottom") dy += 45 * stageRoot.animStaggerProgress;
-                else dy += 30 * stageRoot.animStaggerProgress;
+            if (blockDelegate.hostStage.animStaggerProgress !== 0) {
+                if (blockDelegate.curValign === "top") dy -= 45 * blockDelegate.hostStage.animStaggerProgress;
+                else if (blockDelegate.curValign === "bottom") dy += 45 * blockDelegate.hostStage.animStaggerProgress;
+                else dy += 30 * blockDelegate.hostStage.animStaggerProgress;
             }
-            if (stageRoot.animCurtainSplit !== 0) {
-                const topHalf = (blockDelegate.y + blockDelegate.height / 2) <= (canvasBox.height / 2);
-                dy += (topHalf ? -65 : 65) * stageRoot.animCurtainSplit;
+            if (blockDelegate.hostStage.animCurtainSplit !== 0) {
+                const topHalf = (blockDelegate.y + blockDelegate.height / 2) <= (blockDelegate.hostCanvas.height / 2);
+                dy += (topHalf ? -65 : 65) * blockDelegate.hostStage.animCurtainSplit;
             }
-            if (stageRoot.animPortalPull !== 0) {
-                dy += ((simAuthBox.y + simAuthBox.height / 2) - (blockDelegate.y + blockDelegate.height / 2)) * stageRoot.animPortalPull;
+            if (blockDelegate.hostStage.animPortalPull !== 0) {
+                dy += ((blockDelegate.hostAuthBox.y + blockDelegate.hostAuthBox.height / 2) - (blockDelegate.y + blockDelegate.height / 2)) * blockDelegate.hostStage.animPortalPull;
             }
             return dy;
         }
@@ -105,14 +105,14 @@ Item {
         id: editOutline
         anchors.fill: parent
         radius: Math.max(4, Math.round(8 * blockDelegate.sFactor))
-        visible: !stageRoot.previewMode
+        visible: !blockDelegate.hostStage.previewMode
         color: blockDragArea.drag.active
-            ? Qt.rgba(stageRoot.theme.accentPrimary.r, stageRoot.theme.accentPrimary.g, stageRoot.theme.accentPrimary.b, 0.22)
+            ? Qt.rgba(blockDelegate.hostStage.theme.accentPrimary.r, blockDelegate.hostStage.theme.accentPrimary.g, blockDelegate.hostStage.theme.accentPrimary.b, 0.22)
             : (blockDelegate.isSelected
-                ? Qt.rgba(stageRoot.theme.accentPrimary.r, stageRoot.theme.accentPrimary.g, stageRoot.theme.accentPrimary.b, 0.12)
+                ? Qt.rgba(blockDelegate.hostStage.theme.accentPrimary.r, blockDelegate.hostStage.theme.accentPrimary.g, blockDelegate.hostStage.theme.accentPrimary.b, 0.12)
                 : (blockHover.hovered ? Qt.rgba(0, 0, 0, 0.4) : Qt.rgba(0, 0, 0, 0.18)))
         border.color: (blockDelegate.isSelected || blockDragArea.drag.active)
-            ? stageRoot.theme.accentPrimary
+            ? blockDelegate.hostStage.theme.accentPrimary
             : (blockHover.hovered ? Qt.rgba(1, 1, 1, 0.4) : Qt.rgba(1, 1, 1, 0.12))
         border.width: (blockDelegate.isSelected || blockDragArea.drag.active) ? 1.5 : 1
 
@@ -126,12 +126,12 @@ Item {
     LockModuleHost {
         id: moduleHost
         anchors.centerIn: parent
-        theme: stageRoot.theme
-        font: (stageRoot.theme && stageRoot.theme.lockscreenFont)
-            ? stageRoot.theme.lockscreenFont
-            : ((stageRoot.theme && stageRoot.theme.monoFont) ? stageRoot.theme.monoFont : "JetBrainsMono Nerd Font")
+        theme: blockDelegate.hostStage.theme
+        font: (blockDelegate.hostStage.theme && blockDelegate.hostStage.theme.lockscreenFont)
+            ? blockDelegate.hostStage.theme.lockscreenFont
+            : ((blockDelegate.hostStage.theme && blockDelegate.hostStage.theme.monoFont) ? blockDelegate.hostStage.theme.monoFont : "JetBrainsMono Nerd Font")
         moduleData: blockDelegate.blockData
-        previewMode: stageRoot.previewMode
+        previewMode: blockDelegate.hostStage.previewMode
         scaleFactor: blockDelegate.sFactor
     }
 
@@ -143,32 +143,32 @@ Item {
         drag.target: blockDelegate
         drag.axis: Drag.XAndYAxis
         drag.minimumX: 0
-        drag.maximumX: Math.max(0, canvasBox.width - blockDelegate.width)
+        drag.maximumX: Math.max(0, blockDelegate.hostCanvas.width - blockDelegate.width)
         drag.minimumY: 0
-        drag.maximumY: Math.max(0, canvasBox.height - blockDelegate.height)
+        drag.maximumY: Math.max(0, blockDelegate.hostCanvas.height - blockDelegate.height)
         cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
         onPressed: {
-            stageRoot.selectedIndex = blockDelegate.blockIdx;
-            dragGuides.targetCenterX = blockDelegate.x + blockDelegate.width / 2;
-            dragGuides.targetCenterY = blockDelegate.y + blockDelegate.height / 2;
+            blockDelegate.hostStage.selectedIndex = blockDelegate.blockIdx;
+            blockDelegate.hostGuides.targetCenterX = blockDelegate.x + blockDelegate.width / 2;
+            blockDelegate.hostGuides.targetCenterY = blockDelegate.y + blockDelegate.height / 2;
         }
 
         onPositionChanged: {
             if (drag.active) {
                 let curCenterX = blockDelegate.x + blockDelegate.width / 2;
                 let curCenterY = blockDelegate.y + blockDelegate.height / 2;
-                dragGuides.targetCenterX = curCenterX;
-                dragGuides.targetCenterY = curCenterY;
-                stageRoot.applyMagneticSnap(blockDelegate.x, blockDelegate.y, blockDelegate.width, blockDelegate.height, blockDelegate.blockIdx);
+                blockDelegate.hostGuides.targetCenterX = curCenterX;
+                blockDelegate.hostGuides.targetCenterY = curCenterY;
+                blockDelegate.hostStage.applyMagneticSnap(blockDelegate.x, blockDelegate.y, blockDelegate.width, blockDelegate.height, blockDelegate.blockIdx);
             }
         }
 
         onReleased: {
-            dragGuides.snapVerticalActive = false;
-            dragGuides.snapHorizontalActive = false;
+            blockDelegate.hostGuides.snapVerticalActive = false;
+            blockDelegate.hostGuides.snapHorizontalActive = false;
 
-            let snapped = stageRoot.applyMagneticSnap(blockDelegate.x, blockDelegate.y, blockDelegate.width, blockDelegate.height, blockDelegate.blockIdx);
+            let snapped = blockDelegate.hostStage.applyMagneticSnap(blockDelegate.x, blockDelegate.y, blockDelegate.width, blockDelegate.height, blockDelegate.blockIdx);
             blockDelegate.x = snapped.x;
             blockDelegate.y = snapped.y;
 
@@ -176,18 +176,18 @@ Item {
             let curCenterY = blockDelegate.y + blockDelegate.height / 2;
 
             let newHalign = blockDelegate.blockData ? blockDelegate.blockData.halign : "center";
-            if (curCenterX > canvasBox.width * 0.35 && curCenterX < canvasBox.width * 0.65) {
+            if (curCenterX > blockDelegate.hostCanvas.width * 0.35 && curCenterX < blockDelegate.hostCanvas.width * 0.65) {
                 newHalign = "center";
-            } else if (curCenterX <= canvasBox.width * 0.35) {
+            } else if (curCenterX <= blockDelegate.hostCanvas.width * 0.35) {
                 newHalign = "left";
             } else {
                 newHalign = "right";
             }
 
             let newValign = blockDelegate.blockData ? blockDelegate.blockData.valign : "center";
-            if (curCenterY < canvasBox.height * 0.35) {
+            if (curCenterY < blockDelegate.hostCanvas.height * 0.35) {
                 newValign = "top";
-            } else if (curCenterY > canvasBox.height * 0.65) {
+            } else if (curCenterY > blockDelegate.hostCanvas.height * 0.65) {
                 newValign = "bottom";
             } else {
                 newValign = "center";
@@ -195,18 +195,18 @@ Item {
 
             let rawX = 0;
             if (newHalign === "center") {
-                rawX = (curCenterX - (canvasBox.width / 2)) / blockDelegate.sFactor;
+                rawX = (curCenterX - (blockDelegate.hostCanvas.width / 2)) / blockDelegate.sFactor;
             } else if (newHalign === "right") {
-                rawX = ((blockDelegate.x + blockDelegate.width) - canvasBox.width) / blockDelegate.sFactor;
+                rawX = ((blockDelegate.x + blockDelegate.width) - blockDelegate.hostCanvas.width) / blockDelegate.sFactor;
             } else {
                 rawX = blockDelegate.x / blockDelegate.sFactor;
             }
 
             let rawY = 0;
             if (newValign === "center") {
-                rawY = ((canvasBox.height / 2) - curCenterY) / blockDelegate.sFactor;
+                rawY = ((blockDelegate.hostCanvas.height / 2) - curCenterY) / blockDelegate.sFactor;
             } else if (newValign === "bottom") {
-                rawY = (canvasBox.height - (blockDelegate.y + blockDelegate.height)) / blockDelegate.sFactor;
+                rawY = (blockDelegate.hostCanvas.height - (blockDelegate.y + blockDelegate.height)) / blockDelegate.sFactor;
             } else {
                 rawY = -(blockDelegate.y) / blockDelegate.sFactor;
             }
@@ -228,19 +228,19 @@ Item {
                 });
             }
 
-            if (stageRoot.liveBlocks && blockDelegate.blockIdx >= 0 && blockDelegate.blockIdx < stageRoot.liveBlocks.length) {
-                let liveList = [...stageRoot.liveBlocks];
+            if (blockDelegate.hostStage.liveBlocks && blockDelegate.blockIdx >= 0 && blockDelegate.blockIdx < blockDelegate.hostStage.liveBlocks.length) {
+                let liveList = [...blockDelegate.hostStage.liveBlocks];
                 liveList[blockDelegate.blockIdx] = Object.assign({}, liveList[blockDelegate.blockIdx], {
                     position_x: finalX,
                     position_y: finalY,
                     halign: newHalign,
                     valign: newValign
                 });
-                stageRoot.liveBlocks = liveList;
+                blockDelegate.hostStage.liveBlocks = liveList;
             }
 
-            stageRoot.hasUnsavedMoves = false;
-            stageRoot.blockMoved(blockDelegate.blockIdx, finalX, finalY, newHalign, newValign);
+            blockDelegate.hostStage.hasUnsavedMoves = false;
+            blockDelegate.hostStage.blockMoved(blockDelegate.blockIdx, finalX, finalY, newHalign, newValign);
         }
     }
 }
