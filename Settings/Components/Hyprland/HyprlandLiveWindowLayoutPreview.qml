@@ -8,6 +8,7 @@ import "../Common"
 import ".."
 
 ColumnLayout {
+    id: layoutPreviewRoot
     required property var root
     visible: root.currentSubTab === 0
     Layout.fillWidth: true
@@ -463,360 +464,31 @@ ColumnLayout {
         RowDivider { sideMargin: 0; alpha: 1.0; visible: !root.borderThemeSync }
 
         /* Active Primary Color Row */
-        ColumnLayout {
+        HyprlandBorderColorPickerRow {
             visible: !root.borderThemeSync
-            Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 12
-            spacing: 8
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                ColumnLayout {
-                    spacing: 2
-                    Layout.fillWidth: true
-                    Text {
-                        text: "Active Border Primary Color"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: root.theme.textPrimary
-                    }
-                    Text {
-                        text: "Start color of the focused window border gradient"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                    }
-                }
-
-                Item { Layout.fillWidth: true }
-
-                Rectangle {
-                    width: 24
-                    height: 24
-                    radius: 12
-                    color: root.activeBorderCol1 || "#7aa2f7"
-                    border.color: Qt.rgba(1, 1, 1, 0.3)
-                    border.width: 1
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                }
-
-                Rectangle {
-                    width: 105
-                    height: 30
-                    radius: 6
-                    color: root.theme.bgBase
-                    border.color: col1Input.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
-                    border.width: col1Input.activeFocus ? 2 : 1
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-
-                    TextInput {
-                        id: col1Input
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-                        verticalAlignment: TextInput.AlignVCenter
-                        text: root.activeBorderCol1
-                        font.family: root.font
-                        font.pixelSize: 12
-                        font.bold: true
-                        color: root.theme.textPrimary
-                        selectByMouse: true
-                        onEditingFinished: {
-                            let v = text.trim();
-                            if (!v.startsWith("#") && v.length === 6) v = "#" + v;
-                            if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-                                root.activeBorderCol1 = v.toLowerCase();
-                                root.applyBorderColors();
-                            }
-                        }
-                    }
-                }
-            }
-
-            /* Segmented Color Swatch Track with Sliding Selection Pill */
-            Rectangle {
-                id: sw1Track
-                Layout.fillWidth: true
-                height: 32
-                radius: 7
-                color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                border.width: 1
-
-                readonly property int count: root.borderColorSwatches.length
-                readonly property int activeIdx: {
-                    let cur = String(root.activeBorderCol1).toLowerCase();
-                    for (let i = 0; i < root.borderColorSwatches.length; i++) {
-                        if (String(root.borderColorSwatches[i].color).toLowerCase() === cur) return i;
-                    }
-                    return -1;
-                }
-                readonly property real cellWidth: (width - 6 - Math.max(0, count - 1) * 3) / Math.max(1, count)
-
-                Rectangle {
-                    visible: sw1Track.activeIdx >= 0
-                    y: 3
-                    height: parent.height - 6
-                    width: sw1Track.cellWidth
-                    x: 3 + Math.max(0, sw1Track.activeIdx) * (sw1Track.cellWidth + 3)
-                    radius: 5
-                    color: root.theme.bgSelected
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-
-                    Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 3
-
-                    Repeater {
-                        model: root.borderColorSwatches
-                        delegate: Rectangle {
-                            required property var modelData
-                            required property int index
-                            readonly property bool isSel: sw1Track.activeIdx === index
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 5
-                            color: !isSel && sw1Hover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                            scale: sw1Mouse.pressed ? 0.96 : 1.0
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutQuad } }
-
-                            HoverHandler { id: sw1Hover }
-
-                            RowLayout {
-                                id: sw1Row
-                                anchors.centerIn: parent
-                                spacing: 5
-                                Rectangle {
-                                    width: 10; height: 10; radius: 5
-                                    color: modelData.color
-                                    border.color: Qt.rgba(0, 0, 0, 0.3); border.width: 1
-                                }
-                                Text {
-                                    text: modelData.name
-                                    font.family: root.font
-                                    font.pixelSize: 11
-                                    font.bold: isSel
-                                    color: isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                    opacity: isSel || sw1Hover.hovered ? 1.0 : 0.75
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                    Behavior on opacity { NumberAnimation { duration: 140 } }
-                                }
-                            }
-
-                            MouseArea {
-                                id: sw1Mouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.activeBorderCol1 = String(modelData.color).toLowerCase();
-                                    root.applyBorderColors();
-                                }
-                            }
-                        }
-                    }
-                }
+            root: layoutPreviewRoot.root
+            title: "Active Border Primary Color"
+            subtitle: "Start color of the focused window border gradient"
+            colorValue: root.activeBorderCol1
+            fallbackColor: "#7aa2f7"
+            onColorSelected: hex => {
+                root.activeBorderCol1 = hex;
+                root.applyBorderColors();
             }
         }
 
         RowDivider { sideMargin: 0; alpha: 1.0; visible: !root.borderThemeSync }
 
         /* Active Secondary Color Row */
-        ColumnLayout {
+        HyprlandBorderColorPickerRow {
             visible: !root.borderThemeSync
-            Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 12
-            spacing: 8
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                ColumnLayout {
-                    spacing: 2
-                    Layout.fillWidth: true
-                    Text {
-                        text: "Active Border Secondary Color"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: root.theme.textPrimary
-                    }
-                    Text {
-                        text: "End color of the focused window border gradient (set same as primary for solid border)"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                    }
-                }
-
-                Item { Layout.fillWidth: true }
-
-                Rectangle {
-                    width: 24
-                    height: 24
-                    radius: 12
-                    color: root.activeBorderCol2 || "#7dcfff"
-                    border.color: Qt.rgba(1, 1, 1, 0.3)
-                    border.width: 1
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                }
-
-                Rectangle {
-                    width: 105
-                    height: 30
-                    radius: 6
-                    color: root.theme.bgBase
-                    border.color: col2Input.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
-                    border.width: col2Input.activeFocus ? 2 : 1
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-
-                    TextInput {
-                        id: col2Input
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-                        verticalAlignment: TextInput.AlignVCenter
-                        text: root.activeBorderCol2
-                        font.family: root.font
-                        font.pixelSize: 12
-                        font.bold: true
-                        color: root.theme.textPrimary
-                        selectByMouse: true
-                        onEditingFinished: {
-                            let v = text.trim();
-                            if (!v.startsWith("#") && v.length === 6) v = "#" + v;
-                            if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-                                root.activeBorderCol2 = v.toLowerCase();
-                                root.applyBorderColors();
-                            }
-                        }
-                    }
-                }
-            }
-
-            /* Segmented Color Swatch Track with Sliding Selection Pill */
-            Rectangle {
-                id: sw2Track
-                Layout.fillWidth: true
-                height: 32
-                radius: 7
-                color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                border.width: 1
-
-                readonly property int count: root.borderColorSwatches.length
-                readonly property int activeIdx: {
-                    let cur = String(root.activeBorderCol2).toLowerCase();
-                    for (let i = 0; i < root.borderColorSwatches.length; i++) {
-                        if (String(root.borderColorSwatches[i].color).toLowerCase() === cur) return i;
-                    }
-                    return -1;
-                }
-                readonly property real cellWidth: (width - 6 - Math.max(0, count - 1) * 3) / Math.max(1, count)
-
-                Rectangle {
-                    visible: sw2Track.activeIdx >= 0
-                    y: 3
-                    height: parent.height - 6
-                    width: sw2Track.cellWidth
-                    x: 3 + Math.max(0, sw2Track.activeIdx) * (sw2Track.cellWidth + 3)
-                    radius: 5
-                    color: root.theme.bgSelected
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-
-                    Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 3
-
-                    Repeater {
-                        model: root.borderColorSwatches
-                        delegate: Rectangle {
-                            required property var modelData
-                            required property int index
-                            readonly property bool isSel: sw2Track.activeIdx === index
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 5
-                            color: !isSel && sw2Hover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                            scale: sw2Mouse.pressed ? 0.96 : 1.0
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutQuad } }
-
-                            HoverHandler { id: sw2Hover }
-
-                            RowLayout {
-                                id: sw2Row
-                                anchors.centerIn: parent
-                                spacing: 5
-                                Rectangle {
-                                    width: 10; height: 10; radius: 5
-                                    color: modelData.color
-                                    border.color: Qt.rgba(0, 0, 0, 0.3); border.width: 1
-                                }
-                                Text {
-                                    text: modelData.name
-                                    font.family: root.font
-                                    font.pixelSize: 11
-                                    font.bold: isSel
-                                    color: isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                    opacity: isSel || sw2Hover.hovered ? 1.0 : 0.75
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                    Behavior on opacity { NumberAnimation { duration: 140 } }
-                                }
-                            }
-
-                            MouseArea {
-                                id: sw2Mouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.activeBorderCol2 = String(modelData.color).toLowerCase();
-                                    root.applyBorderColors();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        RowDivider { sideMargin: 0; alpha: 1.0; visible: !root.borderThemeSync }
-
-        SettingSliderRow {
-            visible: !root.borderThemeSync
-            announce: true
-            title: "Gradient Angle"
-            desc: "Rotation angle for the active window border gradient"
-            value: root.activeBorderAngle
-            minVal: 0
-            maxVal: 360
-            unit: "°"
-            presets: [
-                { label: "0°", val: 0 },
-                { label: "45°", val: 45 },
-                { label: "90°", val: 90 },
-                { label: "135°", val: 135 }
-            ]
-            onValueModified: (v) => {
-                root.activeBorderAngle = v;
+            root: layoutPreviewRoot.root
+            title: "Active Border Secondary Color"
+            subtitle: "End color of the focused window border gradient (set same as primary for solid border)"
+            colorValue: root.activeBorderCol2
+            fallbackColor: "#bb9af7"
+            onColorSelected: hex => {
+                root.activeBorderCol2 = hex;
                 root.applyBorderColors();
             }
         }
@@ -824,169 +496,16 @@ ColumnLayout {
         RowDivider { sideMargin: 0; alpha: 1.0; visible: !root.borderThemeSync }
 
         /* Inactive Border Color Row */
-        ColumnLayout {
+        HyprlandBorderColorPickerRow {
             visible: !root.borderThemeSync
-            Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 12
-            spacing: 8
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: 10
-
-                ColumnLayout {
-                    spacing: 2
-                    Layout.fillWidth: true
-                    Text {
-                        text: "Inactive Window Border Color"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: root.theme.textPrimary
-                    }
-                    Text {
-                        text: "Outline color for unfocused background windows"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                    }
-                }
-
-                Item { Layout.fillWidth: true }
-
-                Rectangle {
-                    width: 24
-                    height: 24
-                    radius: 12
-                    color: root.inactiveBorderCol || "#32364a"
-                    border.color: Qt.rgba(1, 1, 1, 0.3)
-                    border.width: 1
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                }
-
-                Rectangle {
-                    width: 105
-                    height: 30
-                    radius: 6
-                    color: root.theme.bgBase
-                    border.color: colInactInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
-                    border.width: colInactInput.activeFocus ? 2 : 1
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-
-                    TextInput {
-                        id: colInactInput
-                        anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-                        verticalAlignment: TextInput.AlignVCenter
-                        text: root.inactiveBorderCol
-                        font.family: root.font
-                        font.pixelSize: 12
-                        font.bold: true
-                        color: root.theme.textPrimary
-                        selectByMouse: true
-                        onEditingFinished: {
-                            let v = text.trim();
-                            if (!v.startsWith("#") && v.length === 6) v = "#" + v;
-                            if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-                                root.inactiveBorderCol = v.toLowerCase();
-                                root.applyBorderColors();
-                            }
-                        }
-                    }
-                }
-            }
-
-            /* Segmented Color Swatch Track with Sliding Selection Pill */
-            Rectangle {
-                id: swInactTrack
-                Layout.fillWidth: true
-                height: 32
-                radius: 7
-                color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                border.width: 1
-
-                readonly property int count: root.inactiveColorSwatches.length
-                readonly property int activeIdx: {
-                    let cur = String(root.inactiveBorderCol).toLowerCase();
-                    for (let i = 0; i < root.inactiveColorSwatches.length; i++) {
-                        if (String(root.inactiveColorSwatches[i].color).toLowerCase() === cur) return i;
-                    }
-                    return -1;
-                }
-                readonly property real cellWidth: (width - 6 - Math.max(0, count - 1) * 3) / Math.max(1, count)
-
-                Rectangle {
-                    visible: swInactTrack.activeIdx >= 0
-                    y: 3
-                    height: parent.height - 6
-                    width: swInactTrack.cellWidth
-                    x: 3 + Math.max(0, swInactTrack.activeIdx) * (swInactTrack.cellWidth + 3)
-                    radius: 5
-                    color: root.theme.bgSelected
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-
-                    Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 3
-
-                    Repeater {
-                        model: root.inactiveColorSwatches
-                        delegate: Rectangle {
-                            required property var modelData
-                            required property int index
-                            readonly property bool isSel: swInactTrack.activeIdx === index
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 5
-                            color: !isSel && swInactHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                            scale: swInactMouse.pressed ? 0.96 : 1.0
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutQuad } }
-
-                            HoverHandler { id: swInactHover }
-
-                            RowLayout {
-                                id: swInactRow
-                                anchors.centerIn: parent
-                                spacing: 5
-                                Rectangle {
-                                    width: 10; height: 10; radius: 5
-                                    color: modelData.color
-                                    border.color: Qt.rgba(0, 0, 0, 0.3); border.width: 1
-                                }
-                                Text {
-                                    text: modelData.name
-                                    font.family: root.font
-                                    font.pixelSize: 11
-                                    font.bold: isSel
-                                    color: isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                    opacity: isSel || swInactHover.hovered ? 1.0 : 0.75
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                    Behavior on opacity { NumberAnimation { duration: 140 } }
-                                }
-                            }
-
-                            MouseArea {
-                                id: swInactMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.inactiveBorderCol = String(modelData.color).toLowerCase();
-                                    root.applyBorderColors();
-                                }
-                            }
-                        }
-                    }
-                }
+            root: layoutPreviewRoot.root
+            title: "Inactive Window Border Color"
+            subtitle: "Outline color for unfocused background windows"
+            colorValue: root.inactiveBorderCol
+            fallbackColor: "#414868"
+            onColorSelected: hex => {
+                root.inactiveBorderCol = hex;
+                root.applyBorderColors();
             }
         }
     }

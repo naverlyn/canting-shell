@@ -6,6 +6,7 @@ import Quickshell.Io
 import Quickshell.Services.Notifications
 import "SocialApps.js" as SocialApps
 import "NotificationPresets.js" as Presets
+import "NotificationConfigUtils.js" as ConfigUtils
 
 Singleton {
     id: root
@@ -341,60 +342,18 @@ Singleton {
     // =========================================================================
     function setToastPosition(pos) {
         const clean = String(pos || "top-right").trim().toLowerCase();
-        if (root.validPositions.indexOf(clean) === -1) return;
-        if (root.toastPosition !== clean) {
+        if (root.validPositions.indexOf(clean) !== -1 && root.toastPosition !== clean) {
             root.toastPosition = clean;
             root.saveConfig();
         }
     }
 
-    function setToastMarginX(val) {
-        const clamped = Math.max(0, Math.min(200, Math.round(Number(val) || 0)));
-        if (root.toastMarginX !== clamped) {
-            root.toastMarginX = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setToastMarginY(val) {
-        const clamped = Math.max(0, Math.min(200, Math.round(Number(val) || 0)));
-        if (root.toastMarginY !== clamped) {
-            root.toastMarginY = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setToastWidth(val) {
-        const clamped = Math.max(280, Math.min(520, Math.round(Number(val) || 360)));
-        if (root.toastWidth !== clamped) {
-            root.toastWidth = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setCardRadius(val) {
-        const clamped = Math.max(0, Math.min(28, Math.round(Number(val) || 0)));
-        if (root.cardRadius !== clamped) {
-            root.cardRadius = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setCardSpacing(val) {
-        const clamped = Math.max(4, Math.min(24, Math.round(Number(val) || 8)));
-        if (root.cardSpacing !== clamped) {
-            root.cardSpacing = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setCardPadding(val) {
-        const clamped = Math.max(8, Math.min(24, Math.round(Number(val) || 14)));
-        if (root.cardPadding !== clamped) {
-            root.cardPadding = clamped;
-            root.saveConfig();
-        }
-    }
+    function setToastMarginX(val) { ConfigUtils.setIntProp(root, "toastMarginX", val); }
+    function setToastMarginY(val) { ConfigUtils.setIntProp(root, "toastMarginY", val); }
+    function setToastWidth(val) { ConfigUtils.setIntProp(root, "toastWidth", val); }
+    function setCardRadius(val) { ConfigUtils.setIntProp(root, "cardRadius", val); }
+    function setCardSpacing(val) { ConfigUtils.setIntProp(root, "cardSpacing", val); }
+    function setCardPadding(val) { ConfigUtils.setIntProp(root, "cardPadding", val); }
 
     function setCardOpacity(val) {
         const clamped = Math.max(0.5, Math.min(1.0, Math.round((Number(val) || 1.0) * 100) / 100));
@@ -404,101 +363,19 @@ Singleton {
         }
     }
 
-    function setMaxVisibleToasts(val) {
-        const clamped = Math.max(1, Math.min(10, Math.round(Number(val) || 5)));
-        if (root.maxVisibleToasts !== clamped) {
-            root.maxVisibleToasts = clamped;
-            root.saveConfig();
-        }
-    }
+    function setMaxVisibleToasts(val) { ConfigUtils.setIntProp(root, "maxVisibleToasts", val); }
+    function setDefaultTimeout(val) { ConfigUtils.setIntProp(root, "defaultTimeout", val); }
+    function setPauseOnHover(val) { ConfigUtils.setBoolProp(root, "pauseOnHover", val, false); }
+    function setShowAccentStrip(val) { ConfigUtils.setBoolProp(root, "showAccentStrip", val, false); }
+    function setAccentStripPosition(pos) { ConfigUtils.setEnumProp(root, "accentStripPosition", pos); }
+    function setAccentStripWidth(val) { ConfigUtils.setIntProp(root, "accentStripWidth", val); }
 
-    function setDefaultTimeout(val) {
-        const clamped = Math.max(1500, Math.min(20000, Math.round(Number(val) || 5000)));
-        if (root.defaultTimeout !== clamped) {
-            root.defaultTimeout = clamped;
-            root.saveConfig();
-        }
-    }
+    function setIconMode(mode) { ConfigUtils.setEnumProp(root, "iconMode", mode); }
+    function setIconSize(val) { ConfigUtils.setIntProp(root, "iconSize", val); }
+    function setIconRadius(val) { ConfigUtils.setIntProp(root, "iconRadius", val); }
+    function setIconShowBg(val) { ConfigUtils.setBoolProp(root, "iconShowBg", val, false); }
 
-    function setPauseOnHover(val) {
-        const b = Boolean(val);
-        if (root.pauseOnHover !== b) {
-            root.pauseOnHover = b;
-            root.saveConfig();
-        }
-    }
-
-    function setShowAccentStrip(val) {
-        const b = Boolean(val);
-        if (root.showAccentStrip !== b) {
-            root.showAccentStrip = b;
-            root.saveConfig();
-        }
-    }
-
-    function setAccentStripPosition(pos) {
-        const valid = ["left", "right", "top", "none"];
-        const clean = String(pos || "left").toLowerCase();
-        if (valid.indexOf(clean) === -1) return;
-        if (root.accentStripPosition !== clean) {
-            root.accentStripPosition = clean;
-            root.showAccentStrip = (clean !== "none");
-            root.saveConfig();
-        }
-    }
-
-    function setAccentStripWidth(val) {
-        const clamped = Math.max(2, Math.min(8, Math.round(Number(val) || 3)));
-        if (root.accentStripWidth !== clamped) {
-            root.accentStripWidth = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setIconMode(mode) {
-        const valid = ["auto", "inline", "avatar"];
-        const clean = String(mode || "auto").toLowerCase();
-        if (valid.indexOf(clean) === -1) return;
-        if (root.iconMode !== clean) {
-            root.iconMode = clean;
-            root.blockOrderRevision++;
-            root.saveConfig();
-        }
-    }
-
-    function setIconSize(val) {
-        const clamped = Math.max(16, Math.min(48, Math.round(Number(val) || 24)));
-        if (root.iconSize !== clamped) {
-            root.iconSize = clamped;
-            root.blockOrderRevision++;
-            root.saveConfig();
-        }
-    }
-
-    function setIconRadius(val) {
-        const clamped = Math.max(0, Math.min(24, Math.round(Number(val) || 8)));
-        if (root.iconRadius !== clamped) {
-            root.iconRadius = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setIconShowBg(val) {
-        const b = Boolean(val);
-        if (root.iconShowBg !== b) {
-            root.iconShowBg = b;
-            root.saveConfig();
-        }
-    }
-
-    function setAppNameFontSize(val) {
-        const clamped = Math.max(9, Math.min(16, Math.round(Number(val) || 11)));
-        if (root.appNameFontSize !== clamped) {
-            root.appNameFontSize = clamped;
-            root.blockOrderRevision++;
-            root.saveConfig();
-        }
-    }
+    function setAppNameFontSize(val) { ConfigUtils.setIntProp(root, "appNameFontSize", val); }
 
     function setTimestampFormat(fmt) {
         const clean = String(fmt) === "time" ? "time" : "relative";
@@ -509,159 +386,27 @@ Singleton {
         }
     }
 
-    function setTitleFontSize(val) {
-        const clamped = Math.max(11, Math.min(22, Math.round(Number(val) || 14)));
-        if (root.titleFontSize !== clamped) {
-            root.titleFontSize = clamped;
-            root.blockOrderRevision++;
-            root.saveConfig();
-        }
-    }
+    function setTitleFontSize(val) { ConfigUtils.setIntProp(root, "titleFontSize", val); }
+    function setTitleBold(val) { ConfigUtils.setBoolProp(root, "titleBold", val, true); }
+    function setTitleMaxLines(val) { ConfigUtils.setIntProp(root, "titleMaxLines", val); }
+    function setTitleAlignment(align) { ConfigUtils.setEnumProp(root, "titleAlignment", align); }
 
-    function setTitleBold(val) {
-        const b = Boolean(val);
-        if (root.titleBold !== b) {
-            root.titleBold = b;
-            root.blockOrderRevision++;
-            root.saveConfig();
-        }
-    }
+    function setBodyFontSize(val) { ConfigUtils.setIntProp(root, "bodyFontSize", val); }
+    function setBodyMaxLines(val) { ConfigUtils.setIntProp(root, "bodyMaxLines", val); }
+    function setBodyAlignment(align) { ConfigUtils.setEnumProp(root, "bodyAlignment", align); }
 
-    function setTitleMaxLines(val) {
-        const clamped = Math.max(1, Math.min(4, Math.round(Number(val) || 1)));
-        if (root.titleMaxLines !== clamped) {
-            root.titleMaxLines = clamped;
-            root.saveConfig();
-        }
-    }
+    function setImagePosition(pos) { ConfigUtils.setEnumProp(root, "imagePosition", pos); }
+    function setImageSize(val) { ConfigUtils.setIntProp(root, "imageSize", val); }
+    function setImageRadius(val) { ConfigUtils.setIntProp(root, "imageRadius", val); }
+    function setImageShowBg(val) { ConfigUtils.setBoolProp(root, "imageShowBg", val, false); }
 
-    function setTitleAlignment(align) {
-        const valid = ["left", "center", "right"];
-        const clean = String(align || "left").toLowerCase();
-        if (valid.indexOf(clean) === -1) return;
-        if (root.titleAlignment !== clean) {
-            root.titleAlignment = clean;
-            root.saveConfig();
-        }
-    }
+    function setButtonStyle(style) { ConfigUtils.setEnumProp(root, "buttonStyle", style); }
+    function setButtonHeight(val) { ConfigUtils.setIntProp(root, "buttonHeight", val); }
+    function setButtonRadius(val) { ConfigUtils.setIntProp(root, "buttonRadius", val); }
+    function setButtonAlignment(align) { ConfigUtils.setEnumProp(root, "buttonAlignment", align); }
 
-    function setBodyFontSize(val) {
-        const clamped = Math.max(10, Math.min(18, Math.round(Number(val) || 12)));
-        if (root.bodyFontSize !== clamped) {
-            root.bodyFontSize = clamped;
-            root.blockOrderRevision++;
-            root.saveConfig();
-        }
-    }
-
-    function setBodyMaxLines(val) {
-        const clamped = Math.max(1, Math.min(8, Math.round(Number(val) || 3)));
-        if (root.bodyMaxLines !== clamped) {
-            root.bodyMaxLines = clamped;
-            root.blockOrderRevision++;
-            root.saveConfig();
-        }
-    }
-
-    function setBodyAlignment(align) {
-        const valid = ["left", "center", "right"];
-        const clean = String(align || "left").toLowerCase();
-        if (valid.indexOf(clean) === -1) return;
-        if (root.bodyAlignment !== clean) {
-            root.bodyAlignment = clean;
-            root.saveConfig();
-        }
-    }
-
-    function setImagePosition(pos) {
-        const valid = ["right", "left", "banner"];
-        const clean = String(pos || "right").toLowerCase();
-        if (valid.indexOf(clean) === -1) return;
-        if (root.imagePosition !== clean) {
-            root.imagePosition = clean;
-            root.blockOrderRevision++;
-            root.saveConfig();
-        }
-    }
-
-    function setImageSize(val) {
-        const clamped = Math.max(28, Math.min(110, Math.round(Number(val) || 44)));
-        if (root.imageSize !== clamped) {
-            root.imageSize = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setImageRadius(val) {
-        const num = (val === undefined || val === null || isNaN(Number(val))) ? 10 : Number(val);
-        const clamped = Math.max(0, Math.min(48, Math.round(num)));
-        if (root.imageRadius !== clamped) {
-            root.imageRadius = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setImageShowBg(val) {
-        const b = Boolean(val);
-        if (root.imageShowBg !== b) {
-            root.imageShowBg = b;
-            root.saveConfig();
-        }
-    }
-
-    function setButtonStyle(style) {
-        const valid = ["pill", "fill", "ghost"];
-        const clean = String(style || "pill").toLowerCase();
-        if (valid.indexOf(clean) === -1) return;
-        if (root.buttonStyle !== clean) {
-            root.buttonStyle = clean;
-            root.blockOrderRevision++;
-            root.saveConfig();
-        }
-    }
-
-    function setButtonHeight(val) {
-        const clamped = Math.max(22, Math.min(40, Math.round(Number(val) || 28)));
-        if (root.buttonHeight !== clamped) {
-            root.buttonHeight = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setButtonRadius(val) {
-        const clamped = Math.max(0, Math.min(20, Math.round(Number(val) || 14)));
-        if (root.buttonRadius !== clamped) {
-            root.buttonRadius = clamped;
-            root.saveConfig();
-        }
-    }
-
-    function setButtonAlignment(align) {
-        const valid = ["left", "center", "right", "stretch"];
-        const clean = String(align || "left").toLowerCase();
-        if (valid.indexOf(clean) === -1) return;
-        if (root.buttonAlignment !== clean) {
-            root.buttonAlignment = clean;
-            root.saveConfig();
-        }
-    }
-
-    function setProgressHeight(val) {
-        const clamped = Math.max(2, Math.min(8, Math.round(Number(val) || 3)));
-        if (root.progressHeight !== clamped) {
-            root.progressHeight = clamped;
-            root.blockOrderRevision++;
-            root.saveConfig();
-        }
-    }
-
-    function setProgressShowCritical(val) {
-        const b = Boolean(val);
-        if (root.progressShowCritical !== b) {
-            root.progressShowCritical = b;
-            root.saveConfig();
-        }
-    }
+    function setProgressHeight(val) { ConfigUtils.setIntProp(root, "progressHeight", val); }
+    function setProgressShowCritical(val) { ConfigUtils.setBoolProp(root, "progressShowCritical", val, false); }
 
     // =========================================================================
     // COMPOSER / TEST NOTIFICATION PRESETS & LIVE DISPATCH
@@ -766,110 +511,12 @@ Singleton {
     }
 
     function resetDefaults() {
-        root.doNotDisturb = false;
-        root.toastPosition = "top-right";
-        root.toastMarginX = 10;
-        root.toastMarginY = 10;
-
-        root.headerBlocks = ["icon", "appName", "closeBtn"];
-        root.contentBlocks = ["title", "body", "image"];
-        root.footerBlocks = ["buttons", "progressBar"];
-
-        root.toastWidth = 360;
-        root.cardRadius = 16;
-        root.cardSpacing = 8;
-        root.cardPadding = 14;
-        root.cardOpacity = 1.0;
-        root.maxVisibleToasts = 5;
-        root.defaultTimeout = 5000;
-        root.pauseOnHover = true;
-
-        root.showAccentStrip = true;
-        root.accentStripPosition = "left";
-        root.accentStripWidth = 3;
-
-        root.iconMode = "auto";
-        root.iconSize = 24;
-        root.iconRadius = 8;
-        root.iconShowBg = true;
-
-        root.appNameFontSize = 11;
-        root.timestampFormat = "relative";
-
-        root.titleFontSize = 14;
-        root.titleBold = true;
-        root.titleMaxLines = 1;
-        root.titleAlignment = "left";
-
-        root.bodyFontSize = 12;
-        root.bodyMaxLines = 3;
-        root.bodyAlignment = "left";
-
-        root.imagePosition = "right";
-        root.imageSize = 44;
-        root.imageRadius = 10;
-        root.imageShowBg = true;
-
-        root.buttonStyle = "pill";
-        root.buttonHeight = 28;
-        root.buttonRadius = 14;
-        root.buttonAlignment = "left";
-
-        root.progressHeight = 3;
-        root.progressShowCritical = false;
-
-        root.applyComposerPreset("screenshot");
-        root.blockOrderRevision++;
-        root.blocksUpdated();
-        root.saveConfig();
+        ConfigUtils.resetDefaults(root);
     }
 
     function saveConfig() {
         if (!root._loaded) return;
-        const data = {
-            doNotDisturb: root.doNotDisturb,
-            toastPosition: root.toastPosition,
-            toastMarginX: root.toastMarginX,
-            toastMarginY: root.toastMarginY,
-            headerBlocks: root.headerBlocks,
-            contentBlocks: root.contentBlocks,
-            footerBlocks: root.footerBlocks,
-            toastWidth: root.toastWidth,
-            cardRadius: root.cardRadius,
-            cardSpacing: root.cardSpacing,
-            cardPadding: root.cardPadding,
-            cardOpacity: root.cardOpacity,
-            maxVisibleToasts: root.maxVisibleToasts,
-            defaultTimeout: root.defaultTimeout,
-            pauseOnHover: root.pauseOnHover,
-            showAccentStrip: root.showAccentStrip,
-            accentStripPosition: root.accentStripPosition,
-            accentStripWidth: root.accentStripWidth,
-            iconMode: root.iconMode,
-            iconSize: root.iconSize,
-            iconRadius: root.iconRadius,
-            iconShowBg: root.iconShowBg,
-            appNameFontSize: root.appNameFontSize,
-            timestampFormat: root.timestampFormat,
-            titleFontSize: root.titleFontSize,
-            titleBold: root.titleBold,
-            titleMaxLines: root.titleMaxLines,
-            titleAlignment: root.titleAlignment,
-            bodyFontSize: root.bodyFontSize,
-            bodyMaxLines: root.bodyMaxLines,
-            bodyAlignment: root.bodyAlignment,
-            imagePosition: root.imagePosition,
-            imageSize: root.imageSize,
-            imageRadius: root.imageRadius,
-            imageShowBg: root.imageShowBg,
-            buttonStyle: root.buttonStyle,
-            buttonHeight: root.buttonHeight,
-            buttonRadius: root.buttonRadius,
-            buttonAlignment: root.buttonAlignment,
-            progressHeight: root.progressHeight,
-            progressShowCritical: root.progressShowCritical
-        };
-        const jsonStr = JSON.stringify(data, null, 2);
+        const jsonStr = JSON.stringify(ConfigUtils.buildConfigData(root), null, 2);
         root._lastSavedJson = jsonStr;
         saveProcess.command = [
             "python3", "-c",
@@ -880,102 +527,8 @@ Singleton {
         saveProcess.running = true;
     }
 
-    function _sanitizeBlockList(arr) {
-        if (!Array.isArray(arr)) return [];
-        let res = [];
-        for (let i = 0; i < arr.length; i++) {
-            const id = String(arr[i] || "").trim();
-            if (root.getBlockDef(id) && res.indexOf(id) === -1) {
-                res.push(id);
-            }
-        }
-        return res;
-    }
-
     function applyConfig(cfg) {
-        if (!cfg) return;
-        if (cfg.doNotDisturb !== undefined) root.doNotDisturb = Boolean(cfg.doNotDisturb);
-        if (cfg.toastPosition !== undefined) {
-            const p = String(cfg.toastPosition).trim().toLowerCase();
-            if (root.validPositions.indexOf(p) !== -1) root.toastPosition = p;
-        }
-        if (cfg.toastMarginX !== undefined) {
-            root.toastMarginX = Math.max(0, Math.min(200, Math.round(Number(cfg.toastMarginX) || 0)));
-        }
-        if (cfg.toastMarginY !== undefined) {
-            root.toastMarginY = Math.max(0, Math.min(200, Math.round(Number(cfg.toastMarginY) || 0)));
-        }
-
-        if (Array.isArray(cfg.headerBlocks)) root.headerBlocks = root._sanitizeBlockList(cfg.headerBlocks);
-        if (Array.isArray(cfg.contentBlocks)) root.contentBlocks = root._sanitizeBlockList(cfg.contentBlocks);
-        if (Array.isArray(cfg.footerBlocks)) root.footerBlocks = root._sanitizeBlockList(cfg.footerBlocks);
-
-        if (cfg.toastWidth !== undefined) root.toastWidth = Math.max(280, Math.min(520, Math.round(Number(cfg.toastWidth) || 360)));
-        if (cfg.cardRadius !== undefined) root.cardRadius = Math.max(0, Math.min(28, Math.round(Number(cfg.cardRadius) || 0)));
-        if (cfg.cardSpacing !== undefined) root.cardSpacing = Math.max(4, Math.min(24, Math.round(Number(cfg.cardSpacing) || 8)));
-        if (cfg.cardPadding !== undefined) root.cardPadding = Math.max(8, Math.min(24, Math.round(Number(cfg.cardPadding) || 14)));
-        if (cfg.cardOpacity !== undefined) root.cardOpacity = Math.max(0.5, Math.min(1.0, Number(cfg.cardOpacity) || 1.0));
-        if (cfg.maxVisibleToasts !== undefined) root.maxVisibleToasts = Math.max(1, Math.min(10, Math.round(Number(cfg.maxVisibleToasts) || 5)));
-        if (cfg.defaultTimeout !== undefined) root.defaultTimeout = Math.max(1500, Math.min(20000, Math.round(Number(cfg.defaultTimeout) || 5000)));
-        if (cfg.pauseOnHover !== undefined) root.pauseOnHover = Boolean(cfg.pauseOnHover);
-
-        if (cfg.showAccentStrip !== undefined) root.showAccentStrip = Boolean(cfg.showAccentStrip);
-        if (cfg.accentStripPosition !== undefined) {
-            const ap = String(cfg.accentStripPosition).toLowerCase();
-            if (["left", "right", "top", "none"].indexOf(ap) !== -1) root.accentStripPosition = ap;
-        }
-        if (cfg.accentStripWidth !== undefined) root.accentStripWidth = Math.max(2, Math.min(8, Math.round(Number(cfg.accentStripWidth) || 3)));
-
-        if (cfg.iconMode !== undefined) {
-            const im = String(cfg.iconMode).toLowerCase();
-            if (["auto", "inline", "avatar"].indexOf(im) !== -1) root.iconMode = im;
-        }
-        if (cfg.iconSize !== undefined) root.iconSize = Math.max(16, Math.min(48, Math.round(Number(cfg.iconSize) || 24)));
-        if (cfg.iconRadius !== undefined) root.iconRadius = Math.max(0, Math.min(24, Math.round(Number(cfg.iconRadius) || 8)));
-        if (cfg.iconShowBg !== undefined) root.iconShowBg = Boolean(cfg.iconShowBg);
-
-        if (cfg.appNameFontSize !== undefined) root.appNameFontSize = Math.max(9, Math.min(16, Math.round(Number(cfg.appNameFontSize) || 11)));
-        if (cfg.timestampFormat !== undefined) root.timestampFormat = String(cfg.timestampFormat) === "time" ? "time" : "relative";
-
-        if (cfg.titleFontSize !== undefined) root.titleFontSize = Math.max(11, Math.min(22, Math.round(Number(cfg.titleFontSize) || 14)));
-        if (cfg.titleBold !== undefined) root.titleBold = Boolean(cfg.titleBold);
-        if (cfg.titleMaxLines !== undefined) root.titleMaxLines = Math.max(1, Math.min(4, Math.round(Number(cfg.titleMaxLines) || 1)));
-        if (cfg.titleAlignment !== undefined) {
-            const ta = String(cfg.titleAlignment).toLowerCase();
-            if (["left", "center", "right"].indexOf(ta) !== -1) root.titleAlignment = ta;
-        }
-
-        if (cfg.bodyFontSize !== undefined) root.bodyFontSize = Math.max(10, Math.min(18, Math.round(Number(cfg.bodyFontSize) || 12)));
-        if (cfg.bodyMaxLines !== undefined) root.bodyMaxLines = Math.max(1, Math.min(8, Math.round(Number(cfg.bodyMaxLines) || 3)));
-        if (cfg.bodyAlignment !== undefined) {
-            const ba = String(cfg.bodyAlignment).toLowerCase();
-            if (["left", "center", "right"].indexOf(ba) !== -1) root.bodyAlignment = ba;
-        }
-
-        if (cfg.imagePosition !== undefined) {
-            const ip = String(cfg.imagePosition).toLowerCase();
-            if (["right", "left", "banner"].indexOf(ip) !== -1) root.imagePosition = ip;
-        }
-        if (cfg.imageSize !== undefined) root.imageSize = Math.max(28, Math.min(110, Math.round(Number(cfg.imageSize) || 44)));
-        if (cfg.imageRadius !== undefined) root.imageRadius = Math.max(0, Math.min(48, Math.round(isNaN(Number(cfg.imageRadius)) ? 10 : Number(cfg.imageRadius))));
-        if (cfg.imageShowBg !== undefined) root.imageShowBg = Boolean(cfg.imageShowBg);
-
-        if (cfg.buttonStyle !== undefined) {
-            const bs = String(cfg.buttonStyle).toLowerCase();
-            if (["pill", "fill", "ghost"].indexOf(bs) !== -1) root.buttonStyle = bs;
-        }
-        if (cfg.buttonHeight !== undefined) root.buttonHeight = Math.max(22, Math.min(40, Math.round(Number(cfg.buttonHeight) || 28)));
-        if (cfg.buttonRadius !== undefined) root.buttonRadius = Math.max(0, Math.min(20, Math.round(Number(cfg.buttonRadius) || 14)));
-        if (cfg.buttonAlignment !== undefined) {
-            const bAlign = String(cfg.buttonAlignment).toLowerCase();
-            if (["left", "center", "right", "stretch"].indexOf(bAlign) !== -1) root.buttonAlignment = bAlign;
-        }
-
-        if (cfg.progressHeight !== undefined) root.progressHeight = Math.max(2, Math.min(8, Math.round(Number(cfg.progressHeight) || 3)));
-        if (cfg.progressShowCritical !== undefined) root.progressShowCritical = Boolean(cfg.progressShowCritical);
-
-        root.blockOrderRevision++;
-        root.blocksUpdated();
+        ConfigUtils.applyConfig(root, cfg);
     }
 
     FileView {
