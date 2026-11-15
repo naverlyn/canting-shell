@@ -4,6 +4,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import ".."
+import "./Wifi"
 
 Item {
     id: root
@@ -39,7 +40,7 @@ Item {
         }
     }
 
-    // Scan for available Wi-Fi networks (matching Control Center's proven field parsing)
+    // Scan for available Wi-Fi networks
     Process {
         id: scanProc
         command: ["nmcli", "-t", "-f", "ssid,signal,security", "dev", "wifi"]
@@ -63,13 +64,32 @@ Item {
                         });
                     }
                 }
-                // Sort by signal strength, always prioritizing the active network at the top
                 root.networks = nets.sort((a, b) => {
                     if (a.ssid === root.currentSsid) return -1;
                     if (b.ssid === root.currentSsid) return 1;
                     return b.signal - a.signal;
                 });
             }
+        }
+    }
+
+    Process { id: toggleProc }
+
+    Process {
+        id: connectProc
+        onExited: {
+            activeSsidProc.running = true;
+            scanProc.running = true;
+        }
+    }
+
+    Process {
+        id: disconnectProc
+        running: false
+        onExited: {
+            root.currentSsid = "";
+            activeSsidProc.running = true;
+            scanProc.running = true;
         }
     }
 
@@ -99,101 +119,23 @@ Item {
         anchors.fill: parent
         spacing: 16
 
-        RowLayout {
-            Layout.fillWidth: true
-
-            Text {
-                text: "Available Networks"
-                font.family: root.font
-                font.pixelSize: 15
-                font.bold: true
-                color: root.theme.accentPrimary
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignVCenter
-                verticalAlignment: Text.AlignVCenter
+        WifiHeaderBar {
+            theme: root.theme
+            font: root.font
+            wifiEnabled: root.wifiEnabled
+            onEnableRequested: {
+                toggleProc.command = ["nmcli", "radio", "wifi", "on"];
+                toggleProc.running = true;
+                root.wifiEnabled = true;
+                activeSsidProc.running = true;
+                scanProc.running = true;
             }
-
-            // Segmented On/Off Toggle
-            Rectangle {
-                width: 76
-                height: 26
-                radius: 6
-                color: root.theme.bgSurface
-                border.color: Qt.rgba(1, 1, 1, 0.05)
-                border.width: 1
-
-                Row {
-                    anchors.fill: parent
-                    anchors.margins: 2
-                    spacing: 0
-
-                    // "On" segment
-                    Rectangle {
-                        width: parent.width / 2
-                        height: parent.height
-                        radius: 4
-                        color: root.wifiEnabled ? root.theme.bgHover : "transparent"
-                        Behavior on color { ColorAnimation { duration: 150 } }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "On"
-                            color: root.wifiEnabled ? root.theme.accentPrimary : root.theme.textMuted
-                            font.pixelSize: 11
-                            font.family: root.font
-                            font.bold: root.wifiEnabled
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (!root.wifiEnabled) {
-                                    toggleProc.command = ["nmcli", "radio", "wifi", "on"];
-                                    toggleProc.running = true;
-                                    root.wifiEnabled = true;
-                                    activeSsidProc.running = true;
-                                    scanProc.running = true;
-                                }
-                            }
-                        }
-                    }
-
-                    // "Off" segment
-                    Rectangle {
-                        width: parent.width / 2
-                        height: parent.height
-                        radius: 4
-                        color: !root.wifiEnabled ? root.theme.bgHover : "transparent"
-                        Behavior on color { ColorAnimation { duration: 150 } }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "Off"
-                            color: !root.wifiEnabled ? root.theme.textPrimary : root.theme.textMuted
-                            font.pixelSize: 11
-                            font.family: root.font
-                            font.bold: !root.wifiEnabled
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (root.wifiEnabled) {
-                                    toggleProc.command = ["nmcli", "radio", "wifi", "off"];
-                                    toggleProc.running = true;
-                                    root.wifiEnabled = false;
-                                    root.networks = [];
-                                    root.expandedSsid = "";
-                                }
-                            }
-                        }
-                    }
-                }
-                Process { id: toggleProc }
+            onDisableRequested: {
+                toggleProc.command = ["nmcli", "radio", "wifi", "off"];
+                toggleProc.running = true;
+                root.wifiEnabled = false;
+                root.networks = [];
+                root.expandedSsid = "";
             }
         }
 
@@ -203,312 +145,45 @@ Item {
             model: root.networks
             clip: true
             spacing: 4
-            
-            delegate: Rectangle {
-                id: netDelegate
+
+            delegate: WifiNetworkRow {
                 required property var modelData
-                required property int index
-
-                readonly property bool isCurrent: modelData.ssid === root.currentSsid
-                readonly property bool isExpanded: root.expandedSsid === modelData.ssid
-
                 width: ListView.view.width
-                height: isExpanded ? ((modelData.security && !isCurrent) ? 140 : 100) : 44
-                radius: 8
-                color: (isCurrent || isExpanded || hoverArea.containsMouse) ? root.theme.bgSelected : "transparent"
-                clip: true
-                
-                Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                Behavior on color { ColorAnimation { duration: 150 } }
+                theme: root.theme
+                font: root.font
+                networkData: modelData
+                isCurrent: modelData.ssid === root.currentSsid
+                isExpanded: root.expandedSsid === modelData.ssid
+                disconnecting: disconnectProc.running
 
-                // Active Indicator Bar matching Control Center
-                Rectangle {
-                    id: activeIndicator
-                    width: 3
-                    height: 24
-                    radius: 2
-                    color: root.theme.accentPrimary
-                    anchors.left: parent.left
-                    anchors.leftMargin: 2
-                    anchors.top: parent.top
-                    anchors.topMargin: 10
-                    visible: netDelegate.isCurrent
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                }
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: netDelegate.isExpanded ? 14 : 0
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 14
-                    spacing: 12
-
-                    // Top Row
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: netDelegate.isExpanded ? -1 : 44
-                        spacing: 12
-
-                        // Solid Signal-Strength Fan Icon matching Control Center
-                        Text {
-                            text: {
-                                if (modelData.signal > 80) return "󰤨";
-                                if (modelData.signal > 60) return "󰤥";
-                                if (modelData.signal > 40) return "󰤢";
-                                if (modelData.signal > 0) return "󰤟";
-                                return "󰤨";
-                            }
-                            color: netDelegate.isCurrent ? root.theme.accentPrimary : root.theme.textPrimary
-                            font.pixelSize: 16
-                            font.family: root.font
-                            Layout.alignment: Qt.AlignVCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
-                        Text {
-                            text: modelData.ssid
-                            color: netDelegate.isCurrent ? root.theme.textPrimary : root.theme.textSecondary
-                            font.pixelSize: 13
-                            font.family: root.font
-                            font.bold: netDelegate.isCurrent || netDelegate.isExpanded
-                            Layout.fillWidth: true
-                            Layout.alignment: Qt.AlignVCenter
-                            verticalAlignment: Text.AlignVCenter
-                            elide: Text.ElideRight
-                        }
-                        
-                        Text {
-                            text: "Connected"
-                            color: netDelegate.isCurrent ? root.theme.accentPrimary : root.theme.textPrimary
-                            font.pixelSize: 13
-                            font.family: root.font
-                            visible: netDelegate.isCurrent
-                            Layout.alignment: Qt.AlignVCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
-                        Text {
-                            text: ""
-                            visible: modelData.security && !netDelegate.isCurrent && !netDelegate.isExpanded
-                            color: root.theme.textMuted
-                            font.pixelSize: 12
-                            font.family: root.font
-                            Layout.alignment: Qt.AlignVCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                    }
-
-                    // Expanded Dropdown Area
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        visible: netDelegate.isExpanded
-                        opacity: netDelegate.isExpanded ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: 150 } }
-                        spacing: 12
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            height: 38
-                            radius: 6
-                            visible: modelData.security && !netDelegate.isCurrent
-                            color: root.theme.bgSurface
-                            border.color: pwdInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
-                            border.width: 1
-
-                            TextInput {
-                                id: pwdInput
-                                anchors.fill: parent
-                                anchors.margins: 10
-                                color: root.theme.textPrimary
-                                font.pixelSize: 13
-                                font.family: root.font
-                                echoMode: TextInput.Password
-                                verticalAlignment: TextInput.AlignVCenter
-                                clip: true
-
-                                Keys.onEscapePressed: {
-                                    if (pwdInput.text !== "") {
-                                        pwdInput.text = "";
-                                    } else {
-                                        root.expandedSsid = "";
-                                    }
-                                }
-
-                                Keys.onReturnPressed: {
-                                    connectProc.command = ["nmcli", "dev", "wifi", "connect", modelData.ssid, "password", pwdInput.text];
-                                    connectProc.running = true;
-                                    root.expandedSsid = "";
-                                    pwdInput.text = "";
-                                }
-                            }
-
-                            Text {
-                                text: "Password"
-                                color: root.theme.textMuted
-                                font.pixelSize: 13
-                                font.family: root.font
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.left: parent.left
-                                anchors.leftMargin: 10
-                                visible: pwdInput.text === ""
-                            }
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 8
-                            Item { Layout.fillWidth: true }
-
-                            // Connect button (when not connected)
-                            Rectangle {
-                                id: connectBtnRect
-                                visible: !netDelegate.isCurrent
-                                width: 80
-                                height: 32
-                                radius: 6
-                                color: connectBtnMouse.containsMouse
-                                    ? root.theme.accentCyan
-                                    : root.theme.accentPrimary
-                                border.color: "transparent"
-                                border.width: 1
-
-                                Behavior on color { ColorAnimation { duration: 150 } }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "Connect"
-                                    color: root.theme.bgBase
-                                    font.family: root.font
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                }
-
-                                MouseArea {
-                                    id: connectBtnMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        if (modelData.security) {
-                                            connectProc.command = ["nmcli", "dev", "wifi", "connect", modelData.ssid, "password", pwdInput.text];
-                                        } else {
-                                            connectProc.command = ["nmcli", "dev", "wifi", "connect", modelData.ssid];
-                                        }
-                                        connectProc.running = true;
-                                        root.expandedSsid = "";
-                                        pwdInput.text = "";
-                                    }
-                                }
-                            }
-
-                            // Disconnect button (when connected)
-                            Rectangle {
-                                visible: netDelegate.isCurrent
-                                width: 90
-                                height: 32
-                                radius: 6
-                                color: disconnectMouse.containsMouse 
-                                    ? root.theme.accentRed 
-                                    : Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.15)
-                                border.color: root.theme.accentRed
-                                border.width: 1
-
-                                Behavior on color { ColorAnimation { duration: 150 } }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: disconnectProc.running ? "Disconnecting..." : "Disconnect"
-                                    color: disconnectMouse.containsMouse 
-                                        ? root.theme.bgBase 
-                                        : root.theme.accentRed
-                                    font.family: root.font
-                                    font.pixelSize: 12
-                                    font.bold: true
-                                    Behavior on color { ColorAnimation { duration: 150 } }
-                                }
-
-                                MouseArea {
-                                    id: disconnectMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    enabled: !disconnectProc.running
-                                    onClicked: {
-                                        root.disconnectFromNetwork(modelData.ssid);
-                                        root.expandedSsid = "";
-                                    }
-                                }
-                            }
-
-                            // Cancel button
-                            Rectangle {
-                                width: 80
-                                height: 32
-                                radius: 6
-                                color: root.theme.bgHover
-                                border.color: root.theme.bgBorder
-                                border.width: 1
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "Cancel"
-                                    color: root.theme.textPrimary
-                                    font.family: root.font
-                                    font.pixelSize: 12
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.expandedSsid = "";
-                                        pwdInput.text = "";
-                                    }
-                                }
-                            }
+                onToggleExpandRequested: (ssid, isCurr, hasSecurity) => {
+                    if (root.expandedSsid === ssid) {
+                        root.expandedSsid = "";
+                    } else {
+                        root.expandedSsid = ssid;
+                        if (!isCurr && !hasSecurity) {
+                            connectProc.command = ["nmcli", "dev", "wifi", "connect", ssid];
+                            connectProc.running = true;
                         }
                     }
                 }
 
-                // Row Click Handler (covers the top row)
-                MouseArea {
-                    id: hoverArea
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    height: 44
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (netDelegate.isExpanded) {
-                            root.expandedSsid = "";
-                        } else {
-                            root.expandedSsid = modelData.ssid;
-                            if (!netDelegate.isCurrent && !modelData.security) {
-                                connectProc.command = ["nmcli", "dev", "wifi", "connect", modelData.ssid];
-                                connectProc.running = true;
-                            }
-                        }
+                onConnectRequested: (ssid, password, hasSecurity) => {
+                    if (hasSecurity) {
+                        connectProc.command = ["nmcli", "dev", "wifi", "connect", ssid, "password", password];
+                    } else {
+                        connectProc.command = ["nmcli", "dev", "wifi", "connect", ssid];
                     }
+                    connectProc.running = true;
+                    root.expandedSsid = "";
                 }
-            }
-        }
 
-        Process {
-            id: connectProc
-            onExited: {
-                activeSsidProc.running = true;
-                scanProc.running = true;
-            }
-        }
+                onDisconnectRequested: ssid => {
+                    root.disconnectFromNetwork(ssid);
+                    root.expandedSsid = "";
+                }
 
-        Process {
-            id: disconnectProc
-            running: false
-            onExited: {
-                root.currentSsid = "";
-                activeSsidProc.running = true;
-                scanProc.running = true;
+                onCollapseRequested: root.expandedSsid = ""
             }
         }
     }

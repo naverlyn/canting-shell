@@ -663,7 +663,7 @@ Scope {
                                         visible: false
                                         layer.enabled: true
                                         layer.smooth: true
-                                        layer.samples: 4
+                                        layer.textureSize: Qt.size(Math.max(2, Math.round(width * 2)), Math.max(2, Math.round(height * 2)))
                                     }
 
                                     Item {
@@ -673,8 +673,8 @@ Scope {
                                         layer.effect: MultiEffect {
                                             maskEnabled: true
                                             maskSource: pairedImgMask
-                                            maskThresholdMin: 0.0
-                                            maskSpreadAtMin: 1.0
+                                            maskThresholdMin: 0.35
+                                            maskSpreadAtMin: 0.3
                                         }
 
                                         Image {
@@ -725,7 +725,7 @@ Scope {
                                     visible: false
                                     layer.enabled: true
                                     layer.smooth: true
-                                    layer.samples: 4
+                                    layer.textureSize: Qt.size(Math.max(2, Math.round(width * 2)), Math.max(2, Math.round(height * 2)))
                                 }
 
                                 Item {
@@ -735,8 +735,8 @@ Scope {
                                     layer.effect: MultiEffect {
                                         maskEnabled: true
                                         maskSource: bannerImgMask
-                                        maskThresholdMin: 0.0
-                                        maskSpreadAtMin: 1.0
+                                        maskThresholdMin: 0.35
+                                        maskSpreadAtMin: 0.3
                                     }
 
                                     Image {

@@ -55,7 +55,10 @@ Rectangle {
                 const clockFmt = (root.moduleData && root.moduleData.clockFormat !== undefined)
                     ? root.moduleData.clockFormat
                     : (typeof LockscreenConfig !== "undefined" ? LockscreenConfig.clock_format : "24h");
-                const fmt = clockFmt === "12h" ? "hh:mm AP" : "hh:mm";
+                const showSec = Boolean(root.moduleData && root.moduleData.showSeconds);
+                const fmt = clockFmt === "12h"
+                    ? (showSec ? "hh:mm:ss AP" : "hh:mm AP")
+                    : (showSec ? "hh:mm:ss" : "hh:mm");
                 return Qt.formatDateTime(root.currentNow, fmt);
             }
             font.family: (root.moduleData && root.moduleData.fontFamily && root.moduleData.fontFamily !== "$font") ? root.moduleData.fontFamily : root.font
