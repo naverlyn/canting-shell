@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Services.Pipewire
 import "../../bar"
 import "../../ThemeSwitcher"
+import "../../notifications"
 import ".."
 
 ColumnLayout {
@@ -19,7 +20,7 @@ ColumnLayout {
     property string currentSsid: ""
     property bool btEnabled: false
     property bool btAvailable: false
-    property bool dndEnabled: false
+    readonly property bool dndEnabled: NotificationService.doNotDisturb
     property bool airplaneEnabled: false
     property bool nightLightEnabled: false
     property bool gameModeEnabled: false
@@ -157,24 +158,6 @@ ColumnLayout {
         }
     }
 
-    // DND Processes
-    Process {
-        id: dndProc
-        command: ["swaync-client", "-d"]
-        running: false
-    }
-
-    Process {
-        id: dndStatusProc
-        command: ["swaync-client", "-D"]
-        running: false
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.dndEnabled = (text.trim() === "true");
-            }
-        }
-    }
-
     // Airplane Mode Processes
     Process { id: airplaneProc; running: false }
 
@@ -287,8 +270,7 @@ ColumnLayout {
     }
 
     function togglednd() {
-        root.dndEnabled = !root.dndEnabled;
-        dndProc.running = true;
+        NotificationService.doNotDisturb = !NotificationService.doNotDisturb;
     }
 
     function toggleAirplane() {
@@ -364,7 +346,6 @@ ColumnLayout {
         wifiStatusProc.running = true;
         activeSsidProc.running = true;
         btStatusProc.running = true;
-        dndStatusProc.running = true;
         airplaneStatusProc.running = true;
         nlStatusProc.running = true;
         gameModeStatusProc.running = true;

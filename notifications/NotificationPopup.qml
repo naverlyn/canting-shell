@@ -15,23 +15,23 @@ Scope {
     IpcHandler {
         target: "notifications"
 
-        function dismiss_all(): void {
+        function dismiss_all() {
             NotificationService.dismissAll();
         }
 
-        function dnd_toggle(): void {
+        function dnd_toggle() {
             NotificationService.doNotDisturb = !NotificationService.doNotDisturb;
         }
 
-        function dnd_off(): void {
+        function dnd_off() {
             NotificationService.doNotDisturb = false;
         }
 
-        function set_position(pos: string): void {
+        function set_position(pos: string) {
             NotificationService.setToastPosition(pos);
         }
 
-        function test_toast(): void {
+        function test_toast() {
             NotificationService.sendCustomNotification({});
         }
     }

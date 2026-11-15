@@ -45,14 +45,14 @@ QtObject {
     readonly property Connections _conn: Connections {
         target: notificationData.notification
 
-        function onClosed(): void {
+        function onClosed() {
             if (notificationData.closed) return;
             notificationData.closed = true;
             NotificationService._remove(notificationData);
             notificationData.destroy();
         }
 
-        function onSummaryChanged(): void {
+        function onSummaryChanged() {
             if (notificationData.notification) {
                 notificationData.summary = notificationData.notification.summary || "";
                 notificationData.actions = notificationData._parseActions(notificationData.notification);
@@ -60,7 +60,7 @@ QtObject {
                 NotificationService._bump(notificationData);
             }
         }
-        function onBodyChanged(): void {
+        function onBodyChanged() {
             if (notificationData.notification) {
                 notificationData.body = notificationData.notification.body || "";
                 notificationData.actions = notificationData._parseActions(notificationData.notification);
@@ -68,25 +68,25 @@ QtObject {
                 NotificationService._bump(notificationData);
             }
         }
-        function onAppIconChanged(): void {
+        function onAppIconChanged() {
             if (notificationData.notification) notificationData.appIcon = notificationData.notification.appIcon || "";
         }
-        function onAppNameChanged(): void {
+        function onAppNameChanged() {
             if (notificationData.notification) {
                 notificationData.appName = notificationData.notification.appName || "";
                 notificationData.actions = notificationData._parseActions(notificationData.notification);
             }
         }
-        function onImageChanged(): void {
+        function onImageChanged() {
             if (notificationData.notification) notificationData.image = notificationData.notification.image || "";
         }
-        function onUrgencyChanged(): void {
+        function onUrgencyChanged() {
             if (notificationData.notification) notificationData.urgency = notificationData.notification.urgency;
         }
-        function onExpireTimeoutChanged(): void {
+        function onExpireTimeoutChanged() {
             if (notificationData.notification) notificationData.expireTimeout = notificationData.notification.expireTimeout;
         }
-        function onActionsChanged(): void {
+        function onActionsChanged() {
             if (!notificationData.notification) return;
             notificationData.actions = notificationData._parseActions(notificationData.notification);
         }
@@ -148,7 +148,7 @@ QtObject {
         actions   = _parseActions(notification);
     }
 
-    function focusAppWindow(): void {
+    function focusAppWindow() {
         if (socialApp) {
             var cmd = SocialApps.getFocusCommand(socialApp);
             if (cmd) {
@@ -164,7 +164,7 @@ QtObject {
         }
     }
 
-    function dismiss(): void {
+    function dismiss() {
         if (closed) return;
         closed = true;
         NotificationService._remove(notificationData);
@@ -172,7 +172,7 @@ QtObject {
         destroy();
     }
 
-    function activate(): void {
+    function activate() {
         if (closed) return;
         if (notification && notification.actions) {
             for (var i = 0; i < notification.actions.length; i++) {
@@ -191,7 +191,7 @@ QtObject {
         dismiss();
     }
 
-    function invokeAction(identifier): void {
+    function invokeAction(identifier) {
         if (!identifier || closed) return;
         closed = true;
         NotificationService._remove(notificationData);
