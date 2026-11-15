@@ -799,6 +799,7 @@ Singleton {
         id: configFile
         path: root.configPath
         watchChanges: true
+        onFileChanged: configFile.reload()
         onTextChanged: {
             const raw = configFile.text();
             if (!raw) {

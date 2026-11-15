@@ -1,0 +1,35 @@
+{
+  "width": 320,
+  "panelLayout": "vertical",
+  "panelCount": 1,
+  "panel1": ["connectivity", "audio", "quickSettings"],
+  "panel2": [],
+  "panel3": [],
+  "groupTilesEnabled": true,
+  "groupedTileIds": ["wifi", "bluetooth", "dnd", "darkmode"],
+  "secondaryTileIds": [],
+  "quickAppsMaxCount": 4,
+  "quickApps": [
+    { "id": "terminal", "label": "Terminal", "icon": "󰆍", "cmd": "kitty || alacritty || foot || wezterm || xdg-terminal-exec" },
+    { "id": "browser",  "label": "Browser",  "icon": "󰈹", "cmd": "xdg-open https:// || firefox || brave || google-chrome-stable || chromium" },
+    { "id": "files",    "label": "Files",    "icon": "󰉋", "cmd": "thunar || nautilus || dolphin || nemo || pcmanfm" },
+    { "id": "settings", "label": "Settings", "icon": "󰒓", "cmd": "__settings__" }
+  ],
+  "mediaShowCava": false,
+  "tiles": [
+    { "id": "wifi", "enabled": true },
+    { "id": "bluetooth", "enabled": true },
+    { "id": "dnd", "enabled": true },
+    { "id": "darkmode", "enabled": true },
+    { "id": "screenshot", "enabled": true },
+    { "id": "lock", "enabled": true },
+    { "id": "mic", "enabled": false },
+    { "id": "nightlight", "enabled": false },
+    { "id": "caffeine", "enabled": false },
+    { "id": "mute", "enabled": false },
+    { "id": "gamemode", "enabled": false },
+    { "id": "clipboard", "enabled": false },
+    { "id": "emoji", "enabled": false },
+    { "id": "airplane", "enabled": false }
+  ]
+}

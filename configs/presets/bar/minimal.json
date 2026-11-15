@@ -1,0 +1,77 @@
+{
+  "barVisible": true,
+  "position": "top",
+  "barHeight": 28,
+  "floating": true,
+  "barOpacity": 0.88,
+  "pillRadius": 12,
+  "pillOpacity": 1.0,
+  "hidePill": true,
+  "activeStyle": "underline",
+  "allMonitors": true,
+  "displayTarget": "all",
+  "secondaryPosition": "top",
+  "secondaryMode": "custom",
+  "blankOnSecondary": false,
+  "secondaryPanels": [
+    ["workspaces"],
+    ["clock"],
+    ["controlCenter"]
+  ],
+  "innerCorners": false,
+  "fluidCards": false,
+  "barBorder": true,
+  "barBorderWidth": 1,
+  "barBorderColor": "",
+  "screenBorder": false,
+  "screenBorderThickness": 4,
+  "screenBorderColor": "",
+  "screenBorderCorners": false,
+  "screenBorderShadow": false,
+  "screenBorderShadowSize": 12,
+  "bars": [
+    {
+      "id": "bar_1",
+      "name": "Minimal Bar",
+      "enabled": true,
+      "position": "top",
+      "barHeight": 28,
+      "floating": true,
+      "barOpacity": 0.88,
+      "pillRadius": 12,
+      "pillOpacity": 1.0,
+      "hidePill": true,
+      "activeStyle": "underline",
+      "barColor": "",
+      "allMonitors": true,
+      "displayTarget": "all",
+      "secondaryPosition": "top",
+      "secondaryMode": "custom",
+      "blankOnSecondary": false,
+      "secondaryPanels": [
+        ["workspaces"],
+        ["clock"],
+        ["controlCenter"]
+      ],
+      "innerCorners": false,
+      "fluidCards": false,
+      "barBorder": true,
+      "barBorderWidth": 1,
+      "barBorderColor": "",
+      "panels": [
+        ["workspaces", "windowTitle"],
+        ["clock"],
+        ["volume", "notifications", "controlCenter"]
+      ]
+    }
+  ],
+  "panels": [
+    ["workspaces", "windowTitle"],
+    ["clock"],
+    ["volume", "notifications", "controlCenter"]
+  ],
+  "leftWidgets": ["workspaces", "windowTitle"],
+  "centerWidgets": ["clock"],
+  "rightWidgets": ["volume", "notifications", "controlCenter"],
+  "appGridIcon": "󰀻"
+}

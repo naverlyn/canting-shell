@@ -1,0 +1,39 @@
+{
+  "width": 320,
+  "panelLayout": "horizontal",
+  "panelCount": 3,
+  "panel1": ["connectivity", "audio", "systemInfo"],
+  "panel2": ["media", "weather", "quickSettings2"],
+  "panel3": ["quickSettings", "quickApps"],
+  "groupTilesEnabled": true,
+  "groupedTileIds": ["wifi", "bluetooth", "dnd", "airplane"],
+  "secondaryTileIds": ["gamemode", "clipboard", "darkmode"],
+  "quickAppsMaxCount": 8,
+  "quickApps": [
+    { "id": "terminal", "label": "Terminal", "icon": "󰆍", "cmd": "kitty || alacritty || foot || wezterm || xdg-terminal-exec" },
+    { "id": "browser",  "label": "Browser",  "icon": "󰈹", "cmd": "xdg-open https:// || firefox || brave || google-chrome-stable || chromium" },
+    { "id": "files",    "label": "Files",    "icon": "󰉋", "cmd": "thunar || nautilus || dolphin || nemo || pcmanfm" },
+    { "id": "editor",   "label": "Code",     "icon": "󰨞", "cmd": "codium || code || zeditor || kate || nvim" },
+    { "id": "launcher", "label": "Apps",     "icon": "󰀻", "cmd": "__appgrid__" },
+    { "id": "music",    "label": "Music",    "icon": "󰝚", "cmd": "spotify || Amberol || rhythmbox || Elisa" },
+    { "id": "monitor",  "label": "Monitor",  "icon": "󰍛", "cmd": "missioncenter || gnome-system-monitor || kitty -e btop || alacritty -e btop" },
+    { "id": "settings", "label": "Settings", "icon": "󰒓", "cmd": "__settings__" }
+  ],
+  "mediaShowCava": false,
+  "tiles": [
+    { "id": "wifi", "enabled": true },
+    { "id": "nightlight", "enabled": true },
+    { "id": "caffeine", "enabled": true },
+    { "id": "dnd", "enabled": true },
+    { "id": "mic", "enabled": true },
+    { "id": "screenshot", "enabled": true },
+    { "id": "lock", "enabled": true },
+    { "id": "mute", "enabled": false },
+    { "id": "gamemode", "enabled": true },
+    { "id": "clipboard", "enabled": true },
+    { "id": "darkmode", "enabled": true },
+    { "id": "emoji", "enabled": false },
+    { "id": "bluetooth", "enabled": false },
+    { "id": "airplane", "enabled": true }
+  ]
+}

@@ -236,7 +236,7 @@ ColumnLayout {
     // Lock Process
     Process {
         id: lockProc
-        command: ["sh", "-c", "hyprlock"]
+        command: ["sh", "-c", "sleep 0.15 && qs ipc call lockscreen lock"]
         running: false
     }
 

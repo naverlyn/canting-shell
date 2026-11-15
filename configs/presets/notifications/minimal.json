@@ -1,0 +1,15 @@
+{
+  "doNotDisturb": false,
+  "toastPosition": "top-right",
+  "toastMarginX": 10,
+  "toastMarginY": 0,
+  "toastWidth": 320,
+  "cardRadius": 12,
+  "cardSpacing": 8,
+  "cardPadding": 10,
+  "cardOpacity": 0.95,
+  "maxVisibleToasts": 3,
+  "defaultTimeout": 4000,
+  "pauseOnHover": true,
+  "showAccentStrip": false
+}

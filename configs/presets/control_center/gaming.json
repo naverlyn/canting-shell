@@ -1,0 +1,36 @@
+{
+  "width": 320,
+  "panelLayout": "horizontal",
+  "panelCount": 2,
+  "panel1": ["audio", "systemInfo", "media"],
+  "panel2": ["quickSettings", "quickSettings2"],
+  "panel3": [],
+  "groupTilesEnabled": true,
+  "groupedTileIds": ["dnd", "gamemode", "caffeine", "darkmode"],
+  "secondaryTileIds": ["wifi", "bluetooth", "clipboard"],
+  "quickAppsMaxCount": 8,
+  "quickApps": [
+    { "id": "terminal", "label": "Terminal", "icon": "󰆍", "cmd": "kitty || alacritty || foot || wezterm || xdg-terminal-exec" },
+    { "id": "browser",  "label": "Browser",  "icon": "󰈹", "cmd": "xdg-open https:// || firefox || brave || google-chrome-stable || chromium" },
+    { "id": "monitor",  "label": "Monitor",  "icon": "󰍛", "cmd": "missioncenter || gnome-system-monitor || kitty -e btop || alacritty -e btop" },
+    { "id": "launcher", "label": "Apps",     "icon": "󰀻", "cmd": "__appgrid__" },
+    { "id": "settings", "label": "Settings", "icon": "󰒓", "cmd": "__settings__" }
+  ],
+  "mediaShowCava": false,
+  "tiles": [
+    { "id": "gamemode", "enabled": true },
+    { "id": "dnd", "enabled": true },
+    { "id": "caffeine", "enabled": true },
+    { "id": "mic", "enabled": true },
+    { "id": "screenshot", "enabled": true },
+    { "id": "darkmode", "enabled": true },
+    { "id": "lock", "enabled": true },
+    { "id": "wifi", "enabled": true },
+    { "id": "bluetooth", "enabled": false },
+    { "id": "clipboard", "enabled": true },
+    { "id": "mute", "enabled": false },
+    { "id": "nightlight", "enabled": false },
+    { "id": "emoji", "enabled": false },
+    { "id": "airplane", "enabled": false }
+  ]
+}

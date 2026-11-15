@@ -1,0 +1,20 @@
+{
+  "background_source": "wallpaper",
+  "background_custom_path": "",
+  "blur_passes": 1,
+  "blur_size": 1,
+  "contrast": 1,
+  "brightness": 0.9,
+  "vibrancy": 0.2,
+  "general_immediate_render": true,
+  "unlock_animation": false,
+  "animation_style": "curtain",
+  "clock_format": "24h",
+  "clock_font_size": 84,
+  "show_date": true,
+  "show_user": false,
+  "show_layout": true,
+  "show_uptime": false,
+  "show_weather": false,
+  "show_media": false
+}

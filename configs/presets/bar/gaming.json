@@ -1,0 +1,82 @@
+{
+  "barVisible": true,
+  "position": "top",
+  "barHeight": 28,
+  "floating": false,
+  "barOpacity": 0.95,
+  "pillRadius": 8,
+  "pillOpacity": 1.0,
+  "hidePill": true,
+  "activeStyle": "underline",
+  "allMonitors": false,
+  "displayTarget": "primary",
+  "secondaryPosition": "top",
+  "secondaryMode": "custom",
+  "blankOnSecondary": false,
+  "secondaryPanels": [
+    ["workspaces"],
+    ["windowTitle"],
+    ["clock"]
+  ],
+  "innerCorners": true,
+  "fluidCards": false,
+  "barBorder": true,
+  "barBorderWidth": 1,
+  "barBorderColor": "",
+  "screenBorder": false,
+  "screenBorderThickness": 4,
+  "screenBorderColor": "",
+  "screenBorderCorners": false,
+  "screenBorderShadow": false,
+  "screenBorderShadowSize": 12,
+  "bars": [
+    {
+      "id": "bar_1",
+      "name": "Gaming Bar",
+      "enabled": true,
+      "position": "top",
+      "barHeight": 28,
+      "floating": false,
+      "barOpacity": 0.95,
+      "pillRadius": 8,
+      "pillOpacity": 1.0,
+      "hidePill": true,
+      "activeStyle": "underline",
+      "barColor": "",
+      "allMonitors": false,
+      "displayTarget": "primary",
+      "secondaryPosition": "top",
+      "secondaryMode": "custom",
+      "blankOnSecondary": false,
+      "secondaryPanels": [
+        ["workspaces"],
+        ["windowTitle"],
+        ["clock"]
+      ],
+      "innerCorners": true,
+      "fluidCards": false,
+      "barBorder": true,
+      "barBorderWidth": 1,
+      "barBorderColor": "",
+      "panels": [
+        ["workspaces", "windowTitle"],
+        ["clock"],
+        ["cpu", "gpu", "temp", "memory", "network", "volume", "idleInhibitor", "notifications", "controlCenter"]
+      ]
+    }
+  ],
+  "panels": [
+    ["workspaces", "windowTitle"],
+    ["clock"],
+    ["cpu", "gpu", "temp", "memory", "network", "volume", "idleInhibitor", "notifications", "controlCenter"]
+  ],
+  "leftWidgets": ["workspaces", "windowTitle"],
+  "centerWidgets": ["clock"],
+  "rightWidgets": ["cpu", "gpu", "temp", "memory", "network", "volume", "idleInhibitor", "notifications", "controlCenter"],
+  "appGridIcon": "󰀻",
+  "hwShowIcons": true,
+  "hwPollInterval": 1,
+  "hwAlertEnabled": true,
+  "hwAlertThreshold": 85,
+  "gpuShowTemp": true
+}

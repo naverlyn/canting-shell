@@ -3,4 +3,10 @@ configs/wallpaper.conf
 monitor-manager.conf
 theme-switcher/wallpaper-theme.json
 backups
+*.bak
+*.bak.*
 *.json
+!configs/presets/bar/*.json
+!configs/presets/notifications/*.json
+!configs/presets/control_center/*.json
+!configs/presets/lockscreen/*.json

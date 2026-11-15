@@ -1,0 +1,82 @@
+{
+  "barVisible": true,
+  "position": "top",
+  "barHeight": 32,
+  "floating": false,
+  "barOpacity": 0.92,
+  "pillRadius": 10,
+  "pillOpacity": 1.0,
+  "hidePill": true,
+  "activeStyle": "underline",
+  "allMonitors": true,
+  "displayTarget": "all",
+  "secondaryPosition": "top",
+  "secondaryMode": "custom",
+  "blankOnSecondary": false,
+  "secondaryPanels": [
+    ["workspaces", "windowTitle"],
+    [],
+    ["weather", "clock"]
+  ],
+  "innerCorners": true,
+  "fluidCards": false,
+  "barBorder": true,
+  "barBorderWidth": 1,
+  "barBorderColor": "",
+  "screenBorder": false,
+  "screenBorderThickness": 6,
+  "screenBorderColor": "",
+  "screenBorderCorners": true,
+  "screenBorderShadow": false,
+  "screenBorderShadowSize": 16,
+  "bars": [
+    {
+      "id": "bar_1",
+      "name": "Desktop Bar",
+      "enabled": true,
+      "position": "top",
+      "barHeight": 32,
+      "floating": false,
+      "barOpacity": 0.92,
+      "pillRadius": 10,
+      "pillOpacity": 1.0,
+      "hidePill": true,
+      "activeStyle": "underline",
+      "barColor": "",
+      "allMonitors": true,
+      "displayTarget": "all",
+      "secondaryPosition": "top",
+      "secondaryMode": "custom",
+      "blankOnSecondary": false,
+      "secondaryPanels": [
+        ["workspaces", "windowTitle"],
+        [],
+        ["weather", "clock"]
+      ],
+      "innerCorners": true,
+      "fluidCards": false,
+      "barBorder": true,
+      "barBorderWidth": 1,
+      "barBorderColor": "",
+      "panels": [
+        ["appGrid", "workspaces", "windowTitle"],
+        ["clock"],
+        ["cpu", "memory", "network", "weather", "hyprLayout", "volume", "tray", "notifications", "controlCenter"]
+      ]
+    }
+  ],
+  "panels": [
+    ["appGrid", "workspaces", "windowTitle"],
+    ["clock"],
+    ["cpu", "memory", "network", "weather", "hyprLayout", "volume", "tray", "notifications", "controlCenter"]
+  ],
+  "leftWidgets": ["appGrid", "workspaces", "windowTitle"],
+  "centerWidgets": ["clock"],
+  "rightWidgets": ["cpu", "memory", "network", "weather", "hyprLayout", "volume", "tray", "notifications", "controlCenter"],
+  "appGridIcon": "󰀻",
+  "hwShowIcons": true,
+  "hwPollInterval": 2,
+  "hwAlertEnabled": true,
+  "hwAlertThreshold": 85,
+  "hyprLayoutShowLabel": true
+}
