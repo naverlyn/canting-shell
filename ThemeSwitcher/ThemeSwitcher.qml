@@ -15,15 +15,15 @@ Scope {
         // Switch to the wallpaper-generated theme. With an image path, regenerate
         // the palette from that image first (see wallpaper-theme/set.sh); without
         // one, just switch into wallpaper mode using the last generated palette.
-        function wallpaper(image: string): void {
+        function wallpaper(image: string) {
             root.theme.setWallpaperFromImage(image);
         }
 
-        function toggleDarkLight(): void {
+        function toggleDarkLight() {
             root.theme.toggleDarkLight();
         }
 
-        function toggle(): void {
+        function toggle() {
             root.panelVisible = !root.panelVisible;
             if (root.panelVisible) {
                 searchText = "";
