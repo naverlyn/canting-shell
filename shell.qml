@@ -24,6 +24,7 @@ import "Clipboard"
 import "Lockscreen"
 import "PowerMenu"
 import "Polkit"
+import "Overview"
 
 Scope {
   ThemeSwitcher { id: ts }
@@ -40,4 +41,5 @@ Scope {
   Lockscreen { theme: ts.theme }
   PowerMenu { theme: ts.theme }
   PolkitAgentService { theme: ts.theme }
+  OverviewService { theme: ts.theme }
 }
