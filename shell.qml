@@ -25,6 +25,7 @@ import "Lockscreen"
 import "PowerMenu"
 import "Polkit"
 import "Overview"
+import "Keybinds"
 
 Scope {
   ThemeSwitcher { id: ts }
@@ -42,4 +43,5 @@ Scope {
   PowerMenu { theme: ts.theme }
   PolkitAgentService { theme: ts.theme }
   OverviewService { theme: ts.theme }
+  KeybindsCheatSheet { theme: ts.theme }
 }
