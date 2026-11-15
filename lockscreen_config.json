@@ -21,7 +21,7 @@
   "input_height": 60,
   "input_outline_thickness": 3,
   "input_placeholder": "Input",
-  "input_pos_x": 1,
+  "input_pos_x": 0,
   "input_pos_y": 0,
   "input_halign": "center",
   "input_valign": "center",
@@ -37,8 +37,8 @@
       "enabled": true,
       "halign": "center",
       "valign": "top",
-      "position_x": 1,
-      "position_y": -31,
+      "position_x": 0,
+      "position_y": -32,
       "color": "$text",
       "fontSize": 90,
       "clockFormat": "12h",
@@ -46,7 +46,12 @@
       "cmd": "",
       "displayMode": "detailed",
       "interval": 5000,
-      "text": ""
+      "text": "",
+      "hideWhenEmpty": false,
+      "maxVisible": 3,
+      "showCard": false,
+      "showContent": true,
+      "showSeconds": true
     },
     {
       "id": "weather_1793497338316",
