@@ -26,22 +26,28 @@ Scope {
     ? (root.commandQuery.trim().length > 0)
     : (root.searchQuery.trim().length > 0 || root.userExpanded)
 
+  function resetSearchIfNeeded() {
+    if (AppLauncherConfig.clearSearchOnClose) {
+      root.searchQuery = "";
+      root.commandQuery = "";
+    }
+    root.userExpanded = false;
+    root.selectedIndex = 0;
+  }
+
   IpcHandler {
     target: "launcher"
 
     function toggle() {
-      root.panelVisible = !root.panelVisible
-      if (root.panelVisible) {
-        root.userExpanded = false
-        root.commandMode = (AppLauncherConfig.defaultMode === "command")
-        if (AppLauncherConfig.clearSearchOnClose) {
-          root.searchQuery = ""
-          root.commandQuery = ""
-        }
-        selectedIndex = 0
-        loadUsageProc.running = true
+      if (!root.panelVisible) {
+        root.commandMode = (AppLauncherConfig.defaultMode === "command");
+        root.resetSearchIfNeeded();
+        loadUsageProc.running = true;
+        root.panelVisible = true;
       } else {
-        Qt.callLater(() => gc())
+        root.panelVisible = false;
+        root.resetSearchIfNeeded();
+        Qt.callLater(() => gc());
       }
     }
   }
@@ -121,6 +127,7 @@ Scope {
       cmdRunner.command = ["sh", "-c", trimmed];
       cmdRunner.running = true;
       root.panelVisible = false;
+      root.resetSearchIfNeeded();
     }
   }
 
@@ -213,6 +220,7 @@ Scope {
       recordAppLaunch(entry);
       entry.execute();
       root.panelVisible = false;
+      root.resetSearchIfNeeded();
     }
   }
 
@@ -238,6 +246,7 @@ Scope {
     onVisibleChanged: {
       if (!visible) {
         root.panelVisible = false;
+        root.resetSearchIfNeeded();
         Qt.callLater(() => gc());
       }
     }
