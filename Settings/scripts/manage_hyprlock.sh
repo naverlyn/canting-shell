@@ -11,7 +11,7 @@ CONF_PATH="${CONF_PATH:-${HYPRLOCK_CONF:-$HOME/.config/hypr/hyprlock.conf}}"
 BACKUP_DIR="$(cd "$SCRIPT_DIR/../backups" 2>/dev/null && pwd || echo "$SCRIPT_DIR/../backups")"
 BACKUP_FILE="$BACKUP_DIR/hyprlock.conf.bak"
 WALLPAPER_CURRENT="$HOME/.config/hypr/wallpaper_effects/.wallpaper_current"
-QUICKSHELL_WALLPAPER_CONF="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)/wallpaper.conf"
+QUICKSHELL_WALLPAPER_CONF="$(cd "$SCRIPT_DIR/../.." 2>/dev/null && pwd)/configs/wallpaper.conf"
 
 ensure_hyprlock_conf() {
     if [[ ! -f "$CONF_PATH" ]]; then

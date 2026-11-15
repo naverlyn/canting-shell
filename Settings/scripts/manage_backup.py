@@ -17,15 +17,15 @@ BASE_DIR = os.path.expanduser("~/.config/quickshell")
 SNAPSHOTS_DIR = os.path.join(BASE_DIR, "backups", "snapshots")
 
 MODULE_FILES = {
-    "bar": ["bar_config.json"],
-    "applauncher": ["app_launcher_config.json"],
-    "notifications": ["notifications_config.json"],
-    "osd": ["osd_config.json"],
-    "controlcenter": ["control_center_config.json"],
-    "lockscreen": ["lockscreen_config.json"],
-    "appearance": ["theme.conf", "qml_color.json", "ThemeSwitcher/wallpaper-theme.json", "fonts_config.json"],
-    "fonts": ["fonts_config.json"],
-    "wallpaper": ["wallpaper.conf", "wallpaper_sync.conf", "wallpaper_dirs.conf", "wallpaper_mode.conf", "wallpaper_displays.json"],
+    "bar": ["configs/bar_config.json"],
+    "applauncher": ["configs/app_launcher_config.json"],
+    "notifications": ["configs/notifications_config.json"],
+    "osd": ["configs/osd_config.json"],
+    "controlcenter": ["configs/control_center_config.json"],
+    "lockscreen": ["configs/lockscreen_config.json"],
+    "appearance": ["configs/theme.conf", "configs/qml_color.json", "ThemeSwitcher/wallpaper-theme.json", "configs/fonts_config.json"],
+    "fonts": ["configs/fonts_config.json"],
+    "wallpaper": ["configs/wallpaper.conf", "configs/wallpaper_sync.conf", "configs/wallpaper_dirs.conf", "configs/wallpaper_mode.conf", "configs/wallpaper_displays.json"],
 }
 
 DEFAULT_CONFIGS = {
@@ -502,28 +502,28 @@ def reset_defaults(modules_csv="all"):
     reset_items = []
     if "notifications" in selected_modules:
         atomic_write(
-            os.path.join(BASE_DIR, "notifications_config.json"),
+            os.path.join(BASE_DIR, "configs", "notifications_config.json"),
             json.dumps(DEFAULT_CONFIGS["notifications_config.json"], indent=2) + "\n"
         )
         reset_items.append("Notifications")
 
     if "osd" in selected_modules:
         atomic_write(
-            os.path.join(BASE_DIR, "osd_config.json"),
+            os.path.join(BASE_DIR, "configs", "osd_config.json"),
             json.dumps(DEFAULT_CONFIGS["osd_config.json"], indent=2) + "\n"
         )
         reset_items.append("OSD")
 
     if "lockscreen" in selected_modules:
         atomic_write(
-            os.path.join(BASE_DIR, "lockscreen_config.json"),
+            os.path.join(BASE_DIR, "configs", "lockscreen_config.json"),
             json.dumps(DEFAULT_CONFIGS["lockscreen_config.json"], indent=2) + "\n"
         )
         reset_items.append("Lock Screen")
 
     if "appearance" in selected_modules or "fonts" in selected_modules:
         atomic_write(
-            os.path.join(BASE_DIR, "fonts_config.json"),
+            os.path.join(BASE_DIR, "configs", "fonts_config.json"),
             json.dumps(DEFAULT_CONFIGS["fonts_config.json"], indent=2) + "\n"
         )
         reset_items.append("Fonts")
@@ -599,7 +599,7 @@ def reset_defaults(modules_csv="all"):
             "appGridIcon": "󰀻"
         }
         atomic_write(
-            os.path.join(BASE_DIR, "bar_config.json"),
+            os.path.join(BASE_DIR, "configs", "bar_config.json"),
             json.dumps(default_bar, indent=2) + "\n"
         )
         reset_items.append("Bar")

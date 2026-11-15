@@ -241,7 +241,7 @@ def harmonize(json_path, img_path=None, explicit_mode=None):
     is_light = (mode == "light")
 
     if not img_path and explicit_mode:
-        wp_conf = os.path.expanduser("~/.config/quickshell/wallpaper.conf")
+        wp_conf = os.path.expanduser("~/.config/quickshell/configs/wallpaper.conf")
         if os.path.exists(wp_conf):
             try:
                 with open(wp_conf, "r", encoding="utf-8") as f:

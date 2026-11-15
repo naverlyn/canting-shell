@@ -1,5 +1,5 @@
-theme.conf
-wallpaper.conf
+configs/theme.conf
+configs/wallpaper.conf
 monitor-manager.conf
 theme-switcher/wallpaper-theme.json
 backups

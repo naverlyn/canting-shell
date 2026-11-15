@@ -9,7 +9,7 @@ import "BarConfigPersistence.js" as Persistence
 Singleton {
   id: root
 
-  readonly property string configPath: Qt.resolvedUrl("../bar_config.json").toString().replace(/^file:\/\//, "")
+  readonly property string configPath: Qt.resolvedUrl("../configs/bar_config.json").toString().replace(/^file:\/\//, "")
 
   // Master Visibility & Layout
   property bool barVisible: true

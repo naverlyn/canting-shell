@@ -8,7 +8,7 @@ import "ControlCenterConfigUtils.js" as ConfigUtils
 Singleton {
     id: root
 
-    readonly property string configPath: Qt.resolvedUrl("../control_center_config.json").toString().replace(/^file:\/\//, "")
+    readonly property string configPath: Qt.resolvedUrl("../configs/control_center_config.json").toString().replace(/^file:\/\//, "")
 
     property int panelWidth: 320
     property bool showHeader: true

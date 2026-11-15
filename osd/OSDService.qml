@@ -7,7 +7,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string configPath: Qt.resolvedUrl("../osd_config.json").toString().replace(/^file:\/\//, "")
+    readonly property string configPath: Qt.resolvedUrl("../configs/osd_config.json").toString().replace(/^file:\/\//, "")
 
     property string position: "right" // "right" | "left" | "center" | "top" | "bottom"
     property string orientation: "auto" // "auto" | "horizontal" | "vertical"

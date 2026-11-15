@@ -263,12 +263,12 @@ Singleton {
     return (directories || []).includes(norm);
   }
 
-  readonly property string dirsConfigPath: Qt.resolvedUrl("../wallpaper_dirs.conf").toString().replace(/^file:\/\//, "")
-  readonly property string wallpaperConfPath: Qt.resolvedUrl("../wallpaper.conf").toString().replace(/^file:\/\//, "")
-  readonly property string syncConfPath: Qt.resolvedUrl("../wallpaper_sync.conf").toString().replace(/^file:\/\//, "")
-  readonly property string modeConfPath: Qt.resolvedUrl("../wallpaper_mode.conf").toString().replace(/^file:\/\//, "")
-  readonly property string configJsonPath: Qt.resolvedUrl("../wallpaper_config.json").toString().replace(/^file:\/\//, "")
-  readonly property string legacyDisplaysJsonPath: Qt.resolvedUrl("../wallpaper_displays.json").toString().replace(/^file:\/\//, "")
+  readonly property string dirsConfigPath: Qt.resolvedUrl("../configs/wallpaper_dirs.conf").toString().replace(/^file:\/\//, "")
+  readonly property string wallpaperConfPath: Qt.resolvedUrl("../configs/wallpaper.conf").toString().replace(/^file:\/\//, "")
+  readonly property string syncConfPath: Qt.resolvedUrl("../configs/wallpaper_sync.conf").toString().replace(/^file:\/\//, "")
+  readonly property string modeConfPath: Qt.resolvedUrl("../configs/wallpaper_mode.conf").toString().replace(/^file:\/\//, "")
+  readonly property string configJsonPath: Qt.resolvedUrl("../configs/wallpaper_config.json").toString().replace(/^file:\/\//, "")
+  readonly property string legacyDisplaysJsonPath: Qt.resolvedUrl("../configs/wallpaper_displays.json").toString().replace(/^file:\/\//, "")
 
   property bool autoSyncPalette: false
 

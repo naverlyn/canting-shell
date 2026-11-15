@@ -11,7 +11,7 @@ import "NotificationConfigUtils.js" as ConfigUtils
 Singleton {
     id: root
 
-    readonly property string configPath: Qt.resolvedUrl("../notifications_config.json").toString().replace(/^file:\/\//, "")
+    readonly property string configPath: Qt.resolvedUrl("../configs/notifications_config.json").toString().replace(/^file:\/\//, "")
 
     property var notifications: []
     property var history: []

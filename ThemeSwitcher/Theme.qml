@@ -205,7 +205,7 @@ Singleton {
     readonly property color batteryCritical: accentRed
 
     // --- Global Typography & Font Configuration ---
-    readonly property string fontsConfigPath: Qt.resolvedUrl("../fonts_config.json").toString().replace(/^file:\/\//, "")
+    readonly property string fontsConfigPath: Qt.resolvedUrl("../configs/fonts_config.json").toString().replace(/^file:\/\//, "")
     property bool _fontsLoaded: false
 
     property string savedFontFamily: "Lato Nerd Font"
@@ -540,7 +540,7 @@ Singleton {
         applyHyprlockTheme(t);
     }
 
-    readonly property string themeConfPath: Qt.resolvedUrl("../theme.conf").toString().replace(/^file:\/\//, "")
+    readonly property string themeConfPath: Qt.resolvedUrl("../configs/theme.conf").toString().replace(/^file:\/\//, "")
 
     function setTheme(index) {
         if (index >= 0 && index < themes.length) {

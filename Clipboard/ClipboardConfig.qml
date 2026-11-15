@@ -7,7 +7,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string configPath: Qt.resolvedUrl("../clipboard_config.json").toString().replace(/^file:\/\//, "")
+    readonly property string configPath: Qt.resolvedUrl("../configs/clipboard_config.json").toString().replace(/^file:\/\//, "")
     readonly property string serviceScript: Qt.resolvedUrl("scripts/clip_service.py").toString().replace(/^file:\/\//, "")
 
     // Configuration Properties

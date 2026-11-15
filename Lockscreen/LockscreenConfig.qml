@@ -7,7 +7,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string configPath: Qt.resolvedUrl("../lockscreen_config.json").toString().replace(/^file:\/\//, "")
+    readonly property string configPath: Qt.resolvedUrl("../configs/lockscreen_config.json").toString().replace(/^file:\/\//, "")
 
     property string background_source: "wallpaper"
     property string background_custom_path: ""

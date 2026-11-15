@@ -7,7 +7,7 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string configPath: Qt.resolvedUrl("../app_launcher_config.json").toString().replace(/^file:\/\//, "")
+    readonly property string configPath: Qt.resolvedUrl("../configs/app_launcher_config.json").toString().replace(/^file:\/\//, "")
     readonly property string usageCachePath: "$HOME/.cache/qs_app_usage.json"
 
     // Configuration Properties
