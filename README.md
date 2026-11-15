@@ -10,12 +10,17 @@ The name comes from the **canting**, the small copper pen used to draw wax patte
 
 | Module | What it does |
 |--------|-------------|
-| **Bar** | configurable and draggable layout: clock with calendar (optional year display), workspaces, window title, global menu, volume, network speed, battery, system tray, media player, weather, CPU / memory / disk / temperature, idle inhibitor, and a cava audio visualizer. Supports multiple bars, per-bar colors, floating bars, fluid cards, and screen borders |
+| **Bar** | configurable and draggable layout: clock with calendar (optional year display), workspaces, window title, global menu, volume, brightness, Wi-Fi, Bluetooth, network speed, battery, system tray, media player, weather, CPU / GPU / memory / disk / temperature, Hyprland layout, custom script, idle inhibitor, and a cava audio visualizer. Supports multiple bars, per-bar colors, floating bars, fluid cards, and screen borders |
 | **App Launcher** | Spotlight-style searchable application launcher with command mode (`>`) and usage-based sorting, plus a full-screen app grid |
 | **Clipboard** | clipboard history manager powered by `cliphist` with text/image categories, image thumbnails, and search |
-| **Notifications** | notification daemon with customizable toast popups, layout blocks, Do Not Disturb, and a history view |
+| **Notifications** | notification daemon with customizable toast popups, layout blocks, interactive live preview/element styling, Do Not Disturb, and a history view |
 | **OSD** | customizable on-screen display for volume and brightness |
 | **Control Center** | quick settings tiles (Wi-Fi, Bluetooth, night light, dark/light mode, and more), quick launch apps, media, speaker and mic controls, brightness, cava visualizer, weather, system info, and notifications view. Tiles and cards can be rearranged |
+| **Overview** | workspace and window overview for switching or managing open windows across Hyprland workspaces |
+| **Power Menu** | session power menu overlay for lock, logout, suspend, reboot, and shutdown |
+| **Polkit Agent** | native Quickshell PolicyKit authentication prompt for elevated system actions |
+| **Keybinds Cheat Sheet** | searchable overlay listing your active Hyprland keybindings |
+| **Screenshot HUD** | interactive screenshot capture HUD for region, window, and screen captures |
 | **Lock Screen** | native Quickshell lock screen with PAM authentication, blur/visual filters, and modular building blocks (clock, auth box, weather, media player, CPU / memory / disk / battery / system info, keyboard layout, uptime, custom text/commands) |
 | **Settings** | Appearance, Bar, App Launcher, Clipboard, Control Center, Wallpaper, Lock Screen (with interactive stage editor), Sound, Display, Wi-Fi, Bluetooth, Power, Keyboard, Mouse & Touchpad, Notifications, OSD, Animations, Hyprland, Autostart, Default Apps, Backup & Restore, and About |
 | **Theme Switcher** | 200+ curated themes, or a harmonized palette generated from your wallpaper with `matugen` or `wallust` (with dark/light mode toggle) |
@@ -96,6 +101,10 @@ hl.bind("SUPER + L", hl.dsp.exec_cmd("qs ipc call lockscreen lock"))
 | `qs ipc call monitors toggle` | monitor manager (also `refresh`) |
 | `qs ipc call notifications dismiss_all` | dismiss all notifications |
 | `qs ipc call notifications dnd_toggle` | toggle Do Not Disturb (also `dnd_off`, `set_position`, `test_toast`) |
+| `qs ipc call overview toggle` | workspace and window overview |
+| `qs ipc call powermenu toggle` | power menu overlay |
+| `qs ipc call keybinds toggle` | keybindings cheat sheet |
+| `qs ipc call screenshot toggle` | screenshot HUD |
 | `qs ipc call idle toggle` | idle inhibitor (also `enable` and `disable`) |
 
 Run `qs ipc show` to list every available target and function.
