@@ -134,9 +134,7 @@ ColumnLayout {
                 border.color: Qt.rgba(1, 1, 1, 0.06)
                 border.width: 1
 
-                // -------------------------------------------------------------
                 // A. SPOTLIGHT RUNNER PREVIEW
-                // -------------------------------------------------------------
                 Rectangle {
                     id: mockSpotlightBox
                     visible: root.previewMode === "spotlight"
@@ -293,9 +291,7 @@ ColumnLayout {
                     }
                 }
 
-                // -------------------------------------------------------------
                 // B. APP GRID MENU PREVIEW
-                // -------------------------------------------------------------
                 Rectangle {
                     id: mockGridBox
                     visible: root.previewMode === "grid"

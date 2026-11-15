@@ -16,9 +16,7 @@ SectionCard {
 
     property bool composerExpanded: false
 
-    // =========================================================================
     // 1. TOP PRESETS & LIVE TEST BAR
-    // =========================================================================
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: 44
@@ -154,9 +152,7 @@ SectionCard {
         }
     }
 
-    // =========================================================================
     // 2. INTERACTIVE SIMULATED DESKTOP STAGE WITH LIVE NOTIFICATION TOAST
-    // =========================================================================
     Rectangle {
         id: stageCanvas
         Layout.fillWidth: true
@@ -461,9 +457,7 @@ SectionCard {
         }
     }
 
-    // =========================================================================
     // 3. INTERACTIVE CUSTOM NOTIFICATION COMPOSER (ICON, TITLE, BODY, BUTTONS)
-    // =========================================================================
     NotificationComposerPanel {
         visible: previewSection.composerExpanded
         root: previewSection.root

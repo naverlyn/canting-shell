@@ -3,7 +3,6 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import "../Common"
 
-// ---------------------------------------------------------
 SectionCard {
     required property var root
     title: "Curated Typography Pairings"

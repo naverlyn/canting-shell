@@ -494,7 +494,7 @@ Scope {
                 }
             }
 
-            // --- 8-Direction Window Resize Handles ---
+            // 8-Direction Window Resize Handles
             SettingsResizeHandles {
                 winCard: winCard
             }

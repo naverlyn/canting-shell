@@ -55,7 +55,7 @@ Item {
 
     HoverHandler { id: barHover }
 
-    // --- Vertical Bar Layout ---
+    // Vertical Bar Layout
     Item {
       id: vertLayout
       visible: root.isVert
@@ -90,7 +90,7 @@ Item {
       }
     }
 
-    // --- Horizontal Bar Layout ---
+    // Horizontal Bar Layout
     Row {
       id: horizRow
       visible: !root.isVert
@@ -203,7 +203,7 @@ Item {
     }
   }
 
-  // --- Submenu Dropdown Popup ---
+  // Submenu Dropdown Popup
   PopupWindow {
     id: dropdownPopup
     property var menuRoot: root

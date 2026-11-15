@@ -161,37 +161,27 @@ ColumnLayout {
         spacing: 16
         transform: Translate { id: subTabContentTranslate; y: 0 }
 
-    /* ========================================================================= */
-    /* TAB 0: GENERAL & LAYOUT                                                   */
-    /* ========================================================================= */
+    // TAB 0: GENERAL & LAYOUT
     HyprlandLiveWindowLayoutPreview {
         root: mainCol.root
     }
 
-    /* ========================================================================= */
-    /* TAB 1: WINDOW DECORATION                                                  */
-    /* ========================================================================= */
+    // TAB 1: WINDOW DECORATION
     HyprlandWindowCornerRounding {
         root: mainCol.root
     }
 
-    /* ========================================================================= */
-    /* TAB 2: WINDOW RULES                                                       */
-    /* ========================================================================= */
+    // TAB 2: WINDOW RULES
     HyprlandWindowRules {
         root: mainCol.root
     }
 
-    /* ========================================================================= */
-    /* TAB 3: GESTURES & TOUCHPAD                                                */
-    /* ========================================================================= */
+    // TAB 3: GESTURES & TOUCHPAD
     HyprlandTouchpadWorkspaceGestures {
         root: mainCol.root
     }
 
-    /* ========================================================================= */
-    /* TAB 4: MISC & COMPOSITOR                                                  */
-    /* ========================================================================= */
+    // TAB 4: MISC & COMPOSITOR
     HyprlandDisplaySyncRefresh {
         root: mainCol.root
     }

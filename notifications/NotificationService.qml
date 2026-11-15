@@ -21,9 +21,7 @@ Singleton {
     property int toastMarginX: 10
     property int toastMarginY: 10
 
-    // =========================================================================
     // 1. MODULAR BUILDING BLOCKS CONFIGURATION (3 ZONES + POOL)
-    // =========================================================================
     property var headerBlocks: ["icon", "appName", "closeBtn"]
     property var contentBlocks: ["title", "body", "image"]
     property var footerBlocks: ["buttons", "progressBar"]
@@ -43,9 +41,7 @@ Singleton {
     signal blocksUpdated()
     property int blockOrderRevision: 0
 
-    // =========================================================================
     // 2. CARD DIMENSIONS, TIMING & APPEARANCE
-    // =========================================================================
     property int toastWidth: 360
     property int cardRadius: 16
     property int cardSpacing: 8
@@ -60,9 +56,7 @@ Singleton {
     property string accentStripPosition: "left" // "left" | "right" | "top" | "none"
     property int accentStripWidth: 3
 
-    // =========================================================================
     // 3. PER-BUILDING-BLOCK CUSTOMIZATION PROPERTIES
-    // =========================================================================
     // Icon Block ("icon")
     property string iconMode: "auto" // "auto" | "inline" | "avatar"
     property int iconSize: 24
@@ -100,9 +94,7 @@ Singleton {
     property int progressHeight: 3
     property bool progressShowCritical: false
 
-    // =========================================================================
     // 4. INTERACTIVE COMPOSER / TEST NOTIFICATION STATE
-    // =========================================================================
     property string composerPreset: "screenshot" // "screenshot" | "message" | "media" | "critical" | "custom"
     property string composerAppName: "notify-send"
     property string composerIcon: "󰂚"
@@ -130,9 +122,7 @@ Singleton {
         if (root._loaded) root.saveConfig();
     }
 
-    // =========================================================================
     // BUILDING BLOCKS HELPER FUNCTIONS
-    // =========================================================================
     function getBlockDef(id) {
         for (let i = 0; i < root.allBlockDefs.length; i++) {
             if (root.allBlockDefs[i].id === id) return root.allBlockDefs[i];
@@ -337,9 +327,7 @@ Singleton {
         root.saveConfig();
     }
 
-    // =========================================================================
     // PROPERTY SETTERS
-    // =========================================================================
     function setToastPosition(pos) {
         const clean = String(pos || "top-right").trim().toLowerCase();
         if (root.validPositions.indexOf(clean) !== -1 && root.toastPosition !== clean) {
@@ -408,9 +396,7 @@ Singleton {
     function setProgressHeight(val) { ConfigUtils.setIntProp(root, "progressHeight", val); }
     function setProgressShowCritical(val) { ConfigUtils.setBoolProp(root, "progressShowCritical", val, false); }
 
-    // =========================================================================
     // COMPOSER / TEST NOTIFICATION PRESETS & LIVE DISPATCH
-    // =========================================================================
     function applyComposerPreset(presetId) {
         root.composerPreset = presetId;
         const p = Presets.getComposerPreset(presetId, NotificationUrgency);

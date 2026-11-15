@@ -3,7 +3,6 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import "../Common"
 
-// ---------------------------------------------------------
 SectionCard {
     required property var root
     title: "Live Specimen Preview"
@@ -129,7 +128,7 @@ SectionCard {
             }
             spacing: 10
 
-            // --- Mode 1: Shell & Bar Mockup ---
+            // Mode 1: Shell & Bar Mockup
             ColumnLayout {
                 visible: root.specimenTab === "ui"
                 Layout.fillWidth: true
@@ -287,7 +286,7 @@ SectionCard {
                 }
             }
 
-            // --- Mode 2: Lock Screen & Monospace Mockup ---
+            // Mode 2: Lock Screen & Monospace Mockup
             ColumnLayout {
                 visible: root.specimenTab === "mono"
                 Layout.fillWidth: true
@@ -363,7 +362,7 @@ SectionCard {
                 }
             }
 
-            // --- Mode 3: Scale & Character Set Waterfall ---
+            // Mode 3: Scale & Character Set Waterfall
             ColumnLayout {
                 visible: root.specimenTab === "charset"
                 Layout.fillWidth: true

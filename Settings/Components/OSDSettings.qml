@@ -174,16 +174,12 @@ Item {
                 }
             }
 
-            /* ========================================================= */
-            /* 1. GENERAL ACTIONS GROUP                                   */
-            /* ========================================================= */
+            // 1. GENERAL ACTIONS GROUP
             OSDGeneralSection {
                 root: root
             }
 
-            /* ========================================================= */
-            /* 2. SCREEN POSITION & PREVIEW GROUP                         */
-            /* ========================================================= */
+            // 2. SCREEN POSITION & PREVIEW GROUP
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 8
@@ -225,16 +221,12 @@ Item {
                 }
             }
 
-            /* ========================================================= */
-            /* 3. ORIENTATION & SHAPE GROUP                               */
-            /* ========================================================= */
+            // 3. ORIENTATION & SHAPE GROUP
             OSDOrientationShape {
                 root: root
             }
 
-            /* ========================================================= */
-            /* 4. TACTILE X/Y PLACEMENT & TIMING GROUP                   */
-            /* ========================================================= */
+            // 4. TACTILE X/Y PLACEMENT & TIMING GROUP
             OSDPlacementTiming {
                 id: oSDPlacementTimingInst
                 root: root

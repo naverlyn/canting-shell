@@ -308,9 +308,7 @@ Item {
             width: pageFlick.width - (mainScroll.visible ? 12 : 0)
             spacing: 16
 
-            // ---------------------------------------------------------
             // 1. Page Header Row
-            // ---------------------------------------------------------
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 12

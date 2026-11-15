@@ -324,9 +324,7 @@ Item {
                 spacing: 20
                 transform: Translate { id: subTabContentTranslate; y: 0 }
 
-                // =============================================================
                 // SUB-TAB 0: MODULAR BUILDING BLOCKS, LIVE COMPOSER & INSPECTOR
-                // =============================================================
                 ColumnLayout {
                     visible: root.currentSubTab === 0
                     Layout.fillWidth: true
@@ -347,9 +345,7 @@ Item {
                     }
                 }
 
-                // =============================================================
                 // SUB-TAB 1: PLACEMENT, GENERAL BEHAVIOR & HISTORY QUEUE
-                // =============================================================
                 ColumnLayout {
                     visible: root.currentSubTab === 1
                     Layout.fillWidth: true

@@ -55,9 +55,7 @@ ColumnLayout {
         }
     }
 
-    // ---------------------------------------------------------
     // 7. Font Weight & Rendering Preferences
-    // ---------------------------------------------------------
     SectionCard {
         title: "Weight & Rendering Preferences"
         subtitle: "Control boldness, glyph hinting, and subpixel antialiasing"

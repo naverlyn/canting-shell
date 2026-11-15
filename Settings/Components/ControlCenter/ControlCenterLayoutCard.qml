@@ -33,9 +33,7 @@ ColumnLayout {
 
     visible: root.currentSubTab === 0
 
-    // =========================================================================
     // CARD 1: 3-PANEL MODULAR BUILDING BLOCKS
-    // =========================================================================
     SectionCard {
         title: "Control Center Panels & Building Blocks"
         subtitle: "Stack any combination of modules into Panel 1, Panel 2, and Panel 3 · MPRIS automatically switches to Compact when stacked with other modules"
@@ -188,9 +186,7 @@ ColumnLayout {
         }
     }
 
-    // =========================================================================
     // CARD 2: QUICK SETTINGS & 2x2 CONNECTIVITY TILES
-    // =========================================================================
     SectionCard {
         title: "Quick Settings & Connectivity Tiles"
         subtitle: "Configure which toggles appear in Connectivity (2x2), Quick Tiles, and Quick Tiles 2"

@@ -204,7 +204,7 @@ Singleton {
     readonly property color batteryWarning:  accentOrange
     readonly property color batteryCritical: accentRed
 
-    // --- Global Typography & Font Configuration ---
+    // Global Typography & Font Configuration
     readonly property string fontsConfigPath: Qt.resolvedUrl("../configs/fonts_config.json").toString().replace(/^file:\/\//, "")
     property bool _fontsLoaded: false
 

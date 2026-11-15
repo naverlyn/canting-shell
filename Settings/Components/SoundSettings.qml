@@ -282,38 +282,28 @@ Item {
                 }
             }
 
-            /* ========================================================= */
-            /* 1. OUTPUT GROUP                                            */
-            /* ========================================================= */
+            // 1. OUTPUT GROUP
             SoundOutputSection {
                 root: root
             }
 
-            /* ========================================================= */
-            /* 2. INPUT GROUP                                             */
-            /* ========================================================= */
+            // 2. INPUT GROUP
             SoundInputSection {
                 id: soundInputSectionInst
                 root: root
             }
 
-            /* ========================================================= */
-            /* 3. VOLUME LEVELS (APPLICATION MIXER)                       */
-            /* ========================================================= */
+            // 3. VOLUME LEVELS (APPLICATION MIXER)
             SoundVolumeLevels {
                 root: root
             }
 
-            /* ========================================================= */
-            /* 4. SYSTEM SOUNDS & ALERT EFFECTS                           */
-            /* ========================================================= */
+            // 4. SYSTEM SOUNDS & ALERT EFFECTS
             SoundSystemSounds {
                 root: root
             }
 
-            /* ========================================================= */
-            /* 5. ON-SCREEN DISPLAY (OSD) OVERLAY                         */
-            /* ========================================================= */
+            // 5. ON-SCREEN DISPLAY (OSD) OVERLAY
             SoundOsdSection {
                 root: root
             }

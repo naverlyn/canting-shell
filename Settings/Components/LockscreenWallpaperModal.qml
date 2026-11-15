@@ -107,7 +107,7 @@ PanelWindow {
             anchors.margins: 20
             spacing: 14
 
-            // --- Header ---
+            // Header
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 12
@@ -260,7 +260,7 @@ PanelWindow {
                 color: root.theme.bgBorder
             }
 
-            // --- Wallpaper Grid Content ---
+            // Wallpaper Grid Content
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -444,7 +444,7 @@ PanelWindow {
                 }
             }
 
-            // --- Footer ---
+            // Footer
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 12

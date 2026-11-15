@@ -70,9 +70,7 @@ Item {
         border.width: root.showCard ? 1 : 0
         border.color: root.theme.bgBorder
 
-        // -------------------------------------------------------------
         // 1. COMPACT MEDIA PLAYER (Horizontal Pill Layout)
-        // -------------------------------------------------------------
         RowLayout {
             visible: root.isCompact
             anchors.fill: parent
@@ -208,9 +206,7 @@ Item {
             }
         }
 
-        // -------------------------------------------------------------
         // 2. FULL MEDIA PLAYER (Detailed Card Layout like Control Center)
-        // -------------------------------------------------------------
         ColumnLayout {
             visible: !root.isCompact
             anchors.fill: parent

@@ -677,38 +677,28 @@ Item {
                 }
             }
 
-            /* ============================================================
-             * 1. Interactive Display Arrangement & Preview Group
-             * ============================================================ */
+            // 1. Interactive Display Arrangement & Preview Group
             DisplayArrangementCanvas {
                 root: root
             }
 
-            /* ============================================================
-             * 2. Per-Display Configuration Group
-             * ============================================================ */
+            // 2. Per-Display Configuration Group
             DisplayConfigurationGroup {
                 root: root
             }
 
-            /* ============================================================
-             * 3. Brightness & Illumination Group
-             * ============================================================ */
+            // 3. Brightness & Illumination Group
             DisplayBrightnessGroup {
                 id: displayIlluminationBrightnessInst
                 root: root
             }
 
-            /* ============================================================
-             * 4. Night Light (Color Temperature) Group
-             * ============================================================ */
+            // 4. Night Light (Color Temperature) Group
             DisplayNightLight {
                 root: root
             }
 
-            /* ============================================================
-             * 5. Compositor & Power Group
-             * ============================================================ */
+            // 5. Compositor & Power Group
             DisplayPowerOptions {
                 root: root
             }

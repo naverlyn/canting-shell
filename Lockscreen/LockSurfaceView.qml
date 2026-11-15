@@ -60,9 +60,7 @@ FocusScope {
     anchors.fill: parent
     clip: true
 
-    // =========================================================================
     // 1. DEFAULT ANIMATION (Classic fade, subtle zoom, and shockwave ripple)
-    // =========================================================================
     ParallelAnimation {
         id: enterDefaultAnim
         NumberAnimation { target: surfaceViewRoot; property: "surfaceOpacity"; from: 0.0; to: 1.0; duration: 280; easing.type: Easing.OutCubic }
@@ -87,9 +85,7 @@ FocusScope {
         }
     }
 
-    // =========================================================================
     // 2. STAGGERED CASCADE ANIMATION (Edge fly-in with spring physics)
-    // =========================================================================
     ParallelAnimation {
         id: enterStaggeredAnim
         NumberAnimation { target: surfaceViewRoot; property: "surfaceOpacity"; from: 0.0; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
@@ -120,9 +116,7 @@ FocusScope {
         }
     }
 
-    // =========================================================================
     // 3. CINEMA CURTAIN ANIMATION (Vertical shutter split & glowing laser seam)
-    // =========================================================================
     ParallelAnimation {
         id: enterCurtainAnim
         NumberAnimation { target: surfaceViewRoot; property: "surfaceOpacity"; from: 0.0; to: 1.0; duration: 140; easing.type: Easing.OutQuad }
@@ -161,9 +155,7 @@ FocusScope {
         }
     }
 
-    // =========================================================================
     // 4. ZOOM & DEPTH OF FIELD ANIMATION (Camera lens rack focus & hyper-zoom)
-    // =========================================================================
     ParallelAnimation {
         id: enterDepthAnim
         NumberAnimation { target: surfaceViewRoot; property: "surfaceOpacity"; from: 0.0; to: 1.0; duration: 260; easing.type: Easing.OutQuad }
@@ -196,9 +188,7 @@ FocusScope {
         }
     }
 
-    // =========================================================================
     // 5. PORTAL IRIS ANIMATION (Radial shockwave & vortex pull from Auth Box)
-    // =========================================================================
     ParallelAnimation {
         id: enterPortalAnim
         NumberAnimation { target: surfaceViewRoot; property: "surfaceOpacity"; from: 0.0; to: 1.0; duration: 220; easing.type: Easing.OutCubic }

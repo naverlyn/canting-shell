@@ -478,7 +478,7 @@ Rectangle {
         LockscreenSandboxHeader { stageRoot: stageRoot }
         LockscreenSandboxColorBar { stageRoot: stageRoot }
 
-        // --- 16:9 Simulated Lock Screen Monitor Stage ---
+        // 16:9 Simulated Lock Screen Monitor Stage
         Rectangle {
             id: canvasBox
             property bool isDropTarget: false

@@ -15,9 +15,7 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 0
 
-// =================================================================
 // 6. ACTION BUTTONS BUILDING BLOCK OPTIONS
-// =================================================================
 ColumnLayout {
     visible: groupRoot.activeTabId === "buttons"
     Layout.fillWidth: true
@@ -156,9 +154,7 @@ ColumnLayout {
     }
 }
 
-// =================================================================
 // 7. TIMEOUT PROGRESS BAR BUILDING BLOCK OPTIONS
-// =================================================================
 ColumnLayout {
     visible: groupRoot.activeTabId === "progressBar"
     Layout.fillWidth: true
@@ -228,9 +224,7 @@ ColumnLayout {
     }
 }
 
-// =================================================================
 // 8. CARD CHROME & ACCENT STRIP OPTIONS
-// =================================================================
 ColumnLayout {
     visible: groupRoot.activeTabId === "card"
     Layout.fillWidth: true

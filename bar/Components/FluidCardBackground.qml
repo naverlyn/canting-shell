@@ -57,7 +57,7 @@ Item {
     }
   }
 
-  // --- Flyout Mode (Standard Rounded Rectangle) ---
+  // Flyout Mode (Standard Rounded Rectangle)
   Rectangle {
     id: flyoutRect
     visible: !root.fluidEnabled
@@ -68,7 +68,7 @@ Item {
     border.width: root.borderWidth
   }
 
-  // --- Fluid Mode (Single-pass Canvas vector path for body + inner corners + integrated shadow) ---
+  // Fluid Mode (Single-pass Canvas vector path for body + inner corners + integrated shadow)
   Loader {
     id: canvasLoader
     anchors.fill: parent

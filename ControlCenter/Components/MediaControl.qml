@@ -73,9 +73,7 @@ Rectangle {
         }
     }
 
-    /* ------------------------------------------------------------- */
-    /* COMPACT SQUARED MEDIA PLAYER (iOS / Android Control Center)   */
-    /* ------------------------------------------------------------- */
+    // COMPACT SQUARED MEDIA PLAYER (iOS / Android Control Center)
     ColumnLayout {
         id: compactCol
         visible: root.isCompact
@@ -288,9 +286,7 @@ Rectangle {
         }
     }
 
-    /* ------------------------------------------------------------- */
-    /* DETAILED FULL-WIDTH MEDIA PLAYER                              */
-    /* ------------------------------------------------------------- */
+    // DETAILED FULL-WIDTH MEDIA PLAYER
     ColumnLayout {
         id: mprisCol
         visible: !root.isCompact

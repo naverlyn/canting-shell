@@ -211,9 +211,7 @@ Item {
         });
     }
 
-    // -------------------------------------------------------------------------
     // Main UI Layout
-    // -------------------------------------------------------------------------
     Flickable {
         id: mainScroll
         anchors.fill: parent
@@ -398,9 +396,7 @@ Item {
     AutostartAddAppModal { root: root }
     AutostartAddCmdModal { root: root }
 
-    // =========================================================================
     // FLOATING TOAST
-    // =========================================================================
     ToastBanner {
         id: toastBanner
         theme: root.theme

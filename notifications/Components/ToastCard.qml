@@ -391,9 +391,7 @@ Rectangle {
         }
     }
 
-    // =========================================================
     // MODULAR BUILDING BLOCK COMPONENTS
-    // =========================================================
     Component {
         id: inlineIconComp
         Rectangle {

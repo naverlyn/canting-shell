@@ -15,9 +15,7 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 0
 
-// =================================================================
 // 3. TITLE NOTIFICATION BUILDING BLOCK OPTIONS
-// =================================================================
 ColumnLayout {
     visible: groupRoot.activeTabId === "title"
     Layout.fillWidth: true
@@ -121,9 +119,7 @@ ColumnLayout {
     }
 }
 
-// =================================================================
 // 4. BODY MESSAGE BUILDING BLOCK OPTIONS
-// =================================================================
 ColumnLayout {
     visible: groupRoot.activeTabId === "body"
     Layout.fillWidth: true
@@ -218,9 +214,7 @@ ColumnLayout {
     }
 }
 
-// =================================================================
 // 5. PREVIEW IMAGE BUILDING BLOCK OPTIONS
-// =================================================================
 ColumnLayout {
     visible: groupRoot.activeTabId === "image"
     Layout.fillWidth: true

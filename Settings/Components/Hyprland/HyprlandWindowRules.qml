@@ -14,16 +14,12 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 16
 
-    /* ========================================================================= */
-    /* 1. QUICK CATEGORY OPACITY OVERRIDES CARD                                  */
-    /* ========================================================================= */
+    // 1. QUICK CATEGORY OPACITY OVERRIDES CARD
     HyprlandCategoryOpacityCard {
         root: windowRulesRoot.root
     }
 
-    /* ========================================================================= */
-    /* 2. QUICK SPECIAL & FLOATING BEHAVIORS CARD                                */
-    /* ========================================================================= */
+    // 2. QUICK SPECIAL & FLOATING BEHAVIORS CARD
     SectionCard {
         subtitleMaxRatio: 0.55
         title: "Special Window & Layer Behaviors"
@@ -70,9 +66,7 @@ ColumnLayout {
         }
     }
 
-    /* ========================================================================= */
-    /* 3. INTERACTIVE LUA WINDOW & LAYER RULES STUDIO                            */
-    /* ========================================================================= */
+    // 3. INTERACTIVE LUA WINDOW & LAYER RULES STUDIO
     ColumnLayout {
         Layout.fillWidth: true
         spacing: 8
@@ -162,16 +156,12 @@ ColumnLayout {
                 }
                 spacing: 8
 
-                /* ============================================================= */
-                /* ADD / EDIT RULE DRAWER                                        */
-                /* ============================================================= */
+                // ADD / EDIT RULE DRAWER
                 HyprlandRuleFormDrawer {
                     root: windowRulesRoot.root
                 }
 
-                /* ============================================================= */
-                /* FILTER SEGMENTED TRACK & SEARCH BAR                           */
-                /* ============================================================= */
+                // FILTER SEGMENTED TRACK & SEARCH BAR
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
@@ -320,9 +310,7 @@ ColumnLayout {
 
                 RowDivider { sideMargin: 0; alpha: 1.0 }
 
-                /* ============================================================= */
-                /* RULES REPEATER                                                */
-                /* ============================================================= */
+                // RULES REPEATER
                 Repeater {
                     model: root.filteredWindowRules
 

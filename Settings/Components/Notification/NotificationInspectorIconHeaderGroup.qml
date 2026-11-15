@@ -15,9 +15,7 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 0
 
-// =================================================================
 // 1. APP ICON BUILDING BLOCK OPTIONS
-// =================================================================
 ColumnLayout {
     visible: groupRoot.activeTabId === "icon"
     Layout.fillWidth: true
@@ -122,9 +120,7 @@ ColumnLayout {
     }
 }
 
-// =================================================================
 // 2. HEADER, APP NAME, TIMESTAMP & CLOSE BUTTON OPTIONS
-// =================================================================
 ColumnLayout {
     visible: groupRoot.activeTabId === "appName"
     Layout.fillWidth: true
