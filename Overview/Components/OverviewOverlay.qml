@@ -19,6 +19,7 @@ PanelWindow {
     signal selectionChanged(int index)
     signal windowFocused(var toplevel)
     signal windowClosed(var toplevel)
+    signal windowMoved(var toplevel, int wsId)
     signal workspaceSwitched(int wsId)
     signal closeRequested()
 
@@ -29,7 +30,7 @@ PanelWindow {
     property bool ready: false
 
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.namespace: "quickshell:overview"
     exclusionMode: ExclusionMode.Ignore
 
@@ -297,6 +298,7 @@ PanelWindow {
                             onSearchQueryChangedByUser: (q) => overviewWindow.searchQueryChangedByUser(q)
                             onWindowClicked: (t) => overviewWindow.windowFocused(t)
                             onWindowClosed: (t) => overviewWindow.windowClosed(t)
+                            onWindowMoved: (t, wsId) => overviewWindow.windowMoved(t, wsId)
                             onWorkspaceClicked: (wsId) => overviewWindow.workspaceSwitched(wsId)
                         }
                     }

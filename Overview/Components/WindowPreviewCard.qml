@@ -12,10 +12,15 @@ Rectangle {
     required property var toplevel
     required property bool isSelected
     property bool compact: false
+    property bool dragEnabled: false
+    property bool isDragging: false
 
     signal clicked()
     signal closeClicked()
     signal hovered()
+    signal dragStarted(var toplevel, real globalX, real globalY)
+    signal dragMoved(real globalX, real globalY)
+    signal dragEnded(real globalX, real globalY)
 
     readonly property string appClass: (toplevel && toplevel.lastIpcObject && (toplevel.lastIpcObject.class || toplevel.lastIpcObject.initialClass)) || ""
     readonly property string windowTitle: (toplevel && toplevel.title) ? toplevel.title : (appClass !== "" ? appClass : "Window")
@@ -35,7 +40,9 @@ Rectangle {
         ? root.theme.accentPrimary
         : (root.isFocused ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.5) : root.theme.bgBorder)
 
-    scale: cardMouse.pressed ? 0.97 : 1.0
+    opacity: root.isDragging ? 0.32 : 1.0
+    scale: cardMouse.pressed && !root.isDragging ? 0.97 : 1.0
+    Behavior on opacity { NumberAnimation { duration: 100 } }
     Behavior on color { ColorAnimation { duration: 120 } }
     Behavior on border.color { ColorAnimation { duration: 120 } }
     Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutQuad } }
@@ -44,10 +51,52 @@ Rectangle {
         id: cardMouse
         anchors.fill: parent
         hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        cursorShape: root.isDragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+
+        property bool dragging: false
+        property real pressX: 0
+        property real pressY: 0
+
         onEntered: root.hovered()
+        onPressed: (mouse) => {
+            if (mouse.button === Qt.LeftButton && root.dragEnabled) {
+                pressX = mouse.x;
+                pressY = mouse.y;
+                dragging = false;
+            }
+        }
+        onPositionChanged: (mouse) => {
+            if (!pressed || !root.dragEnabled || !(mouse.buttons & Qt.LeftButton)) return;
+            if (!dragging) {
+                const dx = mouse.x - pressX;
+                const dy = mouse.y - pressY;
+                if (dx * dx + dy * dy > 64) {
+                    dragging = true;
+                    const pt = cardMouse.mapToItem(null, mouse.x, mouse.y);
+                    root.dragStarted(root.toplevel, pt.x, pt.y);
+                }
+            }
+            if (dragging) {
+                const pt = cardMouse.mapToItem(null, mouse.x, mouse.y);
+                root.dragMoved(pt.x, pt.y);
+            }
+        }
+        onReleased: (mouse) => {
+            if (dragging) {
+                dragging = false;
+                const pt = cardMouse.mapToItem(null, mouse.x, mouse.y);
+                root.dragEnded(pt.x, pt.y);
+            }
+        }
+        onCanceled: {
+            if (dragging) {
+                dragging = false;
+                root.dragEnded(-1, -1);
+            }
+        }
         onClicked: (mouse) => {
+            if (dragging) return;
             if (mouse.button === Qt.MiddleButton) {
                 root.closeClicked();
             } else {
@@ -74,11 +123,37 @@ Rectangle {
             ScreencopyView {
                 id: preview
                 anchors.fill: parent
-                captureSource: (root.toplevel && root.toplevel.wayland) ? root.toplevel.wayland : null
-                live: true
+                captureSource: (root.visible && root.toplevel && root.toplevel.wayland) ? root.toplevel.wayland : null
+                live: false
                 paintCursor: false
                 constraintSize: Qt.size(Math.max(1, width), Math.max(1, height))
                 visible: hasContent
+
+                property bool retried: false
+                function requestSnap() {
+                    if (!root.visible || !captureSource) return;
+                    preview.captureFrame();
+                    if (!preview.hasContent && !preview.retried) {
+                        preview.retried = true;
+                        screencopyRetryTimer.restart();
+                    }
+                }
+                Component.onCompleted: Qt.callLater(() => preview.requestSnap())
+                onCaptureSourceChanged: {
+                    retried = false;
+                    Qt.callLater(() => preview.requestSnap());
+                }
+            }
+
+            Timer {
+                id: screencopyRetryTimer
+                interval: 250
+                repeat: false
+                onTriggered: {
+                    if (root.visible && preview.captureSource && !preview.hasContent) {
+                        preview.captureFrame();
+                    }
+                }
             }
 
             // Fallback when no screencopy frame is available yet

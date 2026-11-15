@@ -16,6 +16,18 @@ Scope {
     property string mode: "workspaces" // "switcher" | "workspaces"
     property int selectedIndex: 0
     property string searchQuery: ""
+    property bool isLua: true
+
+    Process {
+        id: configFormatCheck
+        command: ["sh", "-c", "[ -f \"$HOME/.config/hypr/hyprland.lua\" ] && echo lua || echo conf"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.isLua = (text.trim() === "lua");
+            }
+        }
+    }
 
     readonly property var sortedWorkspaces: {
         if (!root.panelVisible) return [];
@@ -60,22 +72,35 @@ Scope {
         if (wsObj && typeof wsObj.activate === "function") {
             wsObj.activate();
         }
-        if (addr !== "") {
-            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "address:" + addr]);
-        } else if (toplevel.wayland && typeof toplevel.wayland.activate === "function") {
+        if (toplevel.wayland && typeof toplevel.wayland.activate === "function") {
             toplevel.wayland.activate();
+        }
+        if (addr !== "") {
+            if (root.isLua) {
+                Hyprland.dispatch('hl.dsp.focus({ window = "address:' + addr + '" })');
+            } else {
+                Hyprland.dispatch("focuswindow address:" + addr);
+            }
         }
     }
 
     function closeToplevel(toplevel) {
         if (!toplevel) return;
+        if (toplevel.wayland && typeof toplevel.wayland.close === "function") {
+            toplevel.wayland.close();
+            refreshTimer.restart();
+            return;
+        }
         if (toplevel.address) {
             const addr = String(toplevel.address).startsWith("0x")
                 ? toplevel.address
                 : ("0x" + toplevel.address);
-            Quickshell.execDetached(["hyprctl", "dispatch", "closewindow", "address:" + addr]);
-        } else if (toplevel.wayland && typeof toplevel.wayland.close === "function") {
-            toplevel.wayland.close();
+            if (root.isLua) {
+                Hyprland.dispatch('hl.dsp.window.close({ window = "address:' + addr + '" })');
+            } else {
+                Hyprland.dispatch("closewindow address:" + addr);
+            }
+            refreshTimer.restart();
         }
     }
 
@@ -88,6 +113,46 @@ Scope {
             return;
         }
         Hyprland.dispatch("workspace " + wsId);
+    }
+
+    property int pendingMoveWsId: -1
+
+    function moveToplevelToWorkspace(toplevel, wsId) {
+        if (!toplevel || !toplevel.address || wsId <= 0) return;
+        const addr = String(toplevel.address).startsWith("0x")
+            ? toplevel.address
+            : ("0x" + toplevel.address);
+        if (root.isLua) {
+            Hyprland.dispatch('hl.dsp.focus({ window = "address:' + addr + '" })');
+            root.pendingMoveWsId = wsId;
+            moveTimer.restart();
+        } else {
+            Hyprland.dispatch("movetoworkspacesilent " + wsId + ",address:" + addr);
+            refreshTimer.restart();
+        }
+    }
+
+    Timer {
+        id: moveTimer
+        interval: 40
+        repeat: false
+        onTriggered: {
+            if (root.pendingMoveWsId > 0) {
+                Hyprland.dispatch("hl.dsp.window.move({ workspace = " + root.pendingMoveWsId + ", silent = true })");
+                root.pendingMoveWsId = -1;
+            }
+            refreshTimer.restart();
+        }
+    }
+
+    Timer {
+        id: refreshTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            Hyprland.refreshToplevels();
+            Hyprland.refreshWorkspaces();
+        }
     }
 
     IpcHandler {
@@ -135,6 +200,7 @@ Scope {
             onSelectionChanged: (idx) => { root.selectedIndex = idx; }
             onWindowFocused: (t) => root.focusToplevel(t)
             onWindowClosed: (t) => root.closeToplevel(t)
+            onWindowMoved: (t, wsId) => root.moveToplevelToWorkspace(t, wsId)
             onWorkspaceSwitched: (wsId) => root.switchWorkspace(wsId)
             onCloseRequested: root.closeOverview()
         }
