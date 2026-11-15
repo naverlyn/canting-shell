@@ -13,15 +13,15 @@ Scope {
   IpcHandler {
     target: "idle"
 
-    function toggle(): void {
+    function toggle() {
       SystemInfo.toggleIdleInhibitor();
     }
 
-    function enable(): void {
+    function enable() {
       SystemInfo.setIdleInhibitor(true);
     }
 
-    function disable(): void {
+    function disable() {
       SystemInfo.setIdleInhibitor(false);
     }
   }

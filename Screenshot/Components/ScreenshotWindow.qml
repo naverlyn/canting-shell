@@ -24,9 +24,34 @@ PanelWindow {
   implicitWidth: hudCard.width
   implicitHeight: hudCard.height
 
-  Component.onCompleted: Qt.callLater(() => hudCard.forceActiveFocus())
+  property bool closing: false
+
+  function requestClose() {
+    if (hudWin.closing) return;
+    hudWin.closing = true;
+    openAnim.stop();
+    closeAnim.start();
+  }
+
+  Component.onCompleted: {
+    openAnim.start();
+    Qt.callLater(() => hudCard.forceActiveFocus());
+  }
   onVisibleChanged: {
     if (!visible) hudWin.closeRequested();
+  }
+
+  ParallelAnimation {
+    id: openAnim
+    NumberAnimation { target: hudCard; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+    NumberAnimation { target: slideTx; property: "y"; from: 12; to: 0; duration: 160; easing.type: Easing.OutCubic }
+  }
+
+  ParallelAnimation {
+    id: closeAnim
+    NumberAnimation { target: hudCard; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+    NumberAnimation { target: slideTx; property: "y"; to: 10; duration: 110; easing.type: Easing.InCubic }
+    onFinished: hudWin.visible = false
   }
 
   WlrLayershell.layer: WlrLayer.Overlay
@@ -46,9 +71,11 @@ PanelWindow {
     color: hudWin.theme.bgBase
     border.color: hudWin.theme.bgBorder
     border.width: 1
+    opacity: 0.0
+    transform: Translate { id: slideTx; y: 12 }
 
     focus: true
-    Keys.onEscapePressed: hudWin.visible = false
+    Keys.onEscapePressed: hudWin.requestClose()
     Keys.onPressed: event => {
       if (event.key === Qt.Key_1) {
         event.accepted = true;
@@ -109,7 +136,7 @@ PanelWindow {
           font: hudWin.font
           text: "󰅖"
           fixedWidth: 24
-          onTriggered: hudWin.visible = false
+          onTriggered: hudWin.requestClose()
         }
       }
 
