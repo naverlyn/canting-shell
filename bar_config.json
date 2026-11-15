@@ -175,7 +175,6 @@
     "controlCenter"
   ],
   "removedWidgets": [
-    "@color:bar_1:appGrid=textPrimary",
     "idleInhibitor",
     "media",
     "globalMenu",
@@ -183,10 +182,11 @@
     "network",
     "battery",
     "bluetooth",
-    "customScript"
+    "customScript",
+    "@color:bar_1:appGrid=textPrimary"
   ],
   "showAppGrid": true,
-  "appGridIcon": "󰣇",
+  "appGridIcon": "/home/xeana/Downloads/73232e5c2489a4856bbd81710775d7e6870fa317.png",
   "showCpu": true,
   "showMemory": true,
   "showTemp": true,

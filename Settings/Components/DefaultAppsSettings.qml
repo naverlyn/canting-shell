@@ -20,6 +20,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import ".."
+import "./Common"
 
 Item {
     id: root
@@ -230,17 +231,20 @@ Item {
 
                 // Dropdown selector pill
                 Rectangle {
-                    width: 240
-                    height: 32
-                    radius: 6
-                    color: expanderRow.isOpen 
-                        ? (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.12)) 
-                        : (pillHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.04)))
-                    border.color: expanderRow.isOpen 
-                        ? root.theme.accentPrimary 
-                        : (pillHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)))
-                    border.width: expanderRow.isOpen ? 1.5 : 1
+                    id: appDropdownBtn
+                    Layout.preferredWidth: 240
+                    Layout.preferredHeight: 32
                     Layout.alignment: Qt.AlignVCenter
+                    radius: 7
+                    color: appPopup.visible
+                        ? root.theme.bgSelected
+                        : (pillHover.hovered ? root.theme.bgHover : root.theme.bgBase)
+                    border.color: appPopup.visible
+                        ? root.theme.accentPrimary
+                        : (pillHover.hovered
+                            ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.5)
+                            : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)))
+                    border.width: appPopup.visible ? 1.5 : 1
 
                     Behavior on color { ColorAnimation { duration: 140 } }
                     Behavior on border.color { ColorAnimation { duration: 140 } }
@@ -257,6 +261,7 @@ Item {
                             text: root.getDisplayName(expanderRow.options, expanderRow.currentValue)
                             font.family: root.font
                             font.pixelSize: 12
+                            font.bold: true
                             color: root.theme.textPrimary
                             elide: Text.ElideRight
                             Layout.fillWidth: true
@@ -265,100 +270,122 @@ Item {
                         Text {
                             text: "󰅀"
                             font.family: root.font
-                            font.pixelSize: 12
-                            color: expanderRow.isOpen ? root.theme.accentPrimary : root.theme.textSecondary
-                            rotation: expanderRow.isOpen ? 180 : 0
-                            Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                            font.pixelSize: 13
+                            color: appPopup.visible ? root.theme.accentPrimary : root.theme.textSecondary
+                            rotation: appPopup.visible ? 180 : 0
+                            Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                            Behavior on color { ColorAnimation { duration: 140 } }
                         }
                     }
 
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: expanderRow.toggleRequested()
+                        onClicked: {
+                            if (appPopup.visible) appPopup.close();
+                            else expanderRow.toggleRequested();
+                        }
                     }
-                }
-            }
-        }
 
-        // Expandable options sub-list
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.leftMargin: 8
-            Layout.rightMargin: 8
-            Layout.bottomMargin: expanderRow.isOpen ? 8 : 0
-            Layout.preferredHeight: expanderRow.isOpen ? (optListCol.implicitHeight + 8) : 0
-            opacity: expanderRow.isOpen ? 1.0 : 0.0
-            clip: true
-            radius: 8
-            color: Qt.rgba(0, 0, 0, 0.18)
-            border.color: expanderRow.isOpen ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-            border.width: 1
+                    Popup {
+                        id: appPopup
+                        y: appDropdownBtn.height + 4
+                        width: appDropdownBtn.width
+                        padding: 4
+                        modal: false
+                        focus: true
+                        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+                        transformOrigin: Item.Top
 
-            Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-            Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.InOutQuad } }
-            Behavior on Layout.bottomMargin { NumberAnimation { duration: 200 } }
-
-            ColumnLayout {
-                id: optListCol
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                    right: parent.right
-                    margins: 4
-                }
-                spacing: 2
-
-                Repeater {
-                    model: expanderRow.options
-                    delegate: Rectangle {
-                        Layout.fillWidth: true
-                        height: 36
-                        radius: 6
-                        readonly property bool isSelected: expanderRow.currentValue.toLowerCase() === modelData.desktop.toLowerCase()
-                        color: isSelected 
-                            ? (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.12)) 
-                            : (itemHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : "transparent")
-                        border.color: isSelected 
-                            ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.3) 
-                            : "transparent"
-                        border.width: 1
-
-                        Behavior on color { ColorAnimation { duration: 130 } }
-                        Behavior on border.color { ColorAnimation { duration: 130 } }
-
-                        HoverHandler { id: itemHover }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
-                            spacing: 8
-
-                            Text {
-                                text: modelData.name
-                                font.family: root.font
-                                font.pixelSize: 12
-                                font.bold: isSelected
-                                color: isSelected ? (root.theme.accentPrimary ?? "#7aa2f7") : root.theme.textPrimary
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                            }
-
-                            Text {
-                                visible: isSelected
-                                text: "󰄬"
-                                font.family: root.font
-                                font.pixelSize: 13
-                                font.bold: true
-                                color: root.theme.accentPrimary
+                        Connections {
+                            target: expanderRow
+                            function onIsOpenChanged() {
+                                if (expanderRow.isOpen && !appPopup.visible) appPopup.open();
+                                else if (!expanderRow.isOpen && appPopup.visible) appPopup.close();
                             }
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: expanderRow.optionSelected(modelData.desktop, modelData)
+                        onVisibleChanged: {
+                            if (!visible && expanderRow.isOpen) {
+                                expanderRow.toggleRequested();
+                            }
+                        }
+
+                        enter: Transition {
+                            ParallelAnimation {
+                                NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                                NumberAnimation { property: "scale"; from: 0.96; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                            }
+                        }
+
+                        exit: Transition {
+                            ParallelAnimation {
+                                NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+                                NumberAnimation { property: "scale"; from: 1.0; to: 0.96; duration: 110; easing.type: Easing.InCubic }
+                            }
+                        }
+
+                        background: Rectangle {
+                            radius: 8
+                            color: root.theme.bgSurface
+                            border.color: root.theme.bgBorder
+                            border.width: 1
+                        }
+
+                        contentItem: ColumnLayout {
+                            spacing: 2
+
+                            Repeater {
+                                model: expanderRow.options
+                                delegate: Rectangle {
+                                    id: appOptItem
+                                    required property var modelData
+                                    readonly property bool isSelected: expanderRow.currentValue.toLowerCase() === modelData.desktop.toLowerCase()
+                                    Layout.fillWidth: true
+                                    height: 30
+                                    radius: 6
+                                    color: isSelected
+                                        ? root.theme.bgSelected
+                                        : (itemHover.hovered ? root.theme.bgHover : "transparent")
+                                    Behavior on color { ColorAnimation { duration: 110 } }
+
+                                    HoverHandler { id: itemHover }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 10
+                                        spacing: 8
+
+                                        Text {
+                                            text: appOptItem.modelData.name
+                                            font.family: root.font
+                                            font.pixelSize: 12
+                                            font.bold: appOptItem.isSelected
+                                            color: appOptItem.isSelected ? root.theme.accentPrimary : root.theme.textPrimary
+                                            elide: Text.ElideRight
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Text {
+                                            visible: appOptItem.isSelected
+                                            text: "✓"
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            color: root.theme.accentPrimary
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            expanderRow.optionSelected(appOptItem.modelData.desktop, appOptItem.modelData);
+                                            appPopup.close();
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

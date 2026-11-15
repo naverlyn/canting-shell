@@ -56,23 +56,8 @@ Item {
     property int dragHoverZoneIndex: -1     // -2 = pool, -1 = none, 0..2 = Zones 1..3
     property int dragHoverItemIndex: -1
 
-    /* Feedback Toast Notification State */
-    property string toastMessage: ""
-    property bool toastVisible: false
-    property bool toastIsWarning: false
-
-    Timer {
-        id: toastTimer
-        interval: 2800
-        repeat: false
-        onTriggered: root.toastVisible = false
-    }
-
     function showToast(msg, isWarn) {
-        root.toastMessage = msg;
-        root.toastIsWarning = Boolean(isWarn);
-        root.toastVisible = true;
-        toastTimer.restart();
+        toastBanner.show(msg, isWarn);
     }
 
     function withAlpha(col, alpha) {
@@ -391,7 +376,10 @@ Item {
         root: root
     }
 
-    StatusToast {
-        root: root
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
+        durationMs: 2800
     }
 }

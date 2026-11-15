@@ -14,6 +14,7 @@ RowLayout {
     Layout.fillWidth: true
     Layout.leftMargin: 4
     Layout.rightMargin: 4
+    spacing: 8
 
     Text {
         text: "Available Wallpapers"
@@ -21,12 +22,14 @@ RowLayout {
         font.pixelSize: 12
         font.bold: true
         color: root.theme.textSecondary
+        Layout.alignment: Qt.AlignVCenter
     }
 
     Rectangle {
-        height: 18
-        width: galleryCountText.implicitWidth + 12
-        radius: 9
+        Layout.preferredHeight: 20
+        Layout.preferredWidth: galleryCountText.implicitWidth + 14
+        Layout.alignment: Qt.AlignVCenter
+        radius: 10
         color: Qt.rgba(1, 1, 1, 0.06)
 
         Text {
@@ -43,8 +46,9 @@ RowLayout {
 
     // Search field
     Rectangle {
-        width: 200
-        height: 28
+        Layout.preferredWidth: 200
+        Layout.preferredHeight: 28
+        Layout.alignment: Qt.AlignVCenter
         radius: 6
         color: root.theme.bgSurface
         border.color: searchTextInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
@@ -87,8 +91,9 @@ RowLayout {
 
             Rectangle {
                 visible: searchTextInput.text !== ""
-                width: 16
-                height: 16
+                Layout.preferredWidth: 16
+                Layout.preferredHeight: 16
+                Layout.alignment: Qt.AlignVCenter
                 radius: 8
                 color: clearSearchHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.15)) : "transparent"
                 HoverHandler { id: clearSearchHover }

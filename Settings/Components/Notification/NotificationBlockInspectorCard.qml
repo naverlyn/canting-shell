@@ -30,6 +30,22 @@ SectionCard {
         return cur || "icon";
     }
 
+    property real tabRevealProgress: 1.0
+    onActiveTabIdChanged: {
+        tabRevealProgress = 0.0;
+        tabRevealAnim.restart();
+    }
+
+    NumberAnimation {
+        id: tabRevealAnim
+        target: inspectorSection
+        property: "tabRevealProgress"
+        from: 0.0
+        to: 1.0
+        duration: 160
+        easing.type: Easing.OutCubic
+    }
+
     // Top Selector Pill Strip
     Rectangle {
         Layout.fillWidth: true
@@ -107,9 +123,13 @@ SectionCard {
         color: root.theme.bgBase
         border.color: root.theme.bgBorder
         border.width: 1
+        clip: true
+        Behavior on implicitHeight { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
 
         ColumnLayout {
             id: inspectorContentCol
+            opacity: inspectorSection.tabRevealProgress
+            transform: Translate { y: (1.0 - inspectorSection.tabRevealProgress) * 6 }
             anchors {
                 left: parent.left
                 right: parent.right
@@ -164,52 +184,15 @@ SectionCard {
                             }
                         }
 
-                        Rectangle {
-                            width: 240
-                            height: 32
-                            radius: 7
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 3
-                                spacing: 3
-
-                                Repeater {
-                                    model: [
-                                        { id: "auto",   label: "Auto (Zone)" },
-                                        { id: "inline", label: "Header" },
-                                        { id: "avatar", label: "Avatar Left" }
-                                    ]
-                                    delegate: Rectangle {
-                                        required property var modelData
-                                        readonly property bool isCur: NotificationService.iconMode === modelData.id
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: isCur ? root.theme.bgSelected : "transparent"
-                                        border.color: isCur ? root.theme.accentPrimary : "transparent"
-                                        border.width: isCur ? 1 : 0
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: modelData.label
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: isCur
-                                            color: isCur ? root.theme.accentPrimary : root.theme.textSecondary
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: NotificationService.setIconMode(modelData.id)
-                                        }
-                                    }
-                                }
-                            }
+                        SegmentedControl {
+                            trackWidth: 260
+                            currentId: NotificationService.iconMode
+                            options: [
+                                { id: "auto",   label: "Auto (Zone)" },
+                                { id: "inline", label: "Header" },
+                                { id: "avatar", label: "Avatar Left" }
+                            ]
+                            onOptionSelected: (optionId) => NotificationService.setIconMode(optionId)
                         }
                     }
                 }
@@ -335,51 +318,14 @@ SectionCard {
                             }
                         }
 
-                        Rectangle {
-                            width: 190
-                            height: 32
-                            radius: 7
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 3
-                                spacing: 3
-
-                                Repeater {
-                                    model: [
-                                        { id: "relative", label: "Relative (Now)" },
-                                        { id: "time",     label: "Clock (HH:mm)" }
-                                    ]
-                                    delegate: Rectangle {
-                                        required property var modelData
-                                        readonly property bool isCur: NotificationService.timestampFormat === modelData.id
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: isCur ? root.theme.bgSelected : "transparent"
-                                        border.color: isCur ? root.theme.accentPrimary : "transparent"
-                                        border.width: isCur ? 1 : 0
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: modelData.label
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: isCur
-                                            color: isCur ? root.theme.accentPrimary : root.theme.textSecondary
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: NotificationService.setTimestampFormat(modelData.id)
-                                        }
-                                    }
-                                }
-                            }
+                        SegmentedControl {
+                            trackWidth: 220
+                            currentId: NotificationService.timestampFormat
+                            options: [
+                                { id: "relative", label: "Relative (Now)" },
+                                { id: "time",     label: "Clock (HH:mm)" }
+                            ]
+                            onOptionSelected: (optionId) => NotificationService.setTimestampFormat(optionId)
                         }
                     }
                 }
@@ -486,52 +432,15 @@ SectionCard {
                             }
                         }
 
-                        Rectangle {
-                            width: 195
-                            height: 32
-                            radius: 7
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 3
-                                spacing: 3
-
-                                Repeater {
-                                    model: [
-                                        { id: "left",   label: "Left" },
-                                        { id: "center", label: "Center" },
-                                        { id: "right",  label: "Right" }
-                                    ]
-                                    delegate: Rectangle {
-                                        required property var modelData
-                                        readonly property bool isCur: NotificationService.titleAlignment === modelData.id
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: isCur ? root.theme.bgSelected : "transparent"
-                                        border.color: isCur ? root.theme.accentPrimary : "transparent"
-                                        border.width: isCur ? 1 : 0
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: modelData.label
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: isCur
-                                            color: isCur ? root.theme.accentPrimary : root.theme.textSecondary
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: NotificationService.setTitleAlignment(modelData.id)
-                                        }
-                                    }
-                                }
-                            }
+                        SegmentedControl {
+                            trackWidth: 210
+                            currentId: NotificationService.titleAlignment
+                            options: [
+                                { id: "left",   label: "Left" },
+                                { id: "center", label: "Center" },
+                                { id: "right",  label: "Right" }
+                            ]
+                            onOptionSelected: (optionId) => NotificationService.setTitleAlignment(optionId)
                         }
                     }
                 }
@@ -620,52 +529,15 @@ SectionCard {
                             }
                         }
 
-                        Rectangle {
-                            width: 195
-                            height: 32
-                            radius: 7
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 3
-                                spacing: 3
-
-                                Repeater {
-                                    model: [
-                                        { id: "left",   label: "Left" },
-                                        { id: "center", label: "Center" },
-                                        { id: "right",  label: "Right" }
-                                    ]
-                                    delegate: Rectangle {
-                                        required property var modelData
-                                        readonly property bool isCur: NotificationService.bodyAlignment === modelData.id
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: isCur ? root.theme.bgSelected : "transparent"
-                                        border.color: isCur ? root.theme.accentPrimary : "transparent"
-                                        border.width: isCur ? 1 : 0
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: modelData.label
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: isCur
-                                            color: isCur ? root.theme.accentPrimary : root.theme.textSecondary
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: NotificationService.setBodyAlignment(modelData.id)
-                                        }
-                                    }
-                                }
-                            }
+                        SegmentedControl {
+                            trackWidth: 210
+                            currentId: NotificationService.bodyAlignment
+                            options: [
+                                { id: "left",   label: "Left" },
+                                { id: "center", label: "Center" },
+                                { id: "right",  label: "Right" }
+                            ]
+                            onOptionSelected: (optionId) => NotificationService.setBodyAlignment(optionId)
                         }
                     }
                 }
@@ -716,52 +588,15 @@ SectionCard {
                             }
                         }
 
-                        Rectangle {
-                            width: 240
-                            height: 32
-                            radius: 7
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 3
-                                spacing: 3
-
-                                Repeater {
-                                    model: [
-                                        { id: "right",  label: "Right Thumb" },
-                                        { id: "left",   label: "Left Thumb" },
-                                        { id: "banner", label: "Full Banner" }
-                                    ]
-                                    delegate: Rectangle {
-                                        required property var modelData
-                                        readonly property bool isCur: NotificationService.imagePosition === modelData.id
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: isCur ? root.theme.bgSelected : "transparent"
-                                        border.color: isCur ? root.theme.accentPrimary : "transparent"
-                                        border.width: isCur ? 1 : 0
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: modelData.label
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: isCur
-                                            color: isCur ? root.theme.accentPrimary : root.theme.textSecondary
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: NotificationService.setImagePosition(modelData.id)
-                                        }
-                                    }
-                                }
-                            }
+                        SegmentedControl {
+                            trackWidth: 270
+                            currentId: NotificationService.imagePosition
+                            options: [
+                                { id: "right",  label: "Right Thumb" },
+                                { id: "left",   label: "Left Thumb" },
+                                { id: "banner", label: "Full Banner" }
+                            ]
+                            onOptionSelected: (optionId) => NotificationService.setImagePosition(optionId)
                         }
                     }
                 }
@@ -792,14 +627,14 @@ SectionCard {
                     desc: "Rounding applied to the preview thumbnail corners"
                     value: NotificationService.imageRadius
                     minVal: 0
-                    maxVal: 24
+                    maxVal: 48
                     step: 1
                     unit: "px"
                     presets: [
                         { label: "6px", val: 6 },
                         { label: "10px", val: 10 },
-                        { label: "14px", val: 14 },
-                        { label: "20px", val: 20 }
+                        { label: "16px", val: 16 },
+                        { label: "Circle", val: 48 }
                     ]
                     onValueModified: (val) => NotificationService.setImageRadius(val)
                 }
@@ -850,52 +685,15 @@ SectionCard {
                             }
                         }
 
-                        Rectangle {
-                            width: 240
-                            height: 32
-                            radius: 7
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 3
-                                spacing: 3
-
-                                Repeater {
-                                    model: [
-                                        { id: "pill",  label: "Rounded Pill" },
-                                        { id: "fill",  label: "Full Width" },
-                                        { id: "ghost", label: "Ghost" }
-                                    ]
-                                    delegate: Rectangle {
-                                        required property var modelData
-                                        readonly property bool isCur: NotificationService.buttonStyle === modelData.id
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: isCur ? root.theme.bgSelected : "transparent"
-                                        border.color: isCur ? root.theme.accentPrimary : "transparent"
-                                        border.width: isCur ? 1 : 0
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: modelData.label
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: isCur
-                                            color: isCur ? root.theme.accentPrimary : root.theme.textSecondary
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: NotificationService.setButtonStyle(modelData.id)
-                                        }
-                                    }
-                                }
-                            }
+                        SegmentedControl {
+                            trackWidth: 270
+                            currentId: NotificationService.buttonStyle
+                            options: [
+                                { id: "pill",  label: "Rounded Pill" },
+                                { id: "fill",  label: "Full Width" },
+                                { id: "ghost", label: "Ghost" }
+                            ]
+                            onOptionSelected: (optionId) => NotificationService.setButtonStyle(optionId)
                         }
                     }
                 }
@@ -968,53 +766,16 @@ SectionCard {
                             }
                         }
 
-                        Rectangle {
-                            width: 240
-                            height: 32
-                            radius: 7
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 3
-                                spacing: 3
-
-                                Repeater {
-                                    model: [
-                                        { id: "left",    label: "Left" },
-                                        { id: "center",  label: "Center" },
-                                        { id: "right",   label: "Right" },
-                                        { id: "stretch", label: "Stretch" }
-                                    ]
-                                    delegate: Rectangle {
-                                        required property var modelData
-                                        readonly property bool isCur: NotificationService.buttonAlignment === modelData.id
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: isCur ? root.theme.bgSelected : "transparent"
-                                        border.color: isCur ? root.theme.accentPrimary : "transparent"
-                                        border.width: isCur ? 1 : 0
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: modelData.label
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: isCur
-                                            color: isCur ? root.theme.accentPrimary : root.theme.textSecondary
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: NotificationService.setButtonAlignment(modelData.id)
-                                        }
-                                    }
-                                }
-                            }
+                        SegmentedControl {
+                            trackWidth: 260
+                            currentId: NotificationService.buttonAlignment
+                            options: [
+                                { id: "left",    label: "Left" },
+                                { id: "center",  label: "Center" },
+                                { id: "right",   label: "Right" },
+                                { id: "stretch", label: "Stretch" }
+                            ]
+                            onOptionSelected: (optionId) => NotificationService.setButtonAlignment(optionId)
                         }
                     }
                 }
@@ -1128,54 +889,16 @@ SectionCard {
                             }
                         }
 
-                        Rectangle {
-                            width: 240
-                            height: 32
-                            radius: 7
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 3
-                                spacing: 3
-
-                                Repeater {
-                                    model: [
-                                        { id: "left",  label: "Left" },
-                                        { id: "right", label: "Right" },
-                                        { id: "top",   label: "Top" },
-                                        { id: "none",  label: "Hidden" }
-                                    ]
-                                    delegate: Rectangle {
-                                        required property var modelData
-                                        readonly property string curStrip: NotificationService.showAccentStrip ? NotificationService.accentStripPosition : "none"
-                                        readonly property bool isCur: curStrip === modelData.id
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: isCur ? root.theme.bgSelected : "transparent"
-                                        border.color: isCur ? root.theme.accentPrimary : "transparent"
-                                        border.width: isCur ? 1 : 0
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: modelData.label
-                                            font.family: root.font
-                                            font.pixelSize: 10
-                                            font.bold: isCur
-                                            color: isCur ? root.theme.accentPrimary : root.theme.textSecondary
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: NotificationService.setAccentStripPosition(modelData.id)
-                                        }
-                                    }
-                                }
-                            }
+                        SegmentedControl {
+                            trackWidth: 260
+                            currentId: NotificationService.showAccentStrip ? NotificationService.accentStripPosition : "none"
+                            options: [
+                                { id: "left",  label: "Left" },
+                                { id: "right", label: "Right" },
+                                { id: "top",   label: "Top" },
+                                { id: "none",  label: "Hidden" }
+                            ]
+                            onOptionSelected: (optionId) => NotificationService.setAccentStripPosition(optionId)
                         }
                     }
                 }

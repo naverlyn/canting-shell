@@ -45,6 +45,7 @@ Rectangle {
     property int editPosX: moduleData && moduleData.position_x !== undefined ? moduleData.position_x : 0
     property int editPosY: moduleData && moduleData.position_y !== undefined ? moduleData.position_y : 0
     property string editColor: moduleData && moduleData.color ? moduleData.color : "$accent"
+    property string editFontFamily: moduleData && moduleData.fontFamily ? moduleData.fontFamily : "$font"
     property int editFontSize: moduleData && moduleData.fontSize ? moduleData.fontSize : (modType === "clock" ? 90 : 13)
     property string editClockFormat: moduleData && moduleData.clockFormat ? moduleData.clockFormat : "24h"
     property bool editShowDate: moduleData && moduleData.showDate !== undefined ? moduleData.showDate : true
@@ -68,6 +69,7 @@ Rectangle {
         const nextPosX = moduleData.position_x !== undefined ? Number(moduleData.position_x) : 0;
         const nextPosY = moduleData.position_y !== undefined ? Number(moduleData.position_y) : 0;
         const nextColor = moduleData.color ? String(moduleData.color) : "$accent";
+        const nextFontFamily = moduleData.fontFamily ? String(moduleData.fontFamily) : "$font";
         const nextFontSize = moduleData.fontSize ? Number(moduleData.fontSize) : (modType === "clock" ? 90 : 13);
         const nextClockFormat = moduleData.clockFormat ? String(moduleData.clockFormat) : "24h";
         const nextShowDate = moduleData.showDate !== undefined ? Boolean(moduleData.showDate) : true;
@@ -91,6 +93,7 @@ Rectangle {
         if (editPosX !== nextPosX) editPosX = nextPosX;
         if (editPosY !== nextPosY) editPosY = nextPosY;
         if (editColor !== nextColor) editColor = nextColor;
+        if (editFontFamily !== nextFontFamily) editFontFamily = nextFontFamily;
         if (editFontSize !== nextFontSize) editFontSize = nextFontSize;
         if (editClockFormat !== nextClockFormat) editClockFormat = nextClockFormat;
         if (editShowDate !== nextShowDate) editShowDate = nextShowDate;
@@ -113,6 +116,7 @@ Rectangle {
             position_x: cardRoot.editPosX,
             position_y: cardRoot.editPosY,
             color: cardRoot.editColor,
+            fontFamily: cardRoot.editFontFamily.trim() !== "" ? cardRoot.editFontFamily.trim() : "$font",
             fontSize: cardRoot.editFontSize,
             clockFormat: cardRoot.editClockFormat,
             showDate: cardRoot.editShowDate,
@@ -941,6 +945,151 @@ Rectangle {
                     onValueChanged: (val) => {
                         cardRoot.editFontSize = val;
                         cardRoot.saveChanges();
+                    }
+                }
+            }
+
+            // Module Font Family Override
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 8
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 8
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 2
+
+                        Text {
+                            text: "Font Family"
+                            font.family: cardRoot.font
+                            font.pixelSize: 12
+                            font.bold: true
+                            color: cardRoot.theme.textPrimary
+                        }
+
+                        Text {
+                            text: "Override lock screen font for this module (default follows Monospace / Lock Screen font)"
+                            font.family: cardRoot.font
+                            font.pixelSize: 10
+                            color: cardRoot.theme.textMuted
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Rectangle {
+                        height: 22
+                        implicitWidth: modFontSampleTxt.implicitWidth + 14
+                        radius: 6
+                        color: Qt.rgba(cardRoot.theme.accentPrimary.r, cardRoot.theme.accentPrimary.g, cardRoot.theme.accentPrimary.b, 0.14)
+                        border.color: Qt.rgba(cardRoot.theme.accentPrimary.r, cardRoot.theme.accentPrimary.g, cardRoot.theme.accentPrimary.b, 0.3)
+                        border.width: 1
+
+                        Text {
+                            id: modFontSampleTxt
+                            anchors.centerIn: parent
+                            text: {
+                                const f = cardRoot.editFontFamily.trim();
+                                const resolved = (f === "$font" || f === "")
+                                    ? ((cardRoot.theme && cardRoot.theme.lockscreenFont) ? cardRoot.theme.lockscreenFont : "JetBrainsMono Nerd Font")
+                                    : f;
+                                return ((f === "$font" || f === "") ? "Default (" + resolved + ")" : resolved) + " • Aa 01:23";
+                            }
+                            font.family: {
+                                const f = cardRoot.editFontFamily.trim();
+                                if (f === "$font" || f === "")
+                                    return (cardRoot.theme && cardRoot.theme.lockscreenFont) ? cardRoot.theme.lockscreenFont : "JetBrainsMono Nerd Font";
+                                return f;
+                            }
+                            font.pixelSize: 10
+                            font.bold: true
+                            color: cardRoot.theme.accentPrimary
+                        }
+                    }
+
+                    Rectangle {
+                        width: 210
+                        height: 28
+                        radius: 6
+                        color: cardRoot.theme.bgBase
+                        border.color: modFontFamInput.activeFocus ? cardRoot.theme.accentPrimary : cardRoot.theme.bgBorder
+                        border.width: modFontFamInput.activeFocus ? 1.5 : 1
+
+                        TextInput {
+                            id: modFontFamInput
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            verticalAlignment: TextInput.AlignVCenter
+                            text: cardRoot.editFontFamily
+                            font.family: cardRoot.font
+                            font.pixelSize: 11
+                            color: cardRoot.theme.textPrimary
+                            selectByMouse: true
+                            onEditingFinished: {
+                                const cleaned = text.trim();
+                                cardRoot.editFontFamily = cleaned.length > 0 ? cleaned : "$font";
+                                cardRoot.saveChanges();
+                            }
+                        }
+                    }
+                }
+
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: 6
+
+                    Repeater {
+                        model: [
+                            { label: "Default ($font)", val: "$font" },
+                            { label: "Primary UI Font", val: (cardRoot.theme && cardRoot.theme.fontFamily) ? cardRoot.theme.fontFamily : "Lato Nerd Font" },
+                            { label: "JetBrainsMono", val: "JetBrainsMono Nerd Font" },
+                            { label: "Lato", val: "Lato Nerd Font" },
+                            { label: "FiraCode", val: "FiraCode Nerd Font" },
+                            { label: "Inter", val: "Inter" }
+                        ]
+                        delegate: Rectangle {
+                            id: fontPresetBtn
+                            required property var modelData
+                            readonly property bool isSel: cardRoot.editFontFamily.trim() === modelData.val
+
+                            height: 24
+                            implicitWidth: fontPresetLbl.implicitWidth + 16
+                            radius: 6
+                            color: isSel
+                                ? cardRoot.theme.bgSelected
+                                : (fontPresetHover.hovered ? cardRoot.theme.bgHover : cardRoot.theme.bgBase)
+                            border.color: isSel ? cardRoot.theme.accentPrimary : cardRoot.theme.bgBorder
+                            border.width: 1
+                            Behavior on color { ColorAnimation { duration: 140 } }
+                            Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                            HoverHandler { id: fontPresetHover }
+
+                            Text {
+                                id: fontPresetLbl
+                                anchors.centerIn: parent
+                                text: fontPresetBtn.modelData.label
+                                font.family: fontPresetBtn.modelData.val === "$font"
+                                    ? ((cardRoot.theme && cardRoot.theme.monoFont) ? cardRoot.theme.monoFont : cardRoot.font)
+                                    : fontPresetBtn.modelData.val
+                                font.pixelSize: 10
+                                font.bold: fontPresetBtn.isSel
+                                color: fontPresetBtn.isSel ? cardRoot.theme.accentPrimary : cardRoot.theme.textPrimary
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    cardRoot.editFontFamily = fontPresetBtn.modelData.val;
+                                    cardRoot.saveChanges();
+                                }
+                            }
+                        }
                     }
                 }
             }

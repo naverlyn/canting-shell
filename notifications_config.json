@@ -44,7 +44,7 @@
   "bodyAlignment": "left",
   "imagePosition": "left",
   "imageSize": 56,
-  "imageRadius": 24,
+  "imageRadius": 48,
   "buttonStyle": "fill",
   "buttonHeight": 28,
   "buttonRadius": 18,

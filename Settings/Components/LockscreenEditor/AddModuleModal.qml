@@ -15,10 +15,29 @@ Item {
     anchors.fill: parent
     z: 999
 
+    property real openProgress: 0.0
+    onVisibleChanged: {
+        if (visible) {
+            openProgress = 0.0;
+            openAnim.restart();
+        }
+    }
+
+    NumberAnimation {
+        id: openAnim
+        target: modalRoot
+        property: "openProgress"
+        from: 0.0
+        to: 1.0
+        duration: 180
+        easing.type: Easing.OutCubic
+    }
+
     // Dimmed Backdrop
     Rectangle {
         anchors.fill: parent
         color: modalRoot.theme.bgOverlay
+        opacity: modalRoot.openProgress
         MouseArea {
             anchors.fill: parent
             onClicked: modalRoot.visible = false
@@ -34,6 +53,8 @@ Item {
         color: modalRoot.theme.bgSurface
         border.color: modalRoot.theme.bgBorder
         border.width: 1
+        opacity: modalRoot.openProgress
+        scale: 0.96 + 0.04 * modalRoot.openProgress
 
         // Consume click events so clicking card does not close backdrop
         MouseArea {

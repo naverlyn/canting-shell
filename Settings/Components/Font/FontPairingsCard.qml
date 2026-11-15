@@ -7,7 +7,7 @@ import "../Common"
 SectionCard {
     required property var root
     title: "Curated Typography Pairings"
-    subtitle: "Click any pairing to apply it across Quickshell"
+    subtitle: "Applies both UI & Lock Screen fonts together"
 
     GridLayout {
         Layout.fillWidth: true

@@ -641,7 +641,8 @@ Singleton {
     }
 
     function setImageRadius(val) {
-        const clamped = Math.max(0, Math.min(24, Math.round(Number(val) || 10)));
+        const num = (val === undefined || val === null || isNaN(Number(val))) ? 10 : Number(val);
+        const clamped = Math.max(0, Math.min(48, Math.round(num)));
         if (root.imageRadius !== clamped) {
             root.imageRadius = clamped;
             root.saveConfig();
@@ -1031,7 +1032,7 @@ Singleton {
             if (["right", "left", "banner"].indexOf(ip) !== -1) root.imagePosition = ip;
         }
         if (cfg.imageSize !== undefined) root.imageSize = Math.max(28, Math.min(110, Math.round(Number(cfg.imageSize) || 44)));
-        if (cfg.imageRadius !== undefined) root.imageRadius = Math.max(0, Math.min(24, Math.round(Number(cfg.imageRadius) || 10)));
+        if (cfg.imageRadius !== undefined) root.imageRadius = Math.max(0, Math.min(48, Math.round(isNaN(Number(cfg.imageRadius)) ? 10 : Number(cfg.imageRadius))));
 
         if (cfg.buttonStyle !== undefined) {
             const bs = String(cfg.buttonStyle).toLowerCase();

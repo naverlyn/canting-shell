@@ -141,8 +141,9 @@ PanelWindow {
 
                 // Search Filter Input
                 Rectangle {
-                    width: 220
-                    height: 32
+                    Layout.preferredWidth: 220
+                    Layout.preferredHeight: 32
+                    Layout.alignment: Qt.AlignVCenter
                     radius: 8
                     color: root.theme.bgSurface
                     border.color: searchField.activeFocus ? root.theme.accentPrimary : (searchHover.hovered ? Style.withAlpha(root.theme.accentPrimary, 0.4) : root.theme.bgBorder)
@@ -180,8 +181,9 @@ PanelWindow {
                 // Rescan Button (Modern secondary action button)
                 Rectangle {
                     id: rescanBtn
-                    width: rescanText.implicitWidth + 24
-                    height: 32
+                    Layout.preferredWidth: rescanText.implicitWidth + 24
+                    Layout.preferredHeight: 32
+                    Layout.alignment: Qt.AlignVCenter
                     radius: 6
                     color: rescanHover.hovered ? root.theme.bgHover : root.theme.bgBase
                     border.color: rescanHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
@@ -216,8 +218,9 @@ PanelWindow {
                 // Close Button (Modern secondary action button)
                 Rectangle {
                     id: closeBtn
-                    width: closeText.implicitWidth + 24
-                    height: 32
+                    Layout.preferredWidth: closeText.implicitWidth + 24
+                    Layout.preferredHeight: 32
+                    Layout.alignment: Qt.AlignVCenter
                     radius: 6
                     color: closeHover.hovered ? root.theme.bgHover : root.theme.bgBase
                     border.color: closeHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder

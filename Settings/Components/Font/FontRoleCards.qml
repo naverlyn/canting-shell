@@ -57,7 +57,7 @@ RowLayout {
                     spacing: 6
 
                     Text {
-                        text: "PRIMARY UI FONT"
+                        text: "UI FONT"
                         font.family: Style.font
                         font.pixelSize: Style.px(9)
                         font.bold: true
@@ -114,19 +114,19 @@ RowLayout {
         }
     }
 
-    // Monospace & Lock Screen Font Card
+    // Lock Screen Font Card
     Rectangle {
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         height: 88
         radius: 12
-        color: root.targetRole === "mono"
+        color: root.targetRole === "lockscreen"
             ? Style.withAlpha(root.theme.accentCyan, 0.12)
             : root.theme.bgSurface
-        border.color: root.targetRole === "mono"
+        border.color: root.targetRole === "lockscreen"
             ? root.theme.accentCyan
             : root.theme.bgBorder
-        border.width: root.targetRole === "mono" ? 1.5 : 1
+        border.width: root.targetRole === "lockscreen" ? 1.5 : 1
 
         Behavior on color { ColorAnimation { duration: 150 } }
         Behavior on border.color { ColorAnimation { duration: 150 } }
@@ -146,9 +146,9 @@ RowLayout {
 
                 Text {
                     anchors.centerIn: parent
-                    text: "01"
-                    font.family: root.theme.monoFont
-                    font.pixelSize: Style.px(16)
+                    text: "󰌾"
+                    font.family: root.theme.lockscreenFont
+                    font.pixelSize: Style.px(17)
                     font.bold: true
                     color: root.theme.accentCyan
                 }
@@ -163,7 +163,7 @@ RowLayout {
                     spacing: 6
 
                     Text {
-                        text: "MONOSPACE & LOCK SCREEN"
+                        text: "LOCK SCREEN FONT"
                         font.family: Style.font
                         font.pixelSize: Style.px(9)
                         font.bold: true
@@ -172,14 +172,14 @@ RowLayout {
                     }
 
                     Rectangle {
-                        visible: root.targetRole === "mono" || root.targetRole === "both"
+                        visible: root.targetRole === "lockscreen" || root.targetRole === "both"
                         height: 15
                         radius: 4
-                        implicitWidth: monoTargetLbl.implicitWidth + 8
+                        implicitWidth: lockTargetLbl.implicitWidth + 8
                         color: root.theme.accentCyan
 
                         Text {
-                            id: monoTargetLbl
+                            id: lockTargetLbl
                             anchors.centerIn: parent
                             text: "BROWSING"
                             font.family: Style.font
@@ -193,8 +193,8 @@ RowLayout {
                 }
 
                 Text {
-                    text: root.theme.monoFont
-                    font.family: root.theme.monoFont
+                    text: root.theme.lockscreenFont
+                    font.family: root.theme.lockscreenFont
                     font.pixelSize: Style.px(14)
                     font.bold: true
                     color: root.theme.textPrimary
@@ -203,7 +203,7 @@ RowLayout {
                 }
 
                 Text {
-                    text: "Lock Screen • Weather Metrics • Code Blocks"
+                    text: "Lock Screen Clock • Modules • Password Box"
                     font.family: Style.font
                     font.pixelSize: Style.px(10)
                     color: root.theme.textMuted
@@ -216,7 +216,7 @@ RowLayout {
         MouseArea {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.targetRole = "mono"
+            onClicked: root.targetRole = "lockscreen"
         }
     }
 }

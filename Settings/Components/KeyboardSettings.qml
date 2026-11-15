@@ -35,7 +35,7 @@ Item {
     property string activeLayout: "us"
     property bool numlockByDefault: true
 
-    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_keybind.sh").toString().replace(/^file:\/\//, "")
+    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_keybind.py").toString().replace(/^file:\/\//, "")
 
     function showToast(msg, isWarn) {
         toastBanner.show(msg, isWarn);
@@ -111,11 +111,11 @@ Item {
 
     /* Apply live AND persist (Lua or .conf) via manage_hyprland.sh.
        "input:touchpad:natural_scroll" -> section "input.touchpad", key "natural_scroll" */
-    readonly property string hyprVarScript: Qt.resolvedUrl("../scripts/manage_hyprland.sh").toString().replace(/^file:\/\//, "")
+    readonly property string hyprVarScript: Qt.resolvedUrl("../scripts/manage_hyprland.py").toString().replace(/^file:\/\//, "")
     function applyHyprKeyword(key, val) {
         const parts = String(key).split(":");
         const k = parts.pop();
-        hyprcmd.command = [root.hyprVarScript, "set", parts.join("."), k, String(val)];
+        hyprcmd.command = ["python3", root.hyprVarScript, "set", parts.join("."), k, String(val)];
         hyprcmd.running = true;
     }
 
@@ -353,7 +353,7 @@ Item {
         root.showToast("Keybind updated");
 
         rebindProc.command = [
-            "bash",
+            "python3",
             root.scriptPath,
             "rebind",
             oldModStr,
@@ -386,7 +386,7 @@ Item {
         root.showToast("Keybind removed");
 
         rebindProc.command = [
-            "bash",
+            "python3",
             root.scriptPath,
             "delete",
             modStr,
@@ -422,7 +422,7 @@ Item {
         const desc = root.addName.trim() || root.formatTitle(arg || disp);
 
         rebindProc.command = [
-            "bash",
+            "python3",
             root.scriptPath,
             "add",
             modStr,
@@ -589,7 +589,7 @@ Item {
 
     Process {
         id: queryBindsProc
-        command: ["bash", root.scriptPath, "list"]
+        command: ["python3", root.scriptPath, "list"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {

@@ -25,7 +25,7 @@ Item {
     property string font: Style.font
 
     // Browser & Preview state
-    property string targetRole: "ui" // "ui" | "mono" | "both"
+    property string targetRole: "ui" // "ui" | "mono" | "lockscreen" | "both"
     property string searchQuery: ""
     property string activeCategory: "all" // "all" | "nerd" | "mono" | "sans"
     property string specimenTab: "ui" // "ui" | "mono" | "charset"
@@ -60,6 +60,7 @@ Item {
         if (!root.theme) return false;
         return root.theme.savedFontFamily !== "Lato Nerd Font"
             || root.theme.savedMonoFont !== "JetBrainsMono Nerd Font"
+            || root.theme.savedLockscreenFont !== "JetBrainsMono Nerd Font"
             || Math.abs(root.theme.fontScale - 1.0) > 0.005
             || root.theme.fontWeight !== "normal"
             || root.theme.boldHeadings !== true
@@ -252,10 +253,13 @@ Item {
             root.showToast("Primary UI Font set to " + fam);
         } else if (r === "mono") {
             root.theme.setMonoFont(fam);
-            root.showToast("Monospace / Lock Screen Font set to " + fam);
+            root.showToast("Monospace Font set to " + fam);
+        } else if (r === "lockscreen") {
+            root.theme.setLockscreenFont(fam);
+            root.showToast("Lock Screen Font set to " + fam);
         } else {
-            root.theme.setFontPairing(fam, fam);
-            root.showToast("UI & Monospace Font set to " + fam);
+            root.theme.setFontPairing(fam, fam, fam);
+            root.showToast("UI, Monospace & Lock Screen Font set to " + fam);
         }
     }
 
@@ -263,6 +267,7 @@ Item {
         if (!visible && root.theme) {
             root.theme.previewFontFamily = "";
             root.theme.previewMonoFont = "";
+            root.theme.previewLockscreenFont = "";
             root.hoveredBrowserFont = "";
         }
     }
@@ -271,6 +276,7 @@ Item {
         if (root.theme) {
             root.theme.previewFontFamily = "";
             root.theme.previewMonoFont = "";
+            root.theme.previewLockscreenFont = "";
         }
     }
 
@@ -383,7 +389,6 @@ Item {
                 }
             }
 
-            FontRoleCards { root: root }
             FontSpecimenPreviewCard { root: root }
             FontPairingsCard { root: root }
             FontBrowserCard { root: root }

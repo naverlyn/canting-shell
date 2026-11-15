@@ -30,7 +30,7 @@ Item {
 
     /* Loading & Script path */
     property bool isLoading: true
-    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_hyprland.sh").toString().replace(/^file:\/\//, "")
+    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_hyprland.py").toString().replace(/^file:\/\//, "")
     readonly property string rulesScriptPath: Qt.resolvedUrl("../scripts/lua_window_rules.py").toString().replace(/^file:\/\//, "")
 
     /* ---- General State ---- */
@@ -73,7 +73,7 @@ Item {
         let c2 = root.borderThemeSync ? String(root.theme.accentCyan) : root.activeBorderCol2;
         let ang = root.activeBorderAngle;
         let inact = root.borderThemeSync ? String(root.theme.bgBorder) : root.inactiveBorderCol;
-        setVarProc.command = [root.scriptPath, "set_borders", c1, c2, String(ang), inact, root.borderThemeSync ? "true" : "false"];
+        setVarProc.command = ["python3", root.scriptPath, "set_borders", c1, c2, String(ang), inact, root.borderThemeSync ? "true" : "false"];
         setVarProc.running = true;
     }
 
@@ -307,17 +307,17 @@ Item {
         toastBanner.show(msg, isWarn);
     }
 
-    /* Helper: Set variable via manage_hyprland.sh */
+    /* Helper: Set variable via manage_hyprland.py */
     function setHyprVar(section, key, val) {
         if (root.isLoading) return;
-        setVarProc.command = [root.scriptPath, "set", section, key, String(val)];
+        setVarProc.command = ["python3", root.scriptPath, "set", section, key, String(val)];
         setVarProc.running = true;
     }
 
     /* Query process */
     Process {
         id: loadStateProc
-        command: [root.scriptPath, "get"]
+        command: ["python3", root.scriptPath, "get"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {

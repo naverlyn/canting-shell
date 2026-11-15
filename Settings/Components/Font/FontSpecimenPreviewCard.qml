@@ -163,13 +163,13 @@ SectionCard {
                                 spacing: 8
                                 Text {
                                     text: "󰣇"
-                                    font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "mono" ? root.hoveredBrowserFont : root.theme.fontFamily
+                                    font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
                                     font.pixelSize: Style.px(13)
                                     color: root.theme.accentPrimary
                                 }
                                 Text {
                                     text: "1   2   3   •   Quickshell Settings"
-                                    font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "mono" ? root.hoveredBrowserFont : root.theme.fontFamily
+                                    font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
                                     font.pixelSize: Style.px(11)
                                     font.weight: Style.fontWeightEnum
                                     font.bold: Style.boldHeadings
@@ -187,7 +187,7 @@ SectionCard {
                         // Center clock pill
                         Text {
                             text: "Thu 12 Nov   04:20"
-                            font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "mono" ? root.hoveredBrowserFont : root.theme.fontFamily
+                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
                             font.pixelSize: Style.px(12)
                             font.bold: Style.boldHeadings
                             font.letterSpacing: Style.letterSpacing
@@ -212,7 +212,7 @@ SectionCard {
                                 spacing: 8
                                 Text {
                                     text: "󰖩  5G   󰕾  78%   󰁹  96%"
-                                    font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "mono" ? root.hoveredBrowserFont : root.theme.fontFamily
+                                    font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
                                     font.pixelSize: Style.px(11)
                                     font.weight: Style.fontWeightEnum
                                     font.letterSpacing: Style.letterSpacing
@@ -250,7 +250,7 @@ SectionCard {
                             spacing: 8
                             Text {
                                 text: "󰂚  Typography Preview"
-                                font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "mono" ? root.hoveredBrowserFont : root.theme.fontFamily
+                                font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
                                 font.pixelSize: Style.px(13)
                                 font.bold: Style.boldHeadings
                                 font.letterSpacing: Style.letterSpacing
@@ -262,7 +262,7 @@ SectionCard {
                             Item { Layout.fillWidth: true }
                             Text {
                                 text: "just now"
-                                font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "mono" ? root.hoveredBrowserFont : root.theme.fontFamily
+                                font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
                                 font.pixelSize: Style.px(10)
                                 color: root.theme.textMuted
                             }
@@ -274,7 +274,7 @@ SectionCard {
                             text: root.customSpecimenText !== ""
                                 ? root.customSpecimenText
                                 : "The quick brown fox jumps over the lazy dog 0123456789"
-                            font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "mono" ? root.hoveredBrowserFont : root.theme.fontFamily
+                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
                             font.pixelSize: Style.px(12)
                             font.weight: Style.fontWeightEnum
                             font.letterSpacing: Style.letterSpacing
@@ -301,7 +301,7 @@ SectionCard {
                         spacing: 2
                         Text {
                             text: "04:20"
-                            font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "ui" ? root.hoveredBrowserFont : root.theme.monoFont
+                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "lockscreen" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.lockscreenFont
                             font.pixelSize: Style.px(38)
                             font.bold: true
                             font.letterSpacing: Style.letterSpacing
@@ -312,7 +312,7 @@ SectionCard {
                         }
                         Text {
                             text: "Thursday, 12 November"
-                            font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "ui" ? root.hoveredBrowserFont : root.theme.monoFont
+                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "lockscreen" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.lockscreenFont
                             font.pixelSize: Style.px(11)
                             font.letterSpacing: Style.letterSpacing
                             color: root.theme.accentCyan
@@ -333,7 +333,7 @@ SectionCard {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                             text: "󰍛 CPU 14%   •   󰘚 RAM 4.2 GiB   •   󰁹 BAT 96%"
-                            font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "ui" ? root.hoveredBrowserFont : root.theme.monoFont
+                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont
                             font.pixelSize: Style.px(12)
                             font.bold: Style.boldHeadings
                             font.letterSpacing: Style.letterSpacing
@@ -343,8 +343,8 @@ SectionCard {
                         Text {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
-                            text: "const shell = Quickshell.lock({ font: \"" + (root.hoveredBrowserFont !== "" && root.targetRole !== "ui" ? root.hoveredBrowserFont : root.theme.monoFont) + "\" }); // !== => <= >="
-                            font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "ui" ? root.hoveredBrowserFont : root.theme.monoFont
+                            text: "const shell = Quickshell.lock({ font: \"" + (root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont) + "\" }); // !== => <= >="
+                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont
                             font.pixelSize: Style.px(11)
                             font.weight: Style.fontWeightEnum
                             font.letterSpacing: Style.letterSpacing
@@ -355,7 +355,7 @@ SectionCard {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                             text: "0123456789  Il1O0  [] {} () <>  !@#$%^&*+-=~"
-                            font.family: root.hoveredBrowserFont !== "" && root.targetRole !== "ui" ? root.hoveredBrowserFont : root.theme.monoFont
+                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont
                             font.pixelSize: Style.px(11)
                             color: root.theme.textMuted
                         }
@@ -400,7 +400,7 @@ SectionCard {
                             text: root.customSpecimenText !== "" ? root.customSpecimenText : "The quick brown fox jumps over the lazy dog 0123456789"
                             font.family: root.hoveredBrowserFont !== ""
                                 ? root.hoveredBrowserFont
-                                : (root.targetRole === "mono" ? root.theme.monoFont : root.theme.fontFamily)
+                                : (root.targetRole === "lockscreen" ? root.theme.lockscreenFont : (root.targetRole === "mono" ? root.theme.monoFont : root.theme.fontFamily))
                             font.pixelSize: Style.px(modelData.size)
                             font.weight: Style.fontWeightEnum
                             font.letterSpacing: Style.letterSpacing
@@ -424,7 +424,7 @@ SectionCard {
                     text: "Nerd Icons:  󰣇  󰖩  󰂯  󰕾  󰂚  󰐥  󰍽  󰌌  󰍹  󰏘  󰮲  󰌾    󰸉  󰕮  󰁯  󰀻  󰅌"
                     font.family: root.hoveredBrowserFont !== ""
                         ? root.hoveredBrowserFont
-                        : (root.targetRole === "mono" ? root.theme.monoFont : root.theme.fontFamily)
+                        : (root.targetRole === "lockscreen" ? root.theme.lockscreenFont : (root.targetRole === "mono" ? root.theme.monoFont : root.theme.fontFamily))
                     font.pixelSize: Style.px(13)
                     color: root.theme.accentCyan
                 }

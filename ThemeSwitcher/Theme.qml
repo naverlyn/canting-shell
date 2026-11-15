@@ -290,11 +290,14 @@ Singleton {
 
     property string savedFontFamily: "Lato Nerd Font"
     property string savedMonoFont: "JetBrainsMono Nerd Font"
+    property string savedLockscreenFont: "JetBrainsMono Nerd Font"
     property string previewFontFamily: ""
     property string previewMonoFont: ""
+    property string previewLockscreenFont: ""
 
     readonly property string fontFamily: previewFontFamily !== "" ? previewFontFamily : (savedFontFamily || "Lato Nerd Font")
     readonly property string monoFont: previewMonoFont !== "" ? previewMonoFont : (savedMonoFont || "JetBrainsMono Nerd Font")
+    readonly property string lockscreenFont: previewLockscreenFont !== "" ? previewLockscreenFont : (savedLockscreenFont || monoFont || "JetBrainsMono Nerd Font")
 
     property real fontScale: 1.0
     property string fontWeight: "normal" // "light", "normal", "medium", "demibold", "bold"
@@ -365,11 +368,23 @@ Singleton {
         }
     }
 
-    function setFontPairing(primaryFam, monoFam) {
+    function setLockscreenFont(fam) {
+        const clean = String(fam || "").trim();
+        if (!clean) return;
+        root.previewLockscreenFont = "";
+        if (root.savedLockscreenFont !== clean) {
+            root.savedLockscreenFont = clean;
+            root.saveFontsConfig();
+        }
+    }
+
+    function setFontPairing(primaryFam, monoFam, lockFam) {
         const pClean = String(primaryFam || "").trim();
         const mClean = String(monoFam || "").trim();
+        const lClean = String(lockFam !== undefined ? lockFam : (monoFam || "")).trim();
         root.previewFontFamily = "";
         root.previewMonoFont = "";
+        root.previewLockscreenFont = "";
         let changed = false;
         if (pClean && root.savedFontFamily !== pClean) {
             root.savedFontFamily = pClean;
@@ -377,6 +392,10 @@ Singleton {
         }
         if (mClean && root.savedMonoFont !== mClean) {
             root.savedMonoFont = mClean;
+            changed = true;
+        }
+        if (lClean && root.savedLockscreenFont !== lClean) {
+            root.savedLockscreenFont = lClean;
             changed = true;
         }
         if (changed) root.saveFontsConfig();
@@ -445,8 +464,10 @@ Singleton {
     function resetFontsToDefault() {
         root.previewFontFamily = "";
         root.previewMonoFont = "";
+        root.previewLockscreenFont = "";
         root.savedFontFamily = "Lato Nerd Font";
         root.savedMonoFont = "JetBrainsMono Nerd Font";
+        root.savedLockscreenFont = "JetBrainsMono Nerd Font";
         root.fontScale = 1.0;
         root.fontWeight = "normal";
         root.boldHeadings = true;
@@ -463,6 +484,10 @@ Singleton {
             root.savedFontFamily = String(cfg.fontFamily).trim();
         if (cfg.monoFont && String(cfg.monoFont).trim() !== "")
             root.savedMonoFont = String(cfg.monoFont).trim();
+        if (cfg.lockscreenFont && String(cfg.lockscreenFont).trim() !== "")
+            root.savedLockscreenFont = String(cfg.lockscreenFont).trim();
+        else if (cfg.monoFont && String(cfg.monoFont).trim() !== "" && root.savedLockscreenFont === "JetBrainsMono Nerd Font")
+            root.savedLockscreenFont = String(cfg.monoFont).trim();
         if (cfg.fontScale !== undefined)
             root.fontScale = Math.round(Math.max(0.85, Math.min(1.25, Number(cfg.fontScale) || 1.0)) * 100) / 100;
         if (cfg.fontWeight !== undefined && ["light", "normal", "medium", "demibold", "bold"].indexOf(String(cfg.fontWeight)) !== -1)
@@ -491,6 +516,7 @@ Singleton {
         const data = {
             fontFamily: root.savedFontFamily,
             monoFont: root.savedMonoFont,
+            lockscreenFont: root.savedLockscreenFont,
             fontScale: root.fontScale,
             fontWeight: root.fontWeight,
             boldHeadings: root.boldHeadings,

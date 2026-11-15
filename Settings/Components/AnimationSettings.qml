@@ -16,6 +16,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import ".."
+import "./Common"
 import "./Animation"
 
 Item {
@@ -263,7 +264,7 @@ Item {
         { id: "Fades & Borders", label: "Fades & Borders", count: root.getRulesForCategory("Fades & Borders").length }
     ]
 
-    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_animations.sh").toString().replace(/^file:\/\//, "")
+    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_animations.py").toString().replace(/^file:\/\//, "")
 
     function showStatus(msg) {
         toastBanner.show(msg, false);
@@ -272,7 +273,7 @@ Item {
     /* Query Animation Status */
     Process {
         id: queryProc
-        command: [root.scriptPath, "status"]
+        command: ["python3", root.scriptPath, "status"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -305,7 +306,7 @@ Item {
 
     function setAnimationsEnabled(enabled) {
         root.animationsEnabled = enabled;
-        toggleProc.command = [root.scriptPath, "set_enabled", enabled ? "true" : "false"];
+        toggleProc.command = ["python3", root.scriptPath, "set_enabled", enabled ? "true" : "false"];
         toggleProc.running = true;
         root.showStatus(enabled ? "Compositor animations enabled" : "Compositor animations disabled");
     }
@@ -323,7 +324,7 @@ Item {
     }
 
     function applyPreset(presetId, displayName) {
-        applyProc.command = [root.scriptPath, "apply_preset", String(presetId)];
+        applyProc.command = ["python3", root.scriptPath, "apply_preset", String(presetId)];
         applyProc.running = true;
         root.showStatus("Applied animation profile: " + (displayName || presetId));
     }
@@ -331,7 +332,7 @@ Item {
     /* Test Notification Process */
     Process {
         id: testProc
-        command: [root.scriptPath, "test"]
+        command: ["python3", root.scriptPath, "test"]
         running: false
     }
 
@@ -356,7 +357,7 @@ Item {
             rules: root.studioRules
         };
         root.selectedFamily = "Custom";
-        saveCustomProc.command = [root.scriptPath, "save_custom", JSON.stringify(payload)];
+        saveCustomProc.command = ["python3", root.scriptPath, "save_custom", JSON.stringify(payload)];
         saveCustomProc.running = true;
         root.showStatus("Saved and applied profile: " + payload.name);
     }
@@ -373,7 +374,7 @@ Item {
     }
 
     function deleteCustomPreset(presetId) {
-        deleteCustomProc.command = [root.scriptPath, "delete_custom", String(presetId)];
+        deleteCustomProc.command = ["python3", root.scriptPath, "delete_custom", String(presetId)];
         deleteCustomProc.running = true;
         root.showStatus("Removed custom profile: " + presetId);
     }
@@ -469,7 +470,7 @@ Item {
             beziers: root.studioBeziers,
             rules: root.studioRules
         };
-        testProc.command = [root.scriptPath, "test", JSON.stringify(payload)];
+        testProc.command = ["python3", root.scriptPath, "test", JSON.stringify(payload)];
         testProc.running = true;
         root.triggerPreview();
         root.showStatus("Testing motion on Hyprland — observe popup and transitions");

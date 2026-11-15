@@ -20,8 +20,9 @@ Rectangle {
   required property var hostWindow
   required property var hostScope
   id: appGridButton
+  readonly property bool isImageIcon: BarConfig.isAppGridImage(BarConfig.appGridIcon)
   implicitHeight: hostContainer.isVert ? 28 : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : Math.max(28, appGridIconTxt.implicitWidth + 14)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : Math.max(28, (isImageIcon ? 16 : appGridIconTxt.implicitWidth) + 14)
   height: implicitHeight
   width: implicitWidth
   scale: appGridMouse.pressed ? 0.92 : 1.0
@@ -54,10 +55,23 @@ Rectangle {
   Text {
     id: appGridIconTxt
     anchors.centerIn: parent
+    visible: !appGridButton.isImageIcon
     text: BarConfig.appGridIcon || "󰀻"
     color: hostContainer.wAccent("appGrid", hostRoot.theme.accentPrimary)
     font.pixelSize: 14
     font.family: hostRoot.font
+  }
+
+  Image {
+    id: appGridIconImg
+    anchors.centerIn: parent
+    visible: appGridButton.isImageIcon
+    width: 16
+    height: 16
+    source: appGridButton.isImageIcon ? BarConfig.appGridImageSource(BarConfig.appGridIcon) : ""
+    fillMode: Image.PreserveAspectFit
+    smooth: true
+    mipmap: true
   }
 
   MouseArea {

@@ -22,6 +22,7 @@ import Quickshell.Io
 import "../../MonitorManager"
 import "../../MonitorManager/Components"
 import ".."
+import "./Common"
 import "./Display"
 
 Item {
@@ -541,7 +542,7 @@ Item {
         }
     }
 
-    readonly property string hyprVarScript: Qt.resolvedUrl("../scripts/manage_hyprland.sh").toString().replace(/^file:\/\//, "")
+    readonly property string hyprVarScript: Qt.resolvedUrl("../scripts/manage_hyprland.py").toString().replace(/^file:\/\//, "")
 
     Process {
         id: hyprKeywordProc
@@ -550,7 +551,7 @@ Item {
 
     function setVrrMode(mode) {
         root.vrrMode = mode;
-        hyprKeywordProc.command = [root.hyprVarScript, "set", "misc", "vrr", String(mode)];
+        hyprKeywordProc.command = ["python3", root.hyprVarScript, "set", "misc", "vrr", String(mode)];
         hyprKeywordProc.running = true;
         const labels = ["Off", "Always On", "Fullscreen Only"];
         root.showStatus("Adaptive Sync (VRR) set to " + (labels[mode] || mode));
@@ -558,7 +559,7 @@ Item {
 
     function setAllowTearing(enabled) {
         root.allowTearing = enabled;
-        hyprKeywordProc.command = [root.hyprVarScript, "set", "general", "allow_tearing", enabled ? "true" : "false"];
+        hyprKeywordProc.command = ["python3", root.hyprVarScript, "set", "general", "allow_tearing", enabled ? "true" : "false"];
         hyprKeywordProc.running = true;
         root.showStatus("Screen tearing " + (enabled ? "allowed for low latency" : "disabled"));
     }
@@ -663,42 +664,15 @@ Item {
 
                 Item { Layout.fillWidth: true }
 
-                /* Refresh Displays Button (Text-only) */
-                Rectangle {
-                    id: refreshHeaderBtn
-                    implicitWidth: refreshHeaderText.implicitWidth + 20
-                    height: 30
-                    radius: 7
-                    color: refreshHeaderHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgSurface
-                    border.color: refreshHeaderHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
-                    border.width: 1
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                    Behavior on border.color { ColorAnimation { duration: 140 } }
-
-                    HoverHandler { id: refreshHeaderHover }
-
-                    Text {
-                        id: refreshHeaderText
-                        anchors.centerIn: parent
-                        text: MonitorService.loading ? "Refreshing…" : "Refresh"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        font.bold: true
-                        color: refreshHeaderHover.hovered || MonitorService.loading
-                            ? root.theme.accentPrimary
-                            : root.theme.textPrimary
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            MonitorService.refresh();
-                            brightProc.running = true;
-                            root.showStatus("Refreshed display status");
-                        }
+                /* Refresh Displays Button */
+                ActionButton {
+                    iconText: "󰑐"
+                    label: "Refresh"
+                    btnHeight: 30
+                    onClicked: {
+                        MonitorService.refresh();
+                        brightProc.running = true;
+                        root.showStatus("Refreshed display status");
                     }
                 }
             }

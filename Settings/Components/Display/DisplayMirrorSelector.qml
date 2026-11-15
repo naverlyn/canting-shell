@@ -50,26 +50,30 @@ ColumnLayout {
             Item { Layout.fillWidth: true }
 
             Rectangle {
-                width: 220
-                height: 32
-                radius: 6
-                color: root.mirrorDropdownOpen
-                    ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12))
-                    : (mirPillHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.04)))
-                border.color: root.mirrorDropdownOpen
+                id: mirDropdownBtn
+                Layout.preferredWidth: 220
+                Layout.preferredHeight: 32
+                Layout.alignment: Qt.AlignVCenter
+                radius: 7
+                color: mirPopup.visible
+                    ? root.theme.bgSelected
+                    : (mirPillHover.hovered ? root.theme.bgHover : root.theme.bgBase)
+                border.color: mirPopup.visible
                     ? root.theme.accentPrimary
                     : (mirPillHover.hovered
-                        ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4)
+                        ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.5)
                         : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
-                border.width: root.mirrorDropdownOpen ? 1.5 : 1
-                Layout.alignment: Qt.AlignVCenter
+                border.width: mirPopup.visible ? 1.5 : 1
+
+                Behavior on color { ColorAnimation { duration: 140 } }
+                Behavior on border.color { ColorAnimation { duration: 140 } }
 
                 HoverHandler { id: mirPillHover }
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
                     spacing: 8
 
                     Text {
@@ -78,17 +82,20 @@ ColumnLayout {
                             : "None (Extend Desktop)"
                         font.family: root.font
                         font.pixelSize: 12
+                        font.bold: true
                         color: root.theme.textPrimary
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
 
                     Text {
-                        text: root.mirrorDropdownOpen ? "Close" : "Change"
+                        text: "󰅀"
                         font.family: root.font
-                        font.pixelSize: 10
-                        font.bold: true
-                        color: root.mirrorDropdownOpen ? root.theme.accentPrimary : root.theme.textSecondary
+                        font.pixelSize: 13
+                        color: mirPopup.visible ? root.theme.accentPrimary : root.theme.textSecondary
+                        rotation: mirPopup.visible ? 180 : 0
+                        Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                        Behavior on color { ColorAnimation { duration: 140 } }
                     }
                 }
 
@@ -96,91 +103,106 @@ ColumnLayout {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        root.resolutionDropdownOpen = false;
-                        root.mirrorDropdownOpen = !root.mirrorDropdownOpen;
+                        if (mirPopup.visible) mirPopup.close();
+                        else {
+                            root.resolutionDropdownOpen = false;
+                            mirPopup.open();
+                        }
                     }
                 }
-            }
-        }
-    }
 
-    Rectangle {
-        Layout.fillWidth: true
-        Layout.leftMargin: 8
-        Layout.rightMargin: 8
-        Layout.bottomMargin: root.mirrorDropdownOpen ? 8 : 0
-        Layout.preferredHeight: root.mirrorDropdownOpen ? (mirrorOptCol.implicitHeight + 8) : 0
-        opacity: root.mirrorDropdownOpen ? 1.0 : 0.0
-        clip: true
-        radius: 8
-        color: Qt.rgba(0, 0, 0, 0.18)
-        border.color: root.mirrorDropdownOpen ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-        border.width: 1
+                Popup {
+                    id: mirPopup
+                    y: mirDropdownBtn.height + 4
+                    width: mirDropdownBtn.width
+                    padding: 4
+                    modal: false
+                    focus: true
+                    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+                    transformOrigin: Item.Top
+                    onVisibleChanged: root.mirrorDropdownOpen = visible
 
-        Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.InOutQuad } }
-
-        ColumnLayout {
-            id: mirrorOptCol
-            anchors {
-                top: parent.top
-                left: parent.left
-                right: parent.right
-                margins: 4
-            }
-            spacing: 2
-
-            Repeater {
-                model: root.mirrorOptions
-                delegate: Rectangle {
-                    required property var modelData
-                    Layout.fillWidth: true
-                    height: 34
-                    radius: 6
-                    readonly property bool isSelected: (root.selectedMonitor ? (root.selectedMonitor.mirrorOf || "") : "") === modelData.value
-
-                    color: isSelected
-                        ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12))
-                        : (mirOptHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.06)) : "transparent")
-                    border.color: isSelected
-                        ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.3)
-                        : "transparent"
-                    border.width: 1
-
-                    HoverHandler { id: mirOptHover }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 8
-
-                        Text {
-                            text: modelData.label
-                            font.family: root.font
-                            font.pixelSize: 12
-                            font.bold: isSelected
-                            color: isSelected ? root.theme.accentPrimary : root.theme.textPrimary
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
-                        }
-
-                        Text {
-                            visible: isSelected
-                            text: "Active"
-                            font.family: root.font
-                            font.pixelSize: 10
-                            font.bold: true
-                            color: root.theme.accentPrimary
+                    Connections {
+                        target: root
+                        function onMirrorDropdownOpenChanged() {
+                            if (!root.mirrorDropdownOpen && mirPopup.visible) mirPopup.close();
                         }
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.selectMirror(modelData.value);
-                            root.mirrorDropdownOpen = false;
+                    enter: Transition {
+                        ParallelAnimation {
+                            NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                            NumberAnimation { property: "scale"; from: 0.96; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    exit: Transition {
+                        ParallelAnimation {
+                            NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+                            NumberAnimation { property: "scale"; from: 1.0; to: 0.96; duration: 110; easing.type: Easing.InCubic }
+                        }
+                    }
+
+                    background: Rectangle {
+                        radius: 8
+                        color: root.theme.bgSurface
+                        border.color: root.theme.bgBorder
+                        border.width: 1
+                    }
+
+                    contentItem: ColumnLayout {
+                        spacing: 2
+
+                        Repeater {
+                            model: root.mirrorOptions
+                            delegate: Rectangle {
+                                id: mirOptItem
+                                required property var modelData
+                                readonly property bool isSelected: (root.selectedMonitor ? (root.selectedMonitor.mirrorOf || "") : "") === modelData.value
+                                Layout.fillWidth: true
+                                height: 30
+                                radius: 6
+                                color: isSelected
+                                    ? root.theme.bgSelected
+                                    : (mirOptHover.hovered ? root.theme.bgHover : "transparent")
+                                Behavior on color { ColorAnimation { duration: 110 } }
+
+                                HoverHandler { id: mirOptHover }
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    spacing: 8
+
+                                    Text {
+                                        text: mirOptItem.modelData.label
+                                        font.family: root.font
+                                        font.pixelSize: 12
+                                        font.bold: mirOptItem.isSelected
+                                        color: mirOptItem.isSelected ? root.theme.accentPrimary : root.theme.textPrimary
+                                        Layout.fillWidth: true
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Text {
+                                        visible: mirOptItem.isSelected
+                                        text: "✓"
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        color: root.theme.accentPrimary
+                                    }
+                                }
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.selectMirror(mirOptItem.modelData.value);
+                                        mirPopup.close();
+                                    }
+                                }
+                            }
                         }
                     }
                 }

@@ -12,7 +12,9 @@ FocusScope {
     id: surfaceViewRoot
 
     property var theme: DefaultTheme {}
-    property string font: (surfaceViewRoot.theme && surfaceViewRoot.theme.monoFont) ? surfaceViewRoot.theme.monoFont : "JetBrainsMono Nerd Font"
+    property string font: (surfaceViewRoot.theme && surfaceViewRoot.theme.lockscreenFont)
+        ? surfaceViewRoot.theme.lockscreenFont
+        : ((surfaceViewRoot.theme && surfaceViewRoot.theme.monoFont) ? surfaceViewRoot.theme.monoFont : "JetBrainsMono Nerd Font")
     property alias authBoxRef: authBox
     property bool isAuthenticating: false
     property string errorMessage: ""

@@ -1,6 +1,7 @@
 {
   "fontFamily": "Lato Nerd Font",
   "monoFont": "JetBrainsMono Nerd Font",
+  "lockscreenFont": "Lato",
   "fontScale": 1,
   "fontWeight": "normal",
   "boldHeadings": true,

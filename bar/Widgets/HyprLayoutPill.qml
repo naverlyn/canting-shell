@@ -18,7 +18,7 @@ Rectangle {
   property bool isPseudoWin: false
   property bool isPinnedWin: false
 
-  readonly property string manageScript: Qt.resolvedUrl("../../Settings/scripts/manage_hyprland.sh").toString().replace(/^file:\/\//, "")
+  readonly property string manageScript: Qt.resolvedUrl("../../Settings/scripts/manage_hyprland.py").toString().replace(/^file:\/\//, "")
 
   readonly property string modeIcon: {
     if (isMonocle) return "󰊓";
@@ -95,7 +95,7 @@ Rectangle {
       "uid=$(id -u); inst=$(ls -td /run/user/\"$uid\"/hypr/*_*/ 2>/dev/null | head -n1); " +
       "[ -n \"$inst\" ] && export HYPRLAND_INSTANCE_SIGNATURE=$(basename \"$inst\"); " +
       "hyprctl keyword general:layout " + targetLayout + " >/dev/null 2>&1; " +
-      "bash \"" + hyprPill.manageScript + "\" set general layout " + targetLayout + " >/dev/null 2>&1 || true"
+      "python3 \"" + hyprPill.manageScript + "\" set general layout " + targetLayout + " >/dev/null 2>&1 || true"
     ];
     dispatchProc.running = true;
   }

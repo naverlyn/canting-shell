@@ -5,7 +5,11 @@ Item {
     id: hostRoot
 
     property var theme: DefaultTheme {}
-    property string font: (hostRoot.theme && hostRoot.theme.monoFont) ? hostRoot.theme.monoFont : "JetBrainsMono Nerd Font"
+    property string font: (hostRoot.moduleData && hostRoot.moduleData.fontFamily && hostRoot.moduleData.fontFamily !== "$font" && hostRoot.moduleData.fontFamily !== "")
+        ? hostRoot.moduleData.fontFamily
+        : ((hostRoot.theme && hostRoot.theme.lockscreenFont)
+            ? hostRoot.theme.lockscreenFont
+            : ((hostRoot.theme && hostRoot.theme.monoFont) ? hostRoot.theme.monoFont : "JetBrainsMono Nerd Font"))
     property var moduleData: ({})
     property bool previewMode: false
     property real scaleFactor: 1.0

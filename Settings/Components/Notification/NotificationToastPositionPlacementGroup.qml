@@ -536,8 +536,9 @@ ColumnLayout {
 
                 Rectangle {
                     id: resetPosBtn
-                    width: resetPosTxt.implicitWidth + 20
-                    height: 28
+                    Layout.preferredWidth: resetPosTxt.implicitWidth + 20
+                    Layout.preferredHeight: 28
+                    Layout.alignment: Qt.AlignVCenter
                     radius: 6
                     opacity: root.isPositionCustomized ? 1.0 : 0.4
                     color: resetPosHover.hovered && root.isPositionCustomized

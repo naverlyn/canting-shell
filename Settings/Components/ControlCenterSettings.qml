@@ -40,23 +40,17 @@ Item {
     property int dragHoverPanelIndex: -1     // -2 = card pool, -3 = tile pool, -1 = none, 0..2 = Panels 1..3, 3 = 2x2 group, 4 = standalone tiles
     property int dragHoverItemIndex: -1
 
-    /* Feedback Toast Notification State */
-    property string toastMessage: ""
-    property bool toastVisible: false
-    property bool toastIsWarning: false
+    property bool confirmReset: false
 
     Timer {
-        id: toastTimer
-        interval: 2800
+        id: resetConfirmTimer
+        interval: 3500
         repeat: false
-        onTriggered: root.toastVisible = false
+        onTriggered: root.confirmReset = false
     }
 
     function showToast(msg, isWarn) {
-        root.toastMessage = msg;
-        root.toastIsWarning = Boolean(isWarn);
-        root.toastVisible = true;
-        toastTimer.restart();
+        toastBanner.show(msg, isWarn);
     }
 
     function withAlpha(col, alpha) {
@@ -272,10 +266,18 @@ Item {
 
                 ActionButton {
                     iconText: "󰦛"
-                    label: "Reset to Default"
+                    label: root.confirmReset ? "Confirm Reset?" : "Reset to Default"
+                    danger: true
                     onClicked: {
-                        ControlCenterConfig.resetDefaults();
-                        root.showToast("Restored default Control Center settings");
+                        if (!root.confirmReset) {
+                            root.confirmReset = true;
+                            resetConfirmTimer.restart();
+                        } else {
+                            resetConfirmTimer.stop();
+                            root.confirmReset = false;
+                            ControlCenterConfig.resetDefaults();
+                            root.showToast("Restored default Control Center settings");
+                        }
                     }
                 }
             }
@@ -338,7 +340,10 @@ Item {
         root: root
     }
 
-    StatusToast {
-        root: root
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
+        durationMs: 2800
     }
 }

@@ -196,6 +196,28 @@ Singleton {
   // Left Section Widgets
   property bool showAppGrid: true
   property string appGridIcon: "󰀻"
+
+  function isAppGridImage(val) {
+    var s = String(val || "").trim().toLowerCase();
+    return s.endsWith(".png") || s.startsWith("file://") || s.startsWith("/");
+  }
+
+  function normalizeAppGridIcon(val) {
+    var s = String(val || "").trim();
+    if (!s) return "󰀻";
+    if (s.startsWith("~/")) {
+      var home = Quickshell.env("HOME") || "";
+      if (home) s = home + s.slice(1);
+    }
+    return s;
+  }
+
+  function appGridImageSource(val) {
+    var s = normalizeAppGridIcon(val);
+    if (s.startsWith("file://")) return s;
+    if (s.startsWith("/")) return "file://" + s;
+    return s;
+  }
   property bool showCpu: true
   property bool showMemory: true
   property bool showTemp: true
@@ -297,7 +319,7 @@ Singleton {
     { id: "globalMenu",    name: "Global Menu",         icon: "󰍜", desc: "macOS-style application menu bar (File, Edit, View, Help)" },
     { id: "clock",         name: "Clock & Calendar",    icon: "", desc: "Time pill with interactive calendar popup on hover" },
     { id: "weather",       name: "Weather Info",        icon: "󰖐", desc: "Live weather conditions and temperature readout" },
-    { id: "appGrid",       name: "Applications",        icon: root.appGridIcon || "󰀻", desc: "Quick access button for the app launcher grid" },
+    { id: "appGrid",       name: "Applications",        icon: root.isAppGridImage(root.appGridIcon) ? "󰀻" : (root.appGridIcon || "󰀻"), desc: "Quick access button for the app launcher grid" },
     { id: "cpu",           name: "CPU Monitor",         icon: "󰻠", desc: "Live processor usage pill with details popup" },
     { id: "gpu",           name: "GPU Monitor",         icon: "󰢮", desc: "Live GPU utilization, VRAM, and temperature pill with details popup" },
     { id: "temp",          name: "CPU Temperature",     icon: "󰔏", desc: "Thermal sensor status pill with details popup" },

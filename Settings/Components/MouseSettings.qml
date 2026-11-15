@@ -42,11 +42,11 @@ Item {
 
     /* Apply live AND persist (Lua or .conf) via manage_hyprland.sh.
        "input:touchpad:natural_scroll" -> section "input.touchpad", key "natural_scroll" */
-    readonly property string hyprVarScript: Qt.resolvedUrl("../scripts/manage_hyprland.sh").toString().replace(/^file:\/\//, "")
+    readonly property string hyprVarScript: Qt.resolvedUrl("../scripts/manage_hyprland.py").toString().replace(/^file:\/\//, "")
     function applyHyprKeyword(key, val) {
         const parts = String(key).split(":");
         const k = parts.pop();
-        hyprcmd.command = [root.hyprVarScript, "set", parts.join("."), k, String(val)];
+        hyprcmd.command = ["python3", root.hyprVarScript, "set", parts.join("."), k, String(val)];
         hyprcmd.running = true;
     }
 

@@ -112,7 +112,12 @@ Item {
         return root.moduleAccent;
     }
 
-    visible: !root.shouldHideOnLock
+    opacity: root.shouldHideOnLock ? 0.0 : 1.0
+    scale: root.shouldHideOnLock ? 0.94 : 1.0
+    visible: opacity > 0.01
+
+    Behavior on opacity { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+    Behavior on scale { NumberAnimation { duration: 240; easing.type: Easing.OutCubic } }
 
     implicitWidth: isCompact
         ? Math.max(140, Math.round(320 * root.scaleFactor))
@@ -121,6 +126,20 @@ Item {
     implicitHeight: isCompact
         ? Math.max(32, Math.round(68 * root.scaleFactor))
         : Math.max(64, fullStackCol.implicitHeight + Math.round(22 * root.scaleFactor))
+
+    Behavior on implicitHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+
+    onTotalCountChanged: {
+        if (root.totalCount > 0) {
+            badgePopAnim.restart();
+        }
+    }
+
+    onTopItemChanged: {
+        if (root.isCompact && root.topItem) {
+            compactTextPopAnim.restart();
+        }
+    }
 
     // =========================================================================
     // 1. COMPACT NOTIFICATION PILL / BANNER
@@ -160,6 +179,7 @@ Item {
 
                 // Unread count dot badge
                 Rectangle {
+                    id: compactUnreadBadge
                     visible: root.totalCount > 0
                     anchors.right: parent.right
                     anchors.top: parent.top
@@ -168,6 +188,12 @@ Item {
                     height: width
                     radius: width / 2
                     color: root.moduleAccent
+
+                    SequentialAnimation {
+                        id: badgePopAnim
+                        NumberAnimation { target: compactUnreadBadge; property: "scale"; to: 1.28; duration: 130; easing.type: Easing.OutCubic }
+                        NumberAnimation { target: compactUnreadBadge; property: "scale"; to: 1.0; duration: 180; easing.type: Easing.OutBack }
+                    }
 
                     Text {
                         anchors.centerIn: parent
@@ -182,8 +208,15 @@ Item {
 
             // Notification Summary & Body Preview
             ColumnLayout {
+                id: compactTextCol
                 Layout.fillWidth: true
                 spacing: 2
+
+                ParallelAnimation {
+                    id: compactTextPopAnim
+                    NumberAnimation { target: compactTextCol; property: "opacity"; from: 0.25; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
+                    NumberAnimation { target: compactTextCol; property: "Layout.topMargin"; from: 4; to: 0; duration: 220; easing.type: Easing.OutCubic }
+                }
 
                 RowLayout {
                     Layout.fillWidth: true
@@ -236,6 +269,9 @@ Item {
                 height: width
                 radius: width / 2
                 color: clearCompactHover.hovered ? root.theme.bgHover : "transparent"
+                scale: clearCompactMouse.pressed ? 0.90 : 1.0
+                Behavior on color { ColorAnimation { duration: 140 } }
+                Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
                 HoverHandler { id: clearCompactHover }
 
                 Text {
@@ -244,9 +280,11 @@ Item {
                     font.family: root.font
                     font.pixelSize: Math.max(8, Math.round(12 * root.scaleFactor))
                     color: clearCompactHover.hovered ? root.theme.accentRed : root.theme.textMuted
+                    Behavior on color { ColorAnimation { duration: 140 } }
                 }
 
                 MouseArea {
+                    id: clearCompactMouse
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
@@ -337,6 +375,10 @@ Item {
                         : Qt.rgba(root.theme.bgBase.r, root.theme.bgBase.g, root.theme.bgBase.b, 0.6)
                     border.width: 1
                     border.color: clearAllHover.hovered ? root.theme.accentRed : root.theme.bgBorder
+                    scale: clearAllMouse.pressed ? 0.94 : 1.0
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
+                    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
                     HoverHandler { id: clearAllHover }
 
                     Text {
@@ -347,9 +389,11 @@ Item {
                         font.pixelSize: Math.max(6, Math.round(10 * root.scaleFactor))
                         font.bold: true
                         color: clearAllHover.hovered ? root.theme.accentRed : root.theme.textSecondary
+                        Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
                     MouseArea {
+                        id: clearAllMouse
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
@@ -371,10 +415,14 @@ Item {
                     required property int index
 
                     readonly property color itemAccent: root.resolveNotifAccent(modelData)
+                    property real entrySlideY: 12 * root.scaleFactor
 
                     Layout.fillWidth: true
                     implicitHeight: itemRow.implicitHeight + Math.max(8, Math.round(16 * root.scaleFactor))
                     radius: Math.max(6, Math.round(10 * root.scaleFactor))
+                    opacity: 0.0
+                    scale: 0.96
+                    transform: Translate { y: itemCard.entrySlideY }
                     color: itemHover.hovered
                         ? Qt.rgba(root.theme.bgHover.r, root.theme.bgHover.g, root.theme.bgHover.b, 0.65)
                         : Qt.rgba(root.theme.bgBase.r, root.theme.bgBase.g, root.theme.bgBase.b, 0.55)
@@ -383,6 +431,21 @@ Item {
                         ? Qt.rgba(itemAccent.r, itemAccent.g, itemAccent.b, 0.45)
                         : Qt.rgba(root.theme.bgBorder.r, root.theme.bgBorder.g, root.theme.bgBorder.b, 0.5)
                     clip: true
+
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                    SequentialAnimation {
+                        id: cardEnterAnim
+                        PauseAnimation { duration: Math.min(itemCard.index, 4) * 40 }
+                        ParallelAnimation {
+                            NumberAnimation { target: itemCard; property: "opacity"; from: 0.0; to: 1.0; duration: 220; easing.type: Easing.OutCubic }
+                            NumberAnimation { target: itemCard; property: "entrySlideY"; from: 12 * root.scaleFactor; to: 0; duration: 240; easing.type: Easing.OutCubic }
+                            NumberAnimation { target: itemCard; property: "scale"; from: 0.96; to: 1.0; duration: 240; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    Component.onCompleted: cardEnterAnim.restart()
 
                     HoverHandler { id: itemHover }
 
@@ -469,6 +532,9 @@ Item {
                                     height: width
                                     radius: width / 2
                                     color: dismissHover.hovered ? Qt.rgba(1, 1, 1, 0.12) : "transparent"
+                                    scale: dismissMouse.pressed ? 0.88 : 1.0
+                                    Behavior on color { ColorAnimation { duration: 130 } }
+                                    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
                                     HoverHandler { id: dismissHover }
 
                                     Text {
@@ -477,9 +543,11 @@ Item {
                                         font.family: root.font
                                         font.pixelSize: Math.max(6, Math.round(9 * root.scaleFactor))
                                         color: dismissHover.hovered ? root.theme.accentRed : root.theme.textMuted
+                                        Behavior on color { ColorAnimation { duration: 130 } }
                                     }
 
                                     MouseArea {
+                                        id: dismissMouse
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {

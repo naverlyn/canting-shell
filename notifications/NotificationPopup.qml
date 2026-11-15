@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Services.Notifications
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 
 Scope {
     id: root
@@ -176,11 +177,99 @@ Scope {
                         }
                         Component.onCompleted: entryAnim.start()
 
+                        ParallelAnimation {
+                            id: swipeSnapBackAnim
+                            NumberAnimation {
+                                target: slide; property: "x"
+                                to: 0
+                                duration: 180
+                                easing.type: Easing.OutCubic
+                            }
+                            NumberAnimation {
+                                target: notifCard; property: "opacity"
+                                to: NotificationService.cardOpacity
+                                duration: 180
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+
+                        ParallelAnimation {
+                            id: swipeDismissAnim
+                            property real targetX: notifCard.width + 40
+                            NumberAnimation {
+                                target: slide; property: "x"
+                                to: swipeDismissAnim.targetX
+                                duration: 160
+                                easing.type: Easing.OutCubic
+                            }
+                            NumberAnimation {
+                                target: notifCard; property: "opacity"
+                                to: 0
+                                duration: 160
+                                easing.type: Easing.OutCubic
+                            }
+                            onFinished: notifCard.modelData.dismiss()
+                        }
+
+                        function dismissAnimated() {
+                            if (cardClickArea.dismissing) return;
+                            cardClickArea.dismissing = true;
+                            swipeSnapBackAnim.stop();
+                            swipeDismissAnim.targetX = notifWindow.isLeft ? -(notifCard.width + 40) : (notifCard.width + 40);
+                            swipeDismissAnim.start();
+                        }
+
                         MouseArea {
                             id: cardClickArea
                             anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: notifCard.modelData.activate()
+                            cursorShape: isDragging ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+                            property real pressGlobalX: 0
+                            property bool isDragging: false
+                            property bool dismissing: false
+
+                            onPressed: (mouse) => {
+                                if (dismissing) return;
+                                swipeSnapBackAnim.stop();
+                                pressGlobalX = cardClickArea.mapToItem(notifCard.parent, mouse.x, mouse.y).x;
+                                isDragging = false;
+                            }
+
+                            onPositionChanged: (mouse) => {
+                                if (!pressed || dismissing) return;
+                                const curX = cardClickArea.mapToItem(notifCard.parent, mouse.x, mouse.y).x;
+                                const dx = curX - pressGlobalX;
+                                if (!isDragging && dx > 8) {
+                                    isDragging = true;
+                                }
+                                if (isDragging) {
+                                    const clamped = Math.max(0, dx);
+                                    slide.x = clamped;
+                                    notifCard.opacity = NotificationService.cardOpacity * Math.max(0.15, 1.0 - (clamped / (notifCard.width * 0.85)));
+                                }
+                            }
+
+                            onReleased: (mouse) => {
+                                if (dismissing) return;
+                                if (!isDragging) {
+                                    notifCard.modelData.activate();
+                                    return;
+                                }
+                                isDragging = false;
+                                if (slide.x >= Math.min(110, notifCard.width * 0.32)) {
+                                    dismissing = true;
+                                    swipeDismissAnim.targetX = notifCard.width + 40;
+                                    swipeDismissAnim.start();
+                                } else {
+                                    swipeSnapBackAnim.start();
+                                }
+                            }
+
+                            onCanceled: {
+                                if (isDragging && !dismissing) {
+                                    isDragging = false;
+                                    swipeSnapBackAnim.start();
+                                }
+                            }
                         }
 
                         // Accent / Urgency Strip (Left, Right, or Top)
@@ -467,7 +556,7 @@ Scope {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: notifCard.modelData.dismiss()
+                                    onClicked: notifCard.dismissAnimated()
                                 }
                             }
                         }
@@ -560,23 +649,46 @@ Scope {
                                     Layout.preferredHeight: NotificationService.imageSize
                                     Layout.alignment: Qt.AlignTop
                                     radius: NotificationService.imageRadius
+                                    antialiasing: true
                                     color: Qt.alpha(notifCard.urgencyColor, 0.14)
                                     border.color: Qt.alpha(notifCard.urgencyColor, 0.3)
                                     border.width: 1
-                                    clip: true
                                     visible: parent.showThumb
 
-                                    Image {
-                                        id: pairedImg
+                                    Rectangle {
+                                        id: pairedImgMask
                                         anchors.fill: parent
-                                        source: notifCard.hasImg && !notifCard.isSampleImg ? notifCard.modelData.image : ""
-                                        fillMode: Image.PreserveAspectCrop
-                                        sourceSize.width: NotificationService.imageSize * 2
-                                        sourceSize.height: NotificationService.imageSize * 2
-                                        cache: false
-                                        asynchronous: true
-                                        smooth: true
-                                        visible: status === Image.Ready
+                                        radius: NotificationService.imageRadius
+                                        antialiasing: true
+                                        visible: false
+                                        layer.enabled: true
+                                        layer.smooth: true
+                                        layer.samples: 4
+                                    }
+
+                                    Item {
+                                        anchors.fill: parent
+                                        layer.enabled: true
+                                        layer.smooth: true
+                                        layer.effect: MultiEffect {
+                                            maskEnabled: true
+                                            maskSource: pairedImgMask
+                                            maskThresholdMin: 0.0
+                                            maskSpreadAtMin: 1.0
+                                        }
+
+                                        Image {
+                                            id: pairedImg
+                                            anchors.fill: parent
+                                            source: notifCard.hasImg && !notifCard.isSampleImg ? notifCard.modelData.image : ""
+                                            fillMode: Image.PreserveAspectCrop
+                                            sourceSize.width: NotificationService.imageSize * 2
+                                            sourceSize.height: NotificationService.imageSize * 2
+                                            cache: false
+                                            asynchronous: true
+                                            smooth: true
+                                            visible: status === Image.Ready
+                                        }
                                     }
 
                                     Text {
@@ -599,23 +711,46 @@ Scope {
                                 implicitHeight: isBanner ? Math.max(56, NotificationService.imageSize) : NotificationService.imageSize
                                 height: implicitHeight
                                 radius: NotificationService.imageRadius
+                                antialiasing: true
                                 color: Qt.alpha(notifCard.urgencyColor, 0.14)
                                 border.color: Qt.alpha(notifCard.urgencyColor, 0.3)
                                 border.width: 1
-                                clip: true
                                 visible: showThumb
 
-                                Image {
-                                    id: bannerImg
+                                Rectangle {
+                                    id: bannerImgMask
                                     anchors.fill: parent
-                                    source: notifCard.hasImg && !notifCard.isSampleImg ? notifCard.modelData.image : ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    sourceSize.width: 360
-                                    sourceSize.height: 180
-                                    cache: false
-                                    asynchronous: true
-                                    smooth: true
-                                    visible: status === Image.Ready
+                                    radius: NotificationService.imageRadius
+                                    antialiasing: true
+                                    visible: false
+                                    layer.enabled: true
+                                    layer.smooth: true
+                                    layer.samples: 4
+                                }
+
+                                Item {
+                                    anchors.fill: parent
+                                    layer.enabled: true
+                                    layer.smooth: true
+                                    layer.effect: MultiEffect {
+                                        maskEnabled: true
+                                        maskSource: bannerImgMask
+                                        maskThresholdMin: 0.0
+                                        maskSpreadAtMin: 1.0
+                                    }
+
+                                    Image {
+                                        id: bannerImg
+                                        anchors.fill: parent
+                                        source: notifCard.hasImg && !notifCard.isSampleImg ? notifCard.modelData.image : ""
+                                        fillMode: Image.PreserveAspectCrop
+                                        sourceSize.width: 360
+                                        sourceSize.height: 180
+                                        cache: false
+                                        asynchronous: true
+                                        smooth: true
+                                        visible: status === Image.Ready
+                                    }
                                 }
 
                                 RowLayout {

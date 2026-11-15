@@ -37,23 +37,17 @@ Item {
     property int dragHoverPanelIndex: -1
     property int dragHoverItemIndex: -1
 
-    /* Feedback Toast Notification State */
-    property string toastMessage: ""
-    property bool toastVisible: false
-    property bool toastIsWarning: false
+    property bool confirmReset: false
 
     Timer {
-        id: toastTimer
-        interval: 2800
+        id: resetConfirmTimer
+        interval: 3500
         repeat: false
-        onTriggered: root.toastVisible = false
+        onTriggered: root.confirmReset = false
     }
 
     function showToast(msg, isWarn) {
-        root.toastMessage = msg;
-        root.toastIsWarning = Boolean(isWarn);
-        root.toastVisible = true;
-        toastTimer.restart();
+        toastBanner.show(msg, isWarn);
     }
 
     Connections {
@@ -695,8 +689,19 @@ Item {
 
                 ActionButton {
                     iconText: "󰦛"
-                    label: "Reset to Default"
-                    onClicked: BarConfig.resetDefaults()
+                    label: root.confirmReset ? "Confirm Reset?" : "Reset to Default"
+                    danger: true
+                    onClicked: {
+                        if (!root.confirmReset) {
+                            root.confirmReset = true;
+                            resetConfirmTimer.restart();
+                        } else {
+                            resetConfirmTimer.stop();
+                            root.confirmReset = false;
+                            BarConfig.resetDefaults();
+                            root.showToast("Restored default Bar settings");
+                        }
+                    }
                 }
             }
 
@@ -847,8 +852,10 @@ Item {
         root: root
     }
 
-    // Feedback Toast (bottom floating notification)
-    StatusToast {
-        root: root
+    ToastBanner {
+        id: toastBanner
+        theme: root.theme
+        font: root.font
+        durationMs: 2800
     }
 }

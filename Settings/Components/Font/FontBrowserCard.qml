@@ -23,9 +23,9 @@ SectionCard {
 
         Repeater {
             model: [
-                { id: "ui",   label: "Primary UI Font",           icon: "󰛖" },
-                { id: "mono", label: "Monospace / Lock Screen",   icon: "󰅩" },
-                { id: "both", label: "Both UI & Mono",            icon: "󰄬" }
+                { id: "ui",         label: "UI Font",     icon: "󰛖" },
+                { id: "lockscreen", label: "Lock Screen", icon: "󰌾" },
+                { id: "both",       label: "Both",        icon: "󰄬" }
             ]
             delegate: Rectangle {
                 required property var modelData
@@ -231,8 +231,8 @@ SectionCard {
 
                 readonly property string fam: modelData.family
                 readonly property bool isUiActive: root.theme.savedFontFamily === fam
-                readonly property bool isMonoActive: root.theme.savedMonoFont === fam
-                readonly property bool isSelected: isUiActive || isMonoActive
+                readonly property bool isLockActive: root.theme.savedLockscreenFont === fam
+                readonly property bool isSelected: isUiActive || isLockActive
 
                 width: ListView.view.width - 8
                 height: 52
@@ -242,7 +242,7 @@ SectionCard {
                     : (rowMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface)
                 border.color: isUiActive
                     ? root.theme.accentPrimary
-                    : (isMonoActive ? root.theme.accentCyan : (rowMouse.containsMouse ? root.theme.bgBorder : "transparent"))
+                    : (isLockActive ? root.theme.accentCyan : (rowMouse.containsMouse ? root.theme.bgBorder : "transparent"))
                 border.width: isSelected ? 1.5 : 1
 
                 MouseArea {
@@ -348,7 +348,7 @@ SectionCard {
                             }
 
                             Rectangle {
-                                visible: fontRow.isMonoActive
+                                visible: fontRow.isLockActive
                                 height: 15
                                 radius: 4
                                 implicitWidth: monoActTag.implicitWidth + 8
@@ -356,7 +356,7 @@ SectionCard {
                                 Text {
                                     id: monoActTag
                                     anchors.centerIn: parent
-                                    text: "ACTIVE MONO"
+                                    text: "ACTIVE LOCK"
                                     font.family: Style.font
                                     font.pixelSize: 8
                                     font.bold: true
@@ -416,29 +416,29 @@ SectionCard {
                         Rectangle {
                             height: 26
                             radius: 6
-                            implicitWidth: setMonoTxt.implicitWidth + 14
-                            color: fontRow.isMonoActive
+                            implicitWidth: setLockTxt.implicitWidth + 14
+                            color: fontRow.isLockActive
                                 ? root.theme.accentCyan
-                                : (setMonoMouse.containsMouse ? Style.withAlpha(root.theme.accentCyan, 0.22) : root.theme.bgBase)
+                                : (setLockMouse.containsMouse ? Style.withAlpha(root.theme.accentCyan, 0.22) : root.theme.bgBase)
                             border.color: root.theme.accentCyan
                             border.width: 1
 
                             Text {
-                                id: setMonoTxt
+                                id: setLockTxt
                                 anchors.centerIn: parent
-                                text: fontRow.isMonoActive ? "✓ Mono" : "Set Mono"
+                                text: fontRow.isLockActive ? "✓ Lock" : "Set Lock"
                                 font.family: Style.font
                                 font.pixelSize: 10
                                 font.bold: true
-                                color: fontRow.isMonoActive ? root.theme.bgBase : root.theme.accentCyan
+                                color: fontRow.isLockActive ? root.theme.bgBase : root.theme.accentCyan
                             }
 
                             MouseArea {
-                                id: setMonoMouse
+                                id: setLockMouse
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.applyFontForRole(fontRow.fam, "mono")
+                                onClicked: root.applyFontForRole(fontRow.fam, "lockscreen")
                             }
                         }
                     }

@@ -50,19 +50,20 @@ ColumnLayout {
 
             /* Resolution Dropdown Pill */
             Rectangle {
-                width: 220
-                height: 32
-                radius: 6
-                color: root.resolutionDropdownOpen
-                    ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12))
-                    : (resPillHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.04)))
-                border.color: root.resolutionDropdownOpen
+                id: resDropdownBtn
+                Layout.preferredWidth: 220
+                Layout.preferredHeight: 32
+                Layout.alignment: Qt.AlignVCenter
+                radius: 7
+                color: resPopup.visible
+                    ? root.theme.bgSelected
+                    : (resPillHover.hovered ? root.theme.bgHover : root.theme.bgBase)
+                border.color: resPopup.visible
                     ? root.theme.accentPrimary
                     : (resPillHover.hovered
-                        ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4)
+                        ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.5)
                         : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
-                border.width: root.resolutionDropdownOpen ? 1.5 : 1
-                Layout.alignment: Qt.AlignVCenter
+                border.width: resPopup.visible ? 1.5 : 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
                 Behavior on border.color { ColorAnimation { duration: 140 } }
@@ -71,8 +72,8 @@ ColumnLayout {
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
                     spacing: 8
 
                     Text {
@@ -81,23 +82,26 @@ ColumnLayout {
                             const parts = root.currentResString.split("x");
                             if (parts.length === 2) {
                                 const ar = root.getAspectRatio(parseInt(parts[0]), parseInt(parts[1]));
-                                return parts[0] + " × " + parts[1] + (ar ? ("  (" + ar + ")") : "");
+                                return parts[0] + " × " + parts[1] + (ar ? (" (" + ar + ")") : "");
                             }
                             return root.currentResString;
                         }
                         font.family: root.font
                         font.pixelSize: 12
+                        font.bold: true
                         color: root.theme.textPrimary
                         elide: Text.ElideRight
                         Layout.fillWidth: true
                     }
 
                     Text {
-                        text: root.resolutionDropdownOpen ? "Close" : "Change"
+                        text: "󰅀"
                         font.family: root.font
-                        font.pixelSize: 10
-                        font.bold: true
-                        color: root.resolutionDropdownOpen ? root.theme.accentPrimary : root.theme.textSecondary
+                        font.pixelSize: 13
+                        color: resPopup.visible ? root.theme.accentPrimary : root.theme.textSecondary
+                        rotation: resPopup.visible ? 180 : 0
+                        Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+                        Behavior on color { ColorAnimation { duration: 140 } }
                     }
                 }
 
@@ -105,114 +109,133 @@ ColumnLayout {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        root.mirrorDropdownOpen = false;
-                        root.resolutionDropdownOpen = !root.resolutionDropdownOpen;
+                        if (resPopup.visible) resPopup.close();
+                        else {
+                            root.mirrorDropdownOpen = false;
+                            resPopup.open();
+                        }
                     }
                 }
-            }
-        }
-    }
 
-    /* Expandable Resolution Options Sub-Container */
-    Rectangle {
-        Layout.fillWidth: true
-        Layout.leftMargin: 8
-        Layout.rightMargin: 8
-        Layout.bottomMargin: root.resolutionDropdownOpen ? 8 : 0
-        Layout.preferredHeight: root.resolutionDropdownOpen ? Math.min(220, resListCol.implicitHeight + 8) : 0
-        opacity: root.resolutionDropdownOpen ? 1.0 : 0.0
-        clip: true
-        radius: 8
-        color: Qt.rgba(0, 0, 0, 0.18)
-        border.color: root.resolutionDropdownOpen ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-        border.width: 1
+                Popup {
+                    id: resPopup
+                    y: resDropdownBtn.height + 4
+                    width: resDropdownBtn.width
+                    padding: 4
+                    modal: false
+                    focus: true
+                    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+                    transformOrigin: Item.Top
+                    onVisibleChanged: root.resolutionDropdownOpen = visible
 
-        Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.InOutQuad } }
-        Behavior on Layout.bottomMargin { NumberAnimation { duration: 200 } }
-
-        Flickable {
-            anchors.fill: parent
-            anchors.margins: 4
-            contentHeight: resListCol.implicitHeight
-            clip: true
-            boundsBehavior: Flickable.StopAtBounds
-
-            ColumnLayout {
-                id: resListCol
-                width: parent.width
-                spacing: 2
-
-                Repeater {
-                    model: root.availableResolutions
-                    delegate: Rectangle {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        height: 34
-                        radius: 6
-                        readonly property bool isSelected: root.currentResString === modelData.res
-
-                        color: isSelected
-                            ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12))
-                            : (resOptHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.06)) : "transparent")
-                        border.color: isSelected
-                            ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.3)
-                            : "transparent"
-                        border.width: 1
-
-                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                        HoverHandler { id: resOptHover }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 12
-                            anchors.rightMargin: 12
-                            spacing: 8
-
-                            Text {
-                                text: modelData.label
-                                font.family: root.font
-                                font.pixelSize: 12
-                                font.bold: isSelected
-                                color: isSelected ? root.theme.accentPrimary : root.theme.textPrimary
-                            }
-
-                            Rectangle {
-                                visible: modelData.aspect !== ""
-                                height: 18
-                                implicitWidth: aspectLabel.implicitWidth + 10
-                                radius: 4
-                                color: Qt.rgba(1, 1, 1, 0.06)
-
-                                Text {
-                                    id: aspectLabel
-                                    anchors.centerIn: parent
-                                    text: modelData.aspect
-                                    font.family: root.font
-                                    font.pixelSize: 10
-                                    color: root.theme.textSecondary
-                                }
-                            }
-
-                            Item { Layout.fillWidth: true }
-
-                            Text {
-                                visible: isSelected
-                                text: "Active"
-                                font.family: root.font
-                                font.pixelSize: 10
-                                font.bold: true
-                                color: root.theme.accentPrimary
-                            }
+                    Connections {
+                        target: root
+                        function onResolutionDropdownOpenChanged() {
+                            if (!root.resolutionDropdownOpen && resPopup.visible) resPopup.close();
                         }
+                    }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.selectResolution(modelData);
-                                root.resolutionDropdownOpen = false;
+                    enter: Transition {
+                        ParallelAnimation {
+                            NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                            NumberAnimation { property: "scale"; from: 0.96; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    exit: Transition {
+                        ParallelAnimation {
+                            NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+                            NumberAnimation { property: "scale"; from: 1.0; to: 0.96; duration: 110; easing.type: Easing.InCubic }
+                        }
+                    }
+
+                    background: Rectangle {
+                        radius: 8
+                        color: root.theme.bgSurface
+                        border.color: root.theme.bgBorder
+                        border.width: 1
+                    }
+
+                    contentItem: Flickable {
+                        implicitWidth: resPopup.width - 8
+                        implicitHeight: Math.min(240, resListCol.implicitHeight)
+                        contentHeight: resListCol.implicitHeight
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+
+                        ColumnLayout {
+                            id: resListCol
+                            width: parent.width
+                            spacing: 2
+
+                            Repeater {
+                                model: root.availableResolutions
+                                delegate: Rectangle {
+                                    id: resOptItem
+                                    required property var modelData
+                                    readonly property bool isSelected: root.currentResString === modelData.res
+                                    Layout.fillWidth: true
+                                    height: 30
+                                    radius: 6
+                                    color: isSelected
+                                        ? root.theme.bgSelected
+                                        : (resOptHover.hovered ? root.theme.bgHover : "transparent")
+                                    Behavior on color { ColorAnimation { duration: 110 } }
+
+                                    HoverHandler { id: resOptHover }
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 10
+                                        spacing: 6
+
+                                        Text {
+                                            text: resOptItem.modelData.label
+                                            font.family: root.font
+                                            font.pixelSize: 12
+                                            font.bold: resOptItem.isSelected
+                                            color: resOptItem.isSelected ? root.theme.accentPrimary : root.theme.textPrimary
+                                        }
+
+                                        Rectangle {
+                                            visible: resOptItem.modelData.aspect !== ""
+                                            Layout.preferredHeight: 17
+                                            Layout.preferredWidth: aspectLabel.implicitWidth + 8
+                                            Layout.alignment: Qt.AlignVCenter
+                                            radius: 4
+                                            color: Qt.rgba(1, 1, 1, 0.06)
+
+                                            Text {
+                                                id: aspectLabel
+                                                anchors.centerIn: parent
+                                                text: resOptItem.modelData.aspect
+                                                font.family: root.font
+                                                font.pixelSize: 9
+                                                color: root.theme.textSecondary
+                                            }
+                                        }
+
+                                        Item { Layout.fillWidth: true }
+
+                                        Text {
+                                            visible: resOptItem.isSelected
+                                            text: "✓"
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            color: root.theme.accentPrimary
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            root.selectResolution(resOptItem.modelData);
+                                            resPopup.close();
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

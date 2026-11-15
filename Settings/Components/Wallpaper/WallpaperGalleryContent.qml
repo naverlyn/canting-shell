@@ -265,8 +265,9 @@ ColumnLayout {
             RowLayout {
                 spacing: 6
                 Rectangle {
-                    height: 18
-                    width: clickBadge.implicitWidth + 8
+                    Layout.preferredHeight: 18
+                    Layout.preferredWidth: clickBadge.implicitWidth + 8
+                    Layout.alignment: Qt.AlignVCenter
                     radius: 4
                     color: root.theme.bgSurface
                     border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
@@ -291,8 +292,9 @@ ColumnLayout {
             RowLayout {
                 spacing: 6
                 Rectangle {
-                    height: 18
-                    width: rclickBadge.implicitWidth + 8
+                    Layout.preferredHeight: 18
+                    Layout.preferredWidth: rclickBadge.implicitWidth + 8
+                    Layout.alignment: Qt.AlignVCenter
                     radius: 4
                     color: root.theme.bgSurface
                     border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
@@ -317,8 +319,9 @@ ColumnLayout {
             RowLayout {
                 spacing: 6
                 Rectangle {
-                    height: 18
-                    width: targetFooterText.implicitWidth + 12
+                    Layout.preferredHeight: 18
+                    Layout.preferredWidth: targetFooterText.implicitWidth + 12
+                    Layout.alignment: Qt.AlignVCenter
                     radius: 4
                     color: root.theme.bgSurface
                     border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
@@ -344,8 +347,9 @@ ColumnLayout {
             RowLayout {
                 spacing: 6
                 Rectangle {
-                    height: 18
-                    width: typeFooterText.implicitWidth + 12
+                    Layout.preferredHeight: 18
+                    Layout.preferredWidth: typeFooterText.implicitWidth + 12
+                    Layout.alignment: Qt.AlignVCenter
                     radius: 4
                     color: root.theme.bgSurface
                     border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
@@ -366,8 +370,9 @@ ColumnLayout {
                 }
 
                 Rectangle {
-                    height: 18
-                    width: filterFooterText.implicitWidth + 12
+                    Layout.preferredHeight: 18
+                    Layout.preferredWidth: filterFooterText.implicitWidth + 12
+                    Layout.alignment: Qt.AlignVCenter
                     radius: 4
                     color: root.theme.bgSurface
                     border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
@@ -477,8 +482,9 @@ ColumnLayout {
                         // Added Badge (Text only)
                         Rectangle {
                             visible: dirRowItem.isSubAdded
-                            height: 20
-                            width: addedBadgeText.implicitWidth + 12
+                            Layout.preferredHeight: 20
+                            Layout.preferredWidth: addedBadgeText.implicitWidth + 12
+                            Layout.alignment: Qt.AlignVCenter
                             radius: 4
                             color: Qt.rgba(root.theme.accentGreen.r, root.theme.accentGreen.g, root.theme.accentGreen.b, 0.15)
                             border.color: root.theme.accentGreen

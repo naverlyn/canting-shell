@@ -110,7 +110,7 @@ Rectangle {
     theme: hostRoot.theme
     font: hostRoot.font
     location: BarConfig.weatherLocation || "Bekasi"
-    accent: hostContainer.wAccent("weather", hostRoot.theme.accentCyan)
+    accent: hostContainer.wAccent("weather", hostRoot.theme.accentPrimary)
     barPosition: hostContainer.barPos
     onPinToggled: weatherWidget.isPinned = !weatherWidget.isPinned
   }
