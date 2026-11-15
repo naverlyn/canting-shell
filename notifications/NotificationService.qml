@@ -1202,7 +1202,12 @@ Singleton {
             urgency: notifData.urgency !== undefined ? notifData.urgency : NotificationUrgency.Normal,
             createdAt: now,
             timeStr: Qt.formatTime(now, "hh:mm"),
-            socialApp: sApp
+            socialApp: sApp,
+            actions: (notifData.actions || []).filter(function(a) {
+                return a && a.identifier !== "default" && (a.label || a.text);
+            }).map(function(a) {
+                return { label: String(a.label || a.text || ""), identifier: String(a.identifier || "") };
+            })
         };
 
         const filtered = (root.history || []).filter(function(h) {
@@ -1222,6 +1227,27 @@ Singleton {
             if (n && String(n.notifId) === targetId) {
                 n.dismiss();
                 break;
+            }
+        }
+    }
+
+    function dismissHistoryByApp(appName) {
+        if (!appName) return;
+        const target = String(appName);
+        root.history = (root.history || []).filter(function(h) {
+            const name = String((h && (h.displayAppName || h.appName)) || "");
+            return name !== target;
+        });
+    }
+
+    function invokeHistoryAction(notifId, identifier) {
+        if (!notifId || !identifier) return;
+        const targetId = String(notifId);
+        for (let i = 0; i < root.notifications.length; i++) {
+            const n = root.notifications[i];
+            if (n && String(n.notifId) === targetId) {
+                n.invokeAction(identifier);
+                return;
             }
         }
     }

@@ -168,20 +168,7 @@ SectionCard {
 
     RowDivider {}
 
-    // Row 4: View Switcher
-    SettingToggleRow {
-        title: "Show View Switcher"
-        desc: "Display navigation tabs to switch between Control Center and Notifications"
-        checked: ControlCenterConfig.showViewSwitcher
-        onToggled: (val) => {
-            ControlCenterConfig.setCardVisible("viewSwitcher", val);
-            root.showToast(val ? "View Switcher enabled" : "View Switcher hidden");
-        }
-    }
-
-    RowDivider {}
-
-    // Row 5: 2x2 Connectivity Group
+    // Row 4: 2x2 Connectivity Group
     SettingToggleRow {
         title: "2x2 Connectivity Group"
         desc: "Group up to 4 primary quick tiles into a compact squircle card (iOS/Android style)"

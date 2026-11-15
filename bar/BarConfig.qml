@@ -337,6 +337,7 @@ Singleton {
     { id: "customScript",  name: "Custom Script",       icon: "󰆍", desc: "User-defined shell script output pill with custom icon, interval, and click actions" },
     { id: "idleInhibitor", name: "Idle Inhibitor",      icon: "", desc: "Caffeine toggle to prevent screen idle and sleep" },
     { id: "tray",          name: "System Tray",         icon: "󰖩", desc: "Status indicators and tray context menus" },
+    { id: "notifications", name: "Notifications",       icon: "󰂚", desc: "Notification center popup & Do Not Disturb indicator" },
     { id: "controlCenter", name: "Control Center",      icon: "", desc: "Quick settings toggle for audio, network, and buttons" }
   ]
 

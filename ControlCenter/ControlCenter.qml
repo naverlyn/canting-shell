@@ -19,8 +19,6 @@ PanelWindow {
     property int barWindowWidth: 0
     property int barWindowHeight: 0
 
-    property bool viewNotifications: false
-
     property real anchorCenterX: 0
     property real anchorCenterY: 0
     property real targetWinWidth: 1920
@@ -184,8 +182,7 @@ PanelWindow {
         return Math.max(300, scrH - margins.top - margins.bottom - 24);
     }
     readonly property int maxContentAreaHeight: Math.max(160, maxCcHeight - 24
-        - (header.visible ? (header.implicitHeight + 12) : 0)
-        - (switcher.visible ? (switcher.implicitHeight + 12) : 0))
+        - (header.visible ? (header.implicitHeight + 12) : 0))
 
     property var quickSettingsRef: null
     property var brightnessSliderRef: null
@@ -358,29 +355,16 @@ PanelWindow {
                 onCloseRequested: controlCenter.visible = false
             }
 
-            // Tab Switcher: Control Center / Notifications
-            ViewSwitcher {
-                id: switcher
-                width: parent.width
-                visible: ControlCenterConfig.showViewSwitcher
-                theme: controlCenter.theme
-                font: controlCenter.font
-                viewNotifications: controlCenter.viewNotifications
-                onViewNotificationsChanged: controlCenter.viewNotifications = viewNotifications
-            }
-
             // Main Content Container
             Item {
                 id: mainContentContainer
                 width: parent.width
-                implicitHeight: controlCenter.viewNotifications
-                    ? notificationsView.implicitHeight
-                    : Math.min(controlCenter.maxContentAreaHeight, controlCenterView.implicitHeight)
+                implicitHeight: Math.min(controlCenter.maxContentAreaHeight, controlCenterView.implicitHeight)
                 height: implicitHeight
                 clip: true
                 Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
-                // 1. Control Center View (Scrollable Flickable with WheelHandler & ScrollBar)
+                // Control Center View (Scrollable Flickable with WheelHandler & ScrollBar)
                 Flickable {
                     id: ccFlickable
                     anchors.fill: parent
@@ -389,11 +373,6 @@ PanelWindow {
                     clip: true
                     boundsBehavior: Flickable.StopAtBounds
                     interactive: !controlCenter.isDraggingCard && (contentHeight > height)
-                    opacity: controlCenter.viewNotifications ? 0 : 1
-                    x: controlCenter.viewNotifications ? -30 : 0
-                    visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
                     WheelHandler {
                         target: ccFlickable
@@ -567,7 +546,7 @@ PanelWindow {
                                         Loader {
                                             id: cardLoader
                                             width: cardWrapper.cellWidth
-                                            active: controlCenter.visible || cardWrapper.cardId === "media" || cardWrapper.cardId === "connectivity" || cardWrapper.cardId === "brightness"
+                                            active: controlCenter.visible || cardWrapper.cardId === "media" || cardWrapper.cardId === "connectivity" || cardWrapper.cardId === "brightness" || cardWrapper.cardId === "notifications"
                                             sourceComponent: {
                                                 switch (cardWrapper.cardId) {
                                                 case "connectivity": return connectivityComp;
@@ -580,6 +559,7 @@ PanelWindow {
                                                 case "cava": return cavaComp;
                                                 case "weather": return weatherComp;
                                                 case "quickApps": return quickAppsComp;
+                                                case "notifications": return notificationsComp;
                                                 default: return null;
                                                 }
                                             }
@@ -690,19 +670,6 @@ PanelWindow {
                         hostCenter: controlCenter
                     }
                     }
-                }
-
-                // 2. Notifications View
-                NotificationsView {
-                    id: notificationsView
-                    width: parent.width
-                    opacity: controlCenter.viewNotifications ? 1 : 0
-                    x: controlCenter.viewNotifications ? 0 : 30
-                    visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-                    theme: controlCenter.theme
-                    font: controlCenter.font
                 }
             }
         }
@@ -836,6 +803,14 @@ PanelWindow {
             theme: controlCenter.theme
             font: controlCenter.font
             onCloseParentRequested: controlCenter.visible = false
+        }
+    }
+
+    Component {
+        id: notificationsComp
+        NotificationsCard {
+            theme: controlCenter.theme
+            font: controlCenter.font
         }
     }
 

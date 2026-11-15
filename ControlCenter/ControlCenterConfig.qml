@@ -11,7 +11,6 @@ Singleton {
 
     property int panelWidth: 320
     property bool showHeader: true
-    property bool showViewSwitcher: true
     property bool mediaAutoHide: true
     property bool mediaShowCava: false
     property string panelLayout: "horizontal"
@@ -58,6 +57,7 @@ Singleton {
     readonly property bool showCava: isCardVisible("cava")
     readonly property bool showWeather: isCardVisible("weather")
     readonly property bool showQuickApps: isCardVisible("quickApps")
+    readonly property bool showNotifications: isCardVisible("notifications")
 
     // Master list of all available building-block modules
     readonly property var allCardDefs: [
@@ -70,7 +70,8 @@ Singleton {
         { id: "systemInfo",     label: "System Resources",   icon: "󰍛", desc: "CPU, memory, disk & thermals overview" },
         { id: "cava",           label: "Cava Visualizer",    icon: "",   desc: "Real-time Cava audio spectrum visualizer" },
         { id: "weather",        label: "Weather",            icon: "󰖐", desc: "Live weather conditions, temperature & wind" },
-        { id: "quickApps",      label: "Quick Launch",       icon: "󰀻", desc: "Fast shortcuts to favorite desktop apps" }
+        { id: "quickApps",      label: "Quick Launch",       icon: "󰀻", desc: "Fast shortcuts to favorite desktop apps" },
+        { id: "notifications",  label: "Notifications",      icon: "󰂚", desc: "Notification history, grouped alerts & actions" }
     ]
 
     signal cardsUpdated()
@@ -817,10 +818,6 @@ Singleton {
             if (root.showHeader !== val) { root.showHeader = val; root.saveConfig(); }
             return;
         }
-        if (cardName === "viewSwitcher") {
-            if (root.showViewSwitcher !== val) { root.showViewSwitcher = val; root.saveConfig(); }
-            return;
-        }
         if (cardName === "mediaAutoHide") {
             if (root.mediaAutoHide !== val) { root.mediaAutoHide = val; root.saveConfig(); }
             return;
@@ -861,7 +858,7 @@ Singleton {
         root.panelCount = 3;
         root.panel1 = ["connectivity", "quickSettings", "systemInfo"];
         root.panel2 = ["brightness", "media"];
-        root.panel3 = ["audio"];
+        root.panel3 = ["audio", "notifications"];
         root.groupTilesEnabled = true;
         root.groupedTileIds = ["wifi", "bluetooth", "dnd", "airplane"];
         root.secondaryTileIds = ["mute", "gamemode", "clipboard", "darkmode"];
@@ -869,7 +866,6 @@ Singleton {
         root.quickApps = JSON.parse(JSON.stringify(root.defaultQuickApps));
         root.mediaWidgetStyle = "auto";
         root.showHeader = true;
-        root.showViewSwitcher = true;
         root.mediaAutoHide = true;
         root.mediaShowCava = false;
         root.tiles = [
@@ -912,8 +908,7 @@ Singleton {
             quickApps: root.quickApps,
             mediaWidgetStyle: root.mediaWidgetStyle,
             cards: {
-                header: root.showHeader,
-                viewSwitcher: root.showViewSwitcher
+                header: root.showHeader
             },
             mediaAutoHide: root.mediaAutoHide,
             mediaShowCava: root.mediaShowCava,
@@ -974,7 +969,6 @@ Singleton {
         }
         if (cfg.cards) {
             if (cfg.cards.header !== undefined) root.showHeader = Boolean(cfg.cards.header);
-            if (cfg.cards.viewSwitcher !== undefined) root.showViewSwitcher = Boolean(cfg.cards.viewSwitcher);
         }
         if (cfg.mediaAutoHide !== undefined) root.mediaAutoHide = Boolean(cfg.mediaAutoHide);
         if (cfg.mediaShowCava !== undefined) root.mediaShowCava = Boolean(cfg.mediaShowCava);

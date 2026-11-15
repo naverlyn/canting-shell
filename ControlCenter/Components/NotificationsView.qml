@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import ".."
+import "../../notifications"
 import "../../notifications/SocialApps.js" as SocialApps
 
 Column {
@@ -13,8 +14,25 @@ Column {
     property var theme: DefaultTheme {}
     property string font: "Lato Nerd Font"
 
-    // 1. Permanent History Array
-    property var historyModel: []
+    // 1. Live History Array backed by NotificationService (single source of truth)
+    readonly property var historyModel: (NotificationService.history || []).map(h => {
+        const rawImg = String(h.image || "");
+        const imgStr = rawImg.indexOf("image://qsimage/") !== -1 ? "" : rawImg;
+        const acts = (h.actions || []).map(a => ({
+            label: a.label || "",
+            invokeFn: function() { NotificationService.invokeHistoryAction(h.notifId, a.identifier); },
+            customCmd: ""
+        }));
+        return {
+            notifId: h.notifId,
+            notifAppName: h.displayAppName || h.appName || "Notification",
+            notifAppIcon: h.appIcon || "",
+            notifImage: imgStr,
+            notifSummary: h.summary || "New Notification",
+            notifBody: h.displayBody || h.body || "",
+            notifActions: acts
+        };
+    })
 
     // Notifications grouped by app (newest first); each group keeps its own items/actions
     property var expandedApps: ({})
@@ -36,182 +54,15 @@ Column {
     }
 
     function dismissNotif(id) {
-        historyModel = historyModel.filter(n => n.notifId !== id);
+        NotificationService.dismissHistoryItem(id);
     }
 
     function dismissGroup(app) {
-        historyModel = historyModel.filter(n => n.notifAppName !== app);
+        NotificationService.dismissHistoryByApp(app);
     }
 
     function clearAll() {
-        root.historyModel = [];
-        if (notifServer.trackedNotifications) {
-            let notifs = notifServer.trackedNotifications.values || notifServer.trackedNotifications;
-            if (notifs) {
-                for (let i = notifs.length - 1; i >= 0; i--) {
-                    if (notifs[i] && notifs[i].dismiss) {
-                        notifs[i].dismiss();
-                    }
-                }
-            }
-        }
-    }
-
-    // 2. Official Notification Daemon
-    NotificationServer {
-        id: notifServer
-        actionsSupported:    true
-        bodySupported:       true
-        bodyMarkupSupported: true
-        imageSupported:      true
-        keepOnReload:        false
-    }
-
-    // 3. The Invisible Bridge: With a Timer delay to ensure properties are loaded
-    Instantiator {
-        model: notifServer.trackedNotifications
-        delegate: Item {
-            id: delegateBridge
-            property var notif: modelData
-            property int lastProcessedGen: -1
-
-            Connections {
-                target: delegateBridge.notif
-                ignoreUnknownSignals: true
-                function onSummaryChanged() {
-                    extractTimer.restart();
-                }
-                function onBodyChanged() {
-                    extractTimer.restart();
-                }
-            }
-
-            Timer {
-                id: extractTimer
-                interval: 100 // Wait 100ms for DBus payload (Actions, Summary) to fully bind
-                running: true
-                onTriggered: {
-                    if (!delegateBridge.notif) return;
-                    let n = delegateBridge.notif;
-                    let gen = n.lastGeneration !== undefined ? n.lastGeneration : 0;
-                    if (delegateBridge.lastProcessedGen === gen && gen === 0) {
-                        // Already processed this exact generation
-                    }
-                    delegateBridge.lastProcessedGen = gen;
-                    
-                    let baseId = n.id !== undefined ? n.id : Math.random();
-                    let nId = gen > 0 ? (baseId + "_" + gen) : baseId;
-                    let arr = root.historyModel;
-                    
-                    for (let i = 0; i < arr.length; i++) {
-                        if (arr[i].notifId === nId) return; 
-                    }
-                    
-                    let extractedActions = [];
-                    let acts = n.actions || [];
-                    
-                    // Safely iterate the native DBus actions using a closure
-                    for (let i = 0; i < acts.length; i++) {
-                        (function(actionObj) {
-                            let lbl = actionObj ? (actionObj.text || actionObj.label || "") : "";
-                            if (actionObj && lbl && actionObj.identifier !== "default") {
-                                extractedActions.push({
-                                    label: lbl + "",
-                                    invokeFn: function() { try { actionObj.invoke(); } catch(e) {} },
-                                    customCmd: ""
-                                });
-                            }
-                        })(acts[i]);
-                    }
-                    
-                    let summaryStr = (n.summary || "New Notification") + "";
-                    let bodyStr = (n.body || "") + "";
-
-                    // Dynamic Social App handling
-                    let socialApp = SocialApps.detectApp(n.appName, n.appIcon, summaryStr, bodyStr);
-                    if (socialApp) {
-                        bodyStr = SocialApps.cleanBody(bodyStr, socialApp);
-
-                        let defaultAct = null;
-                        for (let k = 0; k < acts.length; k++) {
-                            if (acts[k] && (acts[k].identifier === "default" || acts[k].id === "default")) {
-                                defaultAct = acts[k];
-                                break;
-                            }
-                        }
-
-                        let focusCmd = SocialApps.getFocusCommand(socialApp);
-
-                        extractedActions.unshift({
-                            label: "Reply",
-                            invokeFn: function() {
-                                if (defaultAct && defaultAct.invoke) {
-                                    try { defaultAct.invoke(); } catch(e) {}
-                                }
-                                if (focusCmd) {
-                                    Quickshell.execDetached(["sh", "-c", focusCmd]);
-                                }
-                            },
-                            customCmd: ""
-                        });
-                    }
-
-                    // Swappy screenshots
-                    if (bodyStr.indexOf("Swappy") !== -1) {
-                        let shotPath = "/tmp/qs-shot-" + Date.now() + "-" + nId + ".png";
-                        Quickshell.execDetached(["sh", "-c", "wl-paste --type image/png > '" + shotPath + "'"]);
-                        extractedActions = [
-                            { label: "Open", invokeFn: null, customCmd: "swappy -f '" + shotPath + "'" },
-                            { label: "Delete", invokeFn: null, customCmd: "rm -f '" + shotPath + "'" }
-                        ];
-                    } else if (/screenshot/i.test(summaryStr) && /saved/i.test(bodyStr) && !/not saved/i.test(bodyStr)) {
-                        // Regular grim screenshots
-                        let ts = Date.now() / 1000;
-                        let findCmd = "d=\"$(xdg-user-dir PICTURES 2>/dev/null || echo \"$HOME/Pictures\")/Screenshots\"; " +
-                            "f=\"$(find \"$d\" -maxdepth 1 -type f -name '*.png' -printf '%T@ %p\\n' | " +
-                            "awk -v t=" + ts + " '{x=$1-t; if (x<0) x=-x; if (m==\"\" || x<m) {m=x; p=$0}} END {sub(/^[^ ]+ /, \"\", p); print p}')\"; ";
-                        extractedActions = [
-                            { label: "Open", invokeFn: null, customCmd: findCmd + "[ -n \"$f\" ] && xdg-open \"$f\"" },
-                            { label: "Delete", invokeFn: null, customCmd: findCmd + "[ -n \"$f\" ] && rm -f \"$f\"" }
-                        ];
-                    } else if (extractedActions.length === 0) {
-                        // FALLBACK: Provide default Accept and Dismiss buttons
-                        extractedActions = [
-                            {
-                                label: "Accept",
-                                invokeFn: (acts && acts.length > 0 && acts[0].invoke)
-                                    ? function() { try { acts[0].invoke(); } catch(e) {} }
-                                    : null,
-                                customCmd: ""
-                            },
-                            {
-                                label: "Dismiss",
-                                invokeFn: null,
-                                customCmd: ""
-                            }
-                        ];
-                    }
-
-                    let imgStr = (n.image || "") + "";
-                    if (imgStr.indexOf("image://qsimage/") !== -1) {
-                        imgStr = "";
-                    }
-
-                    // Deep copy strings
-                    let newItem = {
-                        notifId: nId,
-                        notifAppName: SocialApps.formatAppName(n.appName, socialApp) + "",
-                        notifAppIcon: (n.appIcon || "") + "",
-                        notifImage: imgStr,
-                        notifSummary: summaryStr,
-                        notifBody: bodyStr,
-                        notifActions: extractedActions
-                    };
-
-                    root.historyModel = [newItem].concat(arr).slice(0, 50);
-                }
-            }
-        }
+        NotificationService.clearHistory();
     }
 
     // Process for running manual shell commands if native actions time out

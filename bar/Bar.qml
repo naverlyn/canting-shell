@@ -661,6 +661,16 @@ Scope {
               }
             }
 
+            Component {
+              id: notificationsComp
+              NotificationsButton {
+                hostRoot: root
+                hostContainer: barContentContainer
+                hostWindow: barWindow
+                hostScope: barInstanceScope
+              }
+            }
+
             // 12. Network Upload & Download Speed Pill
             Component {
               id: networkComp
@@ -797,6 +807,7 @@ Scope {
                 case "clock": return clockComp;
                 case "tray": return trayComp;
                 case "controlCenter": return controlCenterComp;
+                case "notifications": return notificationsComp;
                 default: return null;
               }
             }
