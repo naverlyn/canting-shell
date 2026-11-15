@@ -89,6 +89,7 @@ DEFAULT_CONFIGS = {
         "imagePosition": "right",
         "imageSize": 44,
         "imageRadius": 10,
+        "imageShowBg": True,
         "buttonStyle": "pill",
         "buttonHeight": 28,
         "buttonRadius": 14,

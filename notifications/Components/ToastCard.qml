@@ -3,7 +3,6 @@ import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import ".."
 
 Rectangle {
@@ -566,135 +565,33 @@ Rectangle {
                 }
             }
 
-            Rectangle {
+            ToastImageBox {
                 Layout.preferredWidth: NotificationService.imageSize
                 Layout.preferredHeight: NotificationService.imageSize
                 Layout.alignment: Qt.AlignTop
-                radius: NotificationService.imageRadius
-                antialiasing: true
-                color: NotificationService.imageShowBg ? Qt.alpha(notifCard.urgencyColor, 0.14) : "transparent"
-                border.color: Qt.alpha(notifCard.urgencyColor, 0.3)
-                border.width: 1
                 visible: parent.showThumb
-
-                Rectangle {
-                    id: pairedImgMask
-                    anchors.fill: parent
-                    radius: NotificationService.imageRadius
-                    antialiasing: true
-                    visible: false
-                    layer.enabled: true
-                    layer.smooth: true
-                    layer.textureSize: Qt.size(Math.max(2, Math.round(width * 2)), Math.max(2, Math.round(height * 2)))
-                }
-
-                Item {
-                    anchors.fill: parent
-                    layer.enabled: true
-                    layer.smooth: true
-                    layer.effect: MultiEffect {
-                        maskEnabled: true
-                        maskSource: pairedImgMask
-                        maskThresholdMin: 0.35
-                        maskSpreadAtMin: 0.3
-                    }
-
-                    Image {
-                        id: pairedImg
-                        anchors.fill: parent
-                        source: notifCard.hasImg && !notifCard.isSampleImg ? notifCard.modelData.image : ""
-                        fillMode: Image.PreserveAspectCrop
-                        sourceSize.width: NotificationService.imageSize * 2
-                        sourceSize.height: NotificationService.imageSize * 2
-                        cache: false
-                        asynchronous: true
-                        smooth: true
-                        visible: status === Image.Ready
-                    }
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: pairedImg.status !== Image.Ready
-                    text: "󰋩"
-                    font.family: notifCard.font
-                    font.pixelSize: Math.round(NotificationService.imageSize * 0.45)
-                    color: notifCard.urgencyColor
-                }
+                imageSource: notifCard.hasImg && !notifCard.isSampleImg ? notifCard.modelData.image : ""
+                urgencyColor: notifCard.urgencyColor
+                secondaryTextColor: notifCard.theme.textSecondary
+                font: notifCard.font
             }
         }
     }
 
     Component {
         id: standaloneImageComp
-        Rectangle {
+        ToastImageBox {
             readonly property bool showThumb: notifCard.hasImg || notifCard.isSampleImg
-            readonly property bool isBanner: NotificationService.imagePosition === "banner"
+            isBanner: NotificationService.imagePosition === "banner"
             implicitHeight: isBanner ? Math.max(56, NotificationService.imageSize) : NotificationService.imageSize
             height: implicitHeight
-            radius: NotificationService.imageRadius
-            antialiasing: true
-            color: NotificationService.imageShowBg ? Qt.alpha(notifCard.urgencyColor, 0.14) : "transparent"
-            border.color: Qt.alpha(notifCard.urgencyColor, 0.3)
-            border.width: 1
             visible: showThumb
-
-            Rectangle {
-                id: bannerImgMask
-                anchors.fill: parent
-                radius: NotificationService.imageRadius
-                antialiasing: true
-                visible: false
-                layer.enabled: true
-                layer.smooth: true
-                layer.textureSize: Qt.size(Math.max(2, Math.round(width * 2)), Math.max(2, Math.round(height * 2)))
-            }
-
-            Item {
-                anchors.fill: parent
-                layer.enabled: true
-                layer.smooth: true
-                layer.effect: MultiEffect {
-                    maskEnabled: true
-                    maskSource: bannerImgMask
-                    maskThresholdMin: 0.35
-                    maskSpreadAtMin: 0.3
-                }
-
-                Image {
-                    id: bannerImg
-                    anchors.fill: parent
-                    source: notifCard.hasImg && !notifCard.isSampleImg ? notifCard.modelData.image : ""
-                    fillMode: Image.PreserveAspectCrop
-                    sourceSize.width: 360
-                    sourceSize.height: 180
-                    cache: false
-                    asynchronous: true
-                    smooth: true
-                    visible: status === Image.Ready
-                }
-            }
-
-            RowLayout {
-                anchors.centerIn: parent
-                spacing: 6
-                visible: bannerImg.status !== Image.Ready
-
-                Text {
-                    text: "󰋩"
-                    font.family: notifCard.font
-                    font.pixelSize: 16
-                    color: notifCard.urgencyColor
-                }
-                Text {
-                    visible: parent.parent.isBanner
-                    text: "Preview Thumbnail"
-                    font.family: notifCard.font
-                    font.pixelSize: 11
-                    font.bold: true
-                    color: notifCard.theme.textSecondary
-                }
-            }
+            imageSource: notifCard.hasImg && !notifCard.isSampleImg ? notifCard.modelData.image : ""
+            urgencyColor: notifCard.urgencyColor
+            secondaryTextColor: notifCard.theme.textSecondary
+            font: notifCard.font
+            sourceWidth: 360
+            sourceHeight: 180
         }
     }
 

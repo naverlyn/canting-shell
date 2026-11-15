@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Notifications
 import "SocialApps.js" as SocialApps
+import "NotificationPresets.js" as Presets
 
 Singleton {
     id: root
@@ -325,60 +326,10 @@ Singleton {
     }
 
     function applyLayoutPreset(presetId) {
-        if (presetId === "standard") {
-            root.headerBlocks = ["icon", "appName", "closeBtn"];
-            root.contentBlocks = ["title", "body", "image"];
-            root.footerBlocks = ["buttons", "progressBar"];
-            root.iconMode = "auto";
-            root.iconSize = 24;
-            root.imagePosition = "right";
-            root.imageSize = 44;
-            root.buttonStyle = "pill";
-            root.showAccentStrip = true;
-            root.accentStripPosition = "left";
-        } else if (presetId === "avatar") {
-            root.headerBlocks = ["appName", "timestamp", "closeBtn"];
-            root.contentBlocks = ["icon", "title", "body", "image"];
-            root.footerBlocks = ["buttons", "progressBar"];
-            root.iconMode = "avatar";
-            root.iconSize = 36;
-            root.imagePosition = "right";
-            root.imageSize = 44;
-            root.buttonStyle = "fill";
-            root.showAccentStrip = true;
-            root.accentStripPosition = "left";
-        } else if (presetId === "banner") {
-            root.headerBlocks = ["icon", "appName", "timestamp", "closeBtn"];
-            root.contentBlocks = ["title", "body", "image"];
-            root.footerBlocks = ["buttons", "progressBar"];
-            root.iconMode = "inline";
-            root.iconSize = 24;
-            root.imagePosition = "banner";
-            root.imageSize = 72;
-            root.buttonStyle = "fill";
-            root.showAccentStrip = true;
-            root.accentStripPosition = "top";
-        } else if (presetId === "compact") {
-            root.headerBlocks = ["icon", "title", "closeBtn"];
-            root.contentBlocks = ["body"];
-            root.footerBlocks = ["buttons"];
-            root.iconMode = "inline";
-            root.iconSize = 20;
-            root.imageSize = 44;
-            root.buttonStyle = "ghost";
-            root.showAccentStrip = true;
-            root.accentStripPosition = "left";
-        } else if (presetId === "detailed") {
-            root.headerBlocks = ["icon", "appName", "timestamp", "closeBtn"];
-            root.contentBlocks = ["title", "body", "image"];
-            root.footerBlocks = ["buttons", "progressBar"];
-            root.iconMode = "auto";
-            root.iconSize = 24;
-            root.imagePosition = "right";
-            root.imageSize = 44;
-            root.buttonStyle = "pill";
-            root.showAccentStrip = true;
-            root.accentStripPosition = "left";
+        const p = Presets.LAYOUT_PRESETS[presetId];
+        if (!p) return;
+        for (const k in p) {
+            root[k] = Array.isArray(p[k]) ? [...p[k]] : p[k];
         }
         root.blockOrderRevision++;
         root.blocksUpdated();
@@ -717,52 +668,15 @@ Singleton {
     // =========================================================================
     function applyComposerPreset(presetId) {
         root.composerPreset = presetId;
-        if (presetId === "screenshot") {
-            root.composerAppName = "notify-send";
-            root.composerIcon = "󰂚";
-            root.composerTitle = "Screenshot:";
-            root.composerBody = "Captured by Swappy";
-            root.composerShowImage = true;
-            root.composerUrgency = NotificationUrgency.Normal;
-            root.composerButtons = [
-                { label: "Open", cmd: "" },
-                { label: "Delete", cmd: "" }
-            ];
-        } else if (presetId === "message") {
-            root.composerAppName = "WhatsApp Web";
-            root.composerIcon = "󰖣";
-            root.composerTitle = "Alex Rivera";
-            root.composerBody = "Hey! Are we still on for the design review at 10:00?";
-            root.composerShowImage = false;
-            root.composerUrgency = NotificationUrgency.Normal;
-            root.composerButtons = [
-                { label: "Reply", cmd: "" },
-                { label: "Mark Read", cmd: "" }
-            ];
-        } else if (presetId === "media") {
-            root.composerAppName = "Spotify";
-            root.composerIcon = "󰓇";
-            root.composerTitle = "Midnight City";
-            root.composerBody = "M83 — Hurry Up, We're Dreaming";
-            root.composerShowImage = true;
-            root.composerUrgency = NotificationUrgency.Low;
-            root.composerButtons = [
-                { label: "Previous", cmd: "" },
-                { label: "Pause", cmd: "" },
-                { label: "Next", cmd: "" }
-            ];
-        } else if (presetId === "critical") {
-            root.composerAppName = "System Monitor";
-            root.composerIcon = "󰀦";
-            root.composerTitle = "Critical Battery Alert";
-            root.composerBody = "Battery level is at 7%. Connect power adapter immediately.";
-            root.composerShowImage = false;
-            root.composerUrgency = NotificationUrgency.Critical;
-            root.composerButtons = [
-                { label: "Power Saver", cmd: "" },
-                { label: "Dismiss", cmd: "" }
-            ];
-        }
+        const p = Presets.getComposerPreset(presetId, NotificationUrgency);
+        if (!p) return;
+        root.composerAppName = p.appName;
+        root.composerIcon = p.icon;
+        root.composerTitle = p.title;
+        root.composerBody = p.body;
+        root.composerShowImage = p.showImage;
+        root.composerUrgency = p.urgency;
+        root.composerButtons = p.buttons;
     }
 
     function addComposerButton(label, cmd) {
