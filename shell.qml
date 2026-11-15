@@ -23,6 +23,7 @@ import "Settings"
 import "Clipboard"
 import "Lockscreen"
 import "PowerMenu"
+import "Polkit"
 
 Scope {
   ThemeSwitcher { id: ts }
@@ -38,4 +39,5 @@ Scope {
   CaffeineToggle { theme: ts.theme }
   Lockscreen { theme: ts.theme }
   PowerMenu { theme: ts.theme }
+  PolkitAgentService { theme: ts.theme }
 }
