@@ -61,18 +61,18 @@
       "panels": [
         ["appGrid", "workspaces", "windowTitle"],
         ["clock"],
-        ["cpu", "memory", "network", "weather", "hyprLayout", "volume", "tray", "notifications", "controlCenter"]
+        ["cpu", "memory", "network", "weather", "hyprLayout", "wifi", "volume", "tray", "notifications", "controlCenter"]
       ]
     }
   ],
   "panels": [
     ["appGrid", "workspaces", "windowTitle"],
     ["clock"],
-    ["cpu", "memory", "network", "weather", "hyprLayout", "volume", "tray", "notifications", "controlCenter"]
+    ["cpu", "memory", "network", "weather", "hyprLayout", "wifi", "volume", "tray", "notifications", "controlCenter"]
   ],
   "leftWidgets": ["appGrid", "workspaces", "windowTitle"],
   "centerWidgets": ["clock"],
-  "rightWidgets": ["cpu", "memory", "network", "weather", "hyprLayout", "volume", "tray", "notifications", "controlCenter"],
+  "rightWidgets": ["cpu", "memory", "network", "weather", "hyprLayout", "wifi", "volume", "tray", "notifications", "controlCenter"],
   "appGridIcon": "󰀻",
   "hwShowIcons": true,
   "hwPollInterval": 2,

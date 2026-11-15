@@ -113,10 +113,19 @@ Run `qs ipc show` to list every available target and function.
 
 ```bash
 git clone https://github.com/naverlyn/canting-shell ~/.config/quickshell
+cd ~/.config/quickshell
+./install.sh
 quickshell
 ```
 
-Quickshell reads from `~/.config/quickshell/` by default.
+`install.sh` checks core and optional dependencies (offering to install missing packages for your distribution), and lets you choose a preset (`laptop`, `pc`, `gaming`, or `minimal`) for the Bar, Notification Toasts, Control Center, and Lock Screen:
+
+```bash
+./install.sh --preset laptop   # or pc, gaming, minimal
+./install.sh --list            # list available presets
+```
+
+Quickshell reads from `~/.config/quickshell/` by default, and all shell configuration files are stored in `configs/`.
 
 ## making your palette
 

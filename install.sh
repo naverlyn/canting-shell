@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIGS_DIR="$SCRIPT_DIR/configs"
 PRESETS_DIR="$CONFIGS_DIR/presets"
 THEME_CONF="$CONFIGS_DIR/theme.conf"
+BACKUP_SCRIPT="$SCRIPT_DIR/Settings/scripts/manage_backup.py"
 TARGET_QS_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"
 
 PRESET=""
@@ -378,11 +379,6 @@ apply_module_preset() {
         return 0
     fi
 
-    if [[ -f "$target_file" && "$NO_BACKUP" == false ]]; then
-        local backup_file="${target_file}.bak.$(date +%Y%m%d_%H%M%S)"
-        cp "$target_file" "$backup_file"
-    fi
-
     # Merge preset onto existing config (or create from preset) so unrelated user preferences remain intact
     if [[ -f "$target_file" ]] && command -v python3 >/dev/null 2>&1; then
         python3 - "$target_file" "$preset_file" <<'PY'
@@ -418,6 +414,18 @@ apply_preset() {
     fi
 
     mkdir -p "$CONFIGS_DIR"
+
+    if [[ "$NO_BACKUP" == false ]] && [[ -f "$CONFIGS_DIR/bar_config.json" || -f "$CONFIGS_DIR/notifications_config.json" || -f "$CONFIGS_DIR/control_center_config.json" || -f "$CONFIGS_DIR/lockscreen_config.json" ]]; then
+        if [[ "$DRY_RUN" == true ]]; then
+            echo "[dry-run] Would create snapshot via Settings/scripts/manage_backup.py before applying '$PRESET'"
+        elif [[ -f "$BACKUP_SCRIPT" ]] && command -v python3 >/dev/null 2>&1; then
+            python3 "$BACKUP_SCRIPT" create \
+                "Pre-Preset ($PRESET)" \
+                "bar,notifications,controlcenter,lockscreen" \
+                "Automatic backup before applying '$PRESET' preset via install.sh" >/dev/null
+            echo -e "${GREEN}✓${NC} Saved snapshot in Backup & Restore (Pre-Preset: $PRESET)"
+        fi
+    fi
 
     apply_module_preset "bar" "$CONFIGS_DIR/bar_config.json"
     apply_module_preset "notifications" "$CONFIGS_DIR/notifications_config.json"

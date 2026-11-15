@@ -61,17 +61,17 @@
       "panels": [
         ["workspaces", "windowTitle"],
         ["clock"],
-        ["volume", "notifications", "controlCenter"]
+        ["wifi", "volume", "notifications", "controlCenter"]
       ]
     }
   ],
   "panels": [
     ["workspaces", "windowTitle"],
     ["clock"],
-    ["volume", "notifications", "controlCenter"]
+    ["wifi", "volume", "notifications", "controlCenter"]
   ],
   "leftWidgets": ["workspaces", "windowTitle"],
   "centerWidgets": ["clock"],
-  "rightWidgets": ["volume", "notifications", "controlCenter"],
+  "rightWidgets": ["wifi", "volume", "notifications", "controlCenter"],
   "appGridIcon": "󰀻"
 }
