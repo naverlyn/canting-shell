@@ -229,7 +229,7 @@ ColumnLayout {
     // Screenshot Process
     Process {
         id: screenshotProc
-        command: ["sh", "-c", "sleep 0.2 && ($HOME/.config/hypr/scripts/ScreenShot.sh --area || grimblast copy area || hyprshot -m region)"]
+        command: ["sh", "-c", "sleep 0.15 && qs ipc call screenshot toggle"]
         running: false
     }
 
