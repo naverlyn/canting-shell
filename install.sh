@@ -338,28 +338,51 @@ choose_preset_interactive() {
     done
 }
 
-# Ensure ~/.config/quickshell points to this repo if run from another directory
+# Copy this repo into ~/.config/quickshell if run from another directory
 ensure_install_location() {
-    local real_script real_target
+    local real_script real_target backup_dir
     real_script="$(readlink -f "$SCRIPT_DIR")"
     real_target="$(readlink -f "$TARGET_QS_DIR" 2>/dev/null || echo "$TARGET_QS_DIR")"
 
     if [[ "$real_script" != "$real_target" ]]; then
-        echo -e "${YELLOW}Note:${NC} Repo is at ${CYAN}$real_script${NC}, but Quickshell reads from ${CYAN}$TARGET_QS_DIR${NC}."
-        if [[ ! -e "$TARGET_QS_DIR" ]]; then
-            read -rp "Create symlink $TARGET_QS_DIR -> $real_script? [Y/n]: " link_ans
-            if [[ "${link_ans,,}" != "n" ]]; then
-                if [[ "$DRY_RUN" == true ]]; then
-                    echo "[dry-run] mkdir -p \"$(dirname "$TARGET_QS_DIR")\" && ln -s \"$real_script\" \"$TARGET_QS_DIR\""
+        echo -e "${YELLOW}Note:${NC} Repo is at ${CYAN}$real_script${NC}. Quickshell reads from ${CYAN}$TARGET_QS_DIR${NC}."
+        if [[ -e "$TARGET_QS_DIR" || -L "$TARGET_QS_DIR" ]]; then
+            read -rp "Existing $TARGET_QS_DIR found. Back it up and install there? [Y/n]: " copy_ans
+            if [[ "${copy_ans,,}" == "n" ]]; then
+                echo -e "${YELLOW}Skipping copy.${NC} Configuring $SCRIPT_DIR in place."
+                echo ""
+                return 0
+            fi
+            backup_dir="${TARGET_QS_DIR}.bak.$(date +%Y%m%d_%H%M%S)"
+            if [[ "$DRY_RUN" == true ]]; then
+                if [[ "$NO_BACKUP" == false ]]; then
+                    echo "[dry-run] mv \"$TARGET_QS_DIR\" \"$backup_dir\""
                 else
-                    mkdir -p "$(dirname "$TARGET_QS_DIR")"
-                    ln -s "$real_script" "$TARGET_QS_DIR"
-                    echo -e "${GREEN}✓${NC} Symlinked $TARGET_QS_DIR -> $real_script"
+                    echo "[dry-run] rm -rf \"$TARGET_QS_DIR\""
+                fi
+            else
+                if [[ "$NO_BACKUP" == false ]]; then
+                    mv "$TARGET_QS_DIR" "$backup_dir"
+                    echo -e "${GREEN}✓${NC} Backed up existing config to $backup_dir"
+                else
+                    rm -rf "$TARGET_QS_DIR"
                 fi
             fi
-        else
-            echo -e "${YELLOW}Warning:${NC} $TARGET_QS_DIR already exists. Configuring $SCRIPT_DIR in place."
         fi
+
+        if [[ "$DRY_RUN" == true ]]; then
+            echo "[dry-run] mkdir -p \"$TARGET_QS_DIR\" && cp -a \"$real_script/.\" \"$TARGET_QS_DIR/\""
+        else
+            mkdir -p "$TARGET_QS_DIR"
+            cp -a "$real_script/." "$TARGET_QS_DIR/"
+            echo -e "${GREEN}✓${NC} Installed canting-shell to $TARGET_QS_DIR"
+        fi
+
+        # Point config/preset paths to the installed location
+        CONFIGS_DIR="$TARGET_QS_DIR/configs"
+        PRESETS_DIR="$CONFIGS_DIR/presets"
+        THEME_CONF="$CONFIGS_DIR/theme.conf"
+        BACKUP_SCRIPT="$TARGET_QS_DIR/Settings/scripts/manage_backup.py"
         echo ""
     fi
 }

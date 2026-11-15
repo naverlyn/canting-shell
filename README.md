@@ -6,6 +6,21 @@ A personal Hyprland desktop shell built with [Quickshell](https://quickshell.out
 
 The name comes from the **canting**, the small copper pen used to draw wax patterns in Indonesian batik. Pronounced "chan-ting" (the `c` sounds like "ch"). Just like a batik maker draws their own motif, this shell lets you draw your own palette: pick a curated theme, generate one from your wallpaper, or write your own.
 
+## sneak peek
+
+![Desktop & Bars](assets/screenshots/01-desktop-bar.png)
+
+| | |
+|---|---|
+| **Control Center**<br>![Control Center](assets/screenshots/15-control-center.png) | **Settings (Appearance)**<br>![Settings Appearance](assets/screenshots/04-settings.png) |
+| **Bar Settings (Layout Editor)**<br>![Bar Settings](assets/screenshots/04b-settings-bar.png) | **Bar Settings (Available Building Blocks)**<br>![Bar Modules](assets/screenshots/04c-bar-modules.png) |
+| **Theme Switcher**<br>![Theme Switcher](assets/screenshots/05-theme-switcher.png) | **Monitor Manager**<br>![Monitor Manager](assets/screenshots/07-monitor-manager.png) |
+| **Wallpaper Picker**<br>![Wallpaper Picker](assets/screenshots/06-wallpaper-manager.png) | **Wallpaper (Browse Folders)**<br>![Wallpaper Folders](assets/screenshots/06b-wallpaper-folders.png) |
+| **App Launcher**<br>![App Launcher](assets/screenshots/02-app-launcher.png)<br><br>**App Launcher (Command Mode)**<br>![App Launcher Command](assets/screenshots/02b-app-launcher-command.png) | **App Grid**<br>![App Grid](assets/screenshots/03-app-grid.png) |
+| **Clipboard History**<br>![Clipboard History](assets/screenshots/08-clipboard.png) | **Notification Center**<br>![Notification Center](assets/screenshots/09b-notifications-center.png)<br><br>**Notification Toast**<br>![Notification Toast](assets/screenshots/09-notifications.png) |
+| **Workspace Overview**<br>![Workspace Overview](assets/screenshots/10-overview.png) | **Keybinds Cheat Sheet**<br>![Keybinds Cheat Sheet](assets/screenshots/12-keybinds.png) |
+| **Power Menu**<br>![Power Menu](assets/screenshots/11-power-menu.png) | **Polkit Prompt**<br>![Polkit Prompt](assets/screenshots/14-polkit.png)<br><br>**Screenshot HUD**<br>![Screenshot HUD](assets/screenshots/13-screenshot-hud.png) |
+
 ## what's included
 
 | Module | What it does |
@@ -112,8 +127,8 @@ Run `qs ipc show` to list every available target and function.
 ## installing
 
 ```bash
-git clone https://github.com/naverlyn/canting-shell ~/.config/quickshell
-cd ~/.config/quickshell
+git clone https://github.com/naverlyn/canting-shell
+cd canting-shell
 ./install.sh
 quickshell
 ```

@@ -81,8 +81,9 @@ import QtQuick.Layouts
             font.family: hostRoot.font
           }
 
-          // Header action button (Folders toggle / Done)
+          // Header action button (Folders toggle, hidden while browsing since ‹ Back is shown)
           Rectangle {
+            visible: !hostRoot.browsingFolders
             implicitWidth: folderBtnText.implicitWidth + 24
             height: 28
             radius: 6

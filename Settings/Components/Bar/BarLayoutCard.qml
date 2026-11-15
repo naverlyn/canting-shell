@@ -518,7 +518,7 @@ SectionCard {
             Flow {
                 visible: BarConfig.unassignedWidgets.length > 0
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: 6
 
                 Repeater {
                     model: BarConfig.unassignedWidgets
@@ -528,8 +528,8 @@ SectionCard {
                         readonly property color blockAccent: root.resolveThemeSpec(root.getBlockColorSpec(poolCard.modelData.id), root.theme.accentPrimary)
                         readonly property bool isBeingDragged: root.isDraggingBlock && root.draggedWidgetId === poolCard.modelData.id
 
-                        implicitWidth: poolRow.implicitWidth + 22
-                        implicitHeight: 34
+                        implicitWidth: poolRow.implicitWidth + 16
+                        implicitHeight: 30
                         width: implicitWidth
                         height: implicitHeight
                         radius: 8
@@ -549,7 +549,7 @@ SectionCard {
                         Row {
                             id: poolRow
                             anchors.centerIn: parent
-                            spacing: 8
+                            spacing: 6
 
                             Text {
                                 width: 16

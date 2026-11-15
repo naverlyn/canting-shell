@@ -23,10 +23,11 @@ Rectangle {
     Row {
       spacing: 4
       Text { text: "click"; color: hostRoot.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: hostRoot.font; anchors.verticalCenter: parent.verticalCenter }
-      Text { text: "apply"; color: hostRoot.theme.textMuted; font.pixelSize: 10; font.family: hostRoot.font; anchors.verticalCenter: parent.verticalCenter }
+      Text { text: hostRoot.browsingFolders ? "open folder" : "apply"; color: hostRoot.theme.textMuted; font.pixelSize: 10; font.family: hostRoot.font; anchors.verticalCenter: parent.verticalCenter }
     }
 
     Row {
+      visible: !hostRoot.browsingFolders
       spacing: 4
       Text { text: "right-click"; color: hostRoot.theme.textMuted; font.pixelSize: 10; font.bold: true; font.family: hostRoot.font; anchors.verticalCenter: parent.verticalCenter }
       Text { text: "preview"; color: hostRoot.theme.textMuted; font.pixelSize: 10; font.family: hostRoot.font; anchors.verticalCenter: parent.verticalCenter }

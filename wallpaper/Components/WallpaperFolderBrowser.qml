@@ -384,7 +384,14 @@ import QtQuick.Layouts
                   anchors.fill: parent
                   anchors.leftMargin: 14
                   anchors.rightMargin: 14
-                  spacing: 12
+                  spacing: 10
+
+                  Text {
+                    text: "󰉋"
+                    color: dirRowItem.isSubAdded ? hostRoot.theme.accentPrimary : hostRoot.theme.textMuted
+                    font.pixelSize: 14
+                    font.family: hostRoot.font
+                  }
 
                   Text {
                     text: dirRowItem.modelData
