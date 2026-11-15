@@ -7,6 +7,10 @@ Rectangle {
     required property string font
     required property var deviceData
     required property bool isExpanded
+    property bool busy: false
+
+    readonly property bool isConnected: Boolean(deviceData && deviceData.connected)
+    readonly property bool isPaired: Boolean(deviceData && deviceData.paired)
 
     signal expandRequested(string mac)
     signal connectRequested(string mac)
@@ -32,19 +36,37 @@ Rectangle {
             spacing: 16
 
             Text {
-                text: "󰂯"
+                text: deviceRow.isConnected ? "󰂱" : "󰂯"
                 font.family: deviceRow.font
                 font.pixelSize: 16
-                color: deviceRow.isExpanded ? deviceRow.theme.accentPrimary : deviceRow.theme.textPrimary
+                color: deviceRow.isConnected
+                    ? deviceRow.theme.accentGreen
+                    : (deviceRow.isExpanded ? deviceRow.theme.accentPrimary : deviceRow.theme.textPrimary)
             }
 
             Text {
                 text: deviceRow.deviceData.name
                 font.family: deviceRow.font
                 font.pixelSize: 14
-                font.bold: deviceRow.isExpanded
-                color: deviceRow.isExpanded ? deviceRow.theme.accentPrimary : deviceRow.theme.textPrimary
+                font.bold: deviceRow.isExpanded || deviceRow.isConnected
+                color: deviceRow.isConnected
+                    ? deviceRow.theme.accentGreen
+                    : (deviceRow.isExpanded ? deviceRow.theme.accentPrimary : deviceRow.theme.textPrimary)
+                elide: Text.ElideRight
                 Layout.fillWidth: true
+            }
+
+            Text {
+                visible: deviceRow.busy || deviceRow.isConnected || deviceRow.isPaired
+                text: deviceRow.busy
+                    ? "Working..."
+                    : (deviceRow.isConnected ? "Connected" : "Paired")
+                font.family: deviceRow.font
+                font.pixelSize: 11
+                font.bold: deviceRow.isConnected
+                color: deviceRow.busy
+                    ? deviceRow.theme.accentPrimary
+                    : (deviceRow.isConnected ? deviceRow.theme.accentGreen : deviceRow.theme.textMuted)
             }
 
             Text {
@@ -66,39 +88,44 @@ Rectangle {
                 Item { Layout.fillWidth: true }
 
                 Rectangle {
-                    width: 80
+                    visible: !deviceRow.isConnected
+                    width: deviceRow.busy ? 96 : 80
                     height: 30
                     radius: 6
                     color: deviceRow.theme.bgSurface
-                    border.color: deviceRow.theme.bgBorder
+                    border.color: deviceRow.theme.accentPrimary
                     border.width: 1
+                    opacity: deviceRow.busy ? 0.6 : 1.0
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Connect"
+                        text: deviceRow.busy ? "Connecting..." : "Connect"
                         font.family: deviceRow.font
                         font.pixelSize: 12
-                        color: deviceRow.theme.textPrimary
+                        color: deviceRow.theme.accentPrimary
                     }
 
                     MouseArea {
                         anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
+                        cursorShape: deviceRow.busy ? Qt.ArrowCursor : Qt.PointingHandCursor
+                        enabled: !deviceRow.busy
                         onClicked: deviceRow.connectRequested(deviceRow.deviceData.mac)
                     }
                 }
 
                 Rectangle {
-                    width: 80
+                    visible: deviceRow.isConnected
+                    width: 84
                     height: 30
                     radius: 6
                     color: deviceRow.theme.bgSurface
                     border.color: deviceRow.theme.bgBorder
                     border.width: 1
+                    opacity: deviceRow.busy ? 0.6 : 1.0
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Disconnect"
+                        text: deviceRow.busy ? "Working..." : "Disconnect"
                         font.family: deviceRow.font
                         font.pixelSize: 12
                         color: deviceRow.theme.textPrimary
@@ -106,7 +133,8 @@ Rectangle {
 
                     MouseArea {
                         anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
+                        cursorShape: deviceRow.busy ? Qt.ArrowCursor : Qt.PointingHandCursor
+                        enabled: !deviceRow.busy
                         onClicked: deviceRow.disconnectRequested(deviceRow.deviceData.mac)
                     }
                 }
@@ -118,6 +146,7 @@ Rectangle {
                     color: deviceRow.theme.bgSurface
                     border.color: Qt.rgba(deviceRow.theme.accentRed.r, deviceRow.theme.accentRed.g, deviceRow.theme.accentRed.b, 0.5)
                     border.width: 1
+                    opacity: deviceRow.busy ? 0.6 : 1.0
 
                     Text {
                         anchors.centerIn: parent
@@ -129,7 +158,8 @@ Rectangle {
 
                     MouseArea {
                         anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
+                        cursorShape: deviceRow.busy ? Qt.ArrowCursor : Qt.PointingHandCursor
+                        enabled: !deviceRow.busy
                         onClicked: deviceRow.forgetRequested(deviceRow.deviceData.mac)
                     }
                 }

@@ -15,6 +15,13 @@ Item {
     property bool btEnabled: false
     property bool btAvailable: true
     property string expandedMac: ""
+    property string busyMac: ""
+    property string errorMessage: ""
+
+    function refreshAll() {
+        if (!btStateProc.running) btStateProc.running = true;
+        if (root.btAvailable && root.btEnabled && !btListProc.running) btListProc.running = true;
+    }
 
     Process {
         id: btStateProc
@@ -29,6 +36,9 @@ Item {
                 } else {
                     root.btAvailable = true;
                     root.btEnabled = (res === "on");
+                    if (root.btEnabled && !btListProc.running) {
+                        btListProc.running = true;
+                    }
                 }
             }
         }
@@ -36,39 +46,104 @@ Item {
 
     Process {
         id: btListProc
-        command: ["bluetoothctl", "devices"]
+        command: [
+            "sh", "-c",
+            "conn_macs=$(bluetoothctl devices Connected 2>/dev/null | awk '{print $2}'); " +
+            "pair_macs=$(bluetoothctl devices Paired 2>/dev/null | awk '{print $2}'); " +
+            "bluetoothctl devices 2>/dev/null | while read -r _ mac name; do " +
+            "[ -z \"$mac\" ] && continue; " +
+            "c='0'; for cm in $conn_macs; do [ \"$cm\" = \"$mac\" ] && c='1' && break; done; " +
+            "p='0'; for pm in $pair_macs; do [ \"$pm\" = \"$mac\" ] && p='1' && break; done; " +
+            "printf 'DEV\\t%s\\t%s\\t%s\\t%s\\n' \"$c\" \"$p\" \"$mac\" \"$name\"; " +
+            "done"
+        ]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.trim().split("\n");
                 const res = [];
                 for (const line of lines) {
-                    if (!line) continue;
-                    const parts = line.split(" ");
-                    if (parts.length >= 3) {
+                    if (!line.startsWith("DEV\t")) continue;
+                    const parts = line.split("\t");
+                    if (parts.length >= 4) {
+                        const c = parts[1] === "1";
+                        const p = parts[2] === "1";
+                        const mac = parts[3].trim();
+                        const name = parts.slice(4).join("\t").trim() || mac;
+                        const macDashed = mac.replace(/:/g, "-").toLowerCase();
+                        const isUnnamed = !name || name.toLowerCase() === macDashed || name.toLowerCase() === mac.toLowerCase();
                         res.push({
-                            mac: parts[1],
-                            name: parts.slice(2).join(" ")
+                            mac: mac,
+                            name: isUnnamed ? "Unknown Device" : name,
+                            connected: c,
+                            paired: p,
+                            unnamed: isUnnamed
                         });
                     }
                 }
+                res.sort((a, b) => {
+                    if (a.connected !== b.connected) return a.connected ? -1 : 1;
+                    if (a.paired !== b.paired) return a.paired ? -1 : 1;
+                    if (a.unnamed !== b.unnamed) return a.unnamed ? 1 : -1;
+                    return a.name.localeCompare(b.name);
+                });
                 root.devices = res;
             }
         }
     }
 
-    Process { id: btToggleProc }
-    Process { id: btActionProc }
+    Process {
+        id: btToggleProc
+        property string lastOutput: ""
+        stdout: StdioCollector {
+            onStreamFinished: btToggleProc.lastOutput = text.trim()
+        }
+        onExited: (exitCode) => {
+            if (exitCode !== 0) {
+                root.errorMessage = btToggleProc.lastOutput || "Failed to toggle Bluetooth power.";
+            } else {
+                root.errorMessage = "";
+            }
+            btStateProc.running = true;
+        }
+    }
+
+    Process {
+        id: btScanProc
+        command: ["sh", "-c", "rfkill unblock bluetooth 2>/dev/null || true; bluetoothctl --timeout 8 scan on >/dev/null 2>&1"]
+        running: false
+        onExited: {
+            if (root.btAvailable && root.btEnabled && !btListProc.running) {
+                btListProc.running = true;
+            }
+        }
+    }
+
+    Process {
+        id: btActionProc
+        property string lastOutput: ""
+        stdout: StdioCollector {
+            onStreamFinished: btActionProc.lastOutput = text.trim()
+        }
+        onExited: (exitCode) => {
+            root.busyMac = "";
+            if (exitCode !== 0) {
+                const lines = btActionProc.lastOutput.split("\n").filter(l => l.trim() !== "");
+                root.errorMessage = lines.length > 0 ? lines[lines.length - 1].trim() : "Bluetooth action failed.";
+            } else {
+                root.errorMessage = "";
+                root.expandedMac = "";
+            }
+            root.refreshAll();
+        }
+    }
 
     Timer {
-        interval: 5000
+        interval: btScanProc.running ? 2000 : 5000
         repeat: true
         running: root.visible
         triggeredOnStart: true
-        onTriggered: {
-            btStateProc.running = true;
-            if (root.btAvailable && root.btEnabled) btListProc.running = true;
-        }
+        onTriggered: root.refreshAll()
     }
 
     ColumnLayout {
@@ -80,18 +155,67 @@ Item {
             font: root.font
             btEnabled: root.btEnabled
             btAvailable: root.btAvailable
+            scanning: btScanProc.running
             onEnableRequested: {
-                btToggleProc.command = ["bluetoothctl", "power", "on"];
+                if (btToggleProc.running) return;
+                root.errorMessage = "";
+                btToggleProc.lastOutput = "";
+                btToggleProc.command = ["sh", "-c", "rfkill unblock bluetooth 2>/dev/null || true; bluetoothctl power on 2>&1"];
                 btToggleProc.running = true;
-                root.btEnabled = true;
-                btListProc.running = true;
             }
             onDisableRequested: {
+                if (btToggleProc.running) return;
+                root.errorMessage = "";
+                btToggleProc.lastOutput = "";
                 btToggleProc.command = ["bluetoothctl", "power", "off"];
                 btToggleProc.running = true;
                 root.btEnabled = false;
                 root.devices = [];
                 root.expandedMac = "";
+            }
+            onScanRequested: {
+                if (!btScanProc.running && root.btAvailable && root.btEnabled) {
+                    root.errorMessage = "";
+                    btScanProc.running = true;
+                }
+            }
+        }
+
+        Rectangle {
+            visible: root.errorMessage !== ""
+            Layout.fillWidth: true
+            height: errorText.implicitHeight + 16
+            radius: 8
+            color: Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.12)
+            border.color: Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.45)
+            border.width: 1
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 8
+
+                Text {
+                    id: errorText
+                    Layout.fillWidth: true
+                    text: root.errorMessage
+                    font.family: root.font
+                    font.pixelSize: 12
+                    color: root.theme.accentRed
+                    wrapMode: Text.WordWrap
+                }
+
+                Text {
+                    text: "✕"
+                    font.family: root.font
+                    font.pixelSize: 12
+                    color: root.theme.accentRed
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.errorMessage = ""
+                    }
+                }
             }
         }
 
@@ -113,22 +237,35 @@ Item {
                     font: root.font
                     deviceData: modelData
                     isExpanded: root.expandedMac === modelData.mac
+                    busy: root.busyMac === modelData.mac
                     onExpandRequested: mac => root.expandedMac = mac
                     onConnectRequested: mac => {
-                        btActionProc.command = ["bluetoothctl", "connect", mac];
+                        if (btActionProc.running) return;
+                        root.errorMessage = "";
+                        root.busyMac = mac;
+                        btActionProc.lastOutput = "";
+                        btActionProc.command = [
+                            "python3",
+                            Qt.resolvedUrl("../scripts/bt_connect.py").toString().replace("file://", ""),
+                            mac
+                        ];
                         btActionProc.running = true;
-                        root.expandedMac = "";
                     }
                     onDisconnectRequested: mac => {
-                        btActionProc.command = ["bluetoothctl", "disconnect", mac];
+                        if (btActionProc.running) return;
+                        root.errorMessage = "";
+                        root.busyMac = mac;
+                        btActionProc.lastOutput = "";
+                        btActionProc.command = ["sh", "-c", "bluetoothctl disconnect \"$1\" 2>&1", "--", mac];
                         btActionProc.running = true;
-                        root.expandedMac = "";
                     }
                     onForgetRequested: mac => {
-                        btActionProc.command = ["bluetoothctl", "remove", mac];
+                        if (btActionProc.running) return;
+                        root.errorMessage = "";
+                        root.busyMac = mac;
+                        btActionProc.lastOutput = "";
+                        btActionProc.command = ["sh", "-c", "bluetoothctl remove \"$1\" 2>&1", "--", mac];
                         btActionProc.running = true;
-                        root.expandedMac = "";
-                        btListProc.running = true;
                     }
                     onCollapseRequested: root.expandedMac = ""
                 }

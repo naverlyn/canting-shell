@@ -280,7 +280,9 @@ ColumnLayout {
             return;
         }
         const targetState = !root.btEnabled;
-        btProc.command = ["bluetoothctl", "power", targetState ? "on" : "off"];
+        btProc.command = targetState
+            ? ["sh", "-c", "rfkill unblock bluetooth 2>/dev/null || true; bluetoothctl power on"]
+            : ["bluetoothctl", "power", "off"];
         btProc.running = true;
     }
 

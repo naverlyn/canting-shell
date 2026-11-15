@@ -7,8 +7,10 @@ RowLayout {
     required property string font
     required property bool btEnabled
     required property bool btAvailable
+    property bool scanning: false
     signal enableRequested()
     signal disableRequested()
+    signal scanRequested()
 
     Layout.fillWidth: true
 
@@ -22,6 +24,40 @@ RowLayout {
     }
 
     Rectangle {
+        visible: headerBar.btAvailable && headerBar.btEnabled
+        Layout.preferredWidth: scanText.implicitWidth + 20
+        Layout.preferredHeight: 26
+        width: Layout.preferredWidth
+        height: 26
+        radius: 6
+        color: headerBar.scanning
+            ? Qt.rgba(headerBar.theme.accentPrimary.r, headerBar.theme.accentPrimary.g, headerBar.theme.accentPrimary.b, 0.2)
+            : headerBar.theme.bgSurface
+        border.color: headerBar.scanning ? headerBar.theme.accentPrimary : headerBar.theme.bgBorder
+        border.width: 1
+        opacity: headerBar.scanning ? 0.85 : 1.0
+
+        Text {
+            id: scanText
+            anchors.centerIn: parent
+            text: headerBar.scanning ? "Scanning..." : "Scan"
+            font.family: headerBar.font
+            font.pixelSize: 11
+            font.bold: headerBar.scanning
+            color: headerBar.scanning ? headerBar.theme.accentPrimary : headerBar.theme.textPrimary
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: headerBar.scanning ? Qt.ArrowCursor : Qt.PointingHandCursor
+            enabled: !headerBar.scanning
+            onClicked: headerBar.scanRequested()
+        }
+    }
+
+    Rectangle {
+        Layout.preferredWidth: 76
+        Layout.preferredHeight: 26
         width: 76
         height: 26
         radius: 6

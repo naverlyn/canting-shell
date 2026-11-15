@@ -53,7 +53,7 @@ Rectangle {
       "bluetoothctl devices 2>/dev/null | while read -r _ mac name; do " +
       "[ -z \"$mac\" ] && continue; " +
       "c='0'; for cm in $conn_macs; do [ \"$cm\" = \"$mac\" ] && c='1' && break; done; " +
-      "printf 'DEV:%s:%s:%s\\n' \"$c\" \"$mac\" \"$name\"; " +
+      "printf 'DEV\\t%s\\t%s\\t%s\\n' \"$c\" \"$mac\" \"$name\"; " +
       "done"
     ]
     running: true
@@ -69,14 +69,12 @@ Rectangle {
             const st = line.substring(6).trim();
             btPill.btAvailable = (st !== "none");
             btPill.btEnabled = (st === "on");
-          } else if (line.startsWith("DEV:")) {
-            const rest = line.substring(4);
-            const c = rest.charAt(0) === "1";
-            const rem = rest.substring(2);
-            const idx = rem.indexOf(":");
-            if (idx !== -1) {
-              const mac = rem.substring(0, idx);
-              const name = rem.substring(idx + 1).trim() || mac;
+          } else if (line.startsWith("DEV\t")) {
+            const parts = line.split("\t");
+            if (parts.length >= 3) {
+              const c = parts[1] === "1";
+              const mac = parts[2].trim();
+              const name = parts.slice(3).join("\t").trim() || mac;
               if (c && !firstConn) firstConn = name;
               devs.push({
                 mac: mac,
@@ -121,7 +119,9 @@ Rectangle {
       btPill.connectedDeviceName = "";
       btPill.deviceList = [];
     }
-    btActionProc.command = ["bluetoothctl", "power", next ? "on" : "off"];
+    btActionProc.command = next
+      ? ["sh", "-c", "rfkill unblock bluetooth 2>/dev/null || true; bluetoothctl power on"]
+      : ["bluetoothctl", "power", "off"];
     btActionProc.running = true;
   }
 
