@@ -432,256 +432,31 @@ Rectangle {
             }
           }
 
-          delegate: Rectangle {
-            id: netDelegate
-            required property var modelData
-            readonly property bool isExpanded: wifiPill.expandedSsid === modelData.ssid
-            readonly property bool isSaved: Boolean(wifiPill.savedConnections[modelData.ssid])
-            readonly property bool needsPassword: modelData.secured && !modelData.active && !isSaved
-
+          delegate: WifiNetworkDelegate {
             width: netListView.width - (netScroll.visible ? 6 : 0)
-            height: isExpanded ? (needsPassword ? 154 : 118) : 44
-            radius: 10
-            color: isExpanded
-              ? Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.07)
-              : (rowHov.hovered ? Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.045) : "transparent")
-            border.color: isExpanded
-              ? Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.10)
-              : "transparent"
-            border.width: 1
-            clip: true
-            Behavior on height { NumberAnimation { duration: 170; easing.type: Easing.OutCubic } }
-            Behavior on color { ColorAnimation { duration: 130 } }
+            theme: th
+            accent: wifiProvider.accent
+            font: wifiProvider.font
+            isExpanded: wifiPill.expandedSsid === modelData.ssid
+            isSaved: Boolean(wifiPill.savedConnections[modelData.ssid])
+            isConnecting: wifiPill.isConnecting
+            connectingSsid: wifiPill.connectingSsid
+            autoConnect: wifiPill.autoConnect
+            passwordInput: wifiPill.passwordInput
+            signalIconFn: wifiPill.netSignalIcon
 
-            HoverHandler { id: rowHov }
-
-            // Fluent short pill accent indicator on the left
-            Rectangle {
-              visible: netDelegate.isExpanded || netDelegate.modelData.active
-              width: 3
-              height: netDelegate.isExpanded ? 24 : 16
-              y: netDelegate.isExpanded ? 12 : 14
-              anchors.left: parent.left
-              anchors.leftMargin: 3
-              radius: 1.5
-              color: wifiProvider.accent
-              Behavior on height { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-            }
-
-            ColumnLayout {
-              anchors.fill: parent
-              anchors.leftMargin: 14
-              anchors.rightMargin: 12
-              anchors.topMargin: 8
-              anchors.bottomMargin: 10
-              spacing: 8
-
-              // Main network header row
-              Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 28
-
-                RowLayout {
-                  anchors.fill: parent
-                  spacing: 12
-
-                  Text {
-                    text: wifiPill.netSignalIcon(netDelegate.modelData.signal, netDelegate.modelData.secured)
-                    font.family: wifiProvider.font
-                    font.pixelSize: 16
-                    color: netDelegate.modelData.active ? wifiProvider.accent : th.textPrimary
-                    Layout.preferredWidth: 20
-                    horizontalAlignment: Text.AlignHCenter
-                  }
-
-                  ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 1
-
-                    Text {
-                      text: netDelegate.modelData.ssid
-                      font.family: wifiProvider.font
-                      font.pixelSize: 12
-                      font.bold: netDelegate.modelData.active || netDelegate.isExpanded
-                      color: th.textPrimary
-                      elide: Text.ElideRight
-                      Layout.fillWidth: true
-                    }
-
-                    Text {
-                      visible: netDelegate.isExpanded || netDelegate.modelData.active
-                      text: {
-                        if (wifiPill.isConnecting && wifiPill.connectingSsid === netDelegate.modelData.ssid) return "Connecting...";
-                        if (netDelegate.modelData.active) return netDelegate.modelData.secured ? "Connected, secured" : "Connected, open";
-                        return netDelegate.modelData.secured ? (netDelegate.isSaved ? "Saved, secured" : "Secured") : "Open";
-                      }
-                      font.family: wifiProvider.font
-                      font.pixelSize: 10
-                      color: netDelegate.modelData.active ? wifiProvider.accent : th.textSecondary
-                    }
-                  }
-
-                  Text {
-                    visible: !netDelegate.isExpanded
-                    text: netDelegate.modelData.signal + "%"
-                    font.family: wifiProvider.font
-                    font.pixelSize: 10
-                    color: th.textMuted
-                  }
-                }
-
-                MouseArea {
-                  anchors.fill: parent
-                  cursorShape: Qt.PointingHandCursor
-                  onClicked: {
-                    if (wifiPill.expandedSsid === netDelegate.modelData.ssid) {
-                      wifiPill.expandedSsid = "";
-                    } else {
-                      wifiPill.expandedSsid = netDelegate.modelData.ssid;
-                      wifiPill.passwordInput = "";
-                    }
-                  }
-                }
-              }
-
-              // Expanded controls indented to align with SSID text (Windows 11 style)
-              ColumnLayout {
-                visible: netDelegate.isExpanded
-                Layout.fillWidth: true
-                Layout.leftMargin: 32
-                spacing: 10
-
-                // "Connect automatically" checkbox row
-                RowLayout {
-                  Layout.fillWidth: true
-                  spacing: 8
-
-                  Rectangle {
-                    width: 16; height: 16; radius: 4
-                    color: wifiPill.autoConnect ? wifiProvider.accent : "transparent"
-                    border.color: wifiPill.autoConnect ? wifiProvider.accent : Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.35)
-                    border.width: 1.5
-                    Behavior on color { ColorAnimation { duration: 120 } }
-
-                    Text {
-                      visible: wifiPill.autoConnect
-                      anchors.centerIn: parent
-                      text: "✓"
-                      font.family: wifiProvider.font
-                      font.pixelSize: 10
-                      font.bold: true
-                      color: th.bgBase
-                    }
-
-                    MouseArea {
-                      anchors.fill: parent
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: wifiPill.autoConnect = !wifiPill.autoConnect
-                    }
-                  }
-
-                  Text {
-                    text: "Connect automatically"
-                    font.family: wifiProvider.font
-                    font.pixelSize: 11
-                    color: th.textSecondary
-                    Layout.fillWidth: true
-
-                    MouseArea {
-                      anchors.fill: parent
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: wifiPill.autoConnect = !wifiPill.autoConnect
-                    }
-                  }
-                }
-
-                // Password field when connecting to a new secured network
-                Loader {
-                  active: netDelegate.isExpanded && netDelegate.needsPassword
-                  visible: active
-                  Layout.fillWidth: true
-                  Layout.preferredHeight: 28
-
-                  sourceComponent: Rectangle {
-                    radius: 6
-                    color: th.bgBase
-                    border.color: pwdInput.activeFocus ? wifiProvider.accent : th.bgBorder
-                    border.width: 1
-
-                    TextInput {
-                      id: pwdInput
-                      anchors.fill: parent
-                      anchors.leftMargin: 8
-                      anchors.rightMargin: 8
-                      verticalAlignment: TextInput.AlignVCenter
-                      font.family: wifiProvider.font
-                      font.pixelSize: 11
-                      color: th.textPrimary
-                      echoMode: TextInput.Password
-                      selectByMouse: true
-                      onTextChanged: wifiPill.passwordInput = text
-                      onAccepted: wifiPill.connectNetwork(netDelegate.modelData.ssid, netDelegate.modelData.secured, text)
-
-                      Text {
-                        visible: parent.text === "" && !parent.activeFocus
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Enter network security key..."
-                        font.family: wifiProvider.font
-                        font.pixelSize: 10
-                        color: th.textMuted
-                      }
-                    }
-                  }
-                }
-
-                // Bottom-right Connect / Disconnect button
-                RowLayout {
-                  Layout.fillWidth: true
-                  Item { Layout.fillWidth: true }
-
-                  Rectangle {
-                    width: 124
-                    height: 28
-                    radius: 6
-                    color: netDelegate.modelData.active
-                      ? (actBtnHov.hovered ? Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.16) : Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.10))
-                      : (actBtnHov.hovered ? Qt.lighter(wifiProvider.accent, 1.1) : wifiProvider.accent)
-                    border.color: netDelegate.modelData.active
-                      ? Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.14)
-                      : "transparent"
-                    border.width: 1
-                    scale: actBtnMouse.pressed ? 0.96 : 1.0
-                    Behavior on scale { NumberAnimation { duration: 100 } }
-                    Behavior on color { ColorAnimation { duration: 120 } }
-                    HoverHandler { id: actBtnHov }
-
-                    Text {
-                      anchors.centerIn: parent
-                      text: (wifiPill.isConnecting && wifiPill.connectingSsid === netDelegate.modelData.ssid)
-                        ? "Working..."
-                        : (netDelegate.modelData.active ? "Disconnect" : "Connect")
-                      font.family: wifiProvider.font
-                      font.pixelSize: 11
-                      font.bold: true
-                      color: netDelegate.modelData.active ? th.textPrimary : th.bgBase
-                    }
-
-                    MouseArea {
-                      id: actBtnMouse
-                      anchors.fill: parent
-                      cursorShape: Qt.PointingHandCursor
-                      onClicked: {
-                        if (netDelegate.modelData.active) {
-                          wifiPill.disconnectNetwork(netDelegate.modelData.ssid);
-                        } else {
-                          wifiPill.connectNetwork(netDelegate.modelData.ssid, netDelegate.modelData.secured, wifiPill.passwordInput);
-                        }
-                      }
-                    }
-                  }
-                }
+            onToggleExpand: ssid => {
+              if (wifiPill.expandedSsid === ssid) {
+                wifiPill.expandedSsid = "";
+              } else {
+                wifiPill.expandedSsid = ssid;
+                wifiPill.passwordInput = "";
               }
             }
+            onToggleAutoConnect: wifiPill.autoConnect = !wifiPill.autoConnect
+            onPasswordEdited: pwd => { wifiPill.passwordInput = pwd; }
+            onConnectRequested: (ssid, secured, pwd) => wifiPill.connectNetwork(ssid, secured, pwd)
+            onDisconnectRequested: ssid => wifiPill.disconnectNetwork(ssid)
           }
         }
 
