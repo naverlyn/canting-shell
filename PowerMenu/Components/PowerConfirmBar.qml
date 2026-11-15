@@ -15,16 +15,17 @@ Item {
 
     readonly property bool confirming: root.pendingAction !== null && root.pendingAction !== undefined
     property bool ready: false
+    property real animHeight: root.confirming ? 52 : 0
 
     Component.onCompleted: Qt.callLater(() => { root.ready = true; })
 
-    visible: height > 0
+    visible: root.confirming || root.animHeight > 0.5
     clip: true
     opacity: root.confirming ? 1.0 : 0.0
     Layout.fillWidth: true
-    Layout.preferredHeight: root.confirming ? 52 : 0
+    Layout.preferredHeight: root.animHeight
 
-    Behavior on Layout.preferredHeight {
+    Behavior on animHeight {
         enabled: root.ready
         NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
     }
