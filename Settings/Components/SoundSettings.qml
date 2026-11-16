@@ -254,7 +254,7 @@ Item {
         contentHeight: mainCol.implicitHeight + 32
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        interactive: !soundRow2MasterVolumeInst.sinkMouseRef.pressed && !balMouse.pressed && !soundInputSectionInst.srcMouseRef.pressed
+        interactive: !(soundInputSectionInst.srcMouseRef && soundInputSectionInst.srcMouseRef.pressed)
 
         ColumnLayout {
             id: mainCol

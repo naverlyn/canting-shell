@@ -116,7 +116,7 @@ Item {
         contentHeight: mainCol.implicitHeight + 32
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        interactive: !desktopMouse.pressed && !oSDPlacementTimingInst.marginXMouseRef.pressed && !oSDPlacementTimingInst.marginYMouseRef.pressed && !oSDPlacementTimingInst.timeoutMouseRef.pressed
+        interactive: !(oSDPlacementTimingInst.marginXMouseRef && oSDPlacementTimingInst.marginXMouseRef.pressed) && !(oSDPlacementTimingInst.marginYMouseRef && oSDPlacementTimingInst.marginYMouseRef.pressed) && !(oSDPlacementTimingInst.timeoutMouseRef && oSDPlacementTimingInst.timeoutMouseRef.pressed)
 
         ScrollBar.vertical: ScrollBar {
             id: vertScroll

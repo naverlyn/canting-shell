@@ -291,7 +291,6 @@ Item {
         contentHeight: mainCol.implicitHeight + 36
         clip: true
         boundsBehavior: Flickable.StopAtBounds
-        interactive: !browserList.hovered
 
         ScrollBar.vertical: ScrollBar {
             id: mainScroll
