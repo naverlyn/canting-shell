@@ -590,20 +590,58 @@ Scope {
 
                 x: {
                   if (barContentContainer.isVert) return 0;
-                  if (totalPanels <= 1) return 0;
-                  if (index === 0) return 0;
+                  if (totalPanels <= 1 || index === 0) return 0;
                   if (index === totalPanels - 1) return Math.max(0, barContentContainer.width - width);
+                  const gap = 8;
                   const frac = index / (totalPanels - 1);
-                  return Math.max(0, Math.min(barContentContainer.width - width, (barContentContainer.width * frac) - (width / 2)));
+                  const idealX = (barContentContainer.width * frac) - (width / 2);
+                  let minX = 0;
+                  const prev = panelsOuterRepeater.itemAt(index - 1);
+                  if (prev) {
+                    minX = prev.x + prev.width + (prev.width > 0 ? gap : 0);
+                  }
+                  let maxX = Math.max(0, barContentContainer.width - width);
+                  const last = panelsOuterRepeater.itemAt(totalPanels - 1);
+                  if (last) {
+                    let tailW = last.width + (last.width > 0 ? gap : 0);
+                    for (let k = index + 1; k < totalPanels - 1; k++) {
+                      const mid = panelsOuterRepeater.itemAt(k);
+                      if (mid && mid.width > 0) tailW += mid.width + gap;
+                    }
+                    maxX = barContentContainer.width - tailW - width;
+                  }
+                  if (minX <= maxX) {
+                    return Math.max(minX, Math.min(maxX, idealX));
+                  }
+                  return Math.max(0, Math.min(barContentContainer.width - width, minX));
                 }
 
                 y: {
                   if (!barContentContainer.isVert) return 0;
-                  if (totalPanels <= 1) return 0;
-                  if (index === 0) return 0;
+                  if (totalPanels <= 1 || index === 0) return 0;
                   if (index === totalPanels - 1) return Math.max(0, barContentContainer.height - height);
+                  const gap = 6;
                   const frac = index / (totalPanels - 1);
-                  return Math.max(0, Math.min(barContentContainer.height - height, (barContentContainer.height * frac) - (height / 2)));
+                  const idealY = (barContentContainer.height * frac) - (height / 2);
+                  let minY = 0;
+                  const prev = panelsOuterRepeater.itemAt(index - 1);
+                  if (prev) {
+                    minY = prev.y + prev.height + (prev.height > 0 ? gap : 0);
+                  }
+                  let maxY = Math.max(0, barContentContainer.height - height);
+                  const last = panelsOuterRepeater.itemAt(totalPanels - 1);
+                  if (last) {
+                    let tailH = last.height + (last.height > 0 ? gap : 0);
+                    for (let k = index + 1; k < totalPanels - 1; k++) {
+                      const mid = panelsOuterRepeater.itemAt(k);
+                      if (mid && mid.height > 0) tailH += mid.height + gap;
+                    }
+                    maxY = barContentContainer.height - tailH - height;
+                  }
+                  if (minY <= maxY) {
+                    return Math.max(minY, Math.min(maxY, idealY));
+                  }
+                  return Math.max(0, Math.min(barContentContainer.height - height, minY));
                 }
 
                 Repeater {

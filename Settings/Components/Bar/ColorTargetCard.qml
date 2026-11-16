@@ -181,7 +181,20 @@ SectionCard {
         Layout.fillWidth: true
 
         Repeater {
-            model: BarConfig.widgetDefinitions
+            model: {
+                void BarConfig.panelsRevision;
+                void BarConfig.selectedBarIndex;
+                void BarConfig.activeEditingDisplay;
+                const pList = BarConfig.panels || [];
+                const assigned = {};
+                for (let p = 0; p < pList.length; p++) {
+                    const arr = pList[p] || [];
+                    for (let j = 0; j < arr.length; j++) {
+                        assigned[arr[j]] = true;
+                    }
+                }
+                return (BarConfig.widgetDefinitions || []).filter(w => Boolean(assigned[w.id]));
+            }
             delegate: Rectangle {
                 id: colorBlockCard
                 required property var modelData
