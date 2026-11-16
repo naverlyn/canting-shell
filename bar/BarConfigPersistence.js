@@ -19,6 +19,7 @@ function buildSaveData(root) {
     allMonitors: primary ? primary.allMonitors : root.allMonitors,
     displayTarget: primary && primary.displayTarget !== undefined ? primary.displayTarget : root.displayTarget,
     secondaryPosition: primary && primary.secondaryPosition !== undefined ? primary.secondaryPosition : (root.secondaryPosition || "top"),
+    secondaryFloating: primary && primary.secondaryFloating !== undefined ? Boolean(primary.secondaryFloating) : Boolean(root.secondaryFloating),
     secondaryMode: primary && primary.secondaryMode !== undefined ? primary.secondaryMode : root.secondaryMode,
     blankOnSecondary: primary && primary.blankOnSecondary !== undefined ? Boolean(primary.blankOnSecondary) : root.blankOnSecondary,
     secondaryPanels: primary && primary.secondaryPanels ? primary.secondaryPanels : root.secondaryPanels,
@@ -118,6 +119,7 @@ function applyConfig(root, cfg) {
     root.displayTarget = cfg.allMonitors ? "all" : "primary";
   }
   if (cfg.secondaryPosition !== undefined) root.secondaryPosition = String(cfg.secondaryPosition);
+  if (cfg.secondaryFloating !== undefined) root.secondaryFloating = Boolean(cfg.secondaryFloating);
   if (cfg.secondaryMode !== undefined) root.secondaryMode = String(cfg.secondaryMode);
   if (cfg.blankOnSecondary !== undefined) root.blankOnSecondary = Boolean(cfg.blankOnSecondary);
   if (Array.isArray(cfg.secondaryPanels) && cfg.secondaryPanels.length > 0) {
@@ -206,9 +208,11 @@ function applyConfig(root, cfg) {
       hidePill: b.hidePill !== undefined ? Boolean(b.hidePill) : root.hidePill,
       activeStyle: b.activeStyle || cfg.activeStyle || root.activeStyle,
       barColor: b.barColor !== undefined ? String(b.barColor) : "",
+      secondaryBarColor: b.secondaryBarColor !== undefined ? String(b.secondaryBarColor) : (b.barColor !== undefined ? String(b.barColor) : ""),
       allMonitors: b.allMonitors !== undefined ? Boolean(b.allMonitors) : (b.displayTarget ? b.displayTarget === "all" : root.allMonitors),
       displayTarget: b.displayTarget || (b.allMonitors !== undefined ? (b.allMonitors ? "all" : "primary") : root.displayTarget),
       secondaryPosition: b.secondaryPosition || root.secondaryPosition || "top",
+      secondaryFloating: b.secondaryFloating !== undefined ? Boolean(b.secondaryFloating) : (b.floating !== undefined ? Boolean(b.floating) : false),
       secondaryMode: b.secondaryMode || root.secondaryMode,
       blankOnSecondary: b.blankOnSecondary !== undefined ? Boolean(b.blankOnSecondary) : (b.secondaryMode === "blank"),
       secondaryPanels: Array.isArray(b.secondaryPanels) && b.secondaryPanels.length > 0
@@ -243,12 +247,14 @@ function applyConfig(root, cfg) {
       allMonitors: root.allMonitors,
       displayTarget: root.displayTarget,
       secondaryPosition: root.secondaryPosition || "top",
+      secondaryFloating: root.secondaryFloating !== undefined ? Boolean(root.secondaryFloating) : Boolean(root.floating),
       secondaryMode: root.secondaryMode,
       blankOnSecondary: root.blankOnSecondary,
       secondaryPanels: root.secondaryPanels,
       innerCorners: root.innerCorners,
       fluidCards: root.fluidCards !== undefined ? Boolean(root.fluidCards) : true,
       barColor: "",
+      secondaryBarColor: "",
       barBorder: root.barBorder,
       barBorderWidth: root.barBorderWidth,
       barBorderColor: root.barBorderColor,
@@ -403,6 +409,7 @@ function resetDefaults(root) {
         ["weather", "clock"]
       ],
       barColor: "",
+      secondaryBarColor: "",
       innerCorners: true,
       fluidCards: true,
       panels: [

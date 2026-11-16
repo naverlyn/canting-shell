@@ -17,7 +17,12 @@ Singleton {
   readonly property var glyphLevels: [" ", " ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
 
   // Active check: only run cava when it is enabled and placed in at least one bar
-  readonly property bool shouldRun: Boolean(BarConfig.showCava) && BarConfig.isWidgetInAnyBar("cava")
+  readonly property bool shouldRun: {
+    void BarConfig.panelsRevision;
+    void BarConfig.bars;
+    void BarConfig.hasSecondaryScreen;
+    return Boolean(BarConfig.showCava) && BarConfig.isWidgetInAnyBar("cava");
+  }
 
   onShouldRunChanged: {
     if (root.shouldRun) {
@@ -86,6 +91,7 @@ Singleton {
     function onCavaStereoChanged() { root.restart(); }
     function onShowCavaChanged() { root.restart(); }
     function onBarsChanged() { root.restart(); }
+    function onPanelsRevisionChanged() { root.restart(); }
   }
 
   function restart() {

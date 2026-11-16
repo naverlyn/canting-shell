@@ -71,10 +71,23 @@ SectionCard {
     RowDivider {}
 
     SettingToggleRow {
-        title: "Floating Bar"
+        title: {
+            const cur = BarConfig.currentBar;
+            const tgt = cur ? (cur.displayTarget || (cur.allMonitors ? "all" : "primary")) : "primary";
+            if (tgt === "all" && root.hasMultipleMonitors) {
+                return BarConfig.activeEditingDisplay === "secondary" ? "Floating Bar (Secondary)" : "Floating Bar (Primary)";
+            }
+            return "Floating Bar";
+        }
         desc: "Add screen margins and rounded outer corners"
-        checked: BarConfig.currentBar ? Boolean(BarConfig.currentBar.floating) : BarConfig.floating
-        onToggled: (val) => BarConfig.updateBarProp("floating", val)
+        checked: root.generalTab.curFloating
+        onToggled: (val) => {
+            if (root.generalTab.isEditingSecondary) {
+                BarConfig.updateBarProp("secondaryFloating", val);
+            } else {
+                BarConfig.updateBarProp("floating", val);
+            }
+        }
     }
 
     RowDivider {}
@@ -83,7 +96,7 @@ SectionCard {
         title: "Inner Rounded Corners"
         desc: "Display concave rounded corners connecting docked bar edges to screen borders"
         checked: BarConfig.currentBar ? (BarConfig.currentBar.innerCorners !== undefined ? Boolean(BarConfig.currentBar.innerCorners) : Boolean(BarConfig.innerCorners)) : Boolean(BarConfig.innerCorners)
-        rowEnabled: !(BarConfig.currentBar ? Boolean(BarConfig.currentBar.floating) : BarConfig.floating)
+        rowEnabled: !root.generalTab.curFloating
         onToggled: (val) => {
             BarConfig.innerCorners = val;
             BarConfig.updateBarProp("innerCorners", val);
@@ -96,15 +109,16 @@ SectionCard {
         title: "Screen Border Frame"
         desc: "Frame un-docked desktop edges with a sleek customizable border line and inner rounded corners"
         checked: Boolean(BarConfig.screenBorder)
+        rowEnabled: !root.generalTab.curFloating
         onToggled: (val) => BarConfig.setScreenBorder(val)
     }
 
     RowDivider {
-        visible: Boolean(BarConfig.screenBorder)
+        visible: Boolean(BarConfig.screenBorder) && !root.generalTab.curFloating
     }
 
     SettingSliderRow {
-        visible: Boolean(BarConfig.screenBorder)
+        visible: Boolean(BarConfig.screenBorder) && !root.generalTab.curFloating
         title: "Screen Border Thickness"
         desc: "Pixel thickness of the border along un-docked desktop edges"
         value: BarConfig.screenBorderThickness
@@ -122,14 +136,15 @@ SectionCard {
     }
 
     RowDivider {
-        visible: Boolean(BarConfig.screenBorder)
+        visible: Boolean(BarConfig.screenBorder) && !root.generalTab.curFloating
     }
 
     SettingToggleRow {
-        visible: Boolean(BarConfig.screenBorder)
+        visible: Boolean(BarConfig.screenBorder) && !root.generalTab.curFloating
         title: "Screen Border Inner Corners"
         desc: "Display smooth concave rounded corners where border edges meet each other or active bars"
         checked: Boolean(BarConfig.screenBorderCorners)
+        rowEnabled: !root.generalTab.curFloating
         onToggled: (val) => BarConfig.setScreenBorderCorners(val)
     }
 
@@ -139,15 +154,16 @@ SectionCard {
         title: "Inner Shadow"
         desc: "Cast a soft ambient shadow inward from the bar and border frame onto the desktop"
         checked: Boolean(BarConfig.screenBorderShadow)
+        rowEnabled: !root.generalTab.curFloating
         onToggled: (val) => BarConfig.setScreenBorderShadow(val)
     }
 
     RowDivider {
-        visible: Boolean(BarConfig.screenBorderShadow)
+        visible: Boolean(BarConfig.screenBorderShadow) && !root.generalTab.curFloating
     }
 
     SettingSliderRow {
-        visible: Boolean(BarConfig.screenBorderShadow)
+        visible: Boolean(BarConfig.screenBorderShadow) && !root.generalTab.curFloating
         title: "Inner Shadow Size"
         desc: "Spread distance in pixels for the ambient inner shadow"
         value: BarConfig.screenBorderShadowSize
@@ -171,6 +187,7 @@ SectionCard {
         title: "Fluid Widget Cards"
         desc: "Blend detail popups directly into the bar with curved inner corners (Fluid) vs detached floating cards (Flyout)"
         checked: BarConfig.currentBar ? (BarConfig.currentBar.fluidCards !== undefined ? Boolean(BarConfig.currentBar.fluidCards) : Boolean(BarConfig.fluidCards)) : Boolean(BarConfig.fluidCards)
+        rowEnabled: !root.generalTab.curFloating
         onToggled: (val) => {
             BarConfig.fluidCards = val;
             BarConfig.updateBarProp("fluidCards", val);

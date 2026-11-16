@@ -40,7 +40,10 @@ if [ -z "$METHOD" ]; then
 fi
 
 PID=$$
-CFG_FILE="${RUN_DIR:-/tmp}/quickshell_cava_${UID:-1000}_${PID}.conf"
+if [ -z "$RUN_DIR" ] || [ ! -d "$RUN_DIR" ] || [ ! -w "$RUN_DIR" ]; then
+    RUN_DIR="/tmp"
+fi
+CFG_FILE="${RUN_DIR}/quickshell_cava_${UID:-1000}_${PID}.conf"
 
 cleanup() {
     rm -f "$CFG_FILE"

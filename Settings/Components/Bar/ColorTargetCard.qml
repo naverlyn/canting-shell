@@ -39,7 +39,11 @@ SectionCard {
             Rectangle {
                 id: barTargetBtn
                 readonly property bool isTarget: root.selectedColorTargetType === "bar"
-                readonly property string barSpec: BarConfig.currentBar ? (BarConfig.currentBar.barColor || "") : (BarConfig.barColor || "")
+                readonly property string barSpec: BarConfig.currentBar
+                    ? (root.isEditingSecondaryBar() && BarConfig.currentBar.secondaryBarColor !== undefined
+                        ? String(BarConfig.currentBar.secondaryBarColor)
+                        : (BarConfig.currentBar.barColor || ""))
+                    : (BarConfig.barColor || "")
                 readonly property color barCol: root.resolveThemeSpec(barSpec, root.theme.bgBase)
 
                 implicitWidth: barTargetRow.implicitWidth + 20

@@ -501,9 +501,18 @@ Item {
         BarConfig.saveConfig();
     }
 
+    function isEditingSecondaryBar() {
+        const cur = BarConfig.currentBar;
+        const tgt = cur ? (cur.displayTarget || (cur.allMonitors ? "all" : "primary")) : "primary";
+        return root.hasMultipleMonitors && tgt === "all" && BarConfig.activeEditingDisplay === "secondary";
+    }
+
     function getActiveTargetSpec() {
         if (root.selectedColorTargetType === "bar") {
-            return BarConfig.currentBar ? (BarConfig.currentBar.barColor || "") : (BarConfig.barColor || "");
+            if (!BarConfig.currentBar) return BarConfig.barColor || "";
+            return (root.isEditingSecondaryBar() && BarConfig.currentBar.secondaryBarColor !== undefined)
+                ? String(BarConfig.currentBar.secondaryBarColor)
+                : (BarConfig.currentBar.barColor || "");
         }
         return root.selectedColorTargetType === "panel"
             ? root.getPanelColorSpec(root.selectedColorPanelIndex)
@@ -512,7 +521,11 @@ Item {
 
     function applyColorToActiveTarget(spec) {
         if (root.selectedColorTargetType === "bar") {
-            BarConfig.updateBarProp("barColor", spec);
+            if (root.isEditingSecondaryBar()) {
+                BarConfig.updateBarProp("secondaryBarColor", spec);
+            } else {
+                BarConfig.updateBarProp("barColor", spec);
+            }
         } else if (root.selectedColorTargetType === "panel") {
             root.setPanelBlocksColorSpec(root.selectedColorPanelIndex, spec);
         } else {
@@ -774,15 +787,24 @@ Item {
                     readonly property string curPos: BarConfig.currentBar ? BarConfig.currentBar.position : BarConfig.position
                     readonly property bool curIsVert: (curPos === "left" || curPos === "right")
                     readonly property int curHeight: BarConfig.currentBar ? Number(BarConfig.currentBar.barHeight) : BarConfig.barHeight
-                    readonly property bool curFloating: BarConfig.currentBar ? Boolean(BarConfig.currentBar.floating) : BarConfig.floating
+                    readonly property string curDisplayTarget: BarConfig.currentBar ? (BarConfig.currentBar.displayTarget || (BarConfig.currentBar.allMonitors ? "all" : "primary")) : BarConfig.displayTarget
+                    readonly property bool isEditingSecondary: root.hasMultipleMonitors && curDisplayTarget === "all" && BarConfig.activeEditingDisplay === "secondary"
+                    readonly property bool curFloating: BarConfig.currentBar
+                        ? (isEditingSecondary && BarConfig.currentBar.secondaryFloating !== undefined
+                            ? Boolean(BarConfig.currentBar.secondaryFloating)
+                            : Boolean(BarConfig.currentBar.floating))
+                        : BarConfig.floating
                     readonly property real curOpacity: BarConfig.currentBar ? Number(BarConfig.currentBar.barOpacity) : BarConfig.barOpacity
                     readonly property int curPillRadius: BarConfig.currentBar ? (BarConfig.currentBar.pillRadius !== undefined ? Number(BarConfig.currentBar.pillRadius) : 10) : BarConfig.pillRadius
                     readonly property real curPillOpacity: BarConfig.currentBar ? (BarConfig.currentBar.pillOpacity !== undefined ? Number(BarConfig.currentBar.pillOpacity) : 1.0) : BarConfig.pillOpacity
                     readonly property bool curHidePill: BarConfig.currentBar ? Boolean(BarConfig.currentBar.hidePill) : BarConfig.hidePill
                     readonly property string curActiveStyle: BarConfig.currentBar ? (BarConfig.currentBar.activeStyle || BarConfig.activeStyle || "pill") : (BarConfig.activeStyle || "pill")
-                    readonly property string curBarColor: BarConfig.currentBar ? (BarConfig.currentBar.barColor || "") : (BarConfig.barColor || "")
+                    readonly property string curBarColor: BarConfig.currentBar
+                        ? (isEditingSecondary && BarConfig.currentBar.secondaryBarColor !== undefined
+                            ? String(BarConfig.currentBar.secondaryBarColor)
+                            : (BarConfig.currentBar.barColor || ""))
+                        : (BarConfig.barColor || "")
                     readonly property bool curAllMonitors: BarConfig.currentBar ? Boolean(BarConfig.currentBar.allMonitors) : BarConfig.allMonitors
-                    readonly property string curDisplayTarget: BarConfig.currentBar ? (BarConfig.currentBar.displayTarget || (BarConfig.currentBar.allMonitors ? "all" : "primary")) : BarConfig.displayTarget
                     readonly property string curSecondaryMode: BarConfig.currentBar ? (BarConfig.currentBar.secondaryMode || "custom") : BarConfig.secondaryMode
                     readonly property bool curBlankOnSecondary: BarConfig.currentBar ? (BarConfig.currentBar.blankOnSecondary !== undefined ? Boolean(BarConfig.currentBar.blankOnSecondary) : false) : BarConfig.blankOnSecondary
                     readonly property bool curEnabled: BarConfig.currentBar ? (BarConfig.currentBar.enabled !== false) : BarConfig.barVisible

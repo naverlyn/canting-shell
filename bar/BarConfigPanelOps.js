@@ -355,7 +355,7 @@ function setWidgetVisible(root, widgetId, val, barId, skipSave) {
 
 function isWidgetInAnyBar(root, widgetId) {
   if (!root.bars) return false;
-  const hasSecondaryScreen = (typeof Quickshell !== "undefined" && Quickshell.screens && Quickshell.screens.length > 1);
+  const hasSecondaryScreen = Boolean(root.hasSecondaryScreen);
   for (let i = 0; i < root.bars.length; i++) {
     const b = root.bars[i];
     if (b && b.enabled !== false) {

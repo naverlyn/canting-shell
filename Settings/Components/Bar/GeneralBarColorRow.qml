@@ -84,7 +84,13 @@ Item {
                 label: "Reset"
                 danger: true
                 btnHeight: 28
-                onClicked: BarConfig.updateBarProp("barColor", "")
+                onClicked: {
+                    if (root.generalTab.isEditingSecondary) {
+                        BarConfig.updateBarProp("secondaryBarColor", "");
+                    } else {
+                        BarConfig.updateBarProp("barColor", "");
+                    }
+                }
             }
         }
     }

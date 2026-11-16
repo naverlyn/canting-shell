@@ -46,7 +46,8 @@ Scope {
         if (bTarget === "secondary" && isPrim) continue;
         if (bTarget !== "all" && bTarget !== "primary" && bTarget !== "secondary" && bTarget !== scrName) continue;
         const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
-        if (effectivePos === pos && !Boolean(b.floating)) {
+        const effectiveFloating = (!isPrim && bTarget === "all" && b.secondaryFloating !== undefined) ? Boolean(b.secondaryFloating) : Boolean(b.floating);
+        if (effectivePos === pos && !effectiveFloating) {
           return true;
         }
         continue;
@@ -74,7 +75,8 @@ Scope {
         if (bTarget === "secondary" && isPrim) continue;
         if (bTarget !== "all" && bTarget !== "primary" && bTarget !== "secondary" && bTarget !== scrName) continue;
         const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
-        if (effectivePos === pos && !Boolean(b.floating)) {
+        const effectiveFloating = (!isPrim && bTarget === "all" && b.secondaryFloating !== undefined) ? Boolean(b.secondaryFloating) : Boolean(b.floating);
+        if (effectivePos === pos && !effectiveFloating) {
           return b.barHeight || 32;
         }
         continue;
@@ -293,6 +295,16 @@ Scope {
             ? barInstanceScope.barCfg.secondaryPosition
             : barInstanceScope.barPos
           readonly property bool windowIsVert: windowBarPos === "left" || windowBarPos === "right"
+          readonly property bool windowIsFloating: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryFloating !== undefined)
+            ? Boolean(barInstanceScope.barCfg.secondaryFloating)
+            : barInstanceScope.isFloating
+          readonly property string windowBarColorSpec: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryBarColor !== undefined)
+            ? String(barInstanceScope.barCfg.secondaryBarColor)
+            : barInstanceScope.barColorSpec
+          readonly property color windowResolvedBarColor: {
+            const c = root.resolveThemeSpec(windowBarColorSpec, root.theme.bgBase);
+            return c ? c : root.theme.bgBase;
+          }
 
           visible: root.barVisible && Boolean(barInstanceScope.barCfg.enabled) && isScreenTargeted
 
@@ -303,10 +315,10 @@ Scope {
             right: barWindow.windowBarPos === "right" || !barWindow.windowIsVert
           }
 
-          exclusiveZone: barInstanceScope.barThickness + (barInstanceScope.isFloating ? 12 : 0)
+          exclusiveZone: barInstanceScope.barThickness + (barWindow.windowIsFloating ? 12 : 0)
 
-          implicitHeight: barWindow.windowIsVert ? 0 : (barInstanceScope.barThickness + (barInstanceScope.isFloating ? 12 : 0))
-          implicitWidth: barWindow.windowIsVert ? (barInstanceScope.barThickness + (barInstanceScope.isFloating ? 12 : 0)) : 0
+          implicitHeight: barWindow.windowIsVert ? 0 : (barInstanceScope.barThickness + (barWindow.windowIsFloating ? 12 : 0))
+          implicitWidth: barWindow.windowIsVert ? (barInstanceScope.barThickness + (barWindow.windowIsFloating ? 12 : 0)) : 0
           color: "transparent"
 
           property string lastPos: barWindow.windowBarPos
@@ -352,30 +364,30 @@ Scope {
           Rectangle {
             id: barBackground
             anchors.fill: parent
-            anchors.topMargin: barInstanceScope.isFloating
+            anchors.topMargin: barWindow.windowIsFloating
               ? (barWindow.windowIsVert ? 12 : (barWindow.windowBarPos === "top" ? 6 : 0))
               : (barWindow.windowIsVert
                 ? 0
                 : ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "bottom") ? barInstanceScope.innerCornerRadius : 0))
-            anchors.bottomMargin: barInstanceScope.isFloating
+            anchors.bottomMargin: barWindow.windowIsFloating
               ? (barWindow.windowIsVert ? 12 : (barWindow.windowBarPos === "bottom" ? 6 : 0))
               : (barWindow.windowIsVert
                 ? 0
                 : ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "top") ? barInstanceScope.innerCornerRadius : 0))
-            anchors.leftMargin: barInstanceScope.isFloating
+            anchors.leftMargin: barWindow.windowIsFloating
               ? (!barWindow.windowIsVert ? 12 : (barWindow.windowBarPos === "left" ? 6 : 0))
               : (barWindow.windowIsVert
                 ? ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "right") ? barInstanceScope.innerCornerRadius : 0)
                 : 0)
-            anchors.rightMargin: barInstanceScope.isFloating
+            anchors.rightMargin: barWindow.windowIsFloating
               ? (!barWindow.windowIsVert ? 12 : (barWindow.windowBarPos === "right" ? 6 : 0))
               : (barWindow.windowIsVert
                 ? ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "left") ? barInstanceScope.innerCornerRadius : 0)
                 : 0)
-            radius: barInstanceScope.isFloating ? 12 : 0
-            color: Qt.rgba(barInstanceScope.resolvedBarColor.r, barInstanceScope.resolvedBarColor.g, barInstanceScope.resolvedBarColor.b, barInstanceScope.barAlpha)
-            border.color: barInstanceScope.isFloating ? root.theme.bgBorder : "transparent"
-            border.width: barInstanceScope.isFloating ? 1 : 0
+            radius: barWindow.windowIsFloating ? 12 : 0
+            color: Qt.rgba(barWindow.windowResolvedBarColor.r, barWindow.windowResolvedBarColor.g, barWindow.windowResolvedBarColor.b, barInstanceScope.barAlpha)
+            border.color: barWindow.windowIsFloating ? root.theme.bgBorder : "transparent"
+            border.width: barWindow.windowIsFloating ? 1 : 0
             transform: Translate { id: barSlideTransform; x: 0; y: 0 }
 
             Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -412,11 +424,11 @@ Scope {
             readonly property real pillOpacity: barInstanceScope.pillOpacity
             readonly property bool hidePill: barInstanceScope.hidePill
             readonly property string activeStyle: barInstanceScope.activeStyle
-            readonly property string barColorSpec: barInstanceScope.barColorSpec
+            readonly property string barColorSpec: barWindow.windowBarColorSpec
             readonly property int barThickness: barInstanceScope.barThickness
-            readonly property bool isFloating: barInstanceScope.isFloating
+            readonly property bool isFloating: barWindow.windowIsFloating
             readonly property bool fluidCards: barInstanceScope.fluidCards
-            readonly property bool hasInnerCorners: barInstanceScope.hasInnerCorners
+            readonly property bool hasInnerCorners: barInstanceScope.hasInnerCorners && !barWindow.windowIsFloating
             readonly property int innerCornerRadius: barInstanceScope.innerCornerRadius
             readonly property color barColor: barBackground.color
             property Item activeInfoProvider: null

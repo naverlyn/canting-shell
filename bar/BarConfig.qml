@@ -23,6 +23,7 @@ Singleton {
   property bool allMonitors: true
   property string displayTarget: "all" // "all" | "primary" | "secondary" | monitor name
   property string secondaryPosition: "bottom" // "top" | "bottom" | "left" | "right"
+  property bool secondaryFloating: false
   property string secondaryMode: "custom" // "blank" | "custom" | "mirror"
   property bool blankOnSecondary: false
   readonly property var defaultSecondaryPanels: [
@@ -104,6 +105,7 @@ Singleton {
       allMonitors: true,
       displayTarget: "all",
       secondaryPosition: "bottom",
+      secondaryFloating: false,
       secondaryMode: "custom",
       blankOnSecondary: false,
       secondaryPanels: [
@@ -161,7 +163,7 @@ Singleton {
     return (root.bars && root.bars.length > 0) ? root.bars[idx] : {
       id: "bar_1", name: "Primary Bar", enabled: true, position: "top",
       barHeight: 32, floating: false, barOpacity: 0.85, pillRadius: 10, pillOpacity: 1.0, hidePill: false,
-      allMonitors: true, displayTarget: "all", secondaryPosition: (root.secondaryPosition || "top"), secondaryMode: "custom", blankOnSecondary: false,
+      allMonitors: true, displayTarget: "all", secondaryPosition: (root.secondaryPosition || "top"), secondaryFloating: Boolean(root.secondaryFloating), secondaryMode: "custom", blankOnSecondary: false,
       secondaryPanels: root.defaultSecondaryPanels,
       innerCorners: root.innerCorners,
       fluidCards: root.fluidCards,
@@ -373,6 +375,9 @@ Singleton {
       else if (propName === "secondaryPosition") {
         root.secondaryPosition = String(val);
       }
+      else if (propName === "secondaryFloating") {
+        root.secondaryFloating = Boolean(val);
+      }
       else if (propName === "secondaryMode") {
         root.secondaryMode = String(val);
         root.blankOnSecondary = (String(val) === "blank");
@@ -433,6 +438,7 @@ Singleton {
       allMonitors: isAll,
       displayTarget: finalTarget,
       secondaryPosition: nextPos,
+      secondaryFloating: false,
       secondaryMode: "custom",
       blankOnSecondary: false,
       secondaryPanels: root.defaultSecondaryPanels.map(p => p.slice()),
@@ -583,6 +589,7 @@ Singleton {
 
   // Counter to guarantee real-time reactivity when widget visibility changes
   property int widgetVisibilityChangeCounter: 0
+  readonly property bool hasSecondaryScreen: Boolean(Quickshell.screens && Quickshell.screens.length > 1)
 
   property bool _loaded: false
   property string _lastSavedJson: ""
