@@ -258,8 +258,6 @@ PanelWindow {
         if (visible) {
             updateAnchorMetrics();
             if (ccFlickable) ccFlickable.contentY = 0;
-            if (brightnessSliderRef) brightnessSliderRef.refresh();
-            if (quickSettingsRef) quickSettingsRef.refresh();
             controlCenter.refreshRequested();
             ccMainRect.forceActiveFocus();
         }
@@ -698,10 +696,10 @@ PanelWindow {
                 onSetWifiRequested: (enabled) => { if (controlCenter.quickSettingsRef) controlCenter.quickSettingsRef.setWifi(enabled); }
                 onToggleWifiRequested: { if (controlCenter.quickSettingsRef) controlCenter.quickSettingsRef.toggleWifi(); }
                 onNetworkConnected: (ssid) => {
-                    if (controlCenter.quickSettingsRef) controlCenter.quickSettingsRef.refresh();
+                    controlCenter.refreshRequested();
                 }
                 onNetworkDisconnected: (ssid) => {
-                    if (controlCenter.quickSettingsRef) controlCenter.quickSettingsRef.refresh();
+                    controlCenter.refreshRequested();
                 }
                 Component.onCompleted: {
                     visible = true;

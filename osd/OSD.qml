@@ -202,7 +202,7 @@ Scope {
   }
 
   Variants {
-    model: (root.anyActive || root.osdMounted) ? Quickshell.screens : []
+    model: (root.anyActive || root.osdMounted) ? (Quickshell.screens || []).filter(s => s && s.name && s.name !== "") : []
 
     PanelWindow {
       id: osdWindow

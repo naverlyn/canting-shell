@@ -1,9 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import Quickshell
-import Quickshell.Io
-import Quickshell.Widgets
 import "../../../Clipboard"
 import "../Common"
 
@@ -40,9 +37,9 @@ ColumnLayout {
                 id: dimLabel
                 anchors.centerIn: parent
                 text: ClipboardConfig.windowWidth + " × " + ClipboardConfig.windowHeight + " px"
-                font.family: "JetBrains Mono, monospace"
+                font.family: Style.monoFont
                 font.pixelSize: 11
-                color: root.theme.accentPrimary
+                color: Style.theme.accentPrimary
             }
         }
 
@@ -236,78 +233,18 @@ ColumnLayout {
                     }
                 }
 
-                Rectangle {
-                    id: catSegmentTrack
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                    implicitWidth: 320
-                    height: 32
-                    radius: 7
-                    color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
-                    border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
-
-                    readonly property var catIds: ["all", "text", "image", "link", "code", "color"]
-                    readonly property int activeIdx: Math.max(0, catIds.indexOf(ClipboardConfig.defaultCategory))
-                    readonly property real cellWidth: (width - 6 - 5 * 3) / 6
-
-                    Rectangle {
-                        y: 3
-                        height: parent.height - 6
-                        width: catSegmentTrack.cellWidth
-                        x: 3 + catSegmentTrack.activeIdx * (catSegmentTrack.cellWidth + 3)
-                        radius: 5
-                        color: (root.theme && root.theme.bgSelected) ? root.theme.bgSelected : Qt.rgba(1, 1, 1, 0.15)
-                        border.color: root.theme.accentPrimary
-                        border.width: 1
-                        Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        spacing: 3
-
-                        Repeater {
-                            model: [
-                                { id: "all",   label: "All" },
-                                { id: "text",  label: "Text" },
-                                { id: "image", label: "Images" },
-                                { id: "link",  label: "Links" },
-                                { id: "code",  label: "Code" },
-                                { id: "color", label: "Colors" }
-                            ]
-                            delegate: Rectangle {
-                                id: catBtn
-                                required property var modelData
-                                required property int index
-                                readonly property bool isSel: catSegmentTrack.activeIdx === index
-
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: 5
-                                color: !isSel && catHover.hovered ? ((root.theme && root.theme.bgHover) ? root.theme.bgHover : Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-
-                                HoverHandler { id: catHover }
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: ClipboardConfig.setDefaultCategory(catBtn.modelData.id)
-                                }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: catBtn.modelData.label
-                                    font.family: root.font
-                                    font.pixelSize: 11
-                                    font.bold: catBtn.isSel
-                                    color: catBtn.isSel
-                                        ? (root.theme.accentPrimary)
-                                        : (root.theme.textPrimary)
-                                    opacity: catBtn.isSel || catHover.hovered ? 1.0 : 0.75
-                                }
-                            }
-                        }
-                    }
+                SegmentedControl {
+                    trackWidth: 320
+                    currentId: ClipboardConfig.defaultCategory
+                    options: [
+                        { id: "all",   label: "All" },
+                        { id: "text",  label: "Text" },
+                        { id: "image", label: "Images" },
+                        { id: "link",  label: "Links" },
+                        { id: "code",  label: "Code" },
+                        { id: "color", label: "Colors" }
+                    ]
+                    onOptionSelected: (optionId) => ClipboardConfig.setDefaultCategory(optionId)
                 }
             }
         }

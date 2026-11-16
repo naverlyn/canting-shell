@@ -209,7 +209,7 @@ Scope {
 
 
       Variants {
-        model: Quickshell.screens
+        model: (Quickshell.screens || []).filter(s => s && s.name && s.name !== "")
 
         PanelWindow {
           id: barWindow
@@ -670,7 +670,7 @@ Scope {
   }
 
   Variants {
-    model: Quickshell.screens
+    model: (Quickshell.screens || []).filter(s => s && s.name && s.name !== "")
 
     ScreenBorder {
       required property var modelData
