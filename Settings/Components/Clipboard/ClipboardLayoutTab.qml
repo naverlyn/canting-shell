@@ -122,7 +122,7 @@ ColumnLayout {
                     spacing: 4
 
                     Repeater {
-                        model: Math.min(4, Math.floor((mockWin.height - 50) / 18))
+                        model: Math.max(0, Math.min(4, Math.floor((mockWin.height - 50) / 18)))
                         delegate: Rectangle {
                             Layout.fillWidth: true
                             height: 14
