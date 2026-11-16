@@ -231,9 +231,9 @@ SectionCard {
                                             ? Qt.color(String(themePaletteCard.modelData[modelData.key]))
                                             : root.theme.accentPrimary
 
-                                        width: 18
-                                        height: 14
-                                        radius: 4
+                                        width: 16
+                                        height: 16
+                                        radius: width / 2
                                         scale: swatchMouse.pressed ? 0.90 : (swatchHover.hovered ? 1.18 : (isChosen ? 1.08 : 1.0))
                                         color: swatchCol
                                         border.color: isChosen ? root.theme.textPrimary : (swatchHover.hovered ? root.theme.textSecondary : root.theme.bgBorder)
