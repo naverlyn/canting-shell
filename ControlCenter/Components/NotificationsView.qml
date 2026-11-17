@@ -17,7 +17,8 @@ Column {
     // 1. Live History Array backed by NotificationService (single source of truth)
     readonly property var historyModel: (NotificationService.history || []).map(h => {
         const rawImg = String(h.image || "");
-        const imgStr = rawImg.indexOf("image://qsimage/") !== -1 ? "" : rawImg;
+        const normImg = rawImg.startsWith("image://icon//") ? ("file://" + rawImg.slice(13)) : rawImg;
+        const imgStr = normImg.indexOf("image://qsimage/") !== -1 ? "" : normImg;
         const acts = (h.actions || []).map(a => ({
             label: a.label || "",
             invokeFn: function() { NotificationService.invokeHistoryAction(h.notifId, a.identifier); },

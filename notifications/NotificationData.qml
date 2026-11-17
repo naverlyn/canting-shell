@@ -42,6 +42,12 @@ QtObject {
 
     readonly property string displayBody: SocialApps.cleanBody(body, socialApp)
 
+    function _normalizeImage(raw) {
+        const s = String(raw || "");
+        if (s.startsWith("image://icon//")) return "file://" + s.slice(13);
+        return s;
+    }
+
     readonly property Connections _conn: Connections {
         target: notificationData.notification
 
@@ -78,7 +84,7 @@ QtObject {
             }
         }
         function onImageChanged() {
-            if (notificationData.notification) notificationData.image = notificationData.notification.image || "";
+            if (notificationData.notification) notificationData.image = notificationData._normalizeImage(notificationData.notification.image);
         }
         function onUrgencyChanged() {
             if (notificationData.notification) notificationData.urgency = notificationData.notification.urgency;
@@ -140,7 +146,7 @@ QtObject {
         body      = notification.body      || "";
         appIcon   = notification.appIcon   || "";
         appName   = notification.appName   || "";
-        image     = notification.image     || "";
+        image     = _normalizeImage(notification.image);
         urgency   = notification.urgency;
 
         const rawTimeout = notification.expireTimeout;

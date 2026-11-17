@@ -598,7 +598,7 @@ Singleton {
         bodySupported:       true
         bodyMarkupSupported: true
         imageSupported:      true
-        keepOnReload:        false
+        keepOnReload:        true
 
         onNotification: function(notification) {
             if (root.doNotDisturb) return;

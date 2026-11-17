@@ -45,7 +45,9 @@ Rectangle {
         Image {
             id: thumbImg
             anchors.fill: parent
-            source: imgBox.imageSource
+            source: imgBox.imageSource.startsWith("image://icon//")
+                ? ("file://" + imgBox.imageSource.slice(13))
+                : imgBox.imageSource
             fillMode: Image.PreserveAspectCrop
             sourceSize.width: imgBox.sourceWidth
             sourceSize.height: imgBox.sourceHeight
