@@ -48,8 +48,13 @@ Singleton {
     readonly property string currentName: current.name
     readonly property string currentFamily: current.family
     readonly property bool isDark: !isLightColor(current.bgBase)
+    readonly property var currentValidation: validateThemePalette(current)
 
     function isLightColor(hex) { return ThemeColorUtils.isLightColor(hex); }
+    function normalizeHex(hex) { return ThemeColorUtils.normalizeHex(hex); }
+    function isValidHex(hex) { return ThemeColorUtils.isValidHex(hex); }
+    function contrastRatio(c1, c2) { return ThemeColorUtils.contrastRatio(c1, c2); }
+    function validateThemePalette(t) { return ThemeColorUtils.validateThemePalette(t); }
 
     function applySystemColorScheme(dark) {
         var scheme = dark ? "prefer-dark" : "prefer-light";

@@ -170,6 +170,32 @@ Item {
                                       : ((root.theme.currentFamily || "") + " - " + (root.theme.currentName || ""))
                             }
                         }
+
+                        // Palette hex & contrast validation badge
+                        Rectangle {
+                            readonly property var validation: root.theme && root.theme.currentValidation
+                                ? root.theme.currentValidation
+                                : { valid: true, summary: "" }
+                            visible: validation.summary !== ""
+                            Layout.preferredHeight: 18
+                            radius: 9
+                            implicitWidth: valText.implicitWidth + 12
+                            color: root.theme.bgSurface
+                            border.color: validation.valid ? root.theme.accentGreen : root.theme.accentOrange
+                            border.width: 1
+
+                            Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                            Text {
+                                id: valText
+                                anchors.centerIn: parent
+                                font.family: root.font
+                                font.pixelSize: 10
+                                font.bold: true
+                                color: parent.validation.valid ? root.theme.accentGreen : root.theme.accentOrange
+                                text: (parent.validation.valid ? "✓ " : "⚠ ") + parent.validation.summary
+                            }
+                        }
                     }
 
                     Text {

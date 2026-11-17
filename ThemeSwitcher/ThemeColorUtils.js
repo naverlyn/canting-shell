@@ -88,12 +88,95 @@ function transformWallpaperPalette(pal, toDark) {
     };
 }
 
+function normalizeHex(hex) {
+    if (hex === undefined || hex === null) return "";
+    var s = String(hex).trim().replace(/^#+/, "");
+    if (!/^[0-9a-fA-F]{6}$/.test(s)) return "";
+    return "#" + s.toLowerCase();
+}
+
+function isValidHex(hex) {
+    return normalizeHex(hex) !== "";
+}
+
+function relativeLuminance(hex) {
+    var norm = normalizeHex(hex);
+    if (!norm) return 0;
+    var s = norm.slice(1);
+    var toLinear = function(c) {
+        var v = parseInt(c, 16) / 255.0;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * toLinear(s.substr(0, 2)) +
+           0.7152 * toLinear(s.substr(2, 2)) +
+           0.0722 * toLinear(s.substr(4, 2));
+}
+
+function contrastRatio(hex1, hex2) {
+    var l1 = relativeLuminance(hex1);
+    var l2 = relativeLuminance(hex2);
+    var lighter = Math.max(l1, l2);
+    var darker = Math.min(l1, l2);
+    return (lighter + 0.05) / (darker + 0.05);
+}
+
+function validateThemePalette(t) {
+    if (!t) {
+        return { valid: false, invalidKeys: ["palette"], lowContrast: [], minContrast: 0, summary: "Missing palette" };
+    }
+    var keys = [
+        "bgBase", "bgSurface", "bgHover", "bgSelected", "bgBorder",
+        "textPrimary", "textSecondary", "textMuted",
+        "accentPrimary", "accentCyan", "accentGreen", "accentOrange", "accentRed"
+    ];
+    var invalidKeys = [];
+    for (var i = 0; i < keys.length; i++) {
+        if (!isValidHex(t[keys[i]])) invalidKeys.push(keys[i]);
+    }
+    var pairs = [
+        { fg: "textPrimary",   bg: "bgBase",    min: 4.5, label: "textPrimary / bgBase" },
+        { fg: "textPrimary",   bg: "bgSurface", min: 4.5, label: "textPrimary / bgSurface" },
+        { fg: "textSecondary", bg: "bgSurface", min: 3.0, label: "textSecondary / bgSurface" },
+        { fg: "accentPrimary", bg: "bgSurface", min: 3.0, label: "accentPrimary / bgSurface" }
+    ];
+    var lowContrast = [];
+    var minRatio = 21.0;
+    for (var j = 0; j < pairs.length; j++) {
+        var p = pairs[j];
+        if (!isValidHex(t[p.fg]) || !isValidHex(t[p.bg])) continue;
+        var ratio = contrastRatio(t[p.fg], t[p.bg]);
+        if (ratio < minRatio) minRatio = ratio;
+        if (ratio < p.min) {
+            lowContrast.push({ label: p.label, ratio: Math.round(ratio * 10) / 10, required: p.min });
+        }
+    }
+    var textRatio = (isValidHex(t.textPrimary) && isValidHex(t.bgBase))
+        ? Math.round(contrastRatio(t.textPrimary, t.bgBase) * 10) / 10
+        : 0;
+    var valid = invalidKeys.length === 0 && lowContrast.length === 0;
+    var summary = invalidKeys.length > 0
+        ? ("Invalid hex: " + invalidKeys.join(", "))
+        : (lowContrast.length > 0
+            ? ("Low contrast: " + lowContrast[0].label + " (" + lowContrast[0].ratio + ":1)")
+            : ("WCAG AA (" + textRatio + ":1)"));
+    return {
+        valid: valid,
+        invalidKeys: invalidKeys,
+        lowContrast: lowContrast,
+        textContrast: textRatio,
+        minContrast: Math.round(minRatio * 10) / 10,
+        summary: summary
+    };
+}
+
 function hexToRgba(hex) {
-    return "rgba(" + hex.toString().replace("#", "") + "ff)";
+    var clean = stripHex(hex);
+    return "rgba(" + clean + "ff)";
 }
 
 function stripHex(hex) {
-    return hex.toString().replace("#", "").toLowerCase();
+    var norm = normalizeHex(hex);
+    return norm ? norm.slice(1) : "000000";
 }
 
 function buildHyprlockConf(t, accentPrimary) {
