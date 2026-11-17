@@ -794,6 +794,11 @@ Item {
                             ? Boolean(BarConfig.currentBar.secondaryFloating)
                             : Boolean(BarConfig.currentBar.floating))
                         : BarConfig.floating
+                    readonly property bool curDashed: BarConfig.currentBar
+                        ? (isEditingSecondary && BarConfig.currentBar.secondaryDashed !== undefined
+                            ? Boolean(BarConfig.currentBar.secondaryDashed)
+                            : Boolean(BarConfig.currentBar.dashed))
+                        : BarConfig.dashed
                     readonly property real curOpacity: BarConfig.currentBar ? Number(BarConfig.currentBar.barOpacity) : BarConfig.barOpacity
                     readonly property int curPillRadius: BarConfig.currentBar ? (BarConfig.currentBar.pillRadius !== undefined ? Number(BarConfig.currentBar.pillRadius) : 10) : BarConfig.pillRadius
                     readonly property real curPillOpacity: BarConfig.currentBar ? (BarConfig.currentBar.pillOpacity !== undefined ? Number(BarConfig.currentBar.pillOpacity) : 1.0) : BarConfig.pillOpacity
@@ -810,6 +815,10 @@ Item {
                     readonly property bool curEnabled: BarConfig.currentBar ? (BarConfig.currentBar.enabled !== false) : BarConfig.barVisible
 
                     GeneralBarCard {
+                        root: root
+                    }
+
+                    GlobalFrameCard {
                         root: root
                     }
 

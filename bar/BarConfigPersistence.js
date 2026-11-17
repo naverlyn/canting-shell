@@ -11,6 +11,7 @@ function buildSaveData(root) {
     position: primary ? primary.position : root.position,
     barHeight: primary ? primary.barHeight : root.barHeight,
     floating: primary ? primary.floating : root.floating,
+    dashed: primary && primary.dashed !== undefined ? Boolean(primary.dashed) : Boolean(root.dashed),
     barOpacity: root.barOpacity !== undefined ? root.barOpacity : (primary ? primary.barOpacity : 1.0),
     pillRadius: primary && primary.pillRadius !== undefined ? primary.pillRadius : root.pillRadius,
     pillOpacity: primary && primary.pillOpacity !== undefined ? primary.pillOpacity : root.pillOpacity,
@@ -20,6 +21,7 @@ function buildSaveData(root) {
     displayTarget: primary && primary.displayTarget !== undefined ? primary.displayTarget : root.displayTarget,
     secondaryPosition: primary && primary.secondaryPosition !== undefined ? primary.secondaryPosition : (root.secondaryPosition || "top"),
     secondaryFloating: primary && primary.secondaryFloating !== undefined ? Boolean(primary.secondaryFloating) : Boolean(root.secondaryFloating),
+    secondaryDashed: primary && primary.secondaryDashed !== undefined ? Boolean(primary.secondaryDashed) : Boolean(root.secondaryDashed),
     secondaryMode: primary && primary.secondaryMode !== undefined ? primary.secondaryMode : root.secondaryMode,
     blankOnSecondary: primary && primary.blankOnSecondary !== undefined ? Boolean(primary.blankOnSecondary) : root.blankOnSecondary,
     secondaryPanels: primary && primary.secondaryPanels ? primary.secondaryPanels : root.secondaryPanels,
@@ -108,6 +110,7 @@ function applyConfig(root, cfg) {
   if (cfg.position !== undefined) root.position = String(cfg.position);
   if (cfg.barHeight !== undefined) root.barHeight = Number(cfg.barHeight);
   if (cfg.floating !== undefined) root.floating = Boolean(cfg.floating);
+  if (cfg.dashed !== undefined) root.dashed = Boolean(cfg.dashed);
   if (cfg.barOpacity !== undefined) root.barOpacity = Number(cfg.barOpacity);
   if (cfg.pillRadius !== undefined) root.pillRadius = Number(cfg.pillRadius);
   if (cfg.pillOpacity !== undefined) root.pillOpacity = Number(cfg.pillOpacity);
@@ -120,6 +123,7 @@ function applyConfig(root, cfg) {
   }
   if (cfg.secondaryPosition !== undefined) root.secondaryPosition = String(cfg.secondaryPosition);
   if (cfg.secondaryFloating !== undefined) root.secondaryFloating = Boolean(cfg.secondaryFloating);
+  if (cfg.secondaryDashed !== undefined) root.secondaryDashed = Boolean(cfg.secondaryDashed);
   if (cfg.secondaryMode !== undefined) root.secondaryMode = String(cfg.secondaryMode);
   if (cfg.blankOnSecondary !== undefined) root.blankOnSecondary = Boolean(cfg.blankOnSecondary);
   if (Array.isArray(cfg.secondaryPanels) && cfg.secondaryPanels.length > 0) {
@@ -202,6 +206,7 @@ function applyConfig(root, cfg) {
       position: b.position || "top",
       barHeight: b.barHeight !== undefined ? Number(b.barHeight) : 32,
       floating: b.floating !== undefined ? Boolean(b.floating) : false,
+      dashed: b.dashed !== undefined ? Boolean(b.dashed) : false,
       barOpacity: b.barOpacity !== undefined ? Number(b.barOpacity) : globalOpacity,
       pillRadius: b.pillRadius !== undefined ? Number(b.pillRadius) : root.pillRadius,
       pillOpacity: b.pillOpacity !== undefined ? Number(b.pillOpacity) : root.pillOpacity,
@@ -213,6 +218,7 @@ function applyConfig(root, cfg) {
       displayTarget: b.displayTarget || (b.allMonitors !== undefined ? (b.allMonitors ? "all" : "primary") : root.displayTarget),
       secondaryPosition: b.secondaryPosition || root.secondaryPosition || "top",
       secondaryFloating: b.secondaryFloating !== undefined ? Boolean(b.secondaryFloating) : (b.floating !== undefined ? Boolean(b.floating) : false),
+      secondaryDashed: b.secondaryDashed !== undefined ? Boolean(b.secondaryDashed) : (b.dashed !== undefined ? Boolean(b.dashed) : false),
       secondaryMode: b.secondaryMode || root.secondaryMode,
       blankOnSecondary: b.blankOnSecondary !== undefined ? Boolean(b.blankOnSecondary) : (b.secondaryMode === "blank"),
       secondaryPanels: Array.isArray(b.secondaryPanels) && b.secondaryPanels.length > 0
@@ -239,6 +245,7 @@ function applyConfig(root, cfg) {
       position: root.position,
       barHeight: root.barHeight,
       floating: root.floating,
+      dashed: Boolean(root.dashed),
       barOpacity: root.barOpacity,
       pillRadius: root.pillRadius,
       pillOpacity: root.pillOpacity,
@@ -248,6 +255,7 @@ function applyConfig(root, cfg) {
       displayTarget: root.displayTarget,
       secondaryPosition: root.secondaryPosition || "top",
       secondaryFloating: root.secondaryFloating !== undefined ? Boolean(root.secondaryFloating) : Boolean(root.floating),
+      secondaryDashed: root.secondaryDashed !== undefined ? Boolean(root.secondaryDashed) : Boolean(root.dashed),
       secondaryMode: root.secondaryMode,
       blankOnSecondary: root.blankOnSecondary,
       secondaryPanels: root.secondaryPanels,

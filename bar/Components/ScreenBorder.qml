@@ -18,9 +18,14 @@ Item {
   readonly property bool hasDockedBottom: barRoot.isDockedBarActive("bottom", undefined, screenIndex)
   readonly property bool hasDockedLeft: barRoot.isDockedBarActive("left", undefined, screenIndex)
   readonly property bool hasDockedRight: barRoot.isDockedBarActive("right", undefined, screenIndex)
+  readonly property bool hasFloatingTop: barRoot.isFloatingBarActive("top", undefined, screenIndex)
+  readonly property bool hasFloatingBottom: barRoot.isFloatingBarActive("bottom", undefined, screenIndex)
+  readonly property bool hasFloatingLeft: barRoot.isFloatingBarActive("left", undefined, screenIndex)
+  readonly property bool hasFloatingRight: barRoot.isFloatingBarActive("right", undefined, screenIndex)
   readonly property bool hasAnyDockedBar: hasDockedTop || hasDockedBottom || hasDockedLeft || hasDockedRight
-  readonly property bool screenBorderActive: Boolean(BarConfig.screenBorder) && hasAnyDockedBar
-  readonly property bool hasShadow: Boolean(BarConfig.screenBorderShadow) && hasAnyDockedBar
+  readonly property bool hasAnyFloatingBar: hasFloatingTop || hasFloatingBottom || hasFloatingLeft || hasFloatingRight
+  readonly property bool screenBorderActive: Boolean(BarConfig.screenBorder)
+  readonly property bool hasShadow: Boolean(BarConfig.screenBorderShadow) && (hasAnyDockedBar || screenBorderActive)
 
   readonly property int dockedLeftW: barRoot.getDockedBarThickness("left", undefined, screenIndex)
   readonly property int dockedRightW: barRoot.getDockedBarThickness("right", undefined, screenIndex)
@@ -39,10 +44,10 @@ Item {
   readonly property bool anyEdgeActive: topActive || bottomActive || leftActive || rightActive
 
   readonly property bool borderCornersEnabled: screenBorderActive && Boolean(BarConfig.screenBorderCorners)
-  readonly property bool showTopLeftCorner: Boolean(BarConfig.innerCorners) && hasAnyDockedBar && (hasDockedTop || hasDockedLeft || (topActive && leftActive && borderCornersEnabled))
-  readonly property bool showTopRightCorner: Boolean(BarConfig.innerCorners) && hasAnyDockedBar && (hasDockedTop || hasDockedRight || (topActive && rightActive && borderCornersEnabled))
-  readonly property bool showBottomLeftCorner: Boolean(BarConfig.innerCorners) && hasAnyDockedBar && (hasDockedBottom || hasDockedLeft || (bottomActive && leftActive && borderCornersEnabled))
-  readonly property bool showBottomRightCorner: Boolean(BarConfig.innerCorners) && hasAnyDockedBar && (hasDockedBottom || hasDockedRight || (bottomActive && rightActive && borderCornersEnabled))
+  readonly property bool showTopLeftCorner: Boolean(BarConfig.innerCorners) && (hasAnyDockedBar || screenBorderActive) && (hasDockedTop || hasDockedLeft || (topActive && leftActive && borderCornersEnabled))
+  readonly property bool showTopRightCorner: Boolean(BarConfig.innerCorners) && (hasAnyDockedBar || screenBorderActive) && (hasDockedTop || hasDockedRight || (topActive && rightActive && borderCornersEnabled))
+  readonly property bool showBottomLeftCorner: Boolean(BarConfig.innerCorners) && (hasAnyDockedBar || screenBorderActive) && (hasDockedBottom || hasDockedLeft || (bottomActive && leftActive && borderCornersEnabled))
+  readonly property bool showBottomRightCorner: Boolean(BarConfig.innerCorners) && (hasAnyDockedBar || screenBorderActive) && (hasDockedBottom || hasDockedRight || (bottomActive && rightActive && borderCornersEnabled))
   readonly property bool anyCornerVisible: showTopLeftCorner || showTopRightCorner || showBottomLeftCorner || showBottomRightCorner
 
   readonly property color resolvedBorderColor: resolveBarColorForPos("top")
@@ -64,7 +69,8 @@ Item {
       if (bTarget === "secondary" && isPrim) continue;
       const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
       const effectiveFloating = (!isPrim && bTarget === "all" && b.secondaryFloating !== undefined) ? Boolean(b.secondaryFloating) : Boolean(b.floating);
-      if (effectivePos === pos && !effectiveFloating) {
+      const effectiveDashed = (!isPrim && bTarget === "all" && b.secondaryDashed !== undefined) ? Boolean(b.secondaryDashed) : Boolean(b.dashed);
+      if (effectivePos === pos && !effectiveFloating && !effectiveDashed) {
         match = b;
         break;
       }
@@ -116,7 +122,8 @@ Item {
       left: true
       right: true
     }
-    exclusiveZone: borderRoot.borderThickness
+    exclusionMode: borderRoot.hasAnyFloatingBar ? ExclusionMode.Ignore : ExclusionMode.Normal
+    exclusiveZone: borderRoot.hasAnyFloatingBar ? -1 : borderRoot.borderThickness
     implicitHeight: borderRoot.borderThickness
 
     Rectangle {
@@ -144,7 +151,8 @@ Item {
       left: true
       right: true
     }
-    exclusiveZone: borderRoot.borderThickness
+    exclusionMode: borderRoot.hasAnyFloatingBar ? ExclusionMode.Ignore : ExclusionMode.Normal
+    exclusiveZone: borderRoot.hasAnyFloatingBar ? -1 : borderRoot.borderThickness
     implicitHeight: borderRoot.borderThickness
 
     Rectangle {
@@ -156,9 +164,9 @@ Item {
     }
   }
 
-  // Left Border Strip (active when no docked left bar is present)
+  // Left Border Strip (active when no docked or floating left bar is present)
   Loader {
-    active: borderRoot.barRoot.barVisible && borderRoot.screenBorderActive && !borderRoot.hasDockedLeft
+    active: borderRoot.barRoot.barVisible && borderRoot.screenBorderActive && !borderRoot.hasDockedLeft && !borderRoot.hasFloatingLeft
     sourceComponent: Component {
   PanelWindow {
     id: leftBorderWindow
@@ -172,8 +180,29 @@ Item {
       top: true
       bottom: true
     }
-    exclusiveZone: borderRoot.borderThickness
+    exclusionMode: borderRoot.hasAnyFloatingBar ? ExclusionMode.Ignore : ExclusionMode.Normal
+    exclusiveZone: borderRoot.hasAnyFloatingBar ? -1 : borderRoot.borderThickness
     implicitWidth: borderRoot.borderThickness
+
+    Loader {
+      active: borderRoot.hasAnyFloatingBar
+      sourceComponent: Component {
+        PanelWindow {
+          screen: borderRoot.screen
+          visible: true
+          color: "transparent"
+          mask: Region {}
+          exclusionMode: ExclusionMode.Normal
+          anchors {
+            left: true
+            top: true
+            bottom: true
+          }
+          implicitWidth: borderRoot.borderThickness
+          exclusiveZone: borderRoot.borderThickness
+        }
+      }
+    }
 
     Rectangle {
       anchors.fill: parent
@@ -184,9 +213,9 @@ Item {
     }
   }
 
-  // Right Border Strip (active when no docked right bar is present)
+  // Right Border Strip (active when no docked or floating right bar is present)
   Loader {
-    active: borderRoot.barRoot.barVisible && borderRoot.screenBorderActive && !borderRoot.hasDockedRight
+    active: borderRoot.barRoot.barVisible && borderRoot.screenBorderActive && !borderRoot.hasDockedRight && !borderRoot.hasFloatingRight
     sourceComponent: Component {
   PanelWindow {
     id: rightBorderWindow
@@ -200,8 +229,29 @@ Item {
       top: true
       bottom: true
     }
-    exclusiveZone: borderRoot.borderThickness
+    exclusionMode: borderRoot.hasAnyFloatingBar ? ExclusionMode.Ignore : ExclusionMode.Normal
+    exclusiveZone: borderRoot.hasAnyFloatingBar ? -1 : borderRoot.borderThickness
     implicitWidth: borderRoot.borderThickness
+
+    Loader {
+      active: borderRoot.hasAnyFloatingBar
+      sourceComponent: Component {
+        PanelWindow {
+          screen: borderRoot.screen
+          visible: true
+          color: "transparent"
+          mask: Region {}
+          exclusionMode: ExclusionMode.Normal
+          anchors {
+            right: true
+            top: true
+            bottom: true
+          }
+          implicitWidth: borderRoot.borderThickness
+          exclusiveZone: borderRoot.borderThickness
+        }
+      }
+    }
 
     Rectangle {
       anchors.fill: parent

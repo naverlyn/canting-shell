@@ -30,6 +30,38 @@ Scope {
     return ColorUtils.resolveThemeSpec(root.theme, spec, fallbackColor);
   }
 
+  function _barMatchesScreen(b, screenIdx) {
+    if (!b || b.enabled === false) return null;
+    const isPrim = (screenIdx === 0);
+    const scr = (Quickshell.screens && Quickshell.screens.length > screenIdx) ? Quickshell.screens[screenIdx] : null;
+    const scrName = (scr && scr.name) ? String(scr.name) : ("screen_" + screenIdx);
+    const bTarget = b.displayTarget || (b.allMonitors ? "all" : "primary");
+    if (bTarget === "primary" && !isPrim) return null;
+    if (bTarget === "secondary" && isPrim) return null;
+    if (bTarget !== "all" && bTarget !== "primary" && bTarget !== "secondary" && bTarget !== scrName) return null;
+    const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
+    const effectiveFloating = (!isPrim && bTarget === "all" && b.secondaryFloating !== undefined) ? Boolean(b.secondaryFloating) : Boolean(b.floating);
+    const effectiveDashed = (!isPrim && bTarget === "all" && b.secondaryDashed !== undefined) ? Boolean(b.secondaryDashed) : Boolean(b.dashed);
+    return { pos: effectivePos, floating: effectiveFloating || effectiveDashed, height: b.barHeight || 32 };
+  }
+
+  function isFloatingBarActive(pos, currentBarId, screenIdx) {
+    const list = BarConfig.bars || [];
+    for (let i = 0; i < list.length; i++) {
+      const b = list[i];
+      if (!b || b.enabled === false) continue;
+      const bid = (b.id !== undefined && b.id !== null) ? String(b.id) : ("bar_" + (i + 1));
+      if (currentBarId && bid === currentBarId) continue;
+      if (screenIdx !== undefined) {
+        const info = _barMatchesScreen(b, screenIdx);
+        if (info && info.pos === pos && info.floating) return true;
+        continue;
+      }
+      if ((b.position || "top") === pos && (Boolean(b.floating) || Boolean(b.dashed))) return true;
+    }
+    return false;
+  }
+
   function isDockedBarActive(pos, currentBarId, screenIdx) {
     const list = BarConfig.bars || [];
     for (let i = 0; i < list.length; i++) {
@@ -38,21 +70,13 @@ Scope {
       const bid = (b.id !== undefined && b.id !== null) ? String(b.id) : ("bar_" + (i + 1));
       if (currentBarId && bid === currentBarId) continue;
       if (screenIdx !== undefined) {
-        const isPrim = (screenIdx === 0);
-        const scr = (Quickshell.screens && Quickshell.screens.length > screenIdx) ? Quickshell.screens[screenIdx] : null;
-        const scrName = (scr && scr.name) ? String(scr.name) : ("screen_" + screenIdx);
-        const bTarget = b.displayTarget || (b.allMonitors ? "all" : "primary");
-        if (bTarget === "primary" && !isPrim) continue;
-        if (bTarget === "secondary" && isPrim) continue;
-        if (bTarget !== "all" && bTarget !== "primary" && bTarget !== "secondary" && bTarget !== scrName) continue;
-        const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
-        const effectiveFloating = (!isPrim && bTarget === "all" && b.secondaryFloating !== undefined) ? Boolean(b.secondaryFloating) : Boolean(b.floating);
-        if (effectivePos === pos && !effectiveFloating) {
+        const info = _barMatchesScreen(b, screenIdx);
+        if (info && info.pos === pos && !info.floating) {
           return true;
         }
         continue;
       }
-      if ((b.position || "top") === pos && !Boolean(b.floating)) {
+      if ((b.position || "top") === pos && !Boolean(b.floating) && !Boolean(b.dashed)) {
         return true;
       }
     }
@@ -186,6 +210,7 @@ Scope {
       readonly property bool isVert: barPos === "left" || barPos === "right"
       readonly property int barThickness: barCfg.barHeight || 32
       readonly property bool isFloating: Boolean(barCfg.floating)
+      readonly property bool isDashed: Boolean(barCfg.dashed)
       readonly property real barAlpha: (barCfg.barOpacity !== undefined && barCfg.barOpacity !== null) ? Number(barCfg.barOpacity) : BarConfig.barOpacity
       readonly property int pillRadius: (barCfg.pillRadius !== undefined) ? Number(barCfg.pillRadius) : BarConfig.pillRadius
       readonly property real pillOpacity: (barCfg.pillOpacity !== undefined) ? Number(barCfg.pillOpacity) : BarConfig.pillOpacity
@@ -211,9 +236,24 @@ Scope {
       Variants {
         model: (Quickshell.screens || []).filter(s => s && s.name && s.name !== "")
 
+        Loader {
+          id: barWindowLoader
+          required property var modelData
+          readonly property var screenModel: modelData
+          property bool isReloading: false
+          readonly property string trackedBarPos: barInstanceScope.barPos + "|" + String(barInstanceScope.barCfg.secondaryPosition || "")
+
+          onTrackedBarPosChanged: {
+            if (!active) return;
+            isReloading = true;
+            Qt.callLater(() => { isReloading = false; });
+          }
+
+          active: !isReloading
+          sourceComponent: Component {
         PanelWindow {
           id: barWindow
-          required property var modelData
+          readonly property var modelData: barWindowLoader.screenModel
           screen: modelData
 
           readonly property int screenIndex: {
@@ -238,18 +278,27 @@ Scope {
           readonly property int dockedLeftW: root.getDockedBarThickness("left", barInstanceScope.currentBarId, screenIndex)
           readonly property int dockedRightW: root.getDockedBarThickness("right", barInstanceScope.currentBarId, screenIndex)
 
+          readonly property bool hasFloatingTop: root.isFloatingBarActive("top", undefined, screenIndex)
+          readonly property bool hasFloatingBottom: root.isFloatingBarActive("bottom", undefined, screenIndex)
+          readonly property bool hasFloatingLeft: root.isFloatingBarActive("left", undefined, screenIndex)
+          readonly property bool hasFloatingRight: root.isFloatingBarActive("right", undefined, screenIndex)
+          readonly property bool hasAnyDockedScreenBar: barWindow.hasDockedTop || barWindow.hasDockedBottom || barWindow.hasDockedLeft || barWindow.hasDockedRight
+          readonly property bool hasAnyFloatingScreenBar: barWindow.hasFloatingTop || barWindow.hasFloatingBottom || barWindow.hasFloatingLeft || barWindow.hasFloatingRight
+          readonly property bool ignoreOtherExclusionForDocked: !barWindow.windowIsFloating && barWindow.hasAnyFloatingScreenBar
+          readonly property bool effectiveScreenBorder: Boolean(BarConfig.screenBorder)
+
           readonly property int effectiveDockedLeft: barWindow.hasDockedLeft
             ? barWindow.dockedLeftW
-            : (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0)
+            : ((barWindow.effectiveScreenBorder && !barWindow.hasFloatingLeft) ? BarConfig.screenBorderThickness : 0)
           readonly property int effectiveDockedRight: barWindow.hasDockedRight
             ? barWindow.dockedRightW
-            : (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0)
+            : ((barWindow.effectiveScreenBorder && !barWindow.hasFloatingRight) ? BarConfig.screenBorderThickness : 0)
           readonly property int effectiveDockedTop: barWindow.hasDockedTop
             ? barWindow.dockedTopH
-            : (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0)
+            : ((barWindow.effectiveScreenBorder && !barWindow.hasFloatingTop) ? BarConfig.screenBorderThickness : 0)
           readonly property int effectiveDockedBottom: barWindow.hasDockedBottom
             ? barWindow.dockedBottomH
-            : (BarConfig.screenBorder ? BarConfig.screenBorderThickness : 0)
+            : ((barWindow.effectiveScreenBorder && !barWindow.hasFloatingBottom) ? BarConfig.screenBorderThickness : 0)
 
           readonly property int horizontalShrink: (barWindow.screen && barWindow.width > 0 && barWindow.width < barWindow.screen.width)
             ? Math.max(0, barWindow.screen.width - barWindow.width)
@@ -295,9 +344,12 @@ Scope {
             ? barInstanceScope.barCfg.secondaryPosition
             : barInstanceScope.barPos
           readonly property bool windowIsVert: windowBarPos === "left" || windowBarPos === "right"
-          readonly property bool windowIsFloating: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryFloating !== undefined)
+          readonly property bool windowIsDashed: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryDashed !== undefined)
+            ? Boolean(barInstanceScope.barCfg.secondaryDashed)
+            : barInstanceScope.isDashed
+          readonly property bool windowIsFloating: ((isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryFloating !== undefined)
             ? Boolean(barInstanceScope.barCfg.secondaryFloating)
-            : barInstanceScope.isFloating
+            : barInstanceScope.isFloating) || windowIsDashed
           readonly property string windowBarColorSpec: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryBarColor !== undefined)
             ? String(barInstanceScope.barCfg.secondaryBarColor)
             : barInstanceScope.barColorSpec
@@ -305,6 +357,7 @@ Scope {
             const c = root.resolveThemeSpec(windowBarColorSpec, root.theme.bgBase);
             return c ? c : root.theme.bgBase;
           }
+          readonly property color effectiveBarColor: Qt.rgba(barWindow.windowResolvedBarColor.r, barWindow.windowResolvedBarColor.g, barWindow.windowResolvedBarColor.b, barInstanceScope.barAlpha)
 
           visible: root.barVisible && Boolean(barInstanceScope.barCfg.enabled) && isScreenTargeted
 
@@ -315,10 +368,67 @@ Scope {
             right: barWindow.windowBarPos === "right" || !barWindow.windowIsVert
           }
 
-          exclusiveZone: barInstanceScope.barThickness + (barWindow.windowIsFloating ? 12 : 0)
+          readonly property int floatSideClearance: barWindow.effectiveScreenBorder ? Math.max(12, Number(BarConfig.screenBorderThickness || 4) + 6) : 12
+          readonly property int floatBorderEdgeClearance: barWindow.effectiveScreenBorder ? (Number(BarConfig.screenBorderThickness || 4) + 6) : 6
+          readonly property bool innerCornersActive: Boolean(BarConfig.innerCorners)
+          readonly property int floatTopClearance: barWindow.windowIsVert
+            ? ((barWindow.hasDockedTop ? barWindow.dockedTopH : 0) + ((barWindow.hasDockedTop && barWindow.innerCornersActive) ? (barInstanceScope.innerCornerRadius + 6) : 12))
+            : (barWindow.windowBarPos === "top"
+              ? (barWindow.hasDockedTop ? (barWindow.dockedTopH + 6) : barWindow.floatBorderEdgeClearance)
+              : 0)
+          readonly property int floatBottomClearance: barWindow.windowIsVert
+            ? ((barWindow.hasDockedBottom ? barWindow.dockedBottomH : 0) + ((barWindow.hasDockedBottom && barWindow.innerCornersActive) ? (barInstanceScope.innerCornerRadius + 6) : 12))
+            : (barWindow.windowBarPos === "bottom"
+              ? (barWindow.hasDockedBottom ? (barWindow.dockedBottomH + 6) : barWindow.floatBorderEdgeClearance)
+              : 0)
+          readonly property int floatLeftClearance: !barWindow.windowIsVert
+            ? ((barWindow.hasDockedLeft ? barWindow.dockedLeftW : 0) + Math.max(barWindow.floatSideClearance, (barWindow.hasDockedLeft && barWindow.innerCornersActive) ? (barInstanceScope.innerCornerRadius + 6) : 12))
+            : (barWindow.windowBarPos === "left"
+              ? (barWindow.hasDockedLeft ? (barWindow.dockedLeftW + 6) : barWindow.floatBorderEdgeClearance)
+              : 0)
+          readonly property int floatRightClearance: !barWindow.windowIsVert
+            ? ((barWindow.hasDockedRight ? barWindow.dockedRightW : 0) + Math.max(barWindow.floatSideClearance, (barWindow.hasDockedRight && barWindow.innerCornersActive) ? (barInstanceScope.innerCornerRadius + 6) : 12))
+            : (barWindow.windowBarPos === "right"
+              ? (barWindow.hasDockedRight ? (barWindow.dockedRightW + 6) : barWindow.floatBorderEdgeClearance)
+              : 0)
 
-          implicitHeight: barWindow.windowIsVert ? 0 : (barInstanceScope.barThickness + (barWindow.windowIsFloating ? 12 : 0))
-          implicitWidth: barWindow.windowIsVert ? (barInstanceScope.barThickness + (barWindow.windowIsFloating ? 12 : 0)) : 0
+          margins {
+            top: barWindow.windowIsFloating ? barWindow.floatTopClearance : 0
+            bottom: barWindow.windowIsFloating ? barWindow.floatBottomClearance : 0
+            left: barWindow.windowIsFloating ? barWindow.floatLeftClearance : 0
+            right: barWindow.windowIsFloating ? barWindow.floatRightClearance : 0
+          }
+
+          exclusionMode: barWindow.ignoreOtherExclusionForDocked ? ExclusionMode.Ignore : ExclusionMode.Normal
+          exclusiveZone: barWindow.ignoreOtherExclusionForDocked ? -1 : barInstanceScope.barThickness
+
+          // When a floating bar is present, a docked bar uses ExclusionMode.Ignore so it
+          // stays docked to the physical monitor edge without being pushed/cut out by the floating bar.
+          // This invisible reserve window preserves the docked bar's exclusiveZone for tiled windows.
+          Loader {
+            active: barWindow.visible && barWindow.ignoreOtherExclusionForDocked
+            sourceComponent: Component {
+              PanelWindow {
+                screen: barWindow.screen
+                visible: true
+                color: "transparent"
+                mask: Region {}
+                exclusionMode: ExclusionMode.Normal
+                anchors {
+                  top: barWindow.windowBarPos === "top" || barWindow.windowIsVert
+                  bottom: barWindow.windowBarPos === "bottom" || barWindow.windowIsVert
+                  left: barWindow.windowBarPos === "left" || !barWindow.windowIsVert
+                  right: barWindow.windowBarPos === "right" || !barWindow.windowIsVert
+                }
+                implicitHeight: barWindow.windowIsVert ? 0 : barInstanceScope.barThickness
+                implicitWidth: barWindow.windowIsVert ? barInstanceScope.barThickness : 0
+                exclusiveZone: barInstanceScope.barThickness
+              }
+            }
+          }
+
+          implicitHeight: barWindow.windowIsVert ? 0 : barInstanceScope.barThickness
+          implicitWidth: barWindow.windowIsVert ? barInstanceScope.barThickness : 0
           color: "transparent"
 
           property string lastPos: barWindow.windowBarPos
@@ -365,29 +475,29 @@ Scope {
             id: barBackground
             anchors.fill: parent
             anchors.topMargin: barWindow.windowIsFloating
-              ? (barWindow.windowIsVert ? 12 : (barWindow.windowBarPos === "top" ? 6 : 0))
+              ? 0
               : (barWindow.windowIsVert
                 ? 0
                 : ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "bottom") ? barInstanceScope.innerCornerRadius : 0))
             anchors.bottomMargin: barWindow.windowIsFloating
-              ? (barWindow.windowIsVert ? 12 : (barWindow.windowBarPos === "bottom" ? 6 : 0))
+              ? 0
               : (barWindow.windowIsVert
                 ? 0
                 : ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "top") ? barInstanceScope.innerCornerRadius : 0))
             anchors.leftMargin: barWindow.windowIsFloating
-              ? (!barWindow.windowIsVert ? 12 : (barWindow.windowBarPos === "left" ? 6 : 0))
+              ? 0
               : (barWindow.windowIsVert
                 ? ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "right") ? barInstanceScope.innerCornerRadius : 0)
                 : 0)
             anchors.rightMargin: barWindow.windowIsFloating
-              ? (!barWindow.windowIsVert ? 12 : (barWindow.windowBarPos === "right" ? 6 : 0))
+              ? 0
               : (barWindow.windowIsVert
                 ? ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "left") ? barInstanceScope.innerCornerRadius : 0)
                 : 0)
             radius: barWindow.windowIsFloating ? 12 : 0
-            color: Qt.rgba(barWindow.windowResolvedBarColor.r, barWindow.windowResolvedBarColor.g, barWindow.windowResolvedBarColor.b, barInstanceScope.barAlpha)
-            border.color: barWindow.windowIsFloating ? root.theme.bgBorder : "transparent"
-            border.width: barWindow.windowIsFloating ? 1 : 0
+            color: barWindow.windowIsDashed ? "transparent" : barWindow.effectiveBarColor
+            border.color: (barWindow.windowIsFloating && !barWindow.windowIsDashed) ? root.theme.bgBorder : "transparent"
+            border.width: (barWindow.windowIsFloating && !barWindow.windowIsDashed) ? 1 : 0
             transform: Translate { id: barSlideTransform; x: 0; y: 0 }
 
             Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -395,7 +505,63 @@ Scope {
             Behavior on anchors.bottomMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             Behavior on anchors.leftMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             Behavior on anchors.rightMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on color { ColorAnimation { duration: 180 } }
+            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on border.color { ColorAnimation { duration: 200 } }
+          }
+
+          // Split Island backgrounds for Dashed bar style (morphs smoothly to/from Floating)
+          property bool dashMorphActive: false
+          Timer {
+            id: dashMorphTimer
+            interval: 260
+            onTriggered: barWindow.dashMorphActive = false
+          }
+          onWindowIsDashedChanged: {
+            dashMorphActive = true;
+            dashMorphTimer.restart();
+          }
+
+          Repeater {
+            model: panelsOuterRepeater.count
+            delegate: Rectangle {
+              required property int index
+              readonly property var secGrid: panelsOuterRepeater.itemAt(index)
+              readonly property bool hasContent: secGrid && secGrid.width > 0 && secGrid.height > 0
+              readonly property real targetX: barWindow.windowIsDashed
+                ? (secGrid ? (barContentContainer.isVert ? barBackground.x : (barContentContainer.x + secGrid.x - 10)) : barBackground.x)
+                : barBackground.x
+              readonly property real targetY: barWindow.windowIsDashed
+                ? (secGrid ? (barContentContainer.isVert ? (barContentContainer.y + secGrid.y - 8) : barBackground.y) : barBackground.y)
+                : barBackground.y
+              readonly property real targetW: barWindow.windowIsDashed
+                ? (secGrid ? (barContentContainer.isVert ? barBackground.width : (secGrid.width + 20)) : 0)
+                : barBackground.width
+              readonly property real targetH: barWindow.windowIsDashed
+                ? (secGrid ? (barContentContainer.isVert ? (secGrid.height + 16) : barBackground.height) : 0)
+                : barBackground.height
+
+              visible: hasContent && !barWindow.isBlankBar && barInstanceScope.barThickness >= 18 && opacity > 0.01
+              x: targetX
+              y: targetY
+              width: targetW
+              height: targetH
+              radius: barWindow.windowIsDashed
+                ? Math.min(12, Math.floor(Math.min(width, height) / 2))
+                : barBackground.radius
+              color: barWindow.effectiveBarColor
+              border.color: root.theme.bgBorder
+              border.width: 1
+              opacity: barWindow.windowIsDashed ? barBackground.opacity : 0.0
+              transform: Translate { x: barSlideTransform.x; y: barSlideTransform.y }
+
+              Behavior on x { enabled: barWindow.dashMorphActive; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+              Behavior on y { enabled: barWindow.dashMorphActive; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+              Behavior on width { enabled: barWindow.dashMorphActive; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+              Behavior on height { enabled: barWindow.dashMorphActive; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+              Behavior on radius { enabled: barWindow.dashMorphActive; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+              Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+              Behavior on color { ColorAnimation { duration: 180 } }
+            }
           }
 
           Item {
@@ -430,7 +596,7 @@ Scope {
             readonly property bool fluidCards: barInstanceScope.fluidCards
             readonly property bool hasInnerCorners: barInstanceScope.hasInnerCorners && !barWindow.windowIsFloating
             readonly property int innerCornerRadius: barInstanceScope.innerCornerRadius
-            readonly property color barColor: barBackground.color
+            readonly property color barColor: barWindow.effectiveBarColor
             property Item activeInfoProvider: null
             property alias sharedInfoPopup: sharedInfoPopupInst
 
@@ -664,6 +830,8 @@ Scope {
 
           }
 
+        }
+          }
         }
       }
     }

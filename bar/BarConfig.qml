@@ -16,6 +16,7 @@ Singleton {
   property string position: "top" // "top" | "bottom"
   property int barHeight: 32
   property bool floating: false
+  property bool dashed: false
   property real barOpacity: 0.85
   property int pillRadius: 10
   property real pillOpacity: 1.0
@@ -24,6 +25,7 @@ Singleton {
   property string displayTarget: "all" // "all" | "primary" | "secondary" | monitor name
   property string secondaryPosition: "bottom" // "top" | "bottom" | "left" | "right"
   property bool secondaryFloating: false
+  property bool secondaryDashed: false
   property string secondaryMode: "custom" // "blank" | "custom" | "mirror"
   property bool blankOnSecondary: false
   readonly property var defaultSecondaryPanels: [
@@ -98,6 +100,7 @@ Singleton {
       position: "top",
       barHeight: 32,
       floating: false,
+      dashed: false,
       barOpacity: 0.85,
       pillRadius: 10,
       pillOpacity: 1.0,
@@ -106,6 +109,7 @@ Singleton {
       displayTarget: "all",
       secondaryPosition: "bottom",
       secondaryFloating: false,
+      secondaryDashed: false,
       secondaryMode: "custom",
       blankOnSecondary: false,
       secondaryPanels: [
@@ -362,6 +366,7 @@ Singleton {
       else if (propName === "position") root.position = String(val);
       else if (propName === "barHeight") root.barHeight = Number(val);
       else if (propName === "floating") root.floating = Boolean(val);
+      else if (propName === "dashed") root.dashed = Boolean(val);
       else if (propName === "barOpacity") root.barOpacity = Number(val);
       else if (propName === "pillRadius") root.pillRadius = Number(val);
       else if (propName === "pillOpacity") root.pillOpacity = Number(val);
@@ -377,6 +382,9 @@ Singleton {
       }
       else if (propName === "secondaryFloating") {
         root.secondaryFloating = Boolean(val);
+      }
+      else if (propName === "secondaryDashed") {
+        root.secondaryDashed = Boolean(val);
       }
       else if (propName === "secondaryMode") {
         root.secondaryMode = String(val);
@@ -431,6 +439,7 @@ Singleton {
       position: nextPos,
       barHeight: 32,
       floating: false,
+      dashed: false,
       barOpacity: root.barOpacity,
       pillRadius: root.pillRadius,
       pillOpacity: root.pillOpacity,
@@ -439,6 +448,7 @@ Singleton {
       displayTarget: finalTarget,
       secondaryPosition: nextPos,
       secondaryFloating: false,
+      secondaryDashed: false,
       secondaryMode: "custom",
       blankOnSecondary: false,
       secondaryPanels: root.defaultSecondaryPanels.map(p => p.slice()),
@@ -652,6 +662,11 @@ Singleton {
         root._loaded = true;
       }
     }
+  }
+
+  function setInnerCorners(val) {
+    root.innerCorners = Boolean(val);
+    root.saveConfig();
   }
 
   function setScreenBorder(val) {
