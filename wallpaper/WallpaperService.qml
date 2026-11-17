@@ -519,7 +519,7 @@ Singleton {
       'origPath="$1"; target="$2"; mode="$3"; filter="$4"; effect="$5"; syncFlag="$6"; setSh="$7"; ' +
       'export MAGICK_THREAD_LIMIT=2; ' +
       'export OMP_NUM_THREADS=2; ' +
-      'pkill -f "wallpaper_effects/wallpaper_modified" 2>/dev/null || true; ' +
+      'pkill -f "^magick .*wallpaper_effects/wallpaper_modified" 2>/dev/null || true; ' +
       'apply_eff() { ' +
       '  inP="$1"; eff="$2"; outP="$3"; ' +
       '  if [ -z "$eff" ] || [ "$eff" = "none" ] || ! command -v magick >/dev/null 2>&1; then ' +
@@ -530,11 +530,11 @@ Singleton {
       '  case "$eff" in ' +
       '    negate)         run_magick "$inP" -negate "$outP" ;; ' +
       '    bw)             run_magick "$inP" -colorspace gray -sigmoidal-contrast 10,40% "$outP" ;; ' +
-      '    blurred)        run_magick "$inP" -resize 2560x1440\> -blur 0x8 "$outP" ;; ' +
-      '    charcoal)       run_magick "$inP" -resize 2560x1440\> -charcoal 0x4 "$outP" ;; ' +
-      '    edge)           run_magick "$inP" -resize 2560x1440\> -edge 1 "$outP" ;; ' +
-      '    emboss)         run_magick "$inP" -resize 2560x1440\> -emboss 0x4 "$outP" ;; ' +
-      '    oil)            run_magick "$inP" -resize 2560x1440\> -paint 3 "$outP" ;; ' +
+      '    blurred)        run_magick "$inP" -resize "2560x1440>" -blur 0x8 "$outP" ;; ' +
+      '    charcoal)       run_magick "$inP" -resize "2560x1440>" -charcoal 0x4 "$outP" ;; ' +
+      '    edge)           run_magick "$inP" -resize "2560x1440>" -edge 1 "$outP" ;; ' +
+      '    emboss)         run_magick "$inP" -resize "2560x1440>" -emboss 0x4 "$outP" ;; ' +
+      '    oil)            run_magick "$inP" -resize "2560x1440>" -paint 3 "$outP" ;; ' +
       '    posterize)      run_magick "$inP" -posterize 4 "$outP" ;; ' +
       '    sepia)          run_magick "$inP" -sepia-tone 65% "$outP" ;; ' +
       '    solarize)       run_magick "$inP" -solarize 80% "$outP" ;; ' +
@@ -646,7 +646,7 @@ Singleton {
       'mode="$1"; wallA="$2"; wallB="$3"; outA="$4"; outB="$5"; filter="$6"; effect="$7"; ' +
       'export MAGICK_THREAD_LIMIT=2; ' +
       'export OMP_NUM_THREADS=2; ' +
-      'pkill -f "wallpaper_effects/wallpaper_modified" 2>/dev/null || true; ' +
+      'pkill -f "^magick .*wallpaper_effects/wallpaper_modified" 2>/dev/null || true; ' +
       'apply_eff() { ' +
       '  inP="$1"; eff="$2"; outP="$3"; ' +
       '  if [ -z "$eff" ] || [ "$eff" = "none" ] || ! command -v magick >/dev/null 2>&1; then ' +
@@ -657,11 +657,11 @@ Singleton {
       '  case "$eff" in ' +
       '    negate)         run_magick "$inP" -negate "$outP" ;; ' +
       '    bw)             run_magick "$inP" -colorspace gray -sigmoidal-contrast 10,40% "$outP" ;; ' +
-      '    blurred)        run_magick "$inP" -resize 2560x1440\> -blur 0x8 "$outP" ;; ' +
-      '    charcoal)       run_magick "$inP" -resize 2560x1440\> -charcoal 0x4 "$outP" ;; ' +
-      '    edge)           run_magick "$inP" -resize 2560x1440\> -edge 1 "$outP" ;; ' +
-      '    emboss)         run_magick "$inP" -resize 2560x1440\> -emboss 0x4 "$outP" ;; ' +
-      '    oil)            run_magick "$inP" -resize 2560x1440\> -paint 3 "$outP" ;; ' +
+      '    blurred)        run_magick "$inP" -resize "2560x1440>" -blur 0x8 "$outP" ;; ' +
+      '    charcoal)       run_magick "$inP" -resize "2560x1440>" -charcoal 0x4 "$outP" ;; ' +
+      '    edge)           run_magick "$inP" -resize "2560x1440>" -edge 1 "$outP" ;; ' +
+      '    emboss)         run_magick "$inP" -resize "2560x1440>" -emboss 0x4 "$outP" ;; ' +
+      '    oil)            run_magick "$inP" -resize "2560x1440>" -paint 3 "$outP" ;; ' +
       '    posterize)      run_magick "$inP" -posterize 4 "$outP" ;; ' +
       '    sepia)          run_magick "$inP" -sepia-tone 65% "$outP" ;; ' +
       '    solarize)       run_magick "$inP" -solarize 80% "$outP" ;; ' +
