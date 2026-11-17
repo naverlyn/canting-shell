@@ -12,7 +12,9 @@ Item {
     required property var root
     id: pillRadiusItem
     Layout.fillWidth: true
-    height: 64
+    visible: !root.generalTab.curHidePill
+    height: visible ? 64 : 0
+    implicitHeight: visible ? 64 : 0
     readonly property int activeRadius: root.generalTab.curPillRadius
     opacity: root.generalTab.curHidePill ? 0.45 : 1.0
     enabled: !root.generalTab.curHidePill

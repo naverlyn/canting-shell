@@ -42,82 +42,20 @@ Item {
 
         Item { Layout.fillWidth: true }
 
-        Rectangle {
-            id: activeStyleSegmentTrack
-            implicitWidth: 260
-            implicitHeight: 32
-            width: 260
-            height: 32
-            radius: 7
-            color: root.theme.bgBase
-            border.color: root.theme.bgBorder
-            border.width: 1
-
-            readonly property string activeStyleVal: root.generalTab.curActiveStyle
-            readonly property int activeIdx: activeStyleVal === "underline" ? 1 : (activeStyleVal === "both" ? 2 : 0)
-            readonly property real cellWidth: (width - 6 - 8) / 3
-
-            Rectangle {
-                y: 3
-                height: parent.height - 6
-                width: activeStyleSegmentTrack.cellWidth
-                x: 3 + activeStyleSegmentTrack.activeIdx * (activeStyleSegmentTrack.cellWidth + 4)
-                radius: 5
-                color: root.theme.bgSelected
-                border.color: root.theme.accentPrimary
-                border.width: 1
-
-                Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-            }
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 3
-                spacing: 4
-
-                Repeater {
-                    model: [
-                        { label: "Pill", value: "pill" },
-                        { label: "Line", value: "underline" },
-                        { label: "Both", value: "both" }
-                    ]
-
-                    delegate: Rectangle {
-                        id: styleSegBtn
-                        required property var modelData
-                        readonly property bool isSel: activeStyleSegmentTrack.activeStyleVal === modelData.value
-
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        radius: 5
-                        scale: styleSegMouse.pressed ? 0.95 : 1.0
-                        color: !isSel && styleSegHover.hovered ? root.theme.bgHover : "transparent"
-                        Behavior on scale { NumberAnimation { duration: 100 } }
-                        Behavior on color { ColorAnimation { duration: 140 } }
-
-                        HoverHandler { id: styleSegHover }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: styleSegBtn.modelData.label
-                            font.family: root.font
-                            font.pixelSize: 11
-                            font.bold: styleSegBtn.isSel
-                            color: styleSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                            opacity: styleSegBtn.isSel || styleSegHover.hovered ? 1.0 : 0.75
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on opacity { NumberAnimation { duration: 140 } }
-                        }
-
-                        MouseArea {
-                            id: styleSegMouse
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: BarConfig.updateBarProp("activeStyle", styleSegBtn.modelData.value)
-                        }
-                    }
-                }
-            }
+        AppDropdown {
+            theme: root.theme
+            font: root.font
+            width: 200
+            implicitWidth: 200
+            menuWidth: 200
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+            options: [
+                { desktop: "pill",      name: "Pill", desc: "" },
+                { desktop: "underline", name: "Line", desc: "" },
+                { desktop: "both",      name: "Both", desc: "" }
+            ]
+            currentValue: root.generalTab.curActiveStyle
+            onSelected: (val) => BarConfig.updateBarProp("activeStyle", val)
         }
     }
 }

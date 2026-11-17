@@ -68,82 +68,22 @@ ColumnLayout {
 
                 Item { Layout.fillWidth: true }
 
-                Rectangle {
-                    id: fingerSegmentTrack
-                    implicitWidth: 200
-                    height: 32
-                    radius: 7
-                    color: root.theme.bgBase
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
+                AppDropdown {
+                    theme: root.theme
+                    font: root.font
+                    width: 220
+                    implicitWidth: 220
+                    menuWidth: 220
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-
-                    readonly property var fingerOpts: [3, 4]
-                    readonly property int activeIdx: fingerOpts.indexOf(root.gesturesWorkspaceSwipeFingers)
-                    readonly property real cellWidth: (width - 6 - 3) / 2
-
-                    /* Sliding Selection Pill */
-                    Rectangle {
-                        visible: fingerSegmentTrack.activeIdx >= 0
-                        y: 3
-                        height: parent.height - 6
-                        width: fingerSegmentTrack.cellWidth
-                        x: 3 + Math.max(0, fingerSegmentTrack.activeIdx) * (fingerSegmentTrack.cellWidth + 3)
-                        radius: 5
-                        color: root.theme.bgSelected
-                        border.color: root.theme.accentPrimary
-                        border.width: 1
-
-                        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        spacing: 3
-
-                        Repeater {
-                            model: [
-                                { val: 3, label: "3 Fingers" },
-                                { val: 4, label: "4 Fingers" }
-                            ]
-
-                            delegate: Rectangle {
-                                id: fingerBtn
-                                required property var modelData
-                                required property int index
-                                readonly property bool isSel: fingerSegmentTrack.activeIdx === fingerBtn.index
-
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: 5
-                                color: !isSel && fHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                                Behavior on color { ColorAnimation { duration: 140 } }
-
-                                HoverHandler { id: fHover }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: fingerBtn.modelData.label
-                                    font.family: root.font
-                                    font.pixelSize: 11
-                                    font.bold: fingerBtn.isSel
-                                    color: fingerBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                    opacity: fingerBtn.isSel || fHover.hovered ? 1.0 : 0.75
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.gesturesWorkspaceSwipeFingers = fingerBtn.modelData.val;
-                                        root.setHyprVar("gestures", "workspace_swipe_fingers", fingerBtn.modelData.val);
-                                        root.showToast("Swipe gesture set to " + fingerBtn.modelData.label);
-                                    }
-                                }
-                            }
-                        }
+                    options: [
+                        { desktop: "3", name: "3 Fingers", desc: "" },
+                        { desktop: "4", name: "4 Fingers", desc: "" }
+                    ]
+                    currentValue: String(root.gesturesWorkspaceSwipeFingers)
+                    onSelected: (val, opt) => {
+                        root.gesturesWorkspaceSwipeFingers = Number(val);
+                        root.setHyprVar("gestures", "workspace_swipe_fingers", Number(val));
+                        root.showToast("Swipe gesture set to " + (opt ? opt.name : val));
                     }
                 }
             }

@@ -75,64 +75,20 @@ ColumnLayout {
                         }
                     }
 
-                    /* Segmented VRR Mode Control */
-                    Rectangle {
-                        width: 260
-                        height: 32
-                        radius: 7
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                        border.width: 1
+                    AppDropdown {
+                        theme: root.theme
+                        font: root.font
+                        width: 220
+                        implicitWidth: 220
+                        menuWidth: 220
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 3
-                            spacing: 3
-
-                            Repeater {
-                                model: [
-                                    { val: 0, label: "Off" },
-                                    { val: 1, label: "Always" },
-                                    { val: 2, label: "Fullscreen" }
-                                ]
-                                delegate: Rectangle {
-                                    required property var modelData
-                                    readonly property bool isSelected: root.vrrMode === modelData.val
-
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    radius: 5
-                                    color: isSelected
-                                        ? root.theme.accentPrimary
-                                        : (vrrHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
-                                    border.color: isSelected ? root.theme.accentPrimary : "transparent"
-                                    border.width: isSelected ? 1 : 0
-
-                                    Behavior on color { ColorAnimation { duration: 120 } }
-
-                                    HoverHandler { id: vrrHover }
-
-                                    Text {
-                                        id: vrrLabel
-                                        anchors.centerIn: parent
-                                        text: modelData.label
-                                        font.family: root.font
-                                        font.pixelSize: 11
-                                        font.bold: isSelected
-                                        color: isSelected
-                                            ? (root.theme.bgBase ?? "#1a1b26")
-                                            : (vrrHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: root.setVrrMode(modelData.val)
-                                    }
-                                }
-                            }
-                        }
+                        options: [
+                            { desktop: "0", name: "Off",        desc: "" },
+                            { desktop: "1", name: "Always",     desc: "" },
+                            { desktop: "2", name: "Fullscreen", desc: "" }
+                        ]
+                        currentValue: String(root.vrrMode)
+                        onSelected: (val) => root.setVrrMode(Number(val))
                     }
                 }
             }

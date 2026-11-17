@@ -58,87 +58,22 @@ ColumnLayout {
                     }
                 }
 
-                Rectangle {
-                    id: mprisSegTrack
-                    implicitWidth: 270
-                    implicitHeight: 32
-                    width: 270
-                    height: 32
-                    radius: 7
-                    color: root.theme.bgBase
-                    border.color: root.theme.bgBorder
-                    border.width: 1
+                AppDropdown {
+                    theme: root.theme
+                    font: root.font
+                    width: 220
+                    implicitWidth: 220
+                    menuWidth: 220
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-
-                    readonly property int activeIdx: ControlCenterConfig.mediaWidgetStyle === "auto"
-                        ? 0
-                        : (ControlCenterConfig.mediaWidgetStyle === "compact" ? 1 : 2)
-                    readonly property real cellWidth: (width - 6 - 8) / 3
-
-                    Rectangle {
-                        y: 3
-                        height: parent.height - 6
-                        width: mprisSegTrack.cellWidth
-                        x: 3 + mprisSegTrack.activeIdx * (mprisSegTrack.cellWidth + 4)
-                        radius: 5
-                        color: root.theme.bgSelected
-                        border.color: root.theme.accentPrimary
-                        border.width: 1
-
-                        Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        spacing: 4
-
-                        Repeater {
-                            model: [
-                                { label: "Auto", value: "auto" },
-                                { label: "Compact", value: "compact" },
-                                { label: "Big Banner", value: "full" }
-                            ]
-
-                            delegate: Rectangle {
-                                id: mprisBtn
-                                required property var modelData
-                                readonly property bool isSel: ControlCenterConfig.mediaWidgetStyle === modelData.value
-
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: 5
-                                scale: mprisMouse.pressed ? 0.95 : 1.0
-                                color: !isSel && mprisHover.hovered ? root.theme.bgHover : "transparent"
-
-                                Behavior on scale { NumberAnimation { duration: 100 } }
-                                Behavior on color { ColorAnimation { duration: 140 } }
-
-                                HoverHandler { id: mprisHover }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: mprisBtn.modelData.label
-                                    font.family: root.font
-                                    font.pixelSize: 11
-                                    font.bold: mprisBtn.isSel
-                                    color: mprisBtn.isSel ? root.theme.accentPrimary : root.theme.textSecondary
-                                    opacity: mprisBtn.isSel || mprisHover.hovered ? 1.0 : 0.75
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                    Behavior on opacity { NumberAnimation { duration: 140 } }
-                                }
-
-                                MouseArea {
-                                    id: mprisMouse
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        ControlCenterConfig.setMediaWidgetStyle(mprisBtn.modelData.value);
-                                        root.showToast("MPRIS style set to " + mprisBtn.modelData.label);
-                                    }
-                                }
-                            }
-                        }
+                    options: [
+                        { desktop: "auto",    name: "Auto",       desc: "" },
+                        { desktop: "compact", name: "Compact",    desc: "" },
+                        { desktop: "full",    name: "Big Banner", desc: "" }
+                    ]
+                    currentValue: ControlCenterConfig.mediaWidgetStyle || "auto"
+                    onSelected: (val, opt) => {
+                        ControlCenterConfig.setMediaWidgetStyle(val);
+                        root.showToast("MPRIS style set to " + (opt ? opt.name : val));
                     }
                 }
             }

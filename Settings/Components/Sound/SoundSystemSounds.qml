@@ -75,91 +75,24 @@ ColumnLayout {
 
                     Item { Layout.fillWidth: true }
 
-                    /* Sound Options Segmented Pill Track */
-                    Rectangle {
-                        id: soundSegmentTrack
-                        implicitWidth: 440
-                        width: 440
-                        height: root.btnHeight
-                        radius: 7
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                        border.width: 1
-                        Layout.alignment: Qt.AlignVCenter
-
-                        readonly property var soundOptions: [
-                            { id: "bell", label: "Bell" },
-                            { id: "dialog-information", label: "Information" },
-                            { id: "window-attention", label: "Attention" },
-                            { id: "message", label: "Message" },
-                            { id: "complete", label: "Complete" }
+                    AppDropdown {
+                        theme: root.theme
+                        font: root.font
+                        width: 220
+                        implicitWidth: 220
+                        menuWidth: 220
+                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                        options: [
+                            { desktop: "bell",               name: "Bell",        desc: "" },
+                            { desktop: "dialog-information", name: "Information", desc: "" },
+                            { desktop: "window-attention",   name: "Attention",   desc: "" },
+                            { desktop: "message",            name: "Message",     desc: "" },
+                            { desktop: "complete",           name: "Complete",    desc: "" }
                         ]
-                        readonly property int activeIdx: {
-                            for (let i = 0; i < soundOptions.length; i++) {
-                                if (soundOptions[i].id === root.selectedAlertSound) return i;
-                            }
-                            return 0;
-                        }
-                        readonly property real cellWidth: (width - 6 - ((soundOptions.length - 1) * 4)) / soundOptions.length
-
-                        // Animated sliding indicator
-                        Rectangle {
-                            y: 3
-                            height: parent.height - 6
-                            width: soundSegmentTrack.cellWidth
-                            x: 3 + soundSegmentTrack.activeIdx * (soundSegmentTrack.cellWidth + 4)
-                            radius: 5
-                            color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15)
-                            border.color: root.theme.accentPrimary
-                            border.width: 1
-
-                            Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                            Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                        }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 3
-                            spacing: 4
-
-                            Repeater {
-                                model: soundSegmentTrack.soundOptions
-
-                                delegate: Rectangle {
-                                    id: soundSegBtn
-                                    required property var modelData
-                                    readonly property bool isSel: root.selectedAlertSound === modelData.id
-
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    radius: 5
-                                    color: !isSel && soundSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-
-                                    HoverHandler { id: soundSegHover }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: soundSegBtn.modelData.label
-                                        font.family: root.font
-                                        font.pixelSize: 11
-                                        font.bold: soundSegBtn.isSel
-                                        color: soundSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                        opacity: soundSegBtn.isSel || soundSegHover.hovered ? 1.0 : 0.75
-                                        Behavior on color { ColorAnimation { duration: 140 } }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        preventStealing: true
-                                        onClicked: {
-                                            root.selectedAlertSound = soundSegBtn.modelData.id;
-                                            root.playSound(soundSegBtn.modelData.id);
-                                        }
-                                    }
-                                }
-                            }
+                        currentValue: root.selectedAlertSound
+                        onSelected: (val) => {
+                            root.selectedAlertSound = val;
+                            root.playSound(val);
                         }
                     }
 

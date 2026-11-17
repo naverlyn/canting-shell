@@ -86,21 +86,21 @@ Rectangle {
         }
     }
 
-    readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_hyprlock.sh").toString().replace(/^file:\/\//, "")
-
     // Shell script execution runner
     Process {
         id: evalProc
         property string cmdToRun: ""
-        command: [cardRoot.scriptPath, "eval", cmdToRun]
+        command: ["timeout", "3s", "bash", "-c", cmdToRun]
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 cardRoot.isEvaluating = false;
-                try {
-                    const res = JSON.parse(text);
-                    cardRoot.testOutput = (res && res.output !== undefined) ? res.output : text.trim();
-                } catch(e) {
+                cardRoot.testOutput = text.trim();
+            }
+        }
+        stderr: StdioCollector {
+            onStreamFinished: {
+                if (text.trim() !== "" && cardRoot.testOutput === "") {
                     cardRoot.testOutput = text.trim();
                 }
             }

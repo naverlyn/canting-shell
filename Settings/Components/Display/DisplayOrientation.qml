@@ -1,12 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
-import Quickshell
-import Quickshell.Io
-import "../../../MonitorManager"
-import "../../../MonitorManager/Components"
-import "../.."
-import "../Common"
 import ".."
 
 Item {
@@ -44,66 +37,21 @@ Item {
 
         Item { Layout.fillWidth: true }
 
-        /* Segmented Orientation Control */
-        Rectangle {
-            width: 360
-            height: 32
-            radius: 7
-            color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
-            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-            border.width: 1
+        AppDropdown {
+            theme: root.theme
+            font: root.font
+            width: 220
+            implicitWidth: 220
+            menuWidth: 220
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: 3
-                spacing: 3
-
-                Repeater {
-                    model: [
-                        { t: 0, label: "0°" },
-                        { t: 1, label: "90°" },
-                        { t: 2, label: "180°" },
-                        { t: 3, label: "270°" }
-                    ]
-                    delegate: Rectangle {
-                        required property var modelData
-                        readonly property bool isSelected: root.selectedMonitor
-                            && root.selectedMonitor.transform === modelData.t
-
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        radius: 5
-                        color: isSelected
-                            ? root.theme.accentPrimary
-                            : (rotPillHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
-                        border.color: isSelected ? root.theme.accentPrimary : "transparent"
-                        border.width: isSelected ? 1 : 0
-
-                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                        HoverHandler { id: rotPillHover }
-
-                        Text {
-                            id: rotText
-                            anchors.centerIn: parent
-                            text: modelData.label
-                            font.family: root.font
-                            font.pixelSize: 11
-                            font.bold: isSelected
-                            color: isSelected
-                                ? (root.theme.bgBase ?? "#1a1b26")
-                                : (rotPillHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.selectTransform(modelData.t)
-                        }
-                    }
-                }
-            }
+            options: [
+                { desktop: "0", name: "0°",   desc: "" },
+                { desktop: "1", name: "90°",  desc: "" },
+                { desktop: "2", name: "180°", desc: "" },
+                { desktop: "3", name: "270°", desc: "" }
+            ]
+            currentValue: root.selectedMonitor ? String(root.selectedMonitor.transform) : "0"
+            onSelected: (val) => root.selectTransform(Number(val))
         }
     }
 }

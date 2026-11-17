@@ -47,86 +47,23 @@ SectionCard {
 
             Item { Layout.fillWidth: true }
 
-            Rectangle {
-                id: wsStyleSegmentTrack
-                implicitWidth: 260
-                implicitHeight: 32
-                width: 260
-                height: 32
+            AppDropdown {
+                theme: root.theme
+                font: root.font
+                width: 200
+                implicitWidth: 200
+                menuWidth: 200
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                radius: 7
-                color: root.theme.bgBase
-                border.color: root.theme.bgBorder
-                border.width: 1
-
-                readonly property string activeVal: BarConfig.workspaceStyle || "index"
-                readonly property int activeIdx: activeVal === "roman" ? 1 : (activeVal === "dot" ? 2 : 0)
-                readonly property real cellWidth: (width - 6 - 8) / 3
-
-                Rectangle {
-                    y: 3
-                    height: parent.height - 6
-                    width: wsStyleSegmentTrack.cellWidth
-                    x: 3 + wsStyleSegmentTrack.activeIdx * (wsStyleSegmentTrack.cellWidth + 4)
-                    radius: 5
-                    color: root.theme.bgSelected
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-
-                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 4
-
-                    Repeater {
-                        model: [
-                            { label: "1, 2, 3", value: "index" },
-                            { label: "I, II, III", value: "roman" },
-                            { label: "• • •", value: "dot" }
-                        ]
-                        delegate: Rectangle {
-                            id: wsStyleBtn
-                            required property var modelData
-                            required property int index
-                            readonly property bool isSel: wsStyleSegmentTrack.activeIdx === index
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 5
-                            color: !isSel && wsHov.hovered ? root.theme.bgHover : "transparent"
-                            scale: wsMouse.pressed ? 0.95 : 1.0
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on scale { NumberAnimation { duration: 100 } }
-
-                            HoverHandler { id: wsHov }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: wsStyleBtn.modelData.label
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: wsStyleBtn.isSel
-                                color: wsStyleBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                opacity: wsStyleBtn.isSel || wsHov.hovered ? 1.0 : 0.75
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                Behavior on opacity { NumberAnimation { duration: 140 } }
-                            }
-
-                            MouseArea {
-                                id: wsMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    BarConfig.workspaceStyle = wsStyleBtn.modelData.value;
-                                    BarConfig.saveConfig();
-                                    root.showToast("Workspace style set to: " + wsStyleBtn.modelData.label);
-                                }
-                            }
-                        }
-                    }
+                options: [
+                    { desktop: "index", name: "1, 2, 3",    desc: "" },
+                    { desktop: "roman", name: "I, II, III", desc: "" },
+                    { desktop: "dot",   name: "• • •",      desc: "" }
+                ]
+                currentValue: BarConfig.workspaceStyle || "index"
+                onSelected: (val, opt) => {
+                    BarConfig.workspaceStyle = val;
+                    BarConfig.saveConfig();
+                    root.showToast("Workspace style set to: " + (opt ? opt.name : val));
                 }
             }
         }

@@ -98,83 +98,22 @@ ColumnLayout {
 
                     Item { Layout.fillWidth: true }
 
-                    /* Position Segmented Pill Track */
-                    Rectangle {
-                        id: osdPosSegmentTrack
-                        implicitWidth: 400
-                        width: 400
-                        height: root.btnHeight
-                        radius: 7
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                        border.width: 1
-                        Layout.alignment: Qt.AlignVCenter
-
-                        readonly property var posList: ["left", "center", "right", "top", "bottom"]
-                        readonly property int activePosIndex: {
-                            const idx = posList.indexOf(OSDService.position);
-                            return idx !== -1 ? idx : 4;
-                        }
-                        readonly property real cellWidth: (width - 6 - ((OSDService.positionOptions.length - 1) * 4)) / OSDService.positionOptions.length
-
-                        // Animated sliding indicator
-                        Rectangle {
-                            y: 3
-                            height: parent.height - 6
-                            width: osdPosSegmentTrack.cellWidth
-                            x: 3 + osdPosSegmentTrack.activePosIndex * (osdPosSegmentTrack.cellWidth + 4)
-                            radius: 5
-                            color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15)
-                            border.color: root.theme.accentPrimary
-                            border.width: 1
-
-                            Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                            Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                        }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 3
-                            spacing: 4
-
-                            Repeater {
-                                model: OSDService.positionOptions
-
-                                delegate: Rectangle {
-                                    id: posSegBtn
-                                    required property var modelData
-                                    readonly property bool isSel: OSDService.position === modelData.id
-
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    radius: 5
-                                    color: !isSel && posSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-
-                                    HoverHandler { id: posSegHover }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: posSegBtn.modelData.label
-                                        font.family: root.font
-                                        font.pixelSize: 11
-                                        font.bold: posSegBtn.isSel
-                                        color: posSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                        opacity: posSegBtn.isSel || posSegHover.hovered ? 1.0 : 0.75
-                                        Behavior on color { ColorAnimation { duration: 140 } }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        preventStealing: true
-                                        onClicked: {
-                                            OSDService.setPosition(posSegBtn.modelData.id);
-                                            OSDService.testOSD();
-                                        }
-                                    }
-                                }
-                            }
+                    AppDropdown {
+                        theme: root.theme
+                        font: root.font
+                        width: 220
+                        implicitWidth: 220
+                        menuWidth: 220
+                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                        options: (OSDService.positionOptions || []).map(p => ({
+                            desktop: p.id,
+                            name: p.label,
+                            desc: ""
+                        }))
+                        currentValue: OSDService.position
+                        onSelected: (val) => {
+                            OSDService.setPosition(val);
+                            OSDService.testOSD();
                         }
                     }
                 }

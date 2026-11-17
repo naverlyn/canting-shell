@@ -184,14 +184,6 @@ ColumnLayout {
                                         Layout.fillWidth: true
                                         elide: Text.ElideRight
                                     }
-
-                                    Text {
-                                        visible: mirOptItem.isSelected
-                                        text: "✓"
-                                        font.family: root.font
-                                        font.pixelSize: 11
-                                        color: root.theme.accentPrimary
-                                    }
                                 }
 
                                 MouseArea {

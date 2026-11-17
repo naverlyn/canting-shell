@@ -552,84 +552,24 @@ ColumnLayout {
 
                 Item { Layout.fillWidth: true }
 
-                Rectangle {
-                    id: layoutSegmentTrack
-                    implicitWidth: 340
-                    height: 32
-                    radius: 7
-                    color: root.theme.bgBase
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
+                AppDropdown {
+                    theme: root.theme
+                    font: root.font
+                    width: 220
+                    implicitWidth: 220
+                    menuWidth: 220
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-
-                    readonly property var layouts: ["dwindle", "master", "scrolling", "monocle"]
-                    readonly property int activeIdx: layouts.indexOf(root.generalLayout)
-                    readonly property real cellWidth: (width - 6 - 9) / 4
-
-                    /* Sliding Selection Pill */
-                    Rectangle {
-                        visible: layoutSegmentTrack.activeIdx >= 0
-                        y: 3
-                        height: parent.height - 6
-                        width: layoutSegmentTrack.cellWidth
-                        x: 3 + Math.max(0, layoutSegmentTrack.activeIdx) * (layoutSegmentTrack.cellWidth + 3)
-                        radius: 5
-                        color: root.theme.bgSelected
-                        border.color: root.theme.accentPrimary
-                        border.width: 1
-
-                        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        spacing: 3
-
-                        Repeater {
-                            model: [
-                                { id: "dwindle", label: "Dwindle" },
-                                { id: "master", label: "Master" },
-                                { id: "scrolling", label: "Scrolling" },
-                                { id: "monocle", label: "Monocle" }
-                            ]
-
-                            delegate: Rectangle {
-                                id: lSegBtn
-                                required property var modelData
-                                required property int index
-                                readonly property bool isSel: layoutSegmentTrack.activeIdx === lSegBtn.index
-
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: 5
-                                color: !isSel && lHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                                Behavior on color { ColorAnimation { duration: 140 } }
-
-                                HoverHandler { id: lHover }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: lSegBtn.modelData.label
-                                    font.family: root.font
-                                    font.pixelSize: 11
-                                    font.bold: lSegBtn.isSel
-                                    color: lSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                    opacity: lSegBtn.isSel || lHover.hovered ? 1.0 : 0.75
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.generalLayout = lSegBtn.modelData.id;
-                                        root.setHyprVar("general", "layout", lSegBtn.modelData.id);
-                                        root.showToast("Layout engine set to " + lSegBtn.modelData.label);
-                                    }
-                                }
-                            }
-                        }
+                    options: [
+                        { desktop: "dwindle",   name: "Dwindle",   desc: "" },
+                        { desktop: "master",    name: "Master",    desc: "" },
+                        { desktop: "scrolling", name: "Scrolling", desc: "" },
+                        { desktop: "monocle",   name: "Monocle",   desc: "" }
+                    ]
+                    currentValue: root.generalLayout
+                    onSelected: (val, opt) => {
+                        root.generalLayout = val;
+                        root.setHyprVar("general", "layout", val);
+                        root.showToast("Layout engine set to " + (opt ? opt.name : val));
                     }
                 }
             }

@@ -7,6 +7,7 @@ import Quickshell.Io
 import Quickshell.Widgets
 import "../../../AppLauncher"
 import "../.."
+import ".."
 import "../Common"
 
 ColumnLayout {
@@ -464,79 +465,21 @@ ColumnLayout {
 
                 Item { Layout.fillWidth: true }
 
-                /* Segmented Track matching SettingSliderRow style */
-                Rectangle {
-                    id: modeSegmentTrack
+                AppDropdown {
+                    theme: root.theme
+                    font: root.font
+                    width: 220
+                    implicitWidth: 220
+                    menuWidth: 220
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                    implicitWidth: 260
-                    height: 32
-                    radius: 7
-                    color: root.theme.bgBase
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
-
-                    readonly property int activeIdx: AppLauncherConfig.defaultMode === "command" ? 1 : 0
-                    readonly property real cellWidth: (width - 6 - 3) / 2
-
-                    /* Sliding Selection Pill */
-                    Rectangle {
-                        y: 3
-                        height: parent.height - 6
-                        width: modeSegmentTrack.cellWidth
-                        x: 3 + modeSegmentTrack.activeIdx * (modeSegmentTrack.cellWidth + 3)
-                        radius: 5
-                        color: root.theme.bgSelected
-                        border.color: root.theme.accentPrimary
-                        border.width: 1
-
-                        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        spacing: 3
-
-                        Repeater {
-                            model: [
-                                { id: "apps",    label: "Applications" },
-                                { id: "command", label: "Execute Command" }
-                            ]
-                            delegate: Rectangle {
-                                id: modeSegBtn
-                                required property var modelData
-                                required property int index
-                                readonly property bool isSel: modeSegmentTrack.activeIdx === modeSegBtn.index
-
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: 5
-                                color: !isSel && modeSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                                Behavior on color { ColorAnimation { duration: 140 } }
-
-                                HoverHandler { id: modeSegHover }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: modeSegBtn.modelData.label
-                                    font.family: root.font
-                                    font.pixelSize: 11
-                                    font.bold: modeSegBtn.isSel
-                                    color: modeSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                    opacity: modeSegBtn.isSel || modeSegHover.hovered ? 1.0 : 0.75
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        AppLauncherConfig.setDefaultMode(modeSegBtn.modelData.id);
-                                        root.showToast("Default mode set to " + modeSegBtn.modelData.label);
-                                    }
-                                }
-                            }
-                        }
+                    options: [
+                        { desktop: "apps",    name: "Applications",    desc: "" },
+                        { desktop: "command", name: "Execute Command", desc: "" }
+                    ]
+                    currentValue: AppLauncherConfig.defaultMode === "command" ? "command" : "apps"
+                    onSelected: (val, opt) => {
+                        AppLauncherConfig.setDefaultMode(val);
+                        root.showToast("Default mode set to " + (opt ? opt.name : val));
                     }
                 }
             }

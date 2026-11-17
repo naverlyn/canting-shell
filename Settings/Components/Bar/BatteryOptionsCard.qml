@@ -60,87 +60,24 @@ SectionCard {
 
             Item { Layout.fillWidth: true }
 
-            Rectangle {
-                id: batThreshSegmentTrack
-                implicitWidth: 260
-                implicitHeight: 32
-                width: 260
-                height: 32
+            AppDropdown {
+                theme: root.theme
+                font: root.font
+                width: 200
+                implicitWidth: 200
+                menuWidth: 200
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                radius: 7
-                color: root.theme.bgBase
-                border.color: root.theme.bgBorder
-                border.width: 1
-
-                readonly property int activeVal: Number(BarConfig.batteryLowThreshold !== undefined ? BarConfig.batteryLowThreshold : 20)
-                readonly property int activeIdx: activeVal === 15 ? 0 : (activeVal === 25 ? 2 : (activeVal === 30 ? 3 : 1))
-                readonly property real cellWidth: (width - 6 - 12) / 4
-
-                Rectangle {
-                    y: 3
-                    height: parent.height - 6
-                    width: batThreshSegmentTrack.cellWidth
-                    x: 3 + batThreshSegmentTrack.activeIdx * (batThreshSegmentTrack.cellWidth + 4)
-                    radius: 5
-                    color: root.theme.bgSelected
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-
-                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 4
-
-                    Repeater {
-                        model: [
-                            { label: "15%", value: 15 },
-                            { label: "20%", value: 20 },
-                            { label: "25%", value: 25 },
-                            { label: "30%", value: 30 }
-                        ]
-                        delegate: Rectangle {
-                            id: batThreshBtn
-                            required property var modelData
-                            required property int index
-                            readonly property bool isSel: batThreshSegmentTrack.activeIdx === index
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 5
-                            color: !isSel && batThreshHov.hovered ? root.theme.bgHover : "transparent"
-                            scale: batThreshMouse.pressed ? 0.95 : 1.0
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on scale { NumberAnimation { duration: 100 } }
-
-                            HoverHandler { id: batThreshHov }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: batThreshBtn.modelData.label
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: batThreshBtn.isSel
-                                color: batThreshBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                opacity: batThreshBtn.isSel || batThreshHov.hovered ? 1.0 : 0.75
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                Behavior on opacity { NumberAnimation { duration: 140 } }
-                            }
-
-                            MouseArea {
-                                id: batThreshMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    BarConfig.batteryLowThreshold = batThreshBtn.modelData.value;
-                                    BarConfig.saveConfig();
-                                    root.showToast("Battery warning threshold set to: " + batThreshBtn.modelData.label);
-                                }
-                            }
-                        }
-                    }
+                options: [
+                    { desktop: "15", name: "15%", desc: "" },
+                    { desktop: "20", name: "20%", desc: "" },
+                    { desktop: "25", name: "25%", desc: "" },
+                    { desktop: "30", name: "30%", desc: "" }
+                ]
+                currentValue: String(Number(BarConfig.batteryLowThreshold !== undefined ? BarConfig.batteryLowThreshold : 20))
+                onSelected: (val, opt) => {
+                    BarConfig.batteryLowThreshold = Number(val);
+                    BarConfig.saveConfig();
+                    root.showToast("Battery warning threshold set to: " + (opt ? opt.name : val));
                 }
             }
         }

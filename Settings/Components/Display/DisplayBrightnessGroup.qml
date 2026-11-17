@@ -183,20 +183,6 @@ ColumnLayout {
                     }
                 }
             }
-
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
-
-            /* Row 2: Quick Brightness Presets */
-            DisplayQuickBrightnessPresets {
-                root: self.root
-            }
         }
     }
 }

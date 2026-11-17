@@ -169,97 +169,32 @@ ColumnLayout {
 
                         Item { Layout.fillWidth: true }
 
-                        /* Segmented Track */
-                        Rectangle {
-                            id: lockSegmentTrack
-                            implicitWidth: 320
-                            implicitHeight: 32
-                            width: 320
-                            height: 32
-                            radius: 7
-                            color: root.theme.bgBase
-                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                            border.width: 1
+                        AppDropdown {
+                            theme: root.theme
+                            font: root.font
+                            width: 220
+                            implicitWidth: 220
+                            menuWidth: 220
                             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-
-                            readonly property int activeIdx: {
-                                if (lockItem.customActive) return 4;
+                            options: [
+                                { desktop: "5",      name: "5m",  desc: "" },
+                                { desktop: "10",     name: "10m", desc: "" },
+                                { desktop: "15",     name: "15m", desc: "" },
+                                { desktop: "30",     name: "30m", desc: "" },
+                                { desktop: "custom", name: lockItem.customActive ? ("Custom (" + root.lockTimeoutMinutes + "m)") : "Custom", desc: "" }
+                            ]
+                            currentValue: {
+                                if (lockItem.customActive) return "custom";
                                 const presets = [5, 10, 15, 30];
-                                const idx = presets.indexOf(root.lockTimeoutMinutes);
-                                return idx !== -1 ? idx : 4;
+                                return presets.indexOf(root.lockTimeoutMinutes) !== -1 ? String(root.lockTimeoutMinutes) : "custom";
                             }
-                            readonly property real cellWidth: (width - 6 - 16) / 5
-
-                            /* Sliding Selection Pill */
-                            Rectangle {
-                                y: 3
-                                height: parent.height - 6
-                                width: lockSegmentTrack.cellWidth
-                                x: 3 + lockSegmentTrack.activeIdx * (lockSegmentTrack.cellWidth + 4)
-                                radius: 5
-                                color: root.theme.bgSelected
-                                border.color: root.theme.accentPrimary
-                                border.width: 1
-
-                                Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                            }
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.margins: 3
-                                spacing: 4
-
-                                Repeater {
-                                    model: [
-                                        { label: "5m", value: 5 },
-                                        { label: "10m", value: 10 },
-                                        { label: "15m", value: 15 },
-                                        { label: "30m", value: 30 },
-                                        { label: "Custom", value: "custom" }
-                                    ]
-
-                                    delegate: Rectangle {
-                                        id: lSegBtn
-                                        required property var modelData
-                                        required property int index
-                                        readonly property bool isSel: lockSegmentTrack.activeIdx === lSegBtn.index
-
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        radius: 5
-                                        color: !isSel && lSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                                        Behavior on color { ColorAnimation { duration: 140 } }
-
-                                        HoverHandler { id: lSegHover }
-
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: (lSegBtn.modelData.value === "custom")
-                                                ? (lockItem.customActive ? (root.lockTimeoutMinutes + "m") : "Custom")
-                                                : lSegBtn.modelData.label
-                                            font.family: root.font
-                                            font.pixelSize: 11
-                                            font.bold: lSegBtn.isSel
-                                            color: lSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                            opacity: lSegBtn.isSel || lSegHover.hovered ? 1.0 : 0.75
-                                            Behavior on color { ColorAnimation { duration: 140 } }
-                                            Behavior on opacity { NumberAnimation { duration: 140 } }
-                                        }
-
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                if (lSegBtn.modelData.value === "custom") {
-                                                    lockItem.customActive = !lockItem.customActive;
-                                                } else {
-                                                    lockItem.customActive = false;
-                                                    root.lockDebounceTimerRef.stop();
-                                                    root.setLockTimeout(lSegBtn.modelData.value);
-                                                }
-                                            }
-                                        }
-                                    }
+                            onSelected: (val) => {
+                                if (val === "custom") {
+                                    lockItem.customActive = true;
+                                } else {
+                                    lockItem.customActive = false;
+                                    root.lockDebounceTimerRef.stop();
+                                    root.setLockTimeout(Number(val));
                                 }
                             }
                         }

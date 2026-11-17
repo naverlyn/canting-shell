@@ -76,86 +76,23 @@ SectionCard {
 
             Item { Layout.fillWidth: true }
 
-            Rectangle {
-                id: cavaStyleSegmentTrack
-                implicitWidth: 260
-                implicitHeight: 32
-                width: 260
-                height: 32
+            AppDropdown {
+                theme: root.theme
+                font: root.font
+                width: 200
+                implicitWidth: 200
+                menuWidth: 200
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                radius: 7
-                color: root.theme.bgBase
-                border.color: root.theme.bgBorder
-                border.width: 1
-
-                readonly property string activeVal: BarConfig.cavaStyle || "bars"
-                readonly property int activeIdx: activeVal === "line" ? 1 : (activeVal === "glyphs" ? 2 : 0)
-                readonly property real cellWidth: (width - 6 - 8) / 3
-
-                Rectangle {
-                    y: 3
-                    height: parent.height - 6
-                    width: cavaStyleSegmentTrack.cellWidth
-                    x: 3 + cavaStyleSegmentTrack.activeIdx * (cavaStyleSegmentTrack.cellWidth + 4)
-                    radius: 5
-                    color: root.theme.bgSelected
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-
-                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 4
-
-                    Repeater {
-                        model: [
-                            { label: "Bars", value: "bars" },
-                            { label: "Line", value: "line" },
-                            { label: "Glyphs", value: "glyphs" }
-                        ]
-                        delegate: Rectangle {
-                            id: cavaStyleBtn
-                            required property var modelData
-                            required property int index
-                            readonly property bool isSel: cavaStyleSegmentTrack.activeIdx === index
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 5
-                            color: !isSel && cavaStyleHov.hovered ? root.theme.bgHover : "transparent"
-                            scale: cavaStyleMouse.pressed ? 0.95 : 1.0
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on scale { NumberAnimation { duration: 100 } }
-
-                            HoverHandler { id: cavaStyleHov }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: cavaStyleBtn.modelData.label
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: cavaStyleBtn.isSel
-                                color: cavaStyleBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                opacity: cavaStyleBtn.isSel || cavaStyleHov.hovered ? 1.0 : 0.75
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                Behavior on opacity { NumberAnimation { duration: 140 } }
-                            }
-
-                            MouseArea {
-                                id: cavaStyleMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    BarConfig.cavaStyle = cavaStyleBtn.modelData.value;
-                                    BarConfig.saveConfig();
-                                    root.showToast("Cava style set to: " + cavaStyleBtn.modelData.label);
-                                }
-                            }
-                        }
-                    }
+                options: [
+                    { desktop: "bars",   name: "Bars",   desc: "" },
+                    { desktop: "line",   name: "Line",   desc: "" },
+                    { desktop: "glyphs", name: "Glyphs", desc: "" }
+                ]
+                currentValue: BarConfig.cavaStyle || "bars"
+                onSelected: (val, opt) => {
+                    BarConfig.cavaStyle = val;
+                    BarConfig.saveConfig();
+                    root.showToast("Cava style set to: " + (opt ? opt.name : val));
                 }
             }
         }
@@ -196,85 +133,22 @@ SectionCard {
 
             Item { Layout.fillWidth: true }
 
-            Rectangle {
-                id: cavaModeSegmentTrack
-                implicitWidth: 260
-                implicitHeight: 32
-                width: 260
-                height: 32
+            AppDropdown {
+                theme: root.theme
+                font: root.font
+                width: 200
+                implicitWidth: 200
+                menuWidth: 200
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                radius: 7
-                color: root.theme.bgBase
-                border.color: root.theme.bgBorder
-                border.width: 1
-
-                readonly property string activeVal: BarConfig.cavaMode || "compact"
-                readonly property int activeIdx: activeVal === "medium" ? 1 : (activeVal === "wide" ? 2 : 0)
-                readonly property real cellWidth: (width - 6 - 8) / 3
-
-                Rectangle {
-                    y: 3
-                    height: parent.height - 6
-                    width: cavaModeSegmentTrack.cellWidth
-                    x: 3 + cavaModeSegmentTrack.activeIdx * (cavaModeSegmentTrack.cellWidth + 4)
-                    radius: 5
-                    color: root.theme.bgSelected
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-
-                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 4
-
-                    Repeater {
-                        model: [
-                            { label: "Compact", value: "compact" },
-                            { label: "Medium",  value: "medium" },
-                            { label: "Wide",    value: "wide" }
-                        ]
-                        delegate: Rectangle {
-                            id: cavaModeBtn
-                            required property var modelData
-                            required property int index
-                            readonly property bool isSel: cavaModeSegmentTrack.activeIdx === index
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 5
-                            color: !isSel && cavaModeHov.hovered ? root.theme.bgHover : "transparent"
-                            scale: cavaModeMouse.pressed ? 0.95 : 1.0
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on scale { NumberAnimation { duration: 100 } }
-
-                            HoverHandler { id: cavaModeHov }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: cavaModeBtn.modelData.label
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: cavaModeBtn.isSel
-                                color: cavaModeBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                opacity: cavaModeBtn.isSel || cavaModeHov.hovered ? 1.0 : 0.75
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                Behavior on opacity { NumberAnimation { duration: 140 } }
-                            }
-
-                            MouseArea {
-                                id: cavaModeMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    BarConfig.setCavaMode(cavaModeBtn.modelData.value);
-                                    root.showToast("Cava mode set to: " + cavaModeBtn.modelData.label);
-                                }
-                            }
-                        }
-                    }
+                options: [
+                    { desktop: "compact", name: "Compact", desc: "" },
+                    { desktop: "medium",  name: "Medium",  desc: "" },
+                    { desktop: "wide",    name: "Wide",    desc: "" }
+                ]
+                currentValue: BarConfig.cavaMode || "compact"
+                onSelected: (val, opt) => {
+                    BarConfig.setCavaMode(val);
+                    root.showToast("Cava mode set to: " + (opt ? opt.name : val));
                 }
             }
         }
@@ -315,86 +189,23 @@ SectionCard {
 
             Item { Layout.fillWidth: true }
 
-            Rectangle {
-                id: cavaFpsSegmentTrack
-                implicitWidth: 260
-                implicitHeight: 32
-                width: 260
-                height: 32
+            AppDropdown {
+                theme: root.theme
+                font: root.font
+                width: 200
+                implicitWidth: 200
+                menuWidth: 200
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                radius: 7
-                color: root.theme.bgBase
-                border.color: root.theme.bgBorder
-                border.width: 1
-
-                readonly property int activeVal: Number(BarConfig.cavaFramerate || 30)
-                readonly property int activeIdx: activeVal === 20 ? 0 : (activeVal === 60 ? 2 : 1)
-                readonly property real cellWidth: (width - 6 - 8) / 3
-
-                Rectangle {
-                    y: 3
-                    height: parent.height - 6
-                    width: cavaFpsSegmentTrack.cellWidth
-                    x: 3 + cavaFpsSegmentTrack.activeIdx * (cavaFpsSegmentTrack.cellWidth + 4)
-                    radius: 5
-                    color: root.theme.bgSelected
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-
-                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 4
-
-                    Repeater {
-                        model: [
-                            { label: "20 FPS", value: 20 },
-                            { label: "30 FPS", value: 30 },
-                            { label: "60 FPS", value: 60 }
-                        ]
-                        delegate: Rectangle {
-                            id: cavaFpsBtn
-                            required property var modelData
-                            required property int index
-                            readonly property bool isSel: cavaFpsSegmentTrack.activeIdx === index
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 5
-                            color: !isSel && cavaFpsHov.hovered ? root.theme.bgHover : "transparent"
-                            scale: cavaFpsMouse.pressed ? 0.95 : 1.0
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on scale { NumberAnimation { duration: 100 } }
-
-                            HoverHandler { id: cavaFpsHov }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: cavaFpsBtn.modelData.label
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: cavaFpsBtn.isSel
-                                color: cavaFpsBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                opacity: cavaFpsBtn.isSel || cavaFpsHov.hovered ? 1.0 : 0.75
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                Behavior on opacity { NumberAnimation { duration: 140 } }
-                            }
-
-                            MouseArea {
-                                id: cavaFpsMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    BarConfig.cavaFramerate = cavaFpsBtn.modelData.value;
-                                    BarConfig.saveConfig();
-                                    root.showToast("Cava framerate set to: " + cavaFpsBtn.modelData.label);
-                                }
-                            }
-                        }
-                    }
+                options: [
+                    { desktop: "20", name: "20 FPS", desc: "" },
+                    { desktop: "30", name: "30 FPS", desc: "" },
+                    { desktop: "60", name: "60 FPS", desc: "" }
+                ]
+                currentValue: String(Number(BarConfig.cavaFramerate || 30))
+                onSelected: (val, opt) => {
+                    BarConfig.cavaFramerate = Number(val);
+                    BarConfig.saveConfig();
+                    root.showToast("Cava framerate set to: " + (opt ? opt.name : val));
                 }
             }
         }

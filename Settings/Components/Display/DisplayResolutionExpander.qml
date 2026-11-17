@@ -215,16 +215,6 @@ ColumnLayout {
                                                 color: root.theme.textSecondary
                                             }
                                         }
-
-                                        Item { Layout.fillWidth: true }
-
-                                        Text {
-                                            visible: resOptItem.isSelected
-                                            text: "✓"
-                                            font.family: root.font
-                                            font.pixelSize: 11
-                                            color: root.theme.accentPrimary
-                                        }
                                     }
 
                                     MouseArea {

@@ -54,83 +54,23 @@ ColumnLayout {
 
                 Item { Layout.fillWidth: true }
 
-                Rectangle {
-                    id: vrrSegmentTrack
-                    implicitWidth: 320
-                    height: 32
-                    radius: 7
-                    color: root.theme.bgBase
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
+                AppDropdown {
+                    theme: root.theme
+                    font: root.font
+                    width: 220
+                    implicitWidth: 220
+                    menuWidth: 220
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-
-                    readonly property var vrrOpts: [0, 1, 2]
-                    readonly property int activeIdx: vrrOpts.indexOf(root.miscVrr)
-                    readonly property real cellWidth: (width - 6 - 6) / 3
-
-                    /* Sliding Selection Pill */
-                    Rectangle {
-                        visible: vrrSegmentTrack.activeIdx >= 0
-                        y: 3
-                        height: parent.height - 6
-                        width: vrrSegmentTrack.cellWidth
-                        x: 3 + Math.max(0, vrrSegmentTrack.activeIdx) * (vrrSegmentTrack.cellWidth + 3)
-                        radius: 5
-                        color: root.theme.bgSelected
-                        border.color: root.theme.accentPrimary
-                        border.width: 1
-
-                        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        spacing: 3
-
-                        Repeater {
-                            model: [
-                                { val: 0, label: "Off" },
-                                { val: 1, label: "Always On" },
-                                { val: 2, label: "Fullscreen" }
-                            ]
-
-                            delegate: Rectangle {
-                                id: vrrBtn
-                                required property var modelData
-                                required property int index
-                                readonly property bool isSel: vrrSegmentTrack.activeIdx === vrrBtn.index
-
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: 5
-                                color: !isSel && vHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                                Behavior on color { ColorAnimation { duration: 140 } }
-
-                                HoverHandler { id: vHover }
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: vrrBtn.modelData.label
-                                    font.family: root.font
-                                    font.pixelSize: 11
-                                    font.bold: vrrBtn.isSel
-                                    color: vrrBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                    opacity: vrrBtn.isSel || vHover.hovered ? 1.0 : 0.75
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.miscVrr = vrrBtn.modelData.val;
-                                        root.setHyprVar("misc", "vrr", vrrBtn.modelData.val);
-                                        root.showToast("VRR set to " + vrrBtn.modelData.label);
-                                    }
-                                }
-                            }
-                        }
+                    options: [
+                        { desktop: "0", name: "Off",        desc: "" },
+                        { desktop: "1", name: "Always On",  desc: "" },
+                        { desktop: "2", name: "Fullscreen", desc: "" }
+                    ]
+                    currentValue: String(root.miscVrr)
+                    onSelected: (val, opt) => {
+                        root.miscVrr = Number(val);
+                        root.setHyprVar("misc", "vrr", Number(val));
+                        root.showToast("VRR set to " + (opt ? opt.name : val));
                     }
                 }
             }

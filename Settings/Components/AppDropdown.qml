@@ -29,8 +29,8 @@ Item {
     signal closed()
     signal selected(string desktopFile, var optionData)
 
-    implicitWidth: 230
-    implicitHeight: 38
+    implicitWidth: 220
+    implicitHeight: 32
 
     function closeMenu() {
         dropdownPopup.close();
@@ -58,15 +58,15 @@ Item {
     Rectangle {
         id: triggerBtn
         anchors.fill: parent
-        radius: 8
+        radius: 7
         color: {
             if (root.isOpen) return root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12);
             if (btnHover.hovered) return root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08);
-            return root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.04);
+            return root.theme.bgBase;
         }
         border.color: {
-            if (root.isOpen) return root.theme.accentPrimary ?? "#7aa2f7";
-            if (btnHover.hovered) return root.colorWithAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.45);
+            if (root.isOpen) return root.theme.accentPrimary;
+            if (btnHover.hovered) return root.colorWithAlpha(root.theme.accentPrimary, 0.45);
             return root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1);
         }
         border.width: root.isOpen ? 1.5 : 1
@@ -88,7 +88,7 @@ Item {
                 font.family: root.font
                 font.pixelSize: 12
                 font.bold: true
-                color: root.theme.textPrimary ?? "#c0caf5"
+                color: root.theme.textPrimary
                 elide: Text.ElideRight
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
@@ -99,7 +99,7 @@ Item {
                 text: "󰅀"
                 font.family: root.font
                 font.pixelSize: 13
-                color: root.isOpen ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.textSecondary ?? "#a9b1d6")
+                color: root.isOpen ? root.theme.accentPrimary : root.theme.textSecondary
                 rotation: root.isOpen ? 180 : 0
                 Layout.alignment: Qt.AlignVCenter
 
@@ -126,9 +126,9 @@ Item {
         id: dropdownPopup
         parent: triggerBtn
         x: triggerBtn.width - width
-        y: triggerBtn.height + 6
+        y: triggerBtn.height + 4
         width: root.menuWidth
-        padding: 6
+        padding: 4
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
 
         onOpened: root.opened()
@@ -136,7 +136,7 @@ Item {
 
         enter: Transition {
             NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
-            NumberAnimation { property: "y"; from: triggerBtn.height; to: triggerBtn.height + 6; duration: 150; easing.type: Easing.OutCubic }
+            NumberAnimation { property: "y"; from: triggerBtn.height; to: triggerBtn.height + 4; duration: 150; easing.type: Easing.OutCubic }
         }
 
         exit: Transition {
@@ -144,38 +144,26 @@ Item {
         }
 
         background: Rectangle {
-            radius: 12
-            color: root.theme.bgSurface ?? "#24283b"
-            border.color: root.theme.accentPrimary 
-                ? root.colorWithAlpha(root.theme.accentPrimary, 0.3) 
-                : Qt.rgba(1, 1, 1, 0.15)
+            radius: 8
+            color: root.theme.bgSurface
+            border.color: root.theme.bgBorder
             border.width: 1
-
-            // Outer subtle glow layer
-            Rectangle {
-                anchors.fill: parent
-                anchors.margins: -1
-                radius: 13
-                color: "transparent"
-                border.color: root.colorWithAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.12)
-                border.width: 1
-                z: -1
-            }
         }
 
         contentItem: ListView {
             id: optionsList
-            implicitHeight: Math.min(contentHeight + 2, 280)
+            implicitHeight: Math.min(contentHeight, 240)
             model: root.options
             boundsBehavior: Flickable.StopAtBounds
             clip: true
-            spacing: 3
+            spacing: 2
 
             delegate: Rectangle {
                 id: itemDelegate
                 width: optionsList.width
-                height: 42
-                radius: 8
+                readonly property string itemDesc: modelData.desc !== undefined ? modelData.desc : (modelData.desktop || "")
+                height: itemDesc !== "" ? 40 : 30
+                radius: 6
 
                 readonly property bool isSelected: root.currentValue === modelData.desktop
 
@@ -185,21 +173,15 @@ Item {
                     return "transparent";
                 }
 
-                border.color: isSelected 
-                    ? root.colorWithAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.35)
-                    : "transparent"
-                border.width: 1
-
-                Behavior on color { ColorAnimation { duration: 130 } }
-                Behavior on border.color { ColorAnimation { duration: 130 } }
+                Behavior on color { ColorAnimation { duration: 110 } }
 
                 HoverHandler { id: itemHover }
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    spacing: 10
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 8
 
                     // App Text (Title + Description)
                     ColumnLayout {
@@ -213,32 +195,21 @@ Item {
                             font.pixelSize: 12
                             font.bold: itemDelegate.isSelected
                             color: itemDelegate.isSelected 
-                                ? (root.theme.accentPrimary ?? "#7aa2f7") 
-                                : (root.theme.textPrimary ?? "#c0caf5")
+                                ? root.theme.accentPrimary 
+                                : root.theme.textPrimary
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
 
                         Text {
-                            text: modelData.desc || modelData.desktop
+                            text: itemDelegate.itemDesc
                             font.family: root.font
                             font.pixelSize: 10
-                            color: root.theme.textMuted ?? "#565f89"
+                            color: root.theme.textMuted
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                             visible: text !== ""
                         }
-                    }
-
-                    // Checkmark indicator for selected state
-                    Text {
-                        text: "󰄬"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        font.bold: true
-                        color: root.theme.accentPrimary ?? "#7aa2f7"
-                        visible: itemDelegate.isSelected
-                        Layout.alignment: Qt.AlignVCenter
                     }
                 }
 

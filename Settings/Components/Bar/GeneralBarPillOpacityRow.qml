@@ -12,7 +12,9 @@ Item {
     required property var root
     id: pillOpacityItem
     Layout.fillWidth: true
-    height: 52
+    visible: !root.generalTab.curHidePill
+    height: visible ? 52 : 0
+    implicitHeight: visible ? 52 : 0
     readonly property real activePillOpacity: root.generalTab.curPillOpacity
     opacity: root.generalTab.curHidePill ? 0.45 : 1.0
     enabled: !root.generalTab.curHidePill

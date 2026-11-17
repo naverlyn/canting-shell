@@ -179,14 +179,6 @@ ColumnLayout {
                                         elide: Text.ElideRight
                                         Layout.fillWidth: true
                                     }
-
-                                    Text {
-                                        visible: appOptItem.isSelected
-                                        text: "✓"
-                                        font.family: expanderRow.font
-                                        font.pixelSize: 11
-                                        color: expanderRow.theme.accentPrimary
-                                    }
                                 }
 
                                 MouseArea {

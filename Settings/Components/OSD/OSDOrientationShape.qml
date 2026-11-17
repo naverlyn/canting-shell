@@ -63,79 +63,39 @@ ColumnLayout {
             }
             spacing: 8
 
-            /* Orientation Segmented Pill Track */
-            Rectangle {
-                id: orientSegmentTrack
+            /* Orientation Dropdown */
+            RowLayout {
                 Layout.fillWidth: true
-                height: 34
-                radius: 7
-                color: root.theme.bgBase
-                border.color: root.theme.bgBorder
-                border.width: 1
+                Layout.leftMargin: 8
+                Layout.rightMargin: 8
+                spacing: 12
 
-                readonly property var orientList: ["auto", "horizontal", "vertical"]
-                readonly property int activeOrientIndex: {
-                    const idx = orientList.indexOf(OSDService.orientation);
-                    return idx !== -1 ? idx : 0;
-                }
-                readonly property real cellWidth: (width - 6 - (2 * 4)) / 3
-
-                // Animated sliding indicator
-                Rectangle {
-                    y: 3
-                    height: parent.height - 6
-                    width: orientSegmentTrack.cellWidth
-                    x: 3 + orientSegmentTrack.activeOrientIndex * (orientSegmentTrack.cellWidth + 4)
-                    radius: 5
-                    color: root.theme.bgSelected
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-
-                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                    Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                Text {
+                    text: "Orientation"
+                    font.family: root.font
+                    font.pixelSize: 13
+                    font.bold: true
+                    color: root.theme.textPrimary
                 }
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 4
+                Item { Layout.fillWidth: true }
 
-                    Repeater {
-                        model: OSDService.orientationOptions
-
-                        delegate: Rectangle {
-                            id: orientSegBtn
-                            required property var modelData
-                            readonly property bool isSel: OSDService.orientation === modelData.id
-
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 5
-                            color: !isSel && orientSegHover.hovered ? root.theme.bgHover : "transparent"
-                            Behavior on color { ColorAnimation { duration: 140 } }
-
-                            HoverHandler { id: orientSegHover }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: orientSegBtn.modelData.label
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: orientSegBtn.isSel
-                                color: orientSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                opacity: orientSegBtn.isSel || orientSegHover.hovered ? 1.0 : 0.75
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    OSDService.setOrientation(orientSegBtn.modelData.id);
-                                    OSDService.testOSD();
-                                }
-                            }
-                        }
+                AppDropdown {
+                    theme: root.theme
+                    font: root.font
+                    width: 220
+                    implicitWidth: 220
+                    menuWidth: 220
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                    options: (OSDService.orientationOptions || []).map(o => ({
+                        desktop: o.id,
+                        name: o.label,
+                        desc: ""
+                    }))
+                    currentValue: OSDService.orientation
+                    onSelected: (val) => {
+                        OSDService.setOrientation(val);
+                        OSDService.testOSD();
                     }
                 }
             }
