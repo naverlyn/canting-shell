@@ -1,8 +1,11 @@
 configs/theme.conf
+theme.conf
 configs/wallpaper.conf
 configs/wallpaper_dirs.conf
 monitor-manager.conf
 theme-switcher/wallpaper-theme.json
+Settings/scripts/wallust-hyprlock.conf
+__pycache__/
 backups
 *.bak
 *.bak.*
