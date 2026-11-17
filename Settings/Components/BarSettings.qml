@@ -5,7 +5,6 @@ import Quickshell
 import Quickshell.Io
 import "../../bar"
 import "../../MonitorManager"
-import ".."
 import "./Common"
 import "./Bar"
 import "../../utils/ColorUtils.js" as ColorUtils
@@ -27,6 +26,13 @@ Item {
     property string selectedColorWidgetId: "launcher"
     property int selectedColorPanelIndex: 0
     property string themeSearchQuery: ""
+    property string optionSearchQuery: ""
+
+    function matchesOptionFilter(keywords) {
+        var q = optionSearchQuery.toLowerCase().trim();
+        if (q === "") return true;
+        return keywords.toLowerCase().indexOf(q) !== -1;
+    }
 
     property bool isDraggingBlock: false
     property string draggedWidgetId: ""
@@ -824,18 +830,22 @@ Item {
 
                     AppGridOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("app grid launcher icon")
                     }
 
                     NetworkSpeedOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("network speed down up compact")
                     }
 
                     ClockOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("clock time date seconds year calendar")
                     }
 
                     WorkspacesOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("workspaces index scroll hyprland")
                     }
 
                     TaskSwitcherOptionsCard {
@@ -844,34 +854,42 @@ Item {
 
                     GlobalMenuOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("global menu appmenu")
                     }
 
                     WeatherOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("weather location unit forecast")
                     }
 
                     BatteryOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("battery percentage low threshold")
                     }
 
                     CavaOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("cava audio visualizer bars stereo")
                     }
 
                     HardwareMonitorOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("hardware cpu gpu memory disk temp alert")
                     }
 
                     WifiBluetoothOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("wifi bluetooth connectivity labels")
                     }
 
                     BrightnessOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("brightness night light step")
                     }
 
                     CustomScriptOptionsCard {
                         root: root
+                        visible: root.matchesOptionFilter("custom script command interval")
                     }
                 }
             }
