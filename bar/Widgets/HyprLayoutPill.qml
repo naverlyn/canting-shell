@@ -177,6 +177,7 @@ Rectangle {
     }
     onHoveredChanged: {
       if (hovered) {
+        if (hostContainer && hostContainer.activeInfoProvider && hostContainer.activeInfoProvider !== hyprProvider && hostContainer.activeInfoProvider.pinned) return;
         hyprCloseTimer.stop();
         effectiveHovered = true;
         hostContainer.activeInfoProvider = hyprProvider;

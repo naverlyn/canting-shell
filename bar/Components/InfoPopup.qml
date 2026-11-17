@@ -51,6 +51,7 @@ Item {
 
   onHoveredChanged: {
     if (hovered) {
+      if (barItem && barItem.activeInfoProvider && barItem.activeInfoProvider !== provider && barItem.activeInfoProvider.pinned) return;
       closeGraceTimer.stop();
       effectiveHovered = true;
       if (barItem) {

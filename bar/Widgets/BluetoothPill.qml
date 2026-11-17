@@ -180,6 +180,7 @@ Rectangle {
     }
     onHoveredChanged: {
       if (hovered) {
+        if (hostContainer && hostContainer.activeInfoProvider && hostContainer.activeInfoProvider !== btProvider && hostContainer.activeInfoProvider.pinned) return;
         btCloseTimer.stop();
         effectiveHovered = true;
         hostContainer.activeInfoProvider = btProvider;

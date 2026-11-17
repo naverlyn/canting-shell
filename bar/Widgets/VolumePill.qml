@@ -97,7 +97,8 @@ Rectangle {
       }
     }
     onHoveredChanged: {
-      if (hovered) { volCloseTimer.stop(); effectiveHovered = true; hostContainer.activeInfoProvider = volProvider; }
+      if (hovered) {
+        if (hostContainer && hostContainer.activeInfoProvider && hostContainer.activeInfoProvider !== volProvider && hostContainer.activeInfoProvider.pinned) return; volCloseTimer.stop(); effectiveHovered = true; hostContainer.activeInfoProvider = volProvider; }
       else if (!isSharedCardHovered) volCloseTimer.restart();
     }
     onIsSharedCardHoveredChanged: {

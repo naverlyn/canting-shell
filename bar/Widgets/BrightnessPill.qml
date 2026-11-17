@@ -139,6 +139,7 @@ Rectangle {
     }
     onHoveredChanged: {
       if (hovered) {
+        if (hostContainer && hostContainer.activeInfoProvider && hostContainer.activeInfoProvider !== brProvider && hostContainer.activeInfoProvider.pinned) return;
         brCloseTimer.stop();
         effectiveHovered = true;
         hostContainer.activeInfoProvider = brProvider;

@@ -255,6 +255,7 @@ Rectangle {
     }
     onHoveredChanged: {
       if (hovered) {
+        if (hostContainer && hostContainer.activeInfoProvider && hostContainer.activeInfoProvider !== wifiProvider && hostContainer.activeInfoProvider.pinned) return;
         wifiCloseTimer.stop();
         effectiveHovered = true;
         hostContainer.activeInfoProvider = wifiProvider;

@@ -220,6 +220,7 @@ Rectangle {
 
     onHoveredChanged: {
       if (hovered) {
+        if (barItem && barItem.activeInfoProvider && barItem.activeInfoProvider !== calendarProvider && barItem.activeInfoProvider.pinned) return;
         calCloseGraceTimer.stop();
         effectiveHovered = true;
         if (barItem) {
