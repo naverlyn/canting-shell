@@ -12,7 +12,8 @@ Item {
   readonly property int borderThickness: Math.max(1, Number(BarConfig.screenBorderThickness || 4))
   readonly property int cornerRadius: 16
   readonly property int shadowSize: Math.max(1, Number(BarConfig.screenBorderShadowSize || 12))
-  readonly property real shadowOpacity: 0.38
+  readonly property real shadowOpacity: Math.max(0.05, Math.min(1.0, Number(BarConfig.screenBorderShadowOpacity !== undefined ? BarConfig.screenBorderShadowOpacity : 0.35)))
+  readonly property real shadowBlur: Math.max(0.0, Math.min(1.0, Number(BarConfig.screenBorderShadowBlur !== undefined ? BarConfig.screenBorderShadowBlur : 0.5)))
 
   readonly property bool hasDockedTop: barRoot.isDockedBarActive("top", undefined, screenIndex)
   readonly property bool hasDockedBottom: barRoot.isDockedBarActive("bottom", undefined, screenIndex)
@@ -95,13 +96,50 @@ Item {
     return Qt.rgba(baseCol.r, baseCol.g, baseCol.b, alpha);
   }
 
-  function requestShadowPaint() {
+  // Throttled (not debounced) repaint: the shadow redraws right away and then at most every
+  // ~33ms while the bar keeps changing, so it follows bumps live instead of snapping at the end.
+  property bool _shadowPending: false
+
+  function _paintShadowNow() {
     if (innerOverlayLoader.item && innerOverlayLoader.item.shadowCanvasRef) {
       innerOverlayLoader.item.shadowCanvasRef.requestPaint();
     }
   }
 
+  function requestShadowPaint() {
+    if (shadowThrottleTimer.running) {
+      borderRoot._shadowPending = true;
+    } else {
+      borderRoot._paintShadowNow();
+      shadowThrottleTimer.start();
+    }
+    // Final repaint once everything has settled.
+    shadowSettleTimer.restart();
+  }
+
+  Timer {
+    id: shadowThrottleTimer
+    interval: 33
+    repeat: false
+    onTriggered: {
+      if (borderRoot._shadowPending) {
+        borderRoot._shadowPending = false;
+        borderRoot._paintShadowNow();
+        shadowThrottleTimer.start();
+      }
+    }
+  }
+
+  Timer {
+    id: shadowSettleTimer
+    interval: 350
+    repeat: false
+    onTriggered: borderRoot._paintShadowNow()
+  }
+
   onShadowSizeChanged: requestShadowPaint()
+  onShadowOpacityChanged: requestShadowPaint()
+  onShadowBlurChanged: requestShadowPaint()
   onHasShadowChanged: requestShadowPaint()
   onShowTopLeftCornerChanged: requestShadowPaint()
   onShowTopRightCornerChanged: requestShadowPaint()
@@ -114,6 +152,13 @@ Item {
 
   readonly property var activePopupData: (barRoot && barRoot.activePopupData) ? barRoot.activePopupData : null
   onActivePopupDataChanged: requestShadowPaint()
+
+  Connections {
+    target: borderRoot.barRoot
+    function onBumpyContourUpdated() {
+      borderRoot.requestShadowPaint();
+    }
+  }
 
   // Top Border Strip (active when no docked top bar is present)
   Loader {
@@ -194,7 +239,7 @@ Item {
     implicitWidth: borderRoot.borderThickness
 
     Loader {
-      active: borderRoot.hasAnyFloatingBar
+      active: !borderRoot.barRoot.reserveExclusionResetting && borderRoot.hasAnyFloatingBar
       sourceComponent: Component {
         PanelWindow {
           screen: borderRoot.screen
@@ -248,7 +293,7 @@ Item {
     implicitWidth: borderRoot.borderThickness
 
     Loader {
-      active: borderRoot.hasAnyFloatingBar
+      active: !borderRoot.barRoot.reserveExclusionResetting && borderRoot.hasAnyFloatingBar
       sourceComponent: Component {
         PanelWindow {
           screen: borderRoot.screen
@@ -304,239 +349,322 @@ Item {
       right: true
     }
 
+    Loader {
+      id: shadowCanvasLoader
+      anchors.fill: parent
+      z: 1
+      active: borderRoot.hasShadow && borderRoot.anyEdgeActive
+      sourceComponent: Component {
+        Canvas {
+          id: shadowCanvas
+          // The shadow is soft, so it is rendered at reduced resolution and scaled back up.
+          // A full-screen canvas with ~30 wide strokes was slow enough that the shadow lagged
+          // behind the bar and left a visible trail; this makes each repaint several times faster.
+          readonly property real k: 0.4
+          width: parent.width * k
+          height: parent.height * k
+          scale: 1.0 / k
+          transformOrigin: Item.TopLeft
+          smooth: true
+          visible: borderRoot.hasShadow && borderRoot.anyEdgeActive
+          antialiasing: true
+
+          Component.onCompleted: requestPaint()
+          onAvailableChanged: if (available) requestPaint()
+          onVisibleChanged: if (visible) requestPaint()
+          onWidthChanged: requestPaint()
+          onHeightChanged: requestPaint()
+
+          function traceDesktopContour(ctx, dL, dT, dR, dB, outTL, outTR, outBR, outBL, bcTop, bcRight, bcBottom, bcLeft, fullW, fullH) {
+            // When a bumpy bar's first/last bump does not reach a screen corner, the contour
+            // must already sit at the rail level on that corner. Otherwise the path cuts a
+            // diagonal from the bump level to the rail level and the shadow stops following the bar.
+            const hasIv = (c) => c && c.intervals && c.intervals.length > 0;
+            const topNSL = hasIv(bcTop) && bcTop.intervals[0].s > dL + 2 * (bcTop.R || 0);
+            const rightNST = hasIv(bcRight) && bcRight.intervals[0].s > dT + 2 * (bcRight.R || 0);
+            const bottomNSR = hasIv(bcBottom) && bcBottom.intervals[bcBottom.intervals.length - 1].e < dR - 2 * (bcBottom.R || 0);
+            const leftNSB = hasIv(bcLeft) && bcLeft.intervals[bcLeft.intervals.length - 1].e < dB - 2 * (bcLeft.R || 0);
+
+            if (topNSL) ctx.moveTo(dL, bcTop.rail + (bcTop.oy || 0));
+            else ctx.moveTo(dL + outTL, dT);
+
+            // 1. Top edge (left -> right)
+            if (bcTop && bcTop.intervals && bcTop.intervals.length > 0) {
+              const r = bcTop.R || 0;
+              const yRail = bcTop.rail + (bcTop.oy || 0);
+              const yBump = bcTop.thick + (bcTop.oy || 0);
+              const ivs = bcTop.intervals;
+              for (let i = 0; i < ivs.length; i++) {
+                const s = Math.max(dL, ivs[i].s + (bcTop.ox || 0));
+                const e = Math.min(dR, ivs[i].e + (bcTop.ox || 0));
+                if (e <= s) continue;
+                if (s > dL + 2 * r) {
+                  ctx.lineTo(s - r, yRail);
+                  if (r > 0) {
+                    ctx.arcTo(s, yRail, s, yBump, r);
+                    ctx.arcTo(s, yBump, s + r, yBump, r);
+                  } else {
+                    ctx.lineTo(s, yRail);
+                    ctx.lineTo(s, yBump);
+                  }
+                }
+                if (e < dR - 2 * r) {
+                  ctx.lineTo(e - r, yBump);
+                  if (r > 0) {
+                    ctx.arcTo(e, yBump, e, yRail, r);
+                    ctx.arcTo(e, yRail, e + r, yRail, r);
+                  } else {
+                    ctx.lineTo(e, yBump);
+                    ctx.lineTo(e, yRail);
+                  }
+                } else {
+                  ctx.lineTo(dR - outTR, yBump);
+                }
+              }
+              const topEndY = (ivs[ivs.length - 1].e >= dR - 2 * r) ? yBump : yRail;
+              if (outTR > 0 && topEndY === yBump) ctx.arcTo(dR, dT, dR, dT + outTR, outTR);
+              else ctx.lineTo(dR, topEndY);
+            } else if (rightNST) {
+              ctx.lineTo(fullW - bcRight.rail + (bcRight.ox || 0), dT);
+            } else {
+              ctx.lineTo(dR - outTR, dT);
+              if (outTR > 0) ctx.arcTo(dR, dT, dR, dT + outTR, outTR);
+              else ctx.lineTo(dR, dT);
+            }
+
+            // 2. Right edge (top -> bottom)
+            if (bcRight && bcRight.intervals && bcRight.intervals.length > 0) {
+              const r = bcRight.R || 0;
+              const xRail = fullW - bcRight.rail + (bcRight.ox || 0);
+              const xBump = fullW - bcRight.thick + (bcRight.ox || 0);
+              const ivs = bcRight.intervals;
+              for (let i = 0; i < ivs.length; i++) {
+                const s = Math.max(dT, ivs[i].s + (bcRight.oy || 0));
+                const e = Math.min(dB, ivs[i].e + (bcRight.oy || 0));
+                if (e <= s) continue;
+                if (s > dT + 2 * r) {
+                  ctx.lineTo(xRail, s - r);
+                  if (r > 0) {
+                    ctx.arcTo(xRail, s, xBump, s, r);
+                    ctx.arcTo(xBump, s, xBump, s + r, r);
+                  } else {
+                    ctx.lineTo(xRail, s);
+                    ctx.lineTo(xBump, s);
+                  }
+                }
+                if (e < dB - 2 * r) {
+                  ctx.lineTo(xBump, e - r);
+                  if (r > 0) {
+                    ctx.arcTo(xBump, e, xRail, e, r);
+                    ctx.arcTo(xRail, e, xRail, e + r, r);
+                  } else {
+                    ctx.lineTo(xBump, e);
+                    ctx.lineTo(xRail, e);
+                  }
+                } else {
+                  ctx.lineTo(xBump, dB - outBR);
+                }
+              }
+              const rightEndX = (ivs[ivs.length - 1].e >= dB - 2 * r) ? xBump : xRail;
+              if (outBR > 0 && rightEndX === xBump) ctx.arcTo(dR, dB, dR - outBR, dB, outBR);
+              else ctx.lineTo(rightEndX, dB);
+            } else if (bottomNSR) {
+              ctx.lineTo(dR, fullH - bcBottom.rail + (bcBottom.oy || 0));
+            } else {
+              ctx.lineTo(dR, dB - outBR);
+              if (outBR > 0) ctx.arcTo(dR, dB, dR - outBR, dB, outBR);
+              else ctx.lineTo(dR, dB);
+            }
+
+            // 3. Bottom edge (right -> left)
+            if (bcBottom && bcBottom.intervals && bcBottom.intervals.length > 0) {
+              const r = bcBottom.R || 0;
+              const yRail = fullH - bcBottom.rail + (bcBottom.oy || 0);
+              const yBump = fullH - bcBottom.thick + (bcBottom.oy || 0);
+              const ivs = bcBottom.intervals;
+              for (let i = ivs.length - 1; i >= 0; i--) {
+                const s = Math.max(dL, ivs[i].s + (bcBottom.ox || 0));
+                const e = Math.min(dR, ivs[i].e + (bcBottom.ox || 0));
+                if (e <= s) continue;
+                if (e < dR - 2 * r) {
+                  ctx.lineTo(e + r, yRail);
+                  if (r > 0) {
+                    ctx.arcTo(e, yRail, e, yBump, r);
+                    ctx.arcTo(e, yBump, e - r, yBump, r);
+                  } else {
+                    ctx.lineTo(e, yRail);
+                    ctx.lineTo(e, yBump);
+                  }
+                }
+                if (s > dL + 2 * r) {
+                  ctx.lineTo(s + r, yBump);
+                  if (r > 0) {
+                    ctx.arcTo(s, yBump, s, yRail, r);
+                    ctx.arcTo(s, yRail, s - r, yRail, r);
+                  } else {
+                    ctx.lineTo(s, yBump);
+                    ctx.lineTo(s, yRail);
+                  }
+                } else {
+                  ctx.lineTo(dL + outBL, yBump);
+                }
+              }
+              const botEndY = (ivs[0].s <= dL + 2 * r) ? yBump : yRail;
+              if (outBL > 0 && botEndY === yBump) ctx.arcTo(dL, dB, dL, dB - outBL, outBL);
+              else ctx.lineTo(dL, botEndY);
+            } else if (leftNSB) {
+              ctx.lineTo(bcLeft.rail + (bcLeft.ox || 0), dB);
+            } else {
+              ctx.lineTo(dL + outBL, dB);
+              if (outBL > 0) ctx.arcTo(dL, dB, dL, dB - outBL, outBL);
+              else ctx.lineTo(dL, dB);
+            }
+
+            // 4. Left edge (bottom -> top)
+            if (bcLeft && bcLeft.intervals && bcLeft.intervals.length > 0) {
+              const r = bcLeft.R || 0;
+              const xRail = bcLeft.rail + (bcLeft.ox || 0);
+              const xBump = bcLeft.thick + (bcLeft.ox || 0);
+              const ivs = bcLeft.intervals;
+              for (let i = ivs.length - 1; i >= 0; i--) {
+                const s = Math.max(dT, ivs[i].s + (bcLeft.oy || 0));
+                const e = Math.min(dB, ivs[i].e + (bcLeft.oy || 0));
+                if (e <= s) continue;
+                if (e < dB - 2 * r) {
+                  ctx.lineTo(xRail, e + r);
+                  if (r > 0) {
+                    ctx.arcTo(xRail, e, xBump, e, r);
+                    ctx.arcTo(xBump, e, xBump, e - r, r);
+                  } else {
+                    ctx.lineTo(xRail, e);
+                    ctx.lineTo(xBump, e);
+                  }
+                }
+                if (s > dT + 2 * r) {
+                  ctx.lineTo(xBump, s + r);
+                  if (r > 0) {
+                    ctx.arcTo(xBump, s, xRail, s, r);
+                    ctx.arcTo(xRail, s, xRail, s - r, r);
+                  } else {
+                    ctx.lineTo(xBump, s);
+                    ctx.lineTo(xRail, s);
+                  }
+                } else {
+                  ctx.lineTo(xBump, dT + outTL);
+                }
+              }
+              const leftEndX = (ivs[0].s <= dT + 2 * r) ? xBump : xRail;
+              if (outTL > 0 && leftEndX === xBump) ctx.arcTo(dL, dT, dL + outTL, dT, outTL);
+              else ctx.lineTo(leftEndX, dT);
+            } else if (topNSL) {
+              ctx.lineTo(dL, bcTop.rail + (bcTop.oy || 0));
+            } else {
+              ctx.lineTo(dL, dT + outTL);
+              if (outTL > 0) ctx.arcTo(dL, dT, dL + outTL, dT, outTL);
+              else ctx.lineTo(dL, dT);
+            }
+
+            ctx.closePath();
+          }
+
+          onPaint: {
+            const ctx = getContext("2d");
+            const fullW = width / k;
+            const fullH = height / k;
+            if (fullW <= 0 || fullH <= 0) return;
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+            ctx.scale(k, k);
+
+            if (!borderRoot.hasShadow || !borderRoot.anyEdgeActive) return;
+
+            const s = borderRoot.shadowSize;
+            const pad = s * 2 + 4;
+            const dL = borderRoot.leftActive ? borderRoot.effectiveDockedLeft : -pad;
+            const dR = borderRoot.rightActive ? (fullW - borderRoot.effectiveDockedRight) : (fullW + pad);
+            const dT = borderRoot.topActive ? borderRoot.effectiveDockedTop : -pad;
+            const dB = borderRoot.bottomActive ? (fullH - borderRoot.effectiveDockedBottom) : (fullH + pad);
+
+            const baseR = borderRoot.cornerRadius;
+            const rTL = borderRoot.showTopLeftCorner ? baseR : 0;
+            const rTR = borderRoot.showTopRightCorner ? baseR : 0;
+            const rBR = borderRoot.showBottomRightCorner ? baseR : 0;
+            const rBL = borderRoot.showBottomLeftCorner ? baseR : 0;
+
+            const outTL = rTL > 0 ? Math.max(0, rTL - 0.75) : 0;
+            const outTR = rTR > 0 ? Math.max(0, rTR - 0.75) : 0;
+            const outBR = rBR > 0 ? Math.max(0, rBR - 0.75) : 0;
+            const outBL = rBL > 0 ? Math.max(0, rBL - 0.75) : 0;
+
+            const contours = (borderRoot.barRoot && borderRoot.barRoot.bumpyContours) ? borderRoot.barRoot.bumpyContours : ({});
+            const bcTop = contours[borderRoot.screenIndex + "_top"] || null;
+            const bcRight = contours[borderRoot.screenIndex + "_right"] || null;
+            const bcBottom = contours[borderRoot.screenIndex + "_bottom"] || null;
+            const bcLeft = contours[borderRoot.screenIndex + "_left"] || null;
+
+            ctx.save();
+            ctx.beginPath();
+            traceDesktopContour(ctx, dL, dT, dR, dB, outTL, outTR, outBR, outBL, bcTop, bcRight, bcBottom, bcLeft, fullW, fullH);
+
+            // Omit shadow along fluid popup contour if active
+            const ap = borderRoot.activePopupData;
+            if (ap && ap.active && ap.fluidEnabled) {
+              const sameScreen = !ap.screen || !borderRoot.screen || ap.screen === borderRoot.screen;
+              if (sameScreen) {
+                const r = ap.cornerRad || 16;
+                const depth = Math.max(s, r);
+                if (ap.barPos === "top" && borderRoot.topActive && ap.width > 0) {
+                  ctx.rect(ap.x, dT, ap.width, depth);
+                } else if (ap.barPos === "bottom" && borderRoot.bottomActive && ap.width > 0) {
+                  ctx.rect(ap.x, dB - depth, ap.width, depth);
+                } else if (ap.barPos === "left" && borderRoot.leftActive && ap.height > 0) {
+                  ctx.rect(dL, ap.y, depth, ap.height);
+                } else if (ap.barPos === "right" && borderRoot.rightActive && ap.height > 0) {
+                  ctx.rect(dR - depth, ap.y, depth, ap.height);
+                }
+              }
+            }
+            ctx.clip("evenodd");
+
+            // While a bar slides/fades in (position change), the shadow follows the same fade.
+            let fade = 1.0;
+            for (const bc of [bcTop, bcRight, bcBottom, bcLeft]) {
+              if (bc && bc.op !== undefined) fade = Math.min(fade, Math.max(0, Math.min(1, bc.op)));
+            }
+            ctx.globalAlpha = fade;
+
+            // Soft falloff: cumulative opacity grows smoothly (power curve) towards the edge,
+            // instead of saturating immediately, so the shadow fades out gently.
+            const steps = Math.min(32, Math.max(14, Math.round(s)));
+            const peak = Math.min(0.9, borderRoot.shadowOpacity * 1.25);
+            // blur 0 = tight/firm edge, 1 = very soft, long fade
+            const power = 0.6 + borderRoot.shadowBlur * 3.4;
+            let prevC = 0;
+            for (let i = 1; i <= steps; i++) {
+              const C = peak * Math.pow(i / steps, power);
+              const ringAlpha = 1.0 - (1.0 - C) / (1.0 - prevC);
+              prevC = C;
+              if (ringAlpha <= 0.0005) continue;
+              ctx.lineWidth = s * (1.0 - (i - 1) / steps) * 2.0;
+              ctx.strokeStyle = Qt.rgba(0, 0, 0, ringAlpha);
+              ctx.beginPath();
+              traceDesktopContour(ctx, dL, dT, dR, dB, outTL, outTR, outBR, outBL, bcTop, bcRight, bcBottom, bcLeft, fullW, fullH);
+              ctx.stroke();
+            }
+            ctx.restore();
+          }
+        }
+      }
+    }
+
     Item {
       id: innerViewport
+      z: 2
       anchors.fill: parent
       anchors.topMargin: borderRoot.effectiveDockedTop
       anchors.bottomMargin: borderRoot.effectiveDockedBottom
       anchors.leftMargin: borderRoot.effectiveDockedLeft
       anchors.rightMargin: borderRoot.effectiveDockedRight
-
-      Loader {
-        id: shadowCanvasLoader
-        anchors.fill: parent
-        active: borderRoot.hasShadow && borderRoot.anyEdgeActive
-        sourceComponent: Component {
-      Canvas {
-        id: shadowCanvas
-        anchors.fill: parent
-        visible: borderRoot.hasShadow && borderRoot.anyEdgeActive
-        antialiasing: true
-
-        Component.onCompleted: requestPaint()
-        onAvailableChanged: if (available) requestPaint()
-        onVisibleChanged: if (visible) requestPaint()
-        onWidthChanged: requestPaint()
-        onHeightChanged: requestPaint()
-
-        function addRoundedRectCW(ctx, x, y, w, h, rtl, rtr, rbr, rbl) {
-          ctx.moveTo(x + rtl, y);
-          ctx.lineTo(x + w - rtr, y);
-          if (rtr > 0) ctx.arcTo(x + w, y, x + w, y + rtr, rtr);
-          else ctx.lineTo(x + w, y);
-          ctx.lineTo(x + w, y + h - rbr);
-          if (rbr > 0) ctx.arcTo(x + w, y + h, x + w - rbr, y + h, rbr);
-          else ctx.lineTo(x + w, y + h);
-          ctx.lineTo(x + rbl, y + h);
-          if (rbl > 0) ctx.arcTo(x, y + h, x, y + h - rbl, rbl);
-          else ctx.lineTo(x, y + h);
-          ctx.lineTo(x, y + rtl);
-          if (rtl > 0) ctx.arcTo(x, y, x + rtl, y, rtl);
-          else ctx.lineTo(x, y);
-          ctx.closePath();
-        }
-
-        function addRoundedRectCCW(ctx, x, y, w, h, rtl, rtr, rbr, rbl) {
-          ctx.moveTo(x + rtl, y);
-          if (rtl > 0) ctx.arcTo(x, y, x, y + rtl, rtl);
-          else ctx.lineTo(x, y);
-          ctx.lineTo(x, y + h - rbl);
-          if (rbl > 0) ctx.arcTo(x, y + h, x + rbl, y + h, rbl);
-          else ctx.lineTo(x, y + h);
-          ctx.lineTo(x + w - rbr, y + h);
-          if (rbr > 0) ctx.arcTo(x + w, y + h, x + w, y + h - rbr, rbr);
-          else ctx.lineTo(x + w, y + h);
-          ctx.lineTo(x + w, y + rtr);
-          if (rtr > 0) ctx.arcTo(x + w, y, x + w - rtr, y, rtr);
-          else ctx.lineTo(x + w, y);
-          ctx.closePath();
-        }
-
-        onPaint: {
-          const ctx = getContext("2d");
-          const w = width;
-          const h = height;
-          if (w <= 0 || h <= 0) return;
-          ctx.clearRect(0, 0, w, h);
-
-          if (!borderRoot.hasShadow || !borderRoot.anyEdgeActive) return;
-
-          const s = borderRoot.shadowSize;
-          const baseR = borderRoot.cornerRadius;
-          const rTL = borderRoot.showTopLeftCorner ? baseR : 0;
-          const rTR = borderRoot.showTopRightCorner ? baseR : 0;
-          const rBR = borderRoot.showBottomRightCorner ? baseR : 0;
-          const rBL = borderRoot.showBottomLeftCorner ? baseR : 0;
-
-          const outTL = rTL > 0 ? Math.max(0, rTL - 0.75) : 0;
-          const outTR = rTR > 0 ? Math.max(0, rTR - 0.75) : 0;
-          const outBR = rBR > 0 ? Math.max(0, rBR - 0.75) : 0;
-          const outBL = rBL > 0 ? Math.max(0, rBL - 0.75) : 0;
-
-          const pad = s * 2 + 4;
-          const x0 = borderRoot.leftActive ? 0 : -pad;
-          const y0 = borderRoot.topActive ? 0 : -pad;
-          const x1 = borderRoot.rightActive ? w : w + pad;
-          const y1 = borderRoot.bottomActive ? h : h + pad;
-          const rw = x1 - x0;
-          const rh = y1 - y0;
-
-          ctx.save();
-          ctx.beginPath();
-          addRoundedRectCW(ctx, 0, 0, w, h, outTL, outTR, outBR, outBL);
-
-          // Omit the straight bar shadow along the exact contour of the fluid popup where it touches the bar,
-          // curving with the scoops, so the shadow never shines through the translucent card,
-          // nor abruptly cuts across the desktop wallpaper outside the scoop!
-          const ap = borderRoot.activePopupData;
-          if (ap && ap.active && ap.fluidEnabled) {
-            const sameScreen = !ap.screen || !borderRoot.screen || ap.screen === borderRoot.screen;
-            if (sameScreen) {
-              const r = ap.cornerRad || 16;
-              const depth = Math.max(s, r);
-              const joinTop = Boolean(ap.joinTop);
-              const joinBottom = Boolean(ap.joinBottom);
-              const joinLeft = Boolean(ap.joinLeft);
-              const joinRight = Boolean(ap.joinRight);
-
-              if (ap.barPos === "right" && borderRoot.rightActive) {
-                const startY = Math.max(0, ap.y - borderRoot.effectiveDockedTop);
-                const endY = startY + ap.height;
-                if (ap.height > 0) {
-                  ctx.moveTo(w, startY);
-                  if (joinTop) {
-                    ctx.lineTo(w - depth, startY);
-                  } else {
-                    ctx.arcTo(w, startY + r, w - r, startY + r, r);
-                    ctx.lineTo(w - depth, startY + r);
-                  }
-
-                  if (joinBottom) {
-                    ctx.lineTo(w - depth, endY);
-                    ctx.lineTo(w, endY);
-                  } else {
-                    ctx.lineTo(w - depth, endY - r);
-                    ctx.lineTo(w - r, endY - r);
-                    ctx.arcTo(w, endY - r, w, endY, r);
-                  }
-                  ctx.lineTo(w, startY);
-                  ctx.closePath();
-                }
-              } else if (ap.barPos === "left" && borderRoot.leftActive) {
-                const startY = Math.max(0, ap.y - borderRoot.effectiveDockedTop);
-                const endY = startY + ap.height;
-                if (ap.height > 0) {
-                  ctx.moveTo(0, startY);
-                  if (joinTop) {
-                    ctx.lineTo(depth, startY);
-                  } else {
-                    ctx.arcTo(0, startY + r, r, startY + r, r);
-                    ctx.lineTo(depth, startY + r);
-                  }
-
-                  if (joinBottom) {
-                    ctx.lineTo(depth, endY);
-                    ctx.lineTo(0, endY);
-                  } else {
-                    ctx.lineTo(depth, endY - r);
-                    ctx.lineTo(r, endY - r);
-                    ctx.arcTo(0, endY - r, 0, endY, r);
-                  }
-                  ctx.lineTo(0, startY);
-                  ctx.closePath();
-                }
-              } else if (ap.barPos === "top" && borderRoot.topActive) {
-                const startX = Math.max(0, ap.x - borderRoot.effectiveDockedLeft);
-                const endX = startX + ap.width;
-                if (ap.width > 0) {
-                  ctx.moveTo(startX, 0);
-                  if (joinLeft) {
-                    ctx.lineTo(startX, depth);
-                  } else {
-                    ctx.arcTo(startX + r, 0, startX + r, r, r);
-                    ctx.lineTo(startX + r, depth);
-                  }
-
-                  if (joinRight) {
-                    ctx.lineTo(endX, depth);
-                    ctx.lineTo(endX, 0);
-                  } else {
-                    ctx.lineTo(endX - r, depth);
-                    ctx.lineTo(endX - r, r);
-                    ctx.arcTo(endX - r, 0, endX, 0, r);
-                  }
-                  ctx.lineTo(startX, 0);
-                  ctx.closePath();
-                }
-              } else if (ap.barPos === "bottom" && borderRoot.bottomActive) {
-                const startX = Math.max(0, ap.x - borderRoot.effectiveDockedLeft);
-                const endX = startX + ap.width;
-                if (ap.width > 0) {
-                  ctx.moveTo(startX, h);
-                  if (joinLeft) {
-                    ctx.lineTo(startX, h - depth);
-                  } else {
-                    ctx.arcTo(startX + r, h, startX + r, h - r, r);
-                    ctx.lineTo(startX + r, h - depth);
-                  }
-
-                  if (joinRight) {
-                    ctx.lineTo(endX, h - depth);
-                    ctx.lineTo(endX, h);
-                  } else {
-                    ctx.lineTo(endX - r, h - depth);
-                    ctx.lineTo(endX - r, h - r);
-                    ctx.arcTo(endX - r, h, endX, h, r);
-                  }
-                  ctx.lineTo(startX, h);
-                  ctx.closePath();
-                }
-              }
-            }
-          }
-          ctx.clip("evenodd");
-
-          const steps = Math.min(14, Math.max(8, Math.round(s * 0.75)));
-          for (let i = 1; i <= steps; i++) {
-            const u = i / steps;
-            const inset = s * u;
-            const ringAlpha = (borderRoot.shadowOpacity * 2.4 / steps) * Math.pow(1.0 - u, 1.35);
-            if (ringAlpha <= 0.001) continue;
-
-            ctx.fillStyle = Qt.rgba(0, 0, 0, ringAlpha);
-
-            const ix = x0 + inset;
-            const iy = y0 + inset;
-            const iw = rw - inset * 2;
-            const ih = rh - inset * 2;
-            if (iw <= 0 || ih <= 0) continue;
-
-            const maxR = Math.min(iw * 0.5, ih * 0.5);
-            const inTL = rTL > 0 ? Math.min(maxR, rTL * Math.exp(-inset / (rTL * 1.1))) : 0;
-            const inTR = rTR > 0 ? Math.min(maxR, rTR * Math.exp(-inset / (rTR * 1.1))) : 0;
-            const inBR = rBR > 0 ? Math.min(maxR, rBR * Math.exp(-inset / (rBR * 1.1))) : 0;
-            const inBL = rBL > 0 ? Math.min(maxR, rBL * Math.exp(-inset / (rBL * 1.1))) : 0;
-
-            ctx.beginPath();
-            addRoundedRectCW(ctx, x0, y0, rw, rh, outTL, outTR, outBR, outBL);
-            addRoundedRectCCW(ctx, ix, iy, iw, ih, inTL, inTR, inBR, inBL);
-            ctx.fill();
-          }
-          ctx.restore();
-        }
-      }
-        }
-      }
 
       InnerCorner {
         id: cornerTopLeft

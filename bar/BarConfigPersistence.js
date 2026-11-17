@@ -12,6 +12,7 @@ function buildSaveData(root) {
     barHeight: primary ? primary.barHeight : root.barHeight,
     floating: primary ? primary.floating : root.floating,
     dashed: primary && primary.dashed !== undefined ? Boolean(primary.dashed) : Boolean(root.dashed),
+    bumpy: primary && primary.bumpy !== undefined ? Boolean(primary.bumpy) : Boolean(root.bumpy),
     barOpacity: root.barOpacity !== undefined ? root.barOpacity : (primary ? primary.barOpacity : 1.0),
     pillRadius: primary && primary.pillRadius !== undefined ? primary.pillRadius : root.pillRadius,
     barRadius: primary && primary.barRadius !== undefined ? primary.barRadius : root.barRadius,
@@ -38,6 +39,8 @@ function buildSaveData(root) {
     screenBorderCorners: root.screenBorderCorners !== undefined ? Boolean(root.screenBorderCorners) : true,
     screenBorderShadow: root.screenBorderShadow !== undefined ? Boolean(root.screenBorderShadow) : false,
     screenBorderShadowSize: root.screenBorderShadowSize !== undefined ? Number(root.screenBorderShadowSize) : 12,
+    screenBorderShadowOpacity: root.screenBorderShadowOpacity !== undefined ? Number(root.screenBorderShadowOpacity) : 0.35,
+    screenBorderShadowBlur: root.screenBorderShadowBlur !== undefined ? Number(root.screenBorderShadowBlur) : 0.5,
     screenFrameOpacity: root.screenFrameOpacity !== undefined ? Number(root.screenFrameOpacity) : 1.0,
     bars: root.bars,
     panels: primaryPanels,
@@ -117,6 +120,7 @@ function applyConfig(root, cfg) {
   if (cfg.barHeight !== undefined) root.barHeight = Number(cfg.barHeight);
   if (cfg.floating !== undefined) root.floating = Boolean(cfg.floating);
   if (cfg.dashed !== undefined) root.dashed = Boolean(cfg.dashed);
+  if (cfg.bumpy !== undefined) root.bumpy = Boolean(cfg.bumpy);
   if (cfg.barOpacity !== undefined) root.barOpacity = Number(cfg.barOpacity);
   if (cfg.screenFrameOpacity !== undefined) {
     root.screenFrameOpacity = Math.max(0.0, Math.min(1.0, Number(cfg.screenFrameOpacity)));
@@ -124,7 +128,7 @@ function applyConfig(root, cfg) {
     root.screenFrameOpacity = Math.max(0.0, Math.min(1.0, Number(cfg.barOpacity)));
   }
   if (cfg.pillRadius !== undefined) root.pillRadius = Number(cfg.pillRadius);
-  if (cfg.barRadius !== undefined) root.barRadius = Math.max(0, Math.min(24, Number(cfg.barRadius)));
+  if (cfg.barRadius !== undefined) root.barRadius = Math.max(0, Math.min(20, Number(cfg.barRadius)));
   if (cfg.barMargin !== undefined) root.barMargin = Math.max(0, Math.min(24, Number(cfg.barMargin)));
   if (cfg.pillOpacity !== undefined) root.pillOpacity = Number(cfg.pillOpacity);
   if (cfg.hidePill !== undefined) root.hidePill = Boolean(cfg.hidePill);
@@ -153,6 +157,8 @@ function applyConfig(root, cfg) {
   if (cfg.screenBorderCorners !== undefined) root.screenBorderCorners = Boolean(cfg.screenBorderCorners);
   if (cfg.screenBorderShadow !== undefined) root.screenBorderShadow = Boolean(cfg.screenBorderShadow);
   if (cfg.screenBorderShadowSize !== undefined) root.screenBorderShadowSize = Math.max(1, Math.min(64, Math.round(Number(cfg.screenBorderShadowSize))));
+  if (cfg.screenBorderShadowOpacity !== undefined) root.screenBorderShadowOpacity = Math.max(0.05, Math.min(1.0, Number(cfg.screenBorderShadowOpacity)));
+  if (cfg.screenBorderShadowBlur !== undefined) root.screenBorderShadowBlur = Math.max(0.0, Math.min(1.0, Number(cfg.screenBorderShadowBlur)));
 
   let pList = [];
   if (Array.isArray(cfg.panels) && cfg.panels.length > 0) {
@@ -220,6 +226,7 @@ function applyConfig(root, cfg) {
       barHeight: b.barHeight !== undefined ? Number(b.barHeight) : 32,
       floating: b.floating !== undefined ? Boolean(b.floating) : false,
       dashed: b.dashed !== undefined ? Boolean(b.dashed) : false,
+      bumpy: b.bumpy !== undefined ? Boolean(b.bumpy) : false,
       barOpacity: b.barOpacity !== undefined ? Number(b.barOpacity) : globalOpacity,
       pillRadius: b.pillRadius !== undefined ? Number(b.pillRadius) : root.pillRadius,
       barRadius: b.barRadius !== undefined ? Number(b.barRadius) : root.barRadius,
@@ -234,6 +241,7 @@ function applyConfig(root, cfg) {
       secondaryPosition: b.secondaryPosition || root.secondaryPosition || "top",
       secondaryFloating: b.secondaryFloating !== undefined ? Boolean(b.secondaryFloating) : (b.floating !== undefined ? Boolean(b.floating) : false),
       secondaryDashed: b.secondaryDashed !== undefined ? Boolean(b.secondaryDashed) : (b.dashed !== undefined ? Boolean(b.dashed) : false),
+      secondaryBumpy: b.secondaryBumpy !== undefined ? Boolean(b.secondaryBumpy) : (b.bumpy !== undefined ? Boolean(b.bumpy) : false),
       secondaryMode: b.secondaryMode || root.secondaryMode,
       blankOnSecondary: b.blankOnSecondary !== undefined ? Boolean(b.blankOnSecondary) : (b.secondaryMode === "blank"),
       secondaryPanels: Array.isArray(b.secondaryPanels) && b.secondaryPanels.length > 0
@@ -355,6 +363,8 @@ function resetDefaults(root) {
   root.position = "top";
   root.barHeight = 32;
   root.floating = false;
+  root.dashed = false;
+  root.bumpy = false;
   root.barOpacity = 0.85;
   root.screenFrameOpacity = 1.0;
   root.pillRadius = 10;
@@ -418,6 +428,8 @@ function resetDefaults(root) {
   root.screenBorderCorners = true;
   root.screenBorderShadow = false;
   root.screenBorderShadowSize = 12;
+  root.screenBorderShadowOpacity = 0.35;
+  root.screenBorderShadowBlur = 0.5;
 
   root.selectedBarIndex = 0;
   root.bars = [

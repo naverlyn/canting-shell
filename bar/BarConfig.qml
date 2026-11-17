@@ -17,6 +17,7 @@ Singleton {
   property int barHeight: 32
   property bool floating: false
   property bool dashed: false
+  property bool bumpy: false
   property real barOpacity: 0.85
   property int pillRadius: 10
   property int barRadius: 12
@@ -57,6 +58,7 @@ Singleton {
   property bool screenBorderShadow: true
   property int screenBorderShadowSize: 12
   property real screenBorderShadowOpacity: 0.35
+  property real screenBorderShadowBlur: 0.5
   property real screenFrameOpacity: 1.0
 
   // Active details popups tracking across bars
@@ -104,6 +106,8 @@ Singleton {
       barHeight: 32,
       floating: false,
       dashed: false,
+      bumpy: false,
+      bumpy: false,
       barOpacity: 0.85,
       pillRadius: 10,
       barRadius: 12,
@@ -376,6 +380,7 @@ Singleton {
       else if (propName === "barHeight") root.barHeight = Number(val);
       else if (propName === "floating") root.floating = Boolean(val);
       else if (propName === "dashed") root.dashed = Boolean(val);
+      else if (propName === "bumpy") root.bumpy = Boolean(val);
       else if (propName === "barOpacity") root.barOpacity = Number(val);
       else if (propName === "pillRadius") root.pillRadius = Number(val);
       else if (propName === "barRadius") root.barRadius = Number(val);
@@ -451,6 +456,8 @@ Singleton {
       barHeight: 32,
       floating: false,
       dashed: false,
+      bumpy: false,
+      bumpy: false,
       barOpacity: root.barOpacity,
       pillRadius: root.pillRadius,
       barRadius: root.barRadius,
@@ -709,6 +716,16 @@ Singleton {
 
   function setScreenBorderShadowSize(val) {
     root.screenBorderShadowSize = Math.max(1, Math.min(64, Math.round(Number(val))));
+    root.saveConfig();
+  }
+
+  function setScreenBorderShadowOpacity(val) {
+    root.screenBorderShadowOpacity = Math.max(0.05, Math.min(1.0, Number(val)));
+    root.saveConfig();
+  }
+
+  function setScreenBorderShadowBlur(val) {
+    root.screenBorderShadowBlur = Math.max(0.0, Math.min(1.0, Number(val)));
     root.saveConfig();
   }
 

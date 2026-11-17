@@ -799,6 +799,11 @@ Item {
                             ? Boolean(BarConfig.currentBar.secondaryDashed)
                             : Boolean(BarConfig.currentBar.dashed))
                         : BarConfig.dashed
+                    readonly property bool curBumpy: BarConfig.currentBar
+                        ? (isEditingSecondary && BarConfig.currentBar.secondaryBumpy !== undefined
+                            ? Boolean(BarConfig.currentBar.secondaryBumpy)
+                            : Boolean(BarConfig.currentBar.bumpy))
+                        : BarConfig.bumpy
                     readonly property real curOpacity: BarConfig.currentBar ? Number(BarConfig.currentBar.barOpacity) : BarConfig.barOpacity
                     readonly property int curPillRadius: BarConfig.currentBar ? (BarConfig.currentBar.pillRadius !== undefined ? Number(BarConfig.currentBar.pillRadius) : 10) : BarConfig.pillRadius
                     readonly property real curPillOpacity: BarConfig.currentBar ? (BarConfig.currentBar.pillOpacity !== undefined ? Number(BarConfig.currentBar.pillOpacity) : 1.0) : BarConfig.pillOpacity

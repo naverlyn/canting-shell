@@ -20,7 +20,39 @@ Scope {
   property var theme: DefaultTheme {}
   property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
   property bool barVisible: true
+  property bool reserveExclusionResetting: false
   property var activePopupData: null
+  property var bumpyContours: ({})
+  signal bumpyContourUpdated()
+
+  Timer {
+    id: reserveResetTimer
+    interval: 100
+    repeat: false
+    onTriggered: root.reserveExclusionResetting = false
+  }
+
+  function triggerReserveExclusionReset() {
+    reserveExclusionResetting = true;
+    reserveResetTimer.restart();
+  }
+
+  // Guard contour removal by `canvasId` so a closing window cannot clear a newer window's entry.
+  function setBumpyContour(screenIdx, pos, data, canvasId) {
+    const key = screenIdx + "_" + pos;
+    const cur = (root.bumpyContours || {})[key];
+    if (!data && canvasId !== undefined && cur && cur.canvasId !== canvasId) return;
+    if (!data && !cur) return;
+    const next = Object.assign({}, root.bumpyContours || {});
+    if (data) {
+      data.canvasId = canvasId;
+      next[key] = data;
+    } else {
+      delete next[key];
+    }
+    root.bumpyContours = next;
+    root.bumpyContourUpdated();
+  }
 
   function withAlpha(col, alpha) {
     return ColorUtils.withAlpha(col, alpha);
@@ -211,6 +243,7 @@ Scope {
       readonly property int barThickness: barCfg.barHeight || 32
       readonly property bool isFloating: Boolean(barCfg.floating)
       readonly property bool isDashed: Boolean(barCfg.dashed)
+      readonly property bool isBumpy: Boolean(barCfg.bumpy)
       readonly property real barAlpha: (barCfg.barOpacity !== undefined && barCfg.barOpacity !== null) ? Number(barCfg.barOpacity) : BarConfig.barOpacity
       readonly property int pillRadius: (barCfg.pillRadius !== undefined) ? Number(barCfg.pillRadius) : BarConfig.pillRadius
       readonly property int barRadius: (barCfg.barRadius !== undefined) ? Number(barCfg.barRadius) : BarConfig.barRadius
@@ -245,10 +278,18 @@ Scope {
           property bool isReloading: false
           readonly property string trackedBarPos: barInstanceScope.barPos + "|" + String(barInstanceScope.barCfg.secondaryPosition || "")
 
+          Timer {
+            id: reloadTimer
+            interval: 60
+            repeat: false
+            onTriggered: barWindowLoader.isReloading = false
+          }
+
           onTrackedBarPosChanged: {
-            if (!active) return;
+            if (!active && !isReloading) return;
+            root.triggerReserveExclusionReset();
             isReloading = true;
-            Qt.callLater(() => { isReloading = false; });
+            reloadTimer.restart();
           }
 
           active: !isReloading
@@ -349,6 +390,9 @@ Scope {
           readonly property bool windowIsDashed: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryDashed !== undefined)
             ? Boolean(barInstanceScope.barCfg.secondaryDashed)
             : barInstanceScope.isDashed
+          readonly property bool windowIsBumpy: ((isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryBumpy !== undefined)
+            ? Boolean(barInstanceScope.barCfg.secondaryBumpy)
+            : barInstanceScope.isBumpy) && !windowIsDashed
           readonly property bool windowIsFloating: ((isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryFloating !== undefined)
             ? Boolean(barInstanceScope.barCfg.secondaryFloating)
             : barInstanceScope.isFloating) || windowIsDashed
@@ -409,7 +453,7 @@ Scope {
           // stays docked to the physical monitor edge without being pushed/cut out by the floating bar.
           // This invisible reserve window preserves the docked bar's exclusiveZone for tiled windows.
           Loader {
-            active: barWindow.visible && barWindow.ignoreOtherExclusionForDocked
+            active: !root.reserveExclusionResetting && barWindow.visible && barWindow.ignoreOtherExclusionForDocked
             sourceComponent: Component {
               PanelWindow {
                 screen: barWindow.screen
@@ -433,6 +477,11 @@ Scope {
           implicitHeight: barWindow.windowIsVert ? 0 : barInstanceScope.barThickness
           implicitWidth: barWindow.windowIsVert ? barInstanceScope.barThickness : 0
           color: "transparent"
+
+          onEffectiveDockedTopChanged: if (windowIsBumpy) bumpyRepaintTimer.restart()
+          onEffectiveDockedBottomChanged: if (windowIsBumpy) bumpyRepaintTimer.restart()
+          onEffectiveDockedLeftChanged: if (windowIsBumpy) bumpyRepaintTimer.restart()
+          onEffectiveDockedRightChanged: if (windowIsBumpy) bumpyRepaintTimer.restart()
 
           property string lastPos: barWindow.windowBarPos
           onLastPosChanged: barPosSwitchAnim.restart()
@@ -502,7 +551,7 @@ Scope {
             radius: barWindow.windowIsFloating
               ? Math.min(Math.max(0, barInstanceScope.barRadius), Math.floor(Math.min(width, height) / 2))
               : 0
-            color: barWindow.windowIsDashed ? "transparent" : barWindow.effectiveBarColor
+            color: (barWindow.windowIsDashed || barWindow.windowIsBumpy) ? "transparent" : barWindow.effectiveBarColor
             border.color: (barWindow.windowIsFloating && !barWindow.windowIsDashed) ? root.theme.bgBorder : "transparent"
             border.width: (barWindow.windowIsFloating && !barWindow.windowIsDashed) ? 1 : 0
             transform: Translate { id: barSlideTransform; x: 0; y: 0 }
@@ -514,6 +563,209 @@ Scope {
             Behavior on anchors.rightMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             Behavior on color { ColorAnimation { duration: 200 } }
             Behavior on border.color { ColorAnimation { duration: 200 } }
+          }
+
+          // Bumpy bar background: edge-attached thin rail with smooth bumps around active panels
+          Canvas {
+            id: bumpyCanvas
+            anchors.fill: barBackground
+            visible: barWindow.windowIsBumpy && !barWindow.isBlankBar && barInstanceScope.barThickness >= 18
+            opacity: barBackground.opacity
+            transform: Translate { x: barSlideTransform.x; y: barSlideTransform.y }
+
+            readonly property color fillCol: barWindow.effectiveBarColor
+            readonly property string pos: barWindow.windowBarPos
+            readonly property int rev: barWindow.panelItemsRev
+            readonly property int bRadius: barInstanceScope.barRadius
+
+            onVisibleChanged: {
+              if (visible) requestPaint();
+              else clearPublished();
+            }
+            onWidthChanged: if (visible) requestPaint()
+            onHeightChanged: if (visible) requestPaint()
+            onFillColChanged: if (visible) requestPaint()
+            // Remember which edge we last published a contour for, so switching the bar to
+            // another edge (or destroying it) removes the stale contour instead of leaving a ghost shadow.
+            property var lastData: null
+            // Publishes the contour together with the bar's current slide offset and fade so the
+            // shadow (drawn in a separate window) moves and fades exactly with the bar.
+            function publish() {
+              if (!lastData || !visible) return;
+              publishedPos = pos;
+              publishedScreen = barWindow.screenIndex;
+              const d = Object.assign({}, lastData, {
+                ox: barSlideTransform.x,
+                oy: barSlideTransform.y,
+                op: barBackground.opacity
+              });
+              root.setBumpyContour(barWindow.screenIndex, pos, d, canvasId);
+            }
+            Connections { target: barSlideTransform; function onXChanged() { bumpyCanvas.publish(); } function onYChanged() { bumpyCanvas.publish(); } }
+            Connections { target: barBackground; function onOpacityChanged() { bumpyCanvas.publish(); } }
+
+            readonly property string canvasId: "c" + Math.random().toString(36).slice(2)
+            property string publishedPos: ""
+            property int publishedScreen: -1
+            function clearPublished() {
+              if (publishedPos !== "") root.setBumpyContour(publishedScreen, publishedPos, null, canvasId);
+              publishedPos = "";
+              lastData = null;
+            }
+            Component.onDestruction: clearPublished()
+            onPosChanged: {
+              if (publishedPos !== "" && publishedPos !== pos) clearPublished();
+              if (visible) requestPaint();
+            }
+            onRevChanged: if (visible) { requestPaint(); bumpyRepaintTimer.restart(); }
+            onBRadiusChanged: if (visible) requestPaint()
+
+            Timer {
+              id: bumpyRepaintTimer
+              interval: 60
+              repeat: false
+              onTriggered: if (bumpyCanvas.visible) bumpyCanvas.requestPaint()
+            }
+
+            onPaint: {
+              const ctx = getContext("2d");
+              ctx.clearRect(0, 0, width, height);
+              if (width <= 0 || height <= 0) return;
+
+              const isVert = barContentContainer.isVert;
+              const span = isVert ? height : width;
+              const thick = isVert ? width : height;
+              const rail = barWindow.effectiveScreenBorder
+                ? Math.max(3, Math.min(thick - 6, Number(BarConfig.screenBorderThickness || 4)))
+                : 4;
+              const pad = 12;
+              const R = bRadius <= 0 ? 0 : Math.max(1, Math.min(bRadius, Math.floor((thick - rail) / 2)));
+              const startSnap = (isVert ? barWindow.effectiveDockedTop : barWindow.effectiveDockedLeft) + (barInstanceScope.hasInnerCorners ? barInstanceScope.innerCornerRadius : 0) + Math.max(10, 2 * R);
+              const endSnap = (isVert ? barWindow.effectiveDockedBottom : barWindow.effectiveDockedRight) + (barInstanceScope.hasInnerCorners ? barInstanceScope.innerCornerRadius : 0) + Math.max(10, 2 * R);
+
+              const raw = [];
+              for (let i = 0; i < panelsOuterRepeater.count; i++) {
+                const g = panelsOuterRepeater.itemAt(i);
+                if (!g || g.width <= 0 || g.height <= 0) continue;
+                const s = isVert
+                  ? Math.max(0, barContentContainer.y + g.y - pad - barBackground.y)
+                  : Math.max(0, barContentContainer.x + g.x - pad - barBackground.x);
+                const e = isVert
+                  ? Math.min(span, barContentContainer.y + g.y + g.height + pad - barBackground.y)
+                  : Math.min(span, barContentContainer.x + g.x + g.width + pad - barBackground.x);
+                if (e > s) raw.push({ s: s, e: e });
+              }
+              raw.sort((a, b) => a.s - b.s);
+
+              const intervals = [];
+              for (let i = 0; i < raw.length; i++) {
+                const cur = raw[i];
+                if (intervals.length > 0 && cur.s <= intervals[intervals.length - 1].e + (4 * R) + 4) {
+                  intervals[intervals.length - 1].e = Math.max(intervals[intervals.length - 1].e, cur.e);
+                } else {
+                  intervals.push({ s: cur.s, e: cur.e });
+                }
+              }
+
+              // Snap outer bumps flush to screen edges so they meet InnerCorners cleanly
+              if (intervals.length > 0) {
+                if (intervals[0].s <= startSnap) intervals[0].s = 0;
+                if (intervals[intervals.length - 1].e >= span - endSnap) intervals[intervals.length - 1].e = span;
+              }
+
+              ctx.fillStyle = fillCol;
+              ctx.beginPath();
+
+              if (!isVert) {
+                const outerY = (pos === "bottom") ? height : 0;
+                const railY = (pos === "bottom") ? (height - rail) : rail;
+                const bumpY = (pos === "bottom") ? 0 : height;
+                const leftY = (intervals.length > 0 && intervals[0].s <= 2 * R) ? bumpY : railY;
+                const rightY = (intervals.length > 0 && intervals[intervals.length - 1].e >= width - (2 * R)) ? bumpY : railY;
+
+                ctx.moveTo(0, outerY);
+                ctx.lineTo(0, leftY);
+                for (let i = 0; i < intervals.length; i++) {
+                  const iv = intervals[i];
+                  if (iv.s > 2 * R) {
+                    const wallX = iv.s;
+                    if (R > 0) {
+                      ctx.lineTo(wallX - R, railY);
+                      ctx.arcTo(wallX, railY, wallX, bumpY, R);
+                      ctx.arcTo(wallX, bumpY, wallX + R, bumpY, R);
+                    } else {
+                      ctx.lineTo(wallX, railY);
+                      ctx.lineTo(wallX, bumpY);
+                    }
+                  }
+                  if (iv.e < width - (2 * R)) {
+                    const wallE = iv.e;
+                    if (R > 0) {
+                      ctx.lineTo(wallE - R, bumpY);
+                      ctx.arcTo(wallE, bumpY, wallE, railY, R);
+                      ctx.arcTo(wallE, railY, wallE + R, railY, R);
+                    } else {
+                      ctx.lineTo(wallE, bumpY);
+                      ctx.lineTo(wallE, railY);
+                    }
+                  } else {
+                    ctx.lineTo(iv.e, bumpY);
+                  }
+                }
+                ctx.lineTo(width, rightY);
+                ctx.lineTo(width, outerY);
+              } else {
+                const outerX = (pos === "right") ? width : 0;
+                const railX = (pos === "right") ? (width - rail) : rail;
+                const bumpX = (pos === "right") ? 0 : width;
+                const topX = (intervals.length > 0 && intervals[0].s <= 2 * R) ? bumpX : railX;
+                const botX = (intervals.length > 0 && intervals[intervals.length - 1].e >= height - (2 * R)) ? bumpX : railX;
+
+                ctx.moveTo(outerX, 0);
+                ctx.lineTo(topX, 0);
+                for (let i = 0; i < intervals.length; i++) {
+                  const iv = intervals[i];
+                  if (iv.s > 2 * R) {
+                    const wallY = iv.s;
+                    if (R > 0) {
+                      ctx.lineTo(railX, wallY - R);
+                      ctx.arcTo(railX, wallY, bumpX, wallY, R);
+                      ctx.arcTo(bumpX, wallY, bumpX, wallY + R, R);
+                    } else {
+                      ctx.lineTo(railX, wallY);
+                      ctx.lineTo(bumpX, wallY);
+                    }
+                  }
+                  if (iv.e < height - (2 * R)) {
+                    const wallE = iv.e;
+                    if (R > 0) {
+                      ctx.lineTo(bumpX, wallE - R);
+                      ctx.arcTo(bumpX, wallE, railX, wallE, R);
+                      ctx.arcTo(railX, wallE, railX, wallE + R, R);
+                    } else {
+                      ctx.lineTo(bumpX, wallE);
+                      ctx.lineTo(railX, wallE);
+                    }
+                  } else {
+                    ctx.lineTo(bumpX, iv.e);
+                  }
+                }
+                ctx.lineTo(botX, height);
+                ctx.lineTo(outerX, height);
+              }
+
+              ctx.closePath();
+              ctx.fill();
+
+              lastData = {
+                rail: rail,
+                thick: thick,
+                R: R,
+                span: span,
+                intervals: intervals
+              };
+              publish();
+            }
           }
 
           // Split Island backgrounds for Dashed bar style (morphs smoothly to/from Floating)
@@ -579,6 +831,12 @@ Scope {
 
           Item {
             id: barContentContainer
+            // The bump outline is derived from this container's and the panels' geometry; repaint
+            // once it settles (e.g. after the bar moved to another edge) so it never stays stale.
+            onXChanged: if (barWindow.windowIsBumpy) { bumpyCanvas.requestPaint(); bumpyRepaintTimer.restart(); }
+            onYChanged: if (barWindow.windowIsBumpy) { bumpyCanvas.requestPaint(); bumpyRepaintTimer.restart(); }
+            onWidthChanged: if (barWindow.windowIsBumpy) { bumpyCanvas.requestPaint(); bumpyRepaintTimer.restart(); }
+            onHeightChanged: if (barWindow.windowIsBumpy) { bumpyCanvas.requestPaint(); bumpyRepaintTimer.restart(); }
             anchors.fill: barBackground
             visible: !barWindow.isBlankBar && barInstanceScope.barThickness >= 18
             anchors.leftMargin: barWindow.windowIsVert
@@ -817,6 +1075,11 @@ Scope {
 
                 height: barContentContainer.isVert ? implicitHeight : barContentContainer.height
                 width: barContentContainer.isVert ? barContentContainer.width : implicitWidth
+
+                onXChanged: if (barWindow.windowIsBumpy) { bumpyCanvas.requestPaint(); bumpyRepaintTimer.restart(); }
+                onYChanged: if (barWindow.windowIsBumpy) { bumpyCanvas.requestPaint(); bumpyRepaintTimer.restart(); }
+                onWidthChanged: if (barWindow.windowIsBumpy) { bumpyCanvas.requestPaint(); bumpyRepaintTimer.restart(); }
+                onHeightChanged: if (barWindow.windowIsBumpy) { bumpyCanvas.requestPaint(); bumpyRepaintTimer.restart(); }
 
                 readonly property real targetX: {
                   if (barContentContainer.isVert) return 0;

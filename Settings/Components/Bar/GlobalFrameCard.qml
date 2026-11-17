@@ -124,6 +124,42 @@ SectionCard {
             ]
             onValueModified: (val) => BarConfig.setScreenBorderShadowSize(val)
         }
+
+        RowDivider {}
+
+        SettingSliderRow {
+            title: "Inner Shadow Blur"
+            desc: "How soft the shadow edge is: low = firm edge, high = smooth, long fade"
+            value: Math.round((BarConfig.screenBorderShadowBlur !== undefined ? BarConfig.screenBorderShadowBlur : 0.5) * 100)
+            minVal: 0
+            maxVal: 100
+            step: 5
+            unit: "%"
+            presets: [
+                { label: "Sharp", val: 10 },
+                { label: "Soft", val: 50 },
+                { label: "Very soft", val: 90 }
+            ]
+            onValueModified: (val) => BarConfig.setScreenBorderShadowBlur(val / 100)
+        }
+
+        RowDivider {}
+
+        SettingSliderRow {
+            title: "Inner Shadow Strength"
+            desc: "Darkness of the shadow right next to the bar and border"
+            value: Math.round((BarConfig.screenBorderShadowOpacity !== undefined ? BarConfig.screenBorderShadowOpacity : 0.35) * 100)
+            minVal: 5
+            maxVal: 100
+            step: 5
+            unit: "%"
+            presets: [
+                { label: "Light", val: 20 },
+                { label: "Normal", val: 35 },
+                { label: "Strong", val: 60 }
+            ]
+            onValueModified: (val) => BarConfig.setScreenBorderShadowOpacity(val / 100)
+        }
     }
 
     RowDivider {}

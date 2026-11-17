@@ -13,6 +13,7 @@ Item {
     property string unit: "px"
     property var presets: []
     property bool isFloat: false
+    property bool showCustom: true
     property bool customActive: false
     signal valueModified(real val)
     property bool announce: false  // emit Style.toast when a preset is chosen
@@ -35,7 +36,7 @@ Item {
         return -1;
     }
 
-    readonly property bool isCustomEffective: customActive || (presets.length > 0 && matchingPresetIdx === -1)
+    readonly property bool isCustomEffective: showCustom && (customActive || (presets.length > 0 && matchingPresetIdx === -1))
 
     readonly property int activeIdx: {
         if (presets.length === 0) return -1;
@@ -105,14 +106,14 @@ Item {
                 id: segmentTrack
                 visible: sliderRow.presets.length > 0
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                implicitWidth: Math.min(380, Math.max(260, (sliderRow.presets.length + 1) * 70))
+                implicitWidth: Math.min(380, Math.max(260, (sliderRow.presets.length + (sliderRow.showCustom ? 1 : 0)) * 70))
                 height: 32
                 radius: 7
                 color: Style.theme.bgBase
                 border.color: Style.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
                 border.width: 1
 
-                readonly property int count: sliderRow.presets.length + 1
+                readonly property int count: sliderRow.presets.length + (sliderRow.showCustom ? 1 : 0)
                 readonly property real cellWidth: (width - 6 - (count - 1) * 3) / count
 
                 /* Sliding Selection Pill */
@@ -177,6 +178,7 @@ Item {
                     /* Custom Segment Button */
                     Rectangle {
                         id: customSegBtn
+                        visible: sliderRow.showCustom
                         readonly property bool isSel: sliderRow.activeIdx === sliderRow.presets.length
 
                         Layout.fillWidth: true

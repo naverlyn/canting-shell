@@ -93,18 +93,19 @@ SectionCard {
     }
 
     AnimatedSection {
-        expanded: generalSection.isFloatingOrDashed
+        expanded: generalSection.isFloatingOrDashed || root.generalTab.curBumpy
 
         RowDivider {}
 
         SettingSliderRow {
             title: "Bar Roundness"
-            desc: "Corner radius in pixels for floating and dashed bars"
+            desc: "Corner and curve radius in pixels for floating, dashed, and bumpy bars"
             value: BarConfig.currentBar && BarConfig.currentBar.barRadius !== undefined ? Number(BarConfig.currentBar.barRadius) : BarConfig.barRadius
             minVal: 0
             maxVal: 20
             step: 1
             unit: "px"
+            showCustom: false
             presets: [
                 { label: "0px", val: 0 },
                 { label: "6px", val: 6 },
@@ -114,6 +115,10 @@ SectionCard {
             ]
             onValueModified: (val) => BarConfig.updateBarProp("barRadius", Math.round(val))
         }
+    }
+
+    AnimatedSection {
+        expanded: generalSection.isFloatingOrDashed
 
         RowDivider {}
 
