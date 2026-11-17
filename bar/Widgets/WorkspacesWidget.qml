@@ -70,6 +70,9 @@ Item {
     }
   }
 
+  // Hyprland lists workspaces in creation order (e.g. 2,3,1,4); always show by id
+  readonly property var sortedWorkspaces: [...Hyprland.workspaces.values].sort((a, b) => a.id - b.id)
+
   function cycleWorkspace(deltaY) {
     if (BarConfig.workspaceScrollSwitch === false) return;
 
@@ -109,7 +112,7 @@ Item {
 
     Repeater {
       id: wsRepeater
-      model: Hyprland.workspaces
+      model: wsContainer.sortedWorkspaces
 
       Rectangle {
         id: wsPill
