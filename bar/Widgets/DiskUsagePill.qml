@@ -8,9 +8,7 @@ import Quickshell.Services.SystemTray
 import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
-import Quickshell.Services.Notifications
 import QtQuick.Effects
-import "../../ControlCenter"
 import "../Components"
 import ".."
 

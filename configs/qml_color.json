@@ -9,9 +9,9 @@
     "borderPrimary": "#E9C7BD",
     "shadowColor": "#000000",
     "accentPrimary": "#E9C7BD",
-    "accentSecondary": "##E9C7BD",
+    "accentSecondary": "#E9C7BD",
     "selectionBackground": "#E9C7BD",
     "accentPrimaryText": "#FFFFFF",
     "selectionText": "#F2DCF3",
-    "borderSecondary": "##9B4A74"
+    "borderSecondary": "#9B4A74"
 }
