@@ -114,6 +114,26 @@ SectionCard {
             ]
             onValueModified: (val) => BarConfig.updateBarProp("barRadius", Math.round(val))
         }
+
+        RowDivider {}
+
+        SettingSliderRow {
+            title: "Bar Edge Margin"
+            desc: "Gap in pixels from the screen edge or border for floating and dashed bars"
+            value: BarConfig.currentBar && BarConfig.currentBar.barMargin !== undefined ? Number(BarConfig.currentBar.barMargin) : BarConfig.barMargin
+            minVal: 0
+            maxVal: 24
+            step: 1
+            unit: "px"
+            presets: [
+                { label: "0px", val: 0 },
+                { label: "4px", val: 4 },
+                { label: "6px", val: 6 },
+                { label: "12px", val: 12 },
+                { label: "16px", val: 16 }
+            ]
+            onValueModified: (val) => BarConfig.updateBarProp("barMargin", Math.round(val))
+        }
     }
 
     RowDivider {}

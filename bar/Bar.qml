@@ -214,6 +214,7 @@ Scope {
       readonly property real barAlpha: (barCfg.barOpacity !== undefined && barCfg.barOpacity !== null) ? Number(barCfg.barOpacity) : BarConfig.barOpacity
       readonly property int pillRadius: (barCfg.pillRadius !== undefined) ? Number(barCfg.pillRadius) : BarConfig.pillRadius
       readonly property int barRadius: (barCfg.barRadius !== undefined) ? Number(barCfg.barRadius) : BarConfig.barRadius
+      readonly property int barMargin: (barCfg.barMargin !== undefined) ? Math.max(0, Number(barCfg.barMargin)) : Math.max(0, BarConfig.barMargin)
       readonly property real pillOpacity: (barCfg.pillOpacity !== undefined) ? Number(barCfg.pillOpacity) : BarConfig.pillOpacity
       readonly property bool hidePill: (barCfg.hidePill !== undefined) ? Boolean(barCfg.hidePill) : BarConfig.hidePill
       readonly property var barPanels: barCfg.panels || []
@@ -369,28 +370,29 @@ Scope {
             right: barWindow.windowBarPos === "right" || !barWindow.windowIsVert
           }
 
-          readonly property int floatSideClearance: barWindow.effectiveScreenBorder ? Math.max(12, Number(BarConfig.screenBorderThickness || 4) + 6) : 12
-          readonly property int floatBorderEdgeClearance: barWindow.effectiveScreenBorder ? (Number(BarConfig.screenBorderThickness || 4) + 6) : 6
+          readonly property int edgeGap: barInstanceScope.barMargin
+          readonly property int floatSideClearance: barWindow.effectiveScreenBorder ? Math.max(12, Number(BarConfig.screenBorderThickness || 4) + edgeGap) : 12
+          readonly property int floatBorderEdgeClearance: barWindow.effectiveScreenBorder ? (Number(BarConfig.screenBorderThickness || 4) + edgeGap) : edgeGap
           readonly property bool innerCornersActive: Boolean(BarConfig.innerCorners)
           readonly property int floatTopClearance: barWindow.windowIsVert
             ? ((barWindow.hasDockedTop ? barWindow.dockedTopH : 0) + ((barWindow.hasDockedTop && barWindow.innerCornersActive) ? (barInstanceScope.innerCornerRadius + 6) : 12))
             : (barWindow.windowBarPos === "top"
-              ? (barWindow.hasDockedTop ? (barWindow.dockedTopH + 6) : barWindow.floatBorderEdgeClearance)
+              ? (barWindow.hasDockedTop ? (barWindow.dockedTopH + edgeGap) : barWindow.floatBorderEdgeClearance)
               : 0)
           readonly property int floatBottomClearance: barWindow.windowIsVert
             ? ((barWindow.hasDockedBottom ? barWindow.dockedBottomH : 0) + ((barWindow.hasDockedBottom && barWindow.innerCornersActive) ? (barInstanceScope.innerCornerRadius + 6) : 12))
             : (barWindow.windowBarPos === "bottom"
-              ? (barWindow.hasDockedBottom ? (barWindow.dockedBottomH + 6) : barWindow.floatBorderEdgeClearance)
+              ? (barWindow.hasDockedBottom ? (barWindow.dockedBottomH + edgeGap) : barWindow.floatBorderEdgeClearance)
               : 0)
           readonly property int floatLeftClearance: !barWindow.windowIsVert
             ? ((barWindow.hasDockedLeft ? barWindow.dockedLeftW : 0) + Math.max(barWindow.floatSideClearance, (barWindow.hasDockedLeft && barWindow.innerCornersActive) ? (barInstanceScope.innerCornerRadius + 6) : 12))
             : (barWindow.windowBarPos === "left"
-              ? (barWindow.hasDockedLeft ? (barWindow.dockedLeftW + 6) : barWindow.floatBorderEdgeClearance)
+              ? (barWindow.hasDockedLeft ? (barWindow.dockedLeftW + edgeGap) : barWindow.floatBorderEdgeClearance)
               : 0)
           readonly property int floatRightClearance: !barWindow.windowIsVert
             ? ((barWindow.hasDockedRight ? barWindow.dockedRightW : 0) + Math.max(barWindow.floatSideClearance, (barWindow.hasDockedRight && barWindow.innerCornersActive) ? (barInstanceScope.innerCornerRadius + 6) : 12))
             : (barWindow.windowBarPos === "right"
-              ? (barWindow.hasDockedRight ? (barWindow.dockedRightW + 6) : barWindow.floatBorderEdgeClearance)
+              ? (barWindow.hasDockedRight ? (barWindow.dockedRightW + edgeGap) : barWindow.floatBorderEdgeClearance)
               : 0)
 
           margins {

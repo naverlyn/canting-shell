@@ -15,6 +15,7 @@ function buildSaveData(root) {
     barOpacity: root.barOpacity !== undefined ? root.barOpacity : (primary ? primary.barOpacity : 1.0),
     pillRadius: primary && primary.pillRadius !== undefined ? primary.pillRadius : root.pillRadius,
     barRadius: primary && primary.barRadius !== undefined ? primary.barRadius : root.barRadius,
+    barMargin: primary && primary.barMargin !== undefined ? primary.barMargin : root.barMargin,
     pillOpacity: primary && primary.pillOpacity !== undefined ? primary.pillOpacity : root.pillOpacity,
     hidePill: primary && primary.hidePill !== undefined ? Boolean(primary.hidePill) : root.hidePill,
     activeStyle: primary && primary.activeStyle !== undefined ? primary.activeStyle : root.activeStyle,
@@ -124,6 +125,7 @@ function applyConfig(root, cfg) {
   }
   if (cfg.pillRadius !== undefined) root.pillRadius = Number(cfg.pillRadius);
   if (cfg.barRadius !== undefined) root.barRadius = Math.max(0, Math.min(24, Number(cfg.barRadius)));
+  if (cfg.barMargin !== undefined) root.barMargin = Math.max(0, Math.min(24, Number(cfg.barMargin)));
   if (cfg.pillOpacity !== undefined) root.pillOpacity = Number(cfg.pillOpacity);
   if (cfg.hidePill !== undefined) root.hidePill = Boolean(cfg.hidePill);
   if (cfg.allMonitors !== undefined) root.allMonitors = Boolean(cfg.allMonitors);
@@ -221,6 +223,7 @@ function applyConfig(root, cfg) {
       barOpacity: b.barOpacity !== undefined ? Number(b.barOpacity) : globalOpacity,
       pillRadius: b.pillRadius !== undefined ? Number(b.pillRadius) : root.pillRadius,
       barRadius: b.barRadius !== undefined ? Number(b.barRadius) : root.barRadius,
+      barMargin: b.barMargin !== undefined ? Number(b.barMargin) : root.barMargin,
       pillOpacity: b.pillOpacity !== undefined ? Number(b.pillOpacity) : root.pillOpacity,
       hidePill: b.hidePill !== undefined ? Boolean(b.hidePill) : root.hidePill,
       activeStyle: b.activeStyle || cfg.activeStyle || root.activeStyle,
@@ -261,6 +264,7 @@ function applyConfig(root, cfg) {
       barOpacity: root.barOpacity,
       pillRadius: root.pillRadius,
       barRadius: root.barRadius,
+      barMargin: root.barMargin,
       pillOpacity: root.pillOpacity,
       hidePill: root.hidePill,
       activeStyle: root.activeStyle,
@@ -355,6 +359,7 @@ function resetDefaults(root) {
   root.screenFrameOpacity = 1.0;
   root.pillRadius = 10;
   root.barRadius = 12;
+  root.barMargin = 6;
   root.pillOpacity = 1.0;
   root.hidePill = false;
   root.activeStyle = "pill";

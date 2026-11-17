@@ -20,6 +20,7 @@ Singleton {
   property real barOpacity: 0.85
   property int pillRadius: 10
   property int barRadius: 12
+  property int barMargin: 6
   property real pillOpacity: 1.0
   property bool hidePill: false
   property bool allMonitors: true
@@ -106,6 +107,7 @@ Singleton {
       barOpacity: 0.85,
       pillRadius: 10,
       barRadius: 12,
+      barMargin: 6,
       pillOpacity: 1.0,
       hidePill: false,
       allMonitors: true,
@@ -377,6 +379,7 @@ Singleton {
       else if (propName === "barOpacity") root.barOpacity = Number(val);
       else if (propName === "pillRadius") root.pillRadius = Number(val);
       else if (propName === "barRadius") root.barRadius = Number(val);
+      else if (propName === "barMargin") root.barMargin = Number(val);
       else if (propName === "pillOpacity") root.pillOpacity = Number(val);
       else if (propName === "hidePill") root.hidePill = Boolean(val);
       else if (propName === "activeStyle") root.activeStyle = String(val);
@@ -451,6 +454,7 @@ Singleton {
       barOpacity: root.barOpacity,
       pillRadius: root.pillRadius,
       barRadius: root.barRadius,
+      barMargin: root.barMargin,
       pillOpacity: root.pillOpacity,
       hidePill: root.hidePill,
       allMonitors: isAll,

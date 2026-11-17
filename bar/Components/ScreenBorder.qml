@@ -166,9 +166,9 @@ Item {
     }
   }
 
-  // Left Border Strip (active when no docked or floating left bar is present)
+  // Left Border Strip (active when no docked left bar is present)
   Loader {
-    active: borderRoot.barRoot.barVisible && borderRoot.screenBorderActive && !borderRoot.hasDockedLeft && !borderRoot.hasFloatingLeft
+    active: borderRoot.barRoot.barVisible && borderRoot.screenBorderActive && !borderRoot.hasDockedLeft
     sourceComponent: Component {
   PanelWindow {
     id: leftBorderWindow
@@ -220,9 +220,9 @@ Item {
     }
   }
 
-  // Right Border Strip (active when no docked or floating right bar is present)
+  // Right Border Strip (active when no docked right bar is present)
   Loader {
-    active: borderRoot.barRoot.barVisible && borderRoot.screenBorderActive && !borderRoot.hasDockedRight && !borderRoot.hasFloatingRight
+    active: borderRoot.barRoot.barVisible && borderRoot.screenBorderActive && !borderRoot.hasDockedRight
     sourceComponent: Component {
   PanelWindow {
     id: rightBorderWindow
