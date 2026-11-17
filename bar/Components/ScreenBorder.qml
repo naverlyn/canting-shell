@@ -55,8 +55,16 @@ Item {
   function resolveBarColorForPos(pos) {
     void BarConfig.panelsRevision;
     const spec = BarConfig.screenBorderColor;
+    const alpha = (BarConfig.screenFrameOpacity !== undefined && BarConfig.screenFrameOpacity !== null)
+      ? Number(BarConfig.screenFrameOpacity)
+      : 1.0;
     if (spec && String(spec).trim() !== "") {
-      return barRoot.resolveThemeSpec(spec, barRoot.theme.bgBase);
+      const c = barRoot.resolveThemeSpec(spec, barRoot.theme.bgBase);
+      return Qt.rgba(c.r, c.g, c.b, alpha);
+    }
+    if (borderRoot.screenBorderActive) {
+      const base = barRoot.theme.bgBase;
+      return Qt.rgba(base.r, base.g, base.b, alpha);
     }
     const list = BarConfig.bars || [];
     let match = null;
@@ -75,16 +83,15 @@ Item {
         break;
       }
     }
-    const bObj = match || (list.length > 0 ? list[0] : null);
+    const bObj = match;
     const isPrim = (borderRoot.screenIndex === 0);
     const bTarget = bObj ? (bObj.displayTarget || (bObj.allMonitors ? "all" : "primary")) : "primary";
-    const colSpec = (!isPrim && bObj && bTarget === "all" && bObj.secondaryBarColor !== undefined)
-      ? bObj.secondaryBarColor
-      : (bObj && bObj.barColor ? bObj.barColor : BarConfig.barColor);
+    const colSpec = bObj
+      ? ((!isPrim && bTarget === "all" && bObj.secondaryBarColor !== undefined)
+          ? bObj.secondaryBarColor
+          : (bObj.barColor ? bObj.barColor : ""))
+      : "";
     const baseCol = barRoot.resolveThemeSpec(colSpec, barRoot.theme.bgBase);
-    const alpha = (BarConfig.screenFrameOpacity !== undefined && BarConfig.screenFrameOpacity !== null)
-      ? Number(BarConfig.screenFrameOpacity)
-      : 1.0;
     return Qt.rgba(baseCol.r, baseCol.g, baseCol.b, alpha);
   }
 

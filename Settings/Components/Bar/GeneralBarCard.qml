@@ -144,12 +144,6 @@ SectionCard {
 
     RowDivider {}
 
-    GeneralBarColorRow {
-        root: generalSection.root
-    }
-
-    RowDivider {}
-
     SettingToggleRow {
         title: "Hide Pill Backgrounds"
         desc: "Remove individual widget card backgrounds for a clean, borderless appearance"
