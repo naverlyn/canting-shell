@@ -82,7 +82,7 @@ SectionCard {
         RowDivider {}
 
         SettingToggleRow {
-            title: "Fluid Widget Cards"
+            title: "Fluid Widget Cards (Experimental)"
             desc: "Blend detail popups directly into the bar with curved inner corners (Fluid) vs detached floating cards (Flyout)"
             checked: BarConfig.currentBar ? (BarConfig.currentBar.fluidCards !== undefined ? Boolean(BarConfig.currentBar.fluidCards) : Boolean(BarConfig.fluidCards)) : Boolean(BarConfig.fluidCards)
             onToggled: (val) => {
