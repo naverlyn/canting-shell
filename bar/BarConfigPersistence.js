@@ -105,7 +105,10 @@ function buildSaveData(root) {
     customScriptOnRightClick: root.customScriptOnRightClick,
     customScriptMaxLength: root.customScriptMaxLength,
     customScriptHideWhenEmpty: root.customScriptHideWhenEmpty,
-    customScriptShowPopup: root.customScriptShowPopup
+    customScriptShowPopup: root.customScriptShowPopup,
+    mediaPopupStyle: root.mediaPopupStyle,
+    mediaShowAlbumArt: root.mediaShowAlbumArt,
+    mediaShowSeekbar: root.mediaShowSeekbar
   };
   return data;
 }
@@ -344,6 +347,9 @@ function applyConfig(root, cfg) {
   if (cfg.customScriptMaxLength !== undefined) root.customScriptMaxLength = Math.max(4, Number(cfg.customScriptMaxLength) || 28);
   if (cfg.customScriptHideWhenEmpty !== undefined) root.customScriptHideWhenEmpty = Boolean(cfg.customScriptHideWhenEmpty);
   if (cfg.customScriptShowPopup !== undefined) root.customScriptShowPopup = Boolean(cfg.customScriptShowPopup);
+  if (cfg.mediaPopupStyle === "full" || cfg.mediaPopupStyle === "compact") root.mediaPopupStyle = cfg.mediaPopupStyle;
+  if (cfg.mediaShowAlbumArt !== undefined) root.mediaShowAlbumArt = Boolean(cfg.mediaShowAlbumArt);
+  if (cfg.mediaShowSeekbar !== undefined) root.mediaShowSeekbar = Boolean(cfg.mediaShowSeekbar);
   root.widgetVisibilityChangeCounter++;
   root.panelsRevision++;
   root.panelsUpdated();
@@ -391,6 +397,9 @@ function resetDefaults(root) {
   root.customScriptMaxLength = 28;
   root.customScriptHideWhenEmpty = false;
   root.customScriptShowPopup = true;
+  root.mediaPopupStyle = "full";
+  root.mediaShowAlbumArt = true;
+  root.mediaShowSeekbar = true;
   root.showCava = true;
   root.cavaMode = "compact";
   root.cavaBars = 8;

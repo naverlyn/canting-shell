@@ -291,6 +291,11 @@ Singleton {
   // Hyprland Switcher Options
   property bool hyprLayoutShowLabel: true
 
+  // Media Player Popup Options
+  property string mediaPopupStyle: "full" // "full" | "compact"
+  property bool mediaShowAlbumArt: true
+  property bool mediaShowSeekbar: true
+
   // Custom Script Pill Options
   property string customScriptCommand: "echo '{\"text\": \"Ready\", \"tooltip\": \"Custom Script Module\"}'"
   property string customScriptIcon: "󰆍"

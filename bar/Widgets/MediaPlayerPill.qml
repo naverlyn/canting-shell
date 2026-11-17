@@ -9,7 +9,6 @@ import Quickshell.Io
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
 import QtQuick.Effects
-import "../../ControlCenter/Components" as CCComponents
 import "../Components"
 import ".."
 
@@ -83,7 +82,8 @@ Rectangle {
       }
     }
     onHoveredChanged: {
-      if (hovered) { mediaCloseTimer.stop(); effectiveHovered = true; hostContainer.activeInfoProvider = mediaProvider; }
+      if (hovered) {
+        if (hostContainer && hostContainer.activeInfoProvider && hostContainer.activeInfoProvider !== mediaProvider && hostContainer.activeInfoProvider.pinned) return; mediaCloseTimer.stop(); effectiveHovered = true; hostContainer.activeInfoProvider = mediaProvider; }
       else if (!isSharedCardHovered) mediaCloseTimer.restart();
     }
     onIsSharedCardHoveredChanged: {
@@ -111,7 +111,7 @@ Rectangle {
         implicitWidth: mediaProvider.preferredWidth
         implicitHeight: showControl ? mediaCard.implicitHeight : emptyMediaCard.implicitHeight
 
-        CCComponents.MediaControl {
+        BarMediaCard {
           id: mediaCard
           width: mediaProvider.preferredWidth
           theme: mediaProvider.theme

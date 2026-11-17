@@ -872,6 +872,11 @@ Item {
                         visible: root.matchesOptionFilter("cava audio visualizer bars stereo")
                     }
 
+                    MediaOptionsCard {
+                        root: root
+                        visible: root.matchesOptionFilter("media player mpris album art seekbar popup")
+                    }
+
                     HardwareMonitorOptionsCard {
                         root: root
                         visible: root.matchesOptionFilter("hardware cpu gpu memory disk temp alert")
