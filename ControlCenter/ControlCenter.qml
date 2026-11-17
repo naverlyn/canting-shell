@@ -16,6 +16,7 @@ PanelWindow {
     property string barPosition: BarConfig.position
     property int barThickness: BarConfig.barHeight
     property bool barFloating: BarConfig.floating
+    property int barEdgeOffset: 0
     property int barWindowWidth: 0
     property int barWindowHeight: 0
 
@@ -94,8 +95,12 @@ PanelWindow {
     }
 
     readonly property bool fluidEnabled: (BarConfig.fluidCards !== false) && !barFloating && Boolean(BarConfig.innerCorners)
-    readonly property int ownHorizClearance: (barFloating ? 6 : 0) + barThickness + (fluidEnabled ? 0 : 6)
-    readonly property int ownVertClearance: (barFloating ? 6 : 0) + barThickness + (fluidEnabled ? 0 : 6)
+    readonly property int ownHorizClearance: barEdgeOffset > 0
+        ? (barEdgeOffset + (fluidEnabled ? 0 : 8))
+        : ((barFloating ? 6 : 0) + barThickness + (fluidEnabled ? 0 : 6))
+    readonly property int ownVertClearance: barEdgeOffset > 0
+        ? (barEdgeOffset + (fluidEnabled ? 0 : 8))
+        : ((barFloating ? 6 : 0) + barThickness + (fluidEnabled ? 0 : 6))
 
     screen: (anchorTarget && anchorTarget.QsWindow.window) ? anchorTarget.QsWindow.window.screen : null
     anchors {

@@ -604,6 +604,12 @@ Scope {
             readonly property string barColorSpec: barWindow.windowBarColorSpec
             readonly property int barThickness: barInstanceScope.barThickness
             readonly property bool isFloating: barWindow.windowIsFloating
+            readonly property int barEdgeOffset: (
+              barWindow.windowBarPos === "top" ? (barWindow.windowIsFloating ? barWindow.floatTopClearance : 0)
+              : (barWindow.windowBarPos === "bottom" ? (barWindow.windowIsFloating ? barWindow.floatBottomClearance : 0)
+              : (barWindow.windowBarPos === "left" ? (barWindow.windowIsFloating ? barWindow.floatLeftClearance : 0)
+              : (barWindow.windowIsFloating ? barWindow.floatRightClearance : 0)))
+            ) + barInstanceScope.barThickness
             readonly property bool fluidCards: barInstanceScope.fluidCards
             readonly property bool hasInnerCorners: barInstanceScope.hasInnerCorners && !barWindow.windowIsFloating
             readonly property int innerCornerRadius: barInstanceScope.innerCornerRadius

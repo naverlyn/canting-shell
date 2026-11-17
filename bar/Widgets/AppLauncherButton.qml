@@ -89,9 +89,10 @@ Rectangle {
       const winH = Math.max(1, hostWindow.height);
       const normX = (pt.x / winW).toFixed(3);
       const normY = (pt.y / winH).toFixed(3);
-      const clearance = hostContainer.isVert
-        ? ((hostScope.isFloating ? 6 : 0) + hostScope.barThickness + 16)
-        : ((hostScope.isFloating ? 6 : 0) + hostScope.barThickness);
+      const baseEdge = hostContainer.barEdgeOffset !== undefined
+        ? hostContainer.barEdgeOffset
+        : ((hostContainer.isFloating ? 6 : 0) + hostScope.barThickness);
+      const clearance = hostContainer.isVert ? (baseEdge + 16) : (baseEdge + 8);
       appGridProc.command = [
         "qs", "ipc", "call", "appgrid", "toggleAt",
         hostContainer.barPos, String(normX), String(normY), String(clearance)

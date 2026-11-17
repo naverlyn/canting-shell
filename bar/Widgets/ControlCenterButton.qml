@@ -111,7 +111,8 @@ Rectangle {
         anchorTarget: controlCenterButton
         barPosition: hostContainer.barPos
         barThickness: hostScope.barThickness
-        barFloating: hostScope.isFloating
+        barFloating: hostContainer.isFloating
+        barEdgeOffset: hostContainer.barEdgeOffset
         barWindowWidth: hostWindow.width
         barWindowHeight: hostWindow.height
         Component.onCompleted: visible = true

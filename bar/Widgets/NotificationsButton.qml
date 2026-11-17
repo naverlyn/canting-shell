@@ -185,7 +185,7 @@ Rectangle {
           clip: true
 
           readonly property string barPos: hostContainer.barPos
-          readonly property int barOffset: hostScope.barThickness + (hostScope.isFloating ? 16 : 8)
+          readonly property int barOffset: (hostContainer.barEdgeOffset !== undefined ? hostContainer.barEdgeOffset : hostScope.barThickness) + 8
 
           x: {
             if (barPos === "left") return barOffset;
