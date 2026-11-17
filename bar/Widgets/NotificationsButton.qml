@@ -48,7 +48,6 @@ Rectangle {
   Text {
     id: notifIcon
     anchors.centerIn: parent
-    anchors.verticalCenterOffset: -1
     text: notifButton.isDnd ? "󰂛" : "󰂚"
     color: (notifButton.popupOpen || notifButton.isDnd || hostContainer.hasCustomColor("notifications"))
       ? hostContainer.wAccent("notifications", hostRoot.theme.accentPrimary)

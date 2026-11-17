@@ -15,6 +15,7 @@ Scope {
   property int delaySeconds: 0
   property int countdownRemaining: 0
   property string pendingMode: ""
+  readonly property string captureScript: Qt.resolvedUrl("scripts/capture.sh").toString().replace(/^file:\/\//, "")
 
   IpcHandler {
     target: "screenshot"
@@ -26,6 +27,30 @@ Scope {
       } else {
         root.panelVisible = true;
       }
+    }
+
+    function full() {
+      root.cancelCountdown();
+      root.panelVisible = false;
+      root.executeCapture("full");
+    }
+
+    function area() {
+      root.cancelCountdown();
+      root.panelVisible = false;
+      root.executeCapture("region");
+    }
+
+    function swappy() {
+      root.cancelCountdown();
+      root.panelVisible = false;
+      root.executeCapture("region", true);
+    }
+
+    function window() {
+      root.cancelCountdown();
+      root.panelVisible = false;
+      root.executeCapture("window");
     }
   }
 
@@ -52,51 +77,10 @@ Scope {
     }
   }
 
-  function executeCapture(mode) {
-    const swappyFlag = root.annotateSwappy ? "1" : "0";
+  function executeCapture(mode, forceSwappy) {
+    const swappyFlag = (forceSwappy === true || root.annotateSwappy) ? "1" : "0";
     const delayArg = (mode === "region" && root.delaySeconds > 0) ? String(root.delaySeconds) : "0";
-    const script = [
-      "sleep 0.2",
-      "dir=\"$(xdg-user-dir PICTURES 2>/dev/null || echo \"$HOME/Pictures\")/Screenshots\"",
-      "mkdir -p \"$dir\"",
-      "time=$(date \"+%d-%b_%H-%M-%S\")",
-      "file=\"$dir/Screenshot_${time}_${RANDOM}.png\"",
-      "iDIR=\"$HOME/.config/swaync/icons\"",
-      "sDIR=\"$HOME/.config/hypr/Scripts\"",
-      "[ ! -d \"$sDIR\" ] && sDIR=\"$HOME/.config/hypr/scripts\"",
-      "mode=\"" + mode + "\"",
-      "if [ \"$mode\" = \"region\" ]; then",
-      "  geom=$(slurp 2>&1) || exit 0",
-      "  if [ \"" + delayArg + "\" -gt 0 ]; then sleep " + delayArg + "; fi",
-      "  err=$(grim -g \"$geom\" \"$file\" 2>&1) || { notify-send -u critical -a \"Screenshot\" \"Screenshot Failed\" \"$err\"; exit 1; }",
-      "elif [ \"$mode\" = \"window\" ]; then",
-      "  geom=$(hyprctl activewindow -j 2>/dev/null | python3 -c \"import json,sys; d=json.load(sys.stdin); a=d.get('at',[0,0]); s=d.get('size',[0,0]); print(f'{a[0]},{a[1]} {s[0]}x{s[1]}') if s[0]>0 and s[1]>0 else sys.exit(1)\" 2>/dev/null) || geom=\"\"",
-      "  if [ -n \"$geom\" ]; then",
-      "    err=$(grim -g \"$geom\" \"$file\" 2>&1) || { notify-send -u critical -a \"Screenshot\" \"Screenshot Failed\" \"$err\"; exit 1; }",
-      "  else",
-      "    err=$(grim \"$file\" 2>&1) || { notify-send -u critical -a \"Screenshot\" \"Screenshot Failed\" \"$err\"; exit 1; }",
-      "  fi",
-      "else",
-      "  err=$(grim \"$file\" 2>&1) || { notify-send -u critical -a \"Screenshot\" \"Screenshot Failed\" \"$err\"; exit 1; }",
-      "fi",
-      "wl-copy --type image/png < \"$file\" >/dev/null 2>&1 &",
-      "[ -x \"$sDIR/Sounds.sh\" ] && \"$sDIR/Sounds.sh\" --screenshot >/dev/null 2>&1 &",
-      "notify_base=\"notify-send -t 10000 -A action1=Open -A action2=Delete -h string:x-canonical-private-synchronous:shot-notify -i $iDIR/picture.png\"",
-      "if [ \"" + swappyFlag + "\" = \"1\" ]; then",
-      "  resp=$($notify_base \" Screenshot:\" \" Captured by Swappy\")",
-      "  case \"$resp\" in",
-      "    action1) swappy -f \"$file\" >/dev/null 2>&1 & ;;",
-      "    action2) rm -f \"$file\" ;;",
-      "  esac",
-      "else",
-      "  resp=$(timeout 10 $notify_base \" Screenshot\" \" Saved\")",
-      "  case \"$resp\" in",
-      "    action1) xdg-open \"$file\" >/dev/null 2>&1 & ;;",
-      "    action2) rm -f \"$file\" ;;",
-      "  esac",
-      "fi"
-    ].join("\n");
-    Quickshell.execDetached(["bash", "-c", script]);
+    Quickshell.execDetached(["bash", root.captureScript, mode, swappyFlag, delayArg]);
   }
 
   Timer {

@@ -85,7 +85,7 @@ import ".."
                         return hostGrid.theme.accentPrimary;
                     }
                     if (ControlCenterConfig.isLiveEdit) {
-                        return isHovered ? hostGrid.theme.accentPrimary : Qt.rgba(hostGrid.theme.accentPrimary.r, hostGrid.theme.accentPrimary.g, hostGrid.theme.accentPrimary.b, 0.45);
+                        return isHovered ? hostGrid.theme.accentPrimary : Qt.rgba(hostGrid.theme.accentPrimary.r, hostGrid.theme.accentPrimary.g, hostGrid.theme.accentPrimary.b, 0.35);
                     }
                     if ((tileBtn.tid === "mic" && hostGrid.micMuted) || (tileBtn.tid === "mute" && hostGrid.sinkMuted)) {
                         return hostGrid.theme.accentRed;
@@ -93,7 +93,7 @@ import ".."
                     if (isActive) return Qt.rgba(hostGrid.theme.accentPrimary.r, hostGrid.theme.accentPrimary.g, hostGrid.theme.accentPrimary.b, 0.85);
                     return hostGrid.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08);
                 }
-                border.width: (isDropTarget || ControlCenterConfig.isLiveEdit) ? 1.5 : 1
+                border.width: (isDropTarget || (ControlCenterConfig.isLiveEdit && isHovered)) ? 1.5 : 1
 
                 Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
                 Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
@@ -142,7 +142,7 @@ import ".."
                         font.pixelSize: 12
                         font.bold: tileBtn.isActive
                         elide: Text.ElideRight
-                        Layout.maximumWidth: tileBtn.isLastOdd ? 200 : 100
+                        Layout.maximumWidth: tileBtn.isLastOdd ? 200 : (ControlCenterConfig.isLiveEdit ? 84 : 100)
                         color: {
                             if ((tileBtn.tid === "mic" && hostGrid.micMuted) || (tileBtn.tid === "mute" && hostGrid.sinkMuted)) {
                                 return hostGrid.theme.accentRed;
@@ -236,24 +236,35 @@ import ".."
                 // Remove ✕ badge in live edit mode
                 Rectangle {
                     visible: ControlCenterConfig.isLiveEdit
-                    width: 18
-                    height: 18
-                    radius: 9
+                    width: 16
+                    height: 16
+                    radius: 8
                     anchors.top: parent.top
                     anchors.right: parent.right
-                    anchors.topMargin: -4
-                    anchors.rightMargin: -4
-                    color: removeClickArea.containsMouse ? Qt.lighter(hostGrid.theme.accentRed ?? "#e05252", 1.15) : (hostGrid.theme.accentRed ?? "#e05252")
-                    border.color: "#ffffff"
+                    anchors.topMargin: 4
+                    anchors.rightMargin: 4
+                    color: removeClickArea.containsMouse
+                        ? (hostGrid.theme.accentRed ?? "#e05252")
+                        : Qt.rgba((hostGrid.theme.accentRed ?? Qt.rgba(0.88, 0.32, 0.32, 1)).r,
+                                  (hostGrid.theme.accentRed ?? Qt.rgba(0.88, 0.32, 0.32, 1)).g,
+                                  (hostGrid.theme.accentRed ?? Qt.rgba(0.88, 0.32, 0.32, 1)).b, 0.22)
+                    border.color: removeClickArea.containsMouse
+                        ? (hostGrid.theme.accentRed ?? "#e05252")
+                        : Qt.rgba((hostGrid.theme.accentRed ?? Qt.rgba(0.88, 0.32, 0.32, 1)).r,
+                                  (hostGrid.theme.accentRed ?? Qt.rgba(0.88, 0.32, 0.32, 1)).g,
+                                  (hostGrid.theme.accentRed ?? Qt.rgba(0.88, 0.32, 0.32, 1)).b, 0.45)
                     border.width: 1
+                    scale: removeClickArea.pressed ? 0.9 : 1.0
                     z: 15
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on scale { NumberAnimation { duration: 100 } }
 
                     Text {
                         anchors.centerIn: parent
                         text: "✕"
-                        font.pixelSize: 9
+                        font.pixelSize: 8
                         font.bold: true
-                        color: "#ffffff"
+                        color: removeClickArea.containsMouse ? "#ffffff" : (hostGrid.theme.accentRed ?? "#e05252")
                     }
 
                     MouseArea {

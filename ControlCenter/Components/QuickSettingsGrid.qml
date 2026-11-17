@@ -37,6 +37,8 @@ ColumnLayout {
     }
 
     readonly property string nightLightScript: Qt.resolvedUrl("../scripts/nightlight.sh").toString().replace(/^file:\/\//, "")
+    readonly property string gameModeScript: Qt.resolvedUrl("../scripts/gamemode.sh").toString().replace(/^file:\/\//, "")
+    readonly property string emojiScript: Qt.resolvedUrl("../scripts/emoji.sh").toString().replace(/^file:\/\//, "")
 
     signal openWifiRequested()
     signal closeParentRequested()
@@ -207,7 +209,7 @@ ColumnLayout {
 
     Process {
         id: gameModeToggleProc
-        command: ["sh", "-c", "$HOME/.config/hypr/scripts/GameMode.sh"]
+        command: ["bash", root.gameModeScript]
         running: false
         onExited: gameModeStatusProc.running = true
     }
@@ -215,14 +217,14 @@ ColumnLayout {
     // Clipboard Process
     Process {
         id: clipProc
-        command: ["sh", "-c", "qs ipc call clipboard toggle 2>/dev/null || quickshell ipc call clipboard toggle 2>/dev/null || $HOME/.config/hypr/scripts/ClipManager.sh"]
+        command: ["sh", "-c", "qs ipc call clipboard toggle 2>/dev/null || quickshell ipc call clipboard toggle"]
         running: false
     }
 
     // Emoji Process
     Process {
         id: emojiProc
-        command: ["sh", "-c", "$HOME/.config/hypr/scripts/RofiEmoji.sh"]
+        command: ["bash", root.emojiScript]
         running: false
     }
 
@@ -274,13 +276,12 @@ ColumnLayout {
     }
 
     function toggleAirplane() {
-        const notifIcon = "$HOME/.config/swaync/images/ja.png";
         if (root.airplaneEnabled) {
             root.airplaneEnabled = false;
             root.wifiEnabled = true;
             airplaneProc.command = [
                 "sh", "-c",
-                `rfkill unblock wifi && notify-send -u low -i "${notifIcon}" " Airplane" " mode: OFF"`
+                "rfkill unblock wifi && notify-send -u low -i network-wireless-signal-excellent-symbolic \"Airplane Mode\" \"OFF\""
             ];
         } else {
             root.airplaneEnabled = true;
@@ -288,7 +289,7 @@ ColumnLayout {
             root.currentSsid = "";
             airplaneProc.command = [
                 "sh", "-c",
-                `rfkill block wifi && notify-send -u low -i "${notifIcon}" " Airplane" " mode: ON"`
+                "rfkill block wifi && notify-send -u low -i airplane-mode-symbolic \"Airplane Mode\" \"ON\""
             ];
         }
         airplaneProc.running = true;
@@ -470,10 +471,11 @@ ColumnLayout {
         }
     }
 
-    // Quick Add Tile row in Live Edit Mode when unassigned tiles exist
+    // Quick Add Tile row in Live Edit Mode when this grid is empty
     Flow {
         visible: ControlCenterConfig.isLiveEdit
             && (root.mode === "tiles" || root.mode === "tiles2")
+            && root.activeTileModel.length === 0
             && ControlCenterConfig.unassignedTiles.length > 0
         Layout.fillWidth: true
         spacing: 5

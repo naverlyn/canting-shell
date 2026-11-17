@@ -19,7 +19,7 @@ HYPR_DIR = os.path.expanduser(os.environ.get("HYPR_DIR", "~/.config/hypr"))
 def find_config_target():
     if os.path.isfile(os.path.join(HYPR_DIR, "hyprland.lua")):
         return os.path.join(HYPR_DIR, "custom_keybinds.lua")
-    for rel in ("UserConfigs/UserKeybinds.conf", "custom_keybinds.conf", "hyprland.conf"):
+    for rel in ("custom_keybinds.conf", "hyprland.conf"):
         p = os.path.join(HYPR_DIR, rel)
         if os.path.isfile(p):
             return os.path.join(HYPR_DIR, "custom_keybinds.conf") if rel == "hyprland.conf" else p
@@ -289,6 +289,11 @@ def cmd_list():
                     ("qs ipc call wallpaper", "Wallpaper Switcher"),
                     ("qs ipc call theme", "Theme Switcher"),
                     ("qs ipc call clipboard", "Clipboard Manager"),
+                    ("qs ipc call screenshot full", "Take Screenshot (Full)"),
+                    ("qs ipc call screenshot area", "Take Screenshot (Area)"),
+                    ("qs ipc call screenshot swappy", "Take Screenshot (Area)"),
+                    ("qs ipc call screenshot window", "Take Screenshot (Window)"),
+                    ("qs ipc call screenshot toggle", "Screenshot HUD"),
                     ("ScreenShot.sh --now", "Take Screenshot (Full)"),
                     ("ScreenShot.sh --swappy", "Take Screenshot (Area)"),
                     ("ScreenShot.sh --win", "Take Screenshot (Window)"),
@@ -368,7 +373,7 @@ def cmd_list():
 
     for rel in ("Configs/Keybinds.lua", "custom_keybinds.lua", "hyprland.lua"):
         parse_lua_file(os.path.join(HYPR_DIR, rel))
-    for rel in ("UserConfigs/UserKeybinds.conf", "configs/Keybinds.conf", "custom_keybinds.conf"):
+    for rel in ("custom_keybinds.conf", "hyprland.conf"):
         parse_conf_file(os.path.join(HYPR_DIR, rel))
 
     live_binds = []
@@ -393,7 +398,7 @@ def cmd_list():
             arg = b.get("arg", "")
             desc = b.get("description", "")
 
-            if disp in ("__lua", "lua", "") or not disp or not arg:
+            if disp in ("__lua", "lua", "") or disp.startswith("HL.Dispatcher") or not disp or not arg:
                 lookup = bind_map.get((modmask, key_norm))
                 if not lookup and key_norm == "return":
                     lookup = bind_map.get((modmask, "enter"))

@@ -12,6 +12,7 @@ Singleton {
   property bool loading:              false
   property bool persistenceAvailable: false
   property string persistenceFilePath: "~/.config/hypr/monitors.conf"
+  readonly property string monitorsScript: Qt.resolvedUrl("scripts/monitors.sh").toString().replace(/^file:\/\//, "")
   property string configFormat:       "conf" // "conf" or "lua" - which hyprland.* is active
 
   property var  _lastEdits:     []
@@ -105,19 +106,8 @@ Singleton {
     if (writeProc.running) return;
     const isLua  = root.configFormat === "lua";
     const content = isLua ? buildFileContentLua(toSave) : buildFileContent(toSave);
-    const hyprConf = isLua ? "$HOME/.config/hypr/hyprland.lua" : "$HOME/.config/hypr/hyprland.conf";
 
-    const script = isLua
-      ? `TARGET="$HOME/.config/hypr/monitors.lua"; MOD="monitors"; ` +
-        `if [ -f "$HOME/.config/hypr/Configs/Monitors.lua" ]; then TARGET="$HOME/.config/hypr/Configs/Monitors.lua"; MOD="Configs.Monitors"; fi; ` +
-        `printf '%s' "$1" > "$TARGET" && ` +
-        `if [ -f "${hyprConf}" ] && ! grep -Eq 'require.*[Mm]onitors' "${hyprConf}"; then printf '\\nrequire("%s")\\n' "$MOD" >> "${hyprConf}"; fi`
-      : `TARGET="$HOME/.config/hypr/monitors.conf"; ` +
-        `if [ -f "$HOME/.config/hypr/UserConfigs/Monitors.conf" ]; then TARGET="$HOME/.config/hypr/UserConfigs/Monitors.conf"; fi; ` +
-        `printf '%s' "$1" > "$TARGET" && ` +
-        `if [ -f "${hyprConf}" ] && ! grep -Eq 'source.*[Mm]onitors\\.conf' "${hyprConf}"; then printf '\\nsource = ~/.config/hypr/monitors.conf\\n' >> "${hyprConf}"; fi`;
-
-    writeProc.command = ["sh", "-c", script, "sh", content];
+    writeProc.command = ["bash", root.monitorsScript, "write", root.configFormat, content];
     writeProc.running = true;
   }
 
@@ -166,16 +156,7 @@ Singleton {
   // Hyprland's own startup precedence) and whether it wires up monitor persistence.
   Process {
     id: sourceCheck
-    command: ["sh", "-c",
-      "if [ -f \"$HOME/.config/hypr/hyprland.lua\" ]; then " +
-        "echo lua; " +
-        "grep -Eq 'require.*[Mm]onitors' \"$HOME/.config/hypr/hyprland.lua\" && echo yes || echo no; " +
-        "if [ -f \"$HOME/.config/hypr/Configs/Monitors.lua\" ]; then echo \"~/.config/hypr/Configs/Monitors.lua\"; else echo \"~/.config/hypr/monitors.lua\"; fi; " +
-      "else " +
-        "echo conf; " +
-        "grep -Eq 'source.*[Mm]onitors\\.conf' \"$HOME/.config/hypr/hyprland.conf\" 2>/dev/null && echo yes || echo no; " +
-        "if [ -f \"$HOME/.config/hypr/UserConfigs/Monitors.conf\" ]; then echo \"~/.config/hypr/UserConfigs/Monitors.conf\"; else echo \"~/.config/hypr/monitors.conf\"; fi; " +
-      "fi"]
+    command: ["bash", root.monitorsScript, "check"]
     running: true
     stdout: StdioCollector {
       onStreamFinished: {

@@ -455,13 +455,20 @@ PanelWindow {
 
                                 // Panel Header Badge in Live Edit Mode
                                 Rectangle {
+                                    readonly property bool isPanelDropTarget: controlCenter.isDraggingCard && controlCenter.dragTargetPanel === panelCol.panelIndex
                                     visible: ControlCenterConfig.isLiveEdit
                                     width: panelCol.cellWidth
                                     height: 24
                                     radius: 6
-                                    color: Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.1)
-                                    border.color: Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.35)
-                                    border.width: 1
+                                    color: isPanelDropTarget
+                                        ? Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.22)
+                                        : Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.08)
+                                    border.color: isPanelDropTarget
+                                        ? controlCenter.theme.accentPrimary
+                                        : Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.30)
+                                    border.width: isPanelDropTarget ? 1.5 : 1
+                                    Behavior on color { ColorAnimation { duration: 140 } }
+                                    Behavior on border.color { ColorAnimation { duration: 140 } }
 
                                     RowLayout {
                                         anchors.fill: parent

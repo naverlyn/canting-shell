@@ -71,13 +71,6 @@ def find_config_target(is_decor=0, target_section=""):
             pass
         return custom_lua
 
-    uc_dir = os.path.join(HYPR_DIR, "UserConfigs")
-    if os.path.isdir(uc_dir):
-        if is_decor == 1 and os.path.isfile(os.path.join(uc_dir, "UserDecorations.conf")):
-            return os.path.join(uc_dir, "UserDecorations.conf")
-        if is_decor == 0 and os.path.isfile(os.path.join(uc_dir, "UserSettings.conf")):
-            return os.path.join(uc_dir, "UserSettings.conf")
-
     custom_conf = os.path.join(HYPR_DIR, "custom_hypr.conf")
     if os.path.isfile(custom_conf):
         return custom_conf
@@ -292,7 +285,7 @@ def get_status():
 
     for rel in ("hyprland.lua", "Configs/WindowDecoration.lua", "Configs/Misc.lua", "Configs/Input.lua", "custom_hypr.lua"):
         parse_lua_config(os.path.join(HYPR_DIR, rel))
-    for rel in ("hyprland.conf", "configs/SystemSettings.conf", "UserConfigs/UserDecorations.conf", "UserConfigs/UserSettings.conf", "custom_hypr.conf"):
+    for rel in ("hyprland.conf", "custom_hypr.conf"):
         parse_conf(os.path.join(HYPR_DIR, rel))
 
     def query_hyprctl(opt):

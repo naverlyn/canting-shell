@@ -14,7 +14,7 @@ get_status_file() {
 
 get_touchpad_device() {
     local dev=""
-    for conf in "$HOME/.config/hypr/UserConfigs/Laptops.conf" "$HOME/.config/hypr/configs/Laptops.conf" "$HOME/.config/hypr/Configs/Input.lua" "$HOME/.config/hypr/hyprland.lua" "$HOME/.config/hypr/hyprland.conf"; do
+    for conf in "$HOME/.config/hypr/Configs/Input.lua" "$HOME/.config/hypr/hyprland.lua" "$HOME/.config/hypr/hyprland.conf"; do
         if [[ -f "$conf" ]]; then
             dev="$(awk -F= '/^\$Touchpad_Device/ { gsub(/[[:space:]]*/, "", $1); gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2); print $2; exit }' "$conf" 2>/dev/null || true)"
             if [[ -n "$dev" ]]; then

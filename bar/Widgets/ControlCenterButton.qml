@@ -46,7 +46,6 @@ Rectangle {
   Text {
     id: ccIcon
     anchors.centerIn: parent
-    anchors.verticalCenterOffset: -1
     text: ""
     color: ((controlCenterLoader.item && controlCenterLoader.item.visible) || hostContainer.hasCustomColor("controlCenter"))
       ? hostContainer.wAccent("controlCenter", hostRoot.theme.accentPrimary)

@@ -492,44 +492,21 @@ Singleton {
     function hexToRgba(hex) { return ThemeColorUtils.hexToRgba(hex); }
     function stripHex(hex) { return ThemeColorUtils.stripHex(hex); }
 
+    readonly property string applyThemeScript: Qt.resolvedUrl("scripts/apply_theme.sh").toString().replace(/^file:\/\//, "")
+
     function applyHyprlockTheme(t) {
         if (!t || !t.bgBase) return;
         var hyprlockConf = ThemeColorUtils.buildHyprlockConf(t, root.accentPrimary);
-        hyprlockThemeProc.command = ["sh", "-c",
-            "mkdir -p \"$HOME/.config/hypr/wallust\" && " +
-            "printf '%s\\n' '" + hyprlockConf + "' > \"$HOME/.config/quickshell/Settings/scripts/wallust-hyprlock.conf\" && " +
-            "cp -f \"$HOME/.config/quickshell/Settings/scripts/wallust-hyprlock.conf\" \"$HOME/.config/hypr/wallust/wallust-hyprland.conf\" 2>/dev/null || true; " +
-            "if [ -f \"$HOME/.config/hypr/hyprlock.conf\" ]; then " +
-            "  sed -i 's|^source = .*mocha\\.conf|source = $HOME/.config/quickshell/Settings/scripts/wallust-hyprlock.conf|' \"$HOME/.config/hypr/hyprlock.conf\" 2>/dev/null || true; " +
-            "  sed -i 's|^source = .*/wallust/wallust-hyprland\\.conf|source = $HOME/.config/quickshell/Settings/scripts/wallust-hyprlock.conf|' \"$HOME/.config/hypr/hyprlock.conf\" 2>/dev/null || true; " +
-            "fi"
-        ];
+        hyprlockThemeProc.command = ["bash", root.applyThemeScript, "hyprlock", hyprlockConf];
         hyprlockThemeProc.running = true;
     }
 
     function applyHyprlandBorders(t) {
         var activeColor1 = hexToRgba(root.accentPrimary);
         var activeColor2 = hexToRgba(t.accentCyan);
-        var angle = 45;
-        var active = activeColor1 + " " + activeColor2 + " " + angle + "deg";
+        var angle = "45";
         var inactive = hexToRgba(t.bgBorder);
-        var checkCustom = '! grep -q "custom_border = true" "$HOME/.config/hypr/theme-borders.lua" "$HOME/.config/hypr/theme-borders.conf" 2>/dev/null';
-        var writeCmd = root.configFormat === "lua"
-            ? "printf '%s\\n' '-- theme_sync = true' 'hl.config({' '    general = {' '        [\"col.active_border\"] = { colors = { \"" + activeColor1 + "\", \"" + activeColor2 + "\" }, angle = " + angle + " },' '        [\"col.inactive_border\"] = \"" + inactive + "\",' '    },' '})' > \"$HOME/.config/hypr/theme-borders.lua\""
-            : 'printf "%s\\n" "# theme_sync = true" "general {" "    col.active_border = ' + active + '" "    col.inactive_border = ' + inactive + '" "}" > "$HOME/.config/hypr/theme-borders.conf"';
-        var applyCmd = root.configFormat === "lua"
-            ? 'hyprctl eval \'dofile(os.getenv("HOME") .. "/.config/hypr/theme-borders.lua")\''
-            : 'hyprctl keyword general:col.active_border "' + active + '" && hyprctl keyword general:col.inactive_border "' + inactive + '"';
-
-        var ensureSource = root.configFormat === "lua"
-            ? '[ -f "$HOME/.config/hypr/hyprland.lua" ] && ! grep -q "theme-borders" "$HOME/.config/hypr/hyprland.lua" 2>/dev/null && printf "\\npcall(require, \\"theme-borders\\")\\n" >> "$HOME/.config/hypr/hyprland.lua" || true'
-            : '[ -f "$HOME/.config/hypr/hyprland.conf" ] && ! grep -q "theme-borders" "$HOME/.config/hypr/hyprland.conf" 2>/dev/null && printf "\\nsource = ~/.config/hypr/theme-borders.conf\\n" >> "$HOME/.config/hypr/hyprland.conf" || true';
-        hyprlandProc.command = ["sh", "-c",
-            checkCustom + ' && { ' +
-            writeCmd + ' && ' +
-            applyCmd + ' ; ' +
-            ensureSource + ' ; } || true'
-        ];
+        hyprlandProc.command = ["bash", root.applyThemeScript, "borders", root.configFormat, activeColor1, activeColor2, angle, inactive];
         hyprlandProc.running = true;
     }
 
@@ -581,12 +558,7 @@ Singleton {
 
     function applyKittyTheme(t) {
         var kitty = ThemeColorUtils.buildKittyColors(t, root.accentPrimary);
-        kittyProc.command = ["sh", "-c",
-            "printf '%s\\n' '" + kitty.conf + "' > $HOME/.config/kitty/theme-colors.conf; " +
-            "for sock in /tmp/kitty-*; do " +
-            "[ -S \"$sock\" ] && kitty @ --to \"unix:$sock\" set-colors --all --configured " + kitty.args + "; " +
-            "done"
-        ];
+        kittyProc.command = ["bash", root.applyThemeScript, "kitty", kitty.conf, kitty.args];
         kittyProc.running = true;
     }
 

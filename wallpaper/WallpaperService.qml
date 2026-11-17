@@ -217,25 +217,14 @@ Singleton {
     }
   }
 
+  readonly property string wallpaperScript: Qt.resolvedUrl("scripts/wallpaper.sh").toString().replace(/^file:\/\//, "")
+
   function loadBrowseEntries() {
     if (!browsePath || browsePath === "") {
       browsePath = normalizePath("~/Pictures");
     }
     browseLoading = true;
-    browserProc.command = [
-      "sh", "-c",
-      'cd "$1" 2>/dev/null || exit 1\n' +
-      'img_count=$(find . -maxdepth 1 -type f \\( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \\) 2>/dev/null | wc -l)\n' +
-      'echo "IMAGES:$img_count"\n' +
-      'for d in */; do\n' +
-      '  [ -d "$d" ] || continue\n' +
-      '  name="${d%/}"\n' +
-      '  [ "$name" = "*" ] && continue\n' +
-      '  case "$name" in .*) continue ;; esac\n' +
-      '  printf "DIR:%s\\n" "$name"\n' +
-      'done | sort -f\n',
-      "browse", browsePath
-    ];
+    browserProc.command = ["bash", root.wallpaperScript, "browse", browsePath];
     browserProc.running = true;
   }
 
@@ -515,67 +504,8 @@ Singleton {
     if (root.autoSyncPalette) root.generatingTheme = true;
 
     setProcess.command = [
-      "sh", "-c",
-      'origPath="$1"; target="$2"; mode="$3"; filter="$4"; effect="$5"; syncFlag="$6"; setSh="$7"; ' +
-      'export MAGICK_THREAD_LIMIT=2; ' +
-      'export OMP_NUM_THREADS=2; ' +
-      'pkill -f "^magick .*wallpaper_effects/wallpaper_modified" 2>/dev/null || true; ' +
-      'apply_eff() { ' +
-      '  inP="$1"; eff="$2"; outP="$3"; ' +
-      '  if [ -z "$eff" ] || [ "$eff" = "none" ] || ! command -v magick >/dev/null 2>&1; then ' +
-      '    printf "%s" "$inP"; return 0; ' +
-      '  fi; ' +
-      '  mkdir -p "$HOME/.cache/quickshell/wallpaper_effects"; ' +
-      '  run_magick() { nice -n 19 ionice -c 3 magick "$@"; }; ' +
-      '  case "$eff" in ' +
-      '    negate)         run_magick "$inP" -negate "$outP" ;; ' +
-      '    bw)             run_magick "$inP" -colorspace gray -sigmoidal-contrast 10,40% "$outP" ;; ' +
-      '    blurred)        run_magick "$inP" -resize "2560x1440>" -blur 0x8 "$outP" ;; ' +
-      '    charcoal)       run_magick "$inP" -resize "2560x1440>" -charcoal 0x4 "$outP" ;; ' +
-      '    edge)           run_magick "$inP" -resize "2560x1440>" -edge 1 "$outP" ;; ' +
-      '    emboss)         run_magick "$inP" -resize "2560x1440>" -emboss 0x4 "$outP" ;; ' +
-      '    oil)            run_magick "$inP" -resize "2560x1440>" -paint 3 "$outP" ;; ' +
-      '    posterize)      run_magick "$inP" -posterize 4 "$outP" ;; ' +
-      '    sepia)          run_magick "$inP" -sepia-tone 65% "$outP" ;; ' +
-      '    solarize)       run_magick "$inP" -solarize 80% "$outP" ;; ' +
-      '    sharpen)        run_magick "$inP" -sharpen 0x4 "$outP" ;; ' +
-      '    vignette)       run_magick "$inP" -vignette 0x3 "$outP" ;; ' +
-      '    vignette_black) run_magick "$inP" -background black -vignette 0x3 "$outP" ;; ' +
-      '    zoomed)         run_magick "$inP" -gravity Center -extent 1:1 "$outP" ;; ' +
-      '    *)              printf "%s" "$inP"; return 0 ;; ' +
-      '  esac; ' +
-      '  if [ -f "$outP" ]; then printf "%s" "$outP"; else printf "%s" "$inP"; fi; ' +
-      '}; ' +
-      'cacheDir="$HOME/.cache/quickshell/wallpaper_effects"; ' +
-      'mkdir -p "$cacheDir"; ' +
-      'modImg="$cacheDir/wallpaper_modified.png"; ' +
-      'path=$(apply_eff "$origPath" "$effect" "$modImg"); ' +
-      'if command -v awww >/dev/null 2>&1; then ' +
-      '  filterArg=""; [ -n "$filter" ] && filterArg="--filter $filter"; ' +
-      '  if [ -n "$target" ] && [ "$target" != "all" ]; then ' +
-      '    awww img "$path" -o "$target" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1; ' +
-      '  else ' +
-      '    awww img "$path" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1; ' +
-      '  fi; ' +
-      'elif command -v swww >/dev/null 2>&1; then ' +
-      '  filterArg=""; [ -n "$filter" ] && filterArg="--filter $filter"; ' +
-      '  if [ -n "$target" ] && [ "$target" != "all" ]; then ' +
-      '    swww img "$path" -o "$target" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1; ' +
-      '  else ' +
-      '    swww img "$path" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1; ' +
-      '  fi; ' +
-      'elif command -v hyprpaper >/dev/null 2>&1 && command -v hyprctl >/dev/null 2>&1; then ' +
-      '  hyprctl hyprpaper preload "$path" 2>/dev/null || true; ' +
-      '  if [ -n "$target" ] && [ "$target" != "all" ]; then ' +
-      '    hyprctl hyprpaper wallpaper "$target,$path" 2>/dev/null || true; ' +
-      '  else ' +
-      '    hyprctl hyprpaper wallpaper ",$path" 2>/dev/null || true; ' +
-      '  fi; ' +
-      'fi; ' +
-      'if [ "$syncFlag" = "syncTheme" ] && [ -f "$setSh" ]; then ' +
-      '  env WALLPAPER_THEME_TOOL=wallust sh "$setSh" "$path" 2>/dev/null || true; ' +
-      'fi',
-      "setWallpaper", path, outputArg, chosenMode, activeFilter, activeEffect, syncThemeFlag, setShScript
+      "bash", root.wallpaperScript, "set",
+      path, outputArg, chosenMode, activeFilter, activeEffect, syncThemeFlag, setShScript
     ];
     setProcess.running = true;
 
@@ -642,74 +572,8 @@ Singleton {
     const outB = root.displayBName;
 
     reapplyProcess.command = [
-      "sh", "-c",
-      'mode="$1"; wallA="$2"; wallB="$3"; outA="$4"; outB="$5"; filter="$6"; effect="$7"; ' +
-      'export MAGICK_THREAD_LIMIT=2; ' +
-      'export OMP_NUM_THREADS=2; ' +
-      'pkill -f "^magick .*wallpaper_effects/wallpaper_modified" 2>/dev/null || true; ' +
-      'apply_eff() { ' +
-      '  inP="$1"; eff="$2"; outP="$3"; ' +
-      '  if [ -z "$eff" ] || [ "$eff" = "none" ] || ! command -v magick >/dev/null 2>&1; then ' +
-      '    printf "%s" "$inP"; return 0; ' +
-      '  fi; ' +
-      '  mkdir -p "$HOME/.cache/quickshell/wallpaper_effects"; ' +
-      '  run_magick() { nice -n 19 ionice -c 3 magick "$@"; }; ' +
-      '  case "$eff" in ' +
-      '    negate)         run_magick "$inP" -negate "$outP" ;; ' +
-      '    bw)             run_magick "$inP" -colorspace gray -sigmoidal-contrast 10,40% "$outP" ;; ' +
-      '    blurred)        run_magick "$inP" -resize "2560x1440>" -blur 0x8 "$outP" ;; ' +
-      '    charcoal)       run_magick "$inP" -resize "2560x1440>" -charcoal 0x4 "$outP" ;; ' +
-      '    edge)           run_magick "$inP" -resize "2560x1440>" -edge 1 "$outP" ;; ' +
-      '    emboss)         run_magick "$inP" -resize "2560x1440>" -emboss 0x4 "$outP" ;; ' +
-      '    oil)            run_magick "$inP" -resize "2560x1440>" -paint 3 "$outP" ;; ' +
-      '    posterize)      run_magick "$inP" -posterize 4 "$outP" ;; ' +
-      '    sepia)          run_magick "$inP" -sepia-tone 65% "$outP" ;; ' +
-      '    solarize)       run_magick "$inP" -solarize 80% "$outP" ;; ' +
-      '    sharpen)        run_magick "$inP" -sharpen 0x4 "$outP" ;; ' +
-      '    vignette)       run_magick "$inP" -vignette 0x3 "$outP" ;; ' +
-      '    vignette_black) run_magick "$inP" -background black -vignette 0x3 "$outP" ;; ' +
-      '    zoomed)         run_magick "$inP" -gravity Center -extent 1:1 "$outP" ;; ' +
-      '    *)              printf "%s" "$inP"; return 0 ;; ' +
-      '  esac; ' +
-      '  if [ -f "$outP" ]; then printf "%s" "$outP"; else printf "%s" "$inP"; fi; ' +
-      '}; ' +
-      'cacheDir="$HOME/.cache/quickshell/wallpaper_effects"; ' +
-      'mkdir -p "$cacheDir"; ' +
-      'effA=$(apply_eff "$wallA" "$effect" "$cacheDir/wallpaper_modified_A.png"); ' +
-      'effB=$(apply_eff "$wallB" "$effect" "$cacheDir/wallpaper_modified_B.png"); ' +
-      'if command -v awww >/dev/null 2>&1; then ' +
-      '  filterArg=""; [ -n "$filter" ] && filterArg="--filter $filter"; ' +
-      '  if [ -n "$effB" ] && [ "$effB" != "$effA" ] && [ -n "$outA" ] && [ -n "$outB" ]; then ' +
-      '    awww img "$effA" -o "$outA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
-      '    awww img "$effB" -o "$outB" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
-      '  elif [ -n "$effA" ]; then ' +
-      '    if [ -n "$outA" ]; then ' +
-      '      awww img "$effA" -o "$outA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
-      '    else ' +
-      '      awww img "$effA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
-      '    fi; ' +
-      '  fi; ' +
-      'elif command -v swww >/dev/null 2>&1; then ' +
-      '  filterArg=""; [ -n "$filter" ] && filterArg="--filter $filter"; ' +
-      '  if [ -n "$effB" ] && [ "$effB" != "$effA" ] && [ -n "$outA" ] && [ -n "$outB" ]; then ' +
-      '    swww img "$effA" -o "$outA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
-      '    swww img "$effB" -o "$outB" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
-      '  elif [ -n "$effA" ]; then ' +
-      '    if [ -n "$outA" ]; then ' +
-      '      swww img "$effA" -o "$outA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
-      '    else ' +
-      '      swww img "$effA" --resize "$mode" $filterArg --transition-type grow --transition-pos center --transition-duration 1 || true; ' +
-      '    fi; ' +
-      '  fi; ' +
-      'elif command -v hyprpaper >/dev/null 2>&1 && command -v hyprctl >/dev/null 2>&1; then ' +
-      '  if [ -n "$effB" ] && [ "$effB" != "$effA" ] && [ -n "$outA" ] && [ -n "$outB" ]; then ' +
-      '    hyprctl hyprpaper wallpaper "$outA,$effA" 2>/dev/null || true; ' +
-      '    hyprctl hyprpaper wallpaper "$outB,$effB" 2>/dev/null || true; ' +
-      '  elif [ -n "$effA" ]; then ' +
-      '    hyprctl hyprpaper wallpaper ",$effA" 2>/dev/null || true; ' +
-      '  fi; ' +
-      'fi',
-      "reapplyWallpapers", mode, wallA, wallB, outA, outB, activeFilter, activeEffect
+      "bash", root.wallpaperScript, "reapply",
+      mode, wallA, wallB, outA, outB, activeFilter, activeEffect
     ];
     reapplyProcess.running = true;
   }
@@ -803,17 +667,7 @@ Singleton {
       root._initialStartupDone = true;
       if (root.wallpaperA || root.currentWallpaper) {
         const wA = root.wallpaperA || root.currentWallpaper;
-        startupCheckProc.command = [
-          "sh", "-c",
-          "if command -v awww >/dev/null 2>&1; then " +
-          "  q=$(awww query 2>/dev/null || true); " +
-          "  if [ -n \"$q\" ] && printf '%s' \"$q\" | grep -Fq \"$1\"; then echo 'ALREADY_SET'; exit 0; fi; " +
-          "elif command -v swww >/dev/null 2>&1; then " +
-          "  q=$(swww query 2>/dev/null || true); " +
-          "  if [ -n \"$q\" ] && printf '%s' \"$q\" | grep -Fq \"$1\"; then echo 'ALREADY_SET'; exit 0; fi; " +
-          "fi; echo 'NEED_APPLY'",
-          "check", wA
-        ];
+        startupCheckProc.command = ["bash", root.wallpaperScript, "check-startup", wA];
         startupCheckProc.running = true;
       }
     }

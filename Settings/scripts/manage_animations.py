@@ -35,12 +35,10 @@ def find_user_conf():
             p = os.path.join(HYPR_DIR, rel)
             if os.path.isfile(p):
                 return p
-    for rel in ("UserConfigs/UserAnimations.conf", "animations.conf", "custom_animations.conf"):
+    for rel in ("animations.conf", "custom_animations.conf"):
         p = os.path.join(HYPR_DIR, rel)
         if os.path.isfile(p):
             return p
-    if os.path.isdir(os.path.join(HYPR_DIR, "UserConfigs")):
-        return os.path.join(HYPR_DIR, "UserConfigs/UserAnimations.conf")
     if os.path.isfile(os.path.join(HYPR_DIR, "hyprland.lua")):
         return os.path.join(HYPR_DIR, "Configs/WindowDecoration.lua")
     return os.path.join(HYPR_DIR, "animations.conf")
@@ -180,21 +178,17 @@ def get_status():
             user_content = f.read()
 
     local_state = os.path.join(BACKUP_DIR, ".animations_enabled")
-    hypr_state = os.path.join(HYPR_DIR, "UserConfigs/.animations_enabled")
     is_enabled = None
-    for sf in (local_state, hypr_state):
-        if os.path.exists(sf):
-            try:
-                with open(sf, "r", encoding="utf-8") as ef:
-                    st = ef.read().strip().lower()
-                if st in ("true", "1", "yes"):
-                    is_enabled = True
-                    break
-                if st in ("false", "0", "no"):
-                    is_enabled = False
-                    break
-            except Exception:
-                pass
+    if os.path.exists(local_state):
+        try:
+            with open(local_state, "r", encoding="utf-8") as ef:
+                st = ef.read().strip().lower()
+            if st in ("true", "1", "yes"):
+                is_enabled = True
+            elif st in ("false", "0", "no"):
+                is_enabled = False
+        except Exception:
+            pass
 
     if is_enabled is None:
         if user_conf.endswith(".lua"):
@@ -205,8 +199,6 @@ def get_status():
             is_enabled = (em.group(1).lower() in ("yes", "true", "1")) if em else True
 
     state_file = os.path.join(BACKUP_DIR, ".current_animation")
-    if not os.path.exists(state_file):
-        state_file = os.path.join(HYPR_DIR, "UserConfigs/.current_animation")
     saved_preset = ""
     if os.path.exists(state_file):
         try:
@@ -300,9 +292,6 @@ def set_enabled(target="true", emit_json=True):
     hypr_val = "1" if is_on else "0"
 
     write_text(os.path.join(BACKUP_DIR, ".animations_enabled"), target_str)
-    uc_dir = os.path.join(HYPR_DIR, "UserConfigs")
-    if os.path.isdir(uc_dir):
-        write_text(os.path.join(uc_dir, ".animations_enabled"), target_str)
 
     user_conf = find_user_conf()
     conf_name = os.path.basename(user_conf)
@@ -410,17 +399,13 @@ def apply_preset(preset_name, emit_json=True):
         pass
     write_text(os.path.join(BACKUP_DIR, ".current_animation"), preset_name)
     write_text(os.path.join(BACKUP_DIR, ".animations_enabled"), "true")
-    uc_dir = os.path.join(HYPR_DIR, "UserConfigs")
-    if os.path.isdir(uc_dir):
-        write_text(os.path.join(uc_dir, ".current_animation"), preset_name)
-        write_text(os.path.join(uc_dir, ".animations_enabled"), "true")
 
     if os.path.isfile(HYPR_CONF):
         try:
             with open(HYPR_CONF, "r", encoding="utf-8", errors="ignore") as f:
                 hc_txt = f.read()
             if conf_name not in hc_txt:
-                src_line = f"source = ~/.config/hypr/UserConfigs/{conf_name}" if "/UserConfigs/" in user_conf else f"source = ~/.config/hypr/{conf_name}"
+                src_line = f"source = ~/.config/hypr/{conf_name}"
                 with open(HYPR_CONF, "a", encoding="utf-8") as f:
                     f.write(f"\n{src_line}\n")
         except OSError:
@@ -440,10 +425,6 @@ def apply_preset(preset_name, emit_json=True):
         except OSError:
             pass
         run_cmd(["hyprctl", "reload"])
-
-    refresh_script = os.path.join(HYPR_DIR, "scripts/RefreshNoWaybar.sh")
-    if os.path.isfile(refresh_script) and os.access(refresh_script, os.X_OK):
-        run_cmd([refresh_script])
 
     if emit_json:
         print(json.dumps({"success": True, "preset": preset_name}))

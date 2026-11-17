@@ -74,7 +74,7 @@ optional, depending on the features you use:
 Yes. The shell only needs Hyprland and Quickshell. It was developed on a [JaKooLit](https://github.com/JaKooLit/Hyprland-Dots) setup, so some features detect JaKooLit's files (as well as `.lua` Hyprland configs) and fall back to plain Hyprland when they aren't there.
 
 - **Keybinds, animations, autostart, and Hyprland settings:** the Settings app writes to JaKooLit's `UserConfigs/` or modular `.lua` `Configs/` files if they exist. On vanilla Hyprland it creates its own files (for example `custom_keybinds.conf` or `custom_hypr.lua`) and adds a `source = ...` or `require` line to your Hyprland config.
-- **Control Center tiles:** Game Mode and Emoji call JaKooLit scripts in `~/.config/hypr/scripts/`, so they won't work on vanilla Hyprland unless you provide scripts with those names. Dark/Light and Clipboard use this shell's own theme and clipboard modules. Screenshot falls back to `grimblast` or `hyprshot`.
+- **Control Center tiles:** Game Mode, Night Light, and Emoji use built-in scripts in `ControlCenter/scripts/` (`emoji.sh` requires `rofi` + `rofi-emoji`). Dark/Light, Clipboard, and Screenshot use this shell's own theme, clipboard, and screenshot modules.
 - **Lock screen and idle:** the lock screen runs natively inside Quickshell (`Lockscreen/scripts/lock.sh` falls back to `hyprlock` if Quickshell isn't running). Idle timeout settings edit `hypridle.conf` in `~/.config/hypr/`.
 
 I haven't tested on a fresh vanilla install, so please open an issue if something breaks.

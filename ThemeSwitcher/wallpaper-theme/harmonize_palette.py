@@ -184,8 +184,7 @@ def write_hyprlock_palette(refined):
     content = "\n".join(lines)
     targets = [
         os.path.expanduser("~/.config/quickshell/Settings/scripts/wallust-hyprlock.conf"),
-        os.path.expanduser("~/.config/hypr/wallust/wallust-hyprland.conf"),
-        os.path.expanduser("~/.config/hypr/mocha.conf")
+        os.path.expanduser("~/.config/hypr/wallust/wallust-hyprland.conf")
     ]
     for t in targets:
         try:

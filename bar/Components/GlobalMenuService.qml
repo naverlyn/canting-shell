@@ -8,8 +8,8 @@ import QtQuick
 Singleton {
   id: root
 
-  readonly property string userBindsPath: (Quickshell.env("HOME") || "") + "/.config/hypr/UserConfigs/UserKeybinds.conf"
-  readonly property string defaultBindsPath: (Quickshell.env("HOME") || "") + "/.config/hypr/configs/Keybinds.conf"
+  readonly property string userBindsPath: (Quickshell.env("HOME") || "") + "/.config/hypr/custom_keybinds.conf"
+  readonly property string defaultBindsPath: (Quickshell.env("HOME") || "") + "/.config/hypr/hyprland.conf"
   readonly property string luaBindsPath: (Quickshell.env("HOME") || "") + "/.config/hypr/Configs/Keybinds.lua"
   readonly property string customLuaBindsPath: (Quickshell.env("HOME") || "") + "/.config/hypr/custom_keybinds.lua"
 
@@ -58,7 +58,7 @@ Singleton {
         { id: 303, label: "Pin Window (Sticky)", icon: "󰤱", shortcut: root.getShortcut("pin", "Super+P"), hypr: "pin activewindow" },
         { id: 304, is_separator: true },
         { id: 305, label: "Center Window", icon: "󰍋", shortcut: "", hypr: "centerwindow" },
-        { id: 306, label: "Take Screenshot", icon: "󰹑", shortcut: root.getShortcut("screenshot", "Super+Shift+S"), hypr: "exec $HOME/.config/hypr/scripts/ScreenShot.sh --swappy" }
+        { id: 306, label: "Take Screenshot", icon: "󰹑", shortcut: root.getShortcut("screenshot", "Super+Shift+S"), hypr: "exec qs ipc call screenshot toggle" }
       ]
     },
     {
