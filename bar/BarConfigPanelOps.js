@@ -62,7 +62,7 @@ function toggleSecondaryWidget(root, widgetId) {
     let targetIdx = 0;
     if (["clock", "weather", "battery", "media", "tray", "controlCenter", "idleInhibitor", "wifi", "bluetooth", "brightness"].indexOf(widgetId) !== -1) {
       targetIdx = pList.length - 1;
-    } else if (["windowTitle", "cava", "customScript"].indexOf(widgetId) !== -1) {
+    } else if (["windowTitle", "taskSwitcher", "cava", "customScript"].indexOf(widgetId) !== -1) {
       targetIdx = Math.floor(pList.length / 2);
     } else {
       targetIdx = 0;

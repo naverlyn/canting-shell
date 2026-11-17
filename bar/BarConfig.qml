@@ -19,6 +19,7 @@ Singleton {
   property bool dashed: false
   property real barOpacity: 0.85
   property int pillRadius: 10
+  property int barRadius: 12
   property real pillOpacity: 1.0
   property bool hidePill: false
   property bool allMonitors: true
@@ -55,6 +56,7 @@ Singleton {
   property bool screenBorderShadow: true
   property int screenBorderShadowSize: 12
   property real screenBorderShadowOpacity: 0.35
+  property real screenFrameOpacity: 1.0
 
   // Active details popups tracking across bars
   property var activePopupsList: []
@@ -103,6 +105,7 @@ Singleton {
       dashed: false,
       barOpacity: 0.85,
       pillRadius: 10,
+      barRadius: 12,
       pillOpacity: 1.0,
       hidePill: false,
       allMonitors: true,
@@ -259,6 +262,9 @@ Singleton {
   property string activeStyle: "pill" // "pill" | "underline" | "both"
   property string workspaceStyle: "index" // "index" | "roman" | "dot"
   property bool workspaceScrollSwitch: true
+  property string taskSwitcherMode: "icon_desc" // "icon" | "icon_desc" | "desc"
+  property string taskSwitcherScope: "all" // "all" | "workspace"
+  property int taskSwitcherMaxLabelWidth: 140
   property string weatherUnit: "m" // "m" (metric °C) | "u" (imperial °F)
   property string weatherMode: "compact" // "compact" | "full"
   property int weatherIntervalMinutes: 15
@@ -322,6 +328,7 @@ Singleton {
   readonly property var widgetDefinitions: [
     { id: "workspaces",    name: "Workspaces",          icon: "󰮲", desc: "Workspace switcher pills with active indicators" },
     { id: "windowTitle",   name: "Active Window Title", icon: "🗔", desc: "Title of the currently focused window" },
+    { id: "taskSwitcher",  name: "Task Switcher",       icon: "󰖯", desc: "Open window switcher with icon-only, icon + title, or title-only modes" },
     { id: "globalMenu",    name: "Global Menu",         icon: "󰍜", desc: "macOS-style application menu bar (File, Edit, View, Help)" },
     { id: "clock",         name: "Clock & Calendar",    icon: "", desc: "Time pill with interactive calendar popup on hover" },
     { id: "weather",       name: "Weather Info",        icon: "󰖐", desc: "Live weather conditions and temperature readout" },
@@ -369,6 +376,7 @@ Singleton {
       else if (propName === "dashed") root.dashed = Boolean(val);
       else if (propName === "barOpacity") root.barOpacity = Number(val);
       else if (propName === "pillRadius") root.pillRadius = Number(val);
+      else if (propName === "barRadius") root.barRadius = Number(val);
       else if (propName === "pillOpacity") root.pillOpacity = Number(val);
       else if (propName === "hidePill") root.hidePill = Boolean(val);
       else if (propName === "activeStyle") root.activeStyle = String(val);
@@ -442,6 +450,7 @@ Singleton {
       dashed: false,
       barOpacity: root.barOpacity,
       pillRadius: root.pillRadius,
+      barRadius: root.barRadius,
       pillOpacity: root.pillOpacity,
       hidePill: root.hidePill,
       allMonitors: isAll,
@@ -696,6 +705,11 @@ Singleton {
 
   function setScreenBorderShadowSize(val) {
     root.screenBorderShadowSize = Math.max(1, Math.min(64, Math.round(Number(val))));
+    root.saveConfig();
+  }
+
+  function setScreenFrameOpacity(val) {
+    root.screenFrameOpacity = Math.max(0.0, Math.min(1.0, Number(val)));
     root.saveConfig();
   }
 

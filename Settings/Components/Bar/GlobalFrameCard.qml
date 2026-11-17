@@ -125,4 +125,23 @@ SectionCard {
             onValueModified: (val) => BarConfig.setScreenBorderShadowSize(val)
         }
     }
+
+    RowDivider {}
+
+    SettingSliderRow {
+        title: "Frame & Corners Opacity"
+        desc: "Background transparency for the global screen border and inner corners"
+        value: Math.round((BarConfig.screenFrameOpacity !== undefined ? BarConfig.screenFrameOpacity : 1.0) * 100)
+        minVal: 10
+        maxVal: 100
+        step: 5
+        unit: "%"
+        presets: [
+            { label: "50%", val: 50 },
+            { label: "75%", val: 75 },
+            { label: "85%", val: 85 },
+            { label: "100%", val: 100 }
+        ]
+        onValueModified: (val) => BarConfig.setScreenFrameOpacity(Math.round(val) / 100)
+    }
 }

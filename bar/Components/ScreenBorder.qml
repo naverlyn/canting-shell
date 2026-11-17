@@ -82,7 +82,9 @@ Item {
       ? bObj.secondaryBarColor
       : (bObj && bObj.barColor ? bObj.barColor : BarConfig.barColor);
     const baseCol = barRoot.resolveThemeSpec(colSpec, barRoot.theme.bgBase);
-    const alpha = (bObj && bObj.barOpacity !== undefined && bObj.barOpacity !== null) ? Number(bObj.barOpacity) : (BarConfig.barOpacity !== undefined ? BarConfig.barOpacity : 1.0);
+    const alpha = (BarConfig.screenFrameOpacity !== undefined && BarConfig.screenFrameOpacity !== null)
+      ? Number(BarConfig.screenFrameOpacity)
+      : 1.0;
     return Qt.rgba(baseCol.r, baseCol.g, baseCol.b, alpha);
   }
 
@@ -205,7 +207,12 @@ Item {
     }
 
     Rectangle {
-      anchors.fill: parent
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
+      anchors.bottom: parent.bottom
+      anchors.topMargin: borderRoot.effectiveDockedTop
+      anchors.bottomMargin: borderRoot.effectiveDockedBottom
       color: borderRoot.resolveBarColorForPos("left")
       Behavior on color { ColorAnimation { duration: 180 } }
     }
@@ -254,7 +261,12 @@ Item {
     }
 
     Rectangle {
-      anchors.fill: parent
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
+      anchors.bottom: parent.bottom
+      anchors.topMargin: borderRoot.effectiveDockedTop
+      anchors.bottomMargin: borderRoot.effectiveDockedBottom
       color: borderRoot.resolveBarColorForPos("right")
       Behavior on color { ColorAnimation { duration: 180 } }
     }

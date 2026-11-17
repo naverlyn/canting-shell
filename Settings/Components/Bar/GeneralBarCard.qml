@@ -92,6 +92,30 @@ SectionCard {
         }
     }
 
+    AnimatedSection {
+        expanded: generalSection.isFloatingOrDashed
+
+        RowDivider {}
+
+        SettingSliderRow {
+            title: "Bar Roundness"
+            desc: "Corner radius in pixels for floating and dashed bars"
+            value: BarConfig.currentBar && BarConfig.currentBar.barRadius !== undefined ? Number(BarConfig.currentBar.barRadius) : BarConfig.barRadius
+            minVal: 0
+            maxVal: 20
+            step: 1
+            unit: "px"
+            presets: [
+                { label: "0px", val: 0 },
+                { label: "6px", val: 6 },
+                { label: "12px", val: 12 },
+                { label: "16px", val: 16 },
+                { label: "20px", val: 20 }
+            ]
+            onValueModified: (val) => BarConfig.updateBarProp("barRadius", Math.round(val))
+        }
+    }
+
     RowDivider {}
 
     GeneralBarOpacityRow {

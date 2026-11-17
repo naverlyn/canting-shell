@@ -838,6 +838,10 @@ Item {
                         root: root
                     }
 
+                    TaskSwitcherOptionsCard {
+                        root: root
+                    }
+
                     GlobalMenuOptionsCard {
                         root: root
                     }

@@ -12,6 +12,7 @@ SectionCard {
     required property var root
     id: self
     property alias panelRepeater: panelColumnsRepeater
+    property int knownPanelCount: 0
     property alias poolCard: availPoolCard
     visible: root.currentSubTab === 0
     title: {
@@ -154,6 +155,19 @@ SectionCard {
 
                 Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
                 Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+
+                // Slide-in for newly added panels only (not for rebuilds caused by edits/drags)
+                transform: Translate { id: panelSlide; x: 0 }
+                ParallelAnimation {
+                    id: panelEnterAnim
+                    NumberAnimation { target: panelColumnCard; property: "opacity"; from: 0.0; to: 1.0; duration: 260; easing.type: Easing.OutCubic }
+                    NumberAnimation { target: panelSlide; property: "x"; from: 48; to: 0; duration: 320; easing.type: Easing.OutCubic }
+                }
+                Component.onCompleted: {
+                    if (panelColumnCard.index >= self.knownPanelCount && self.knownPanelCount > 0)
+                        panelEnterAnim.start();
+                    Qt.callLater(() => { self.knownPanelCount = BarConfig.panels.length; });
+                }
 
                 ColumnLayout {
                     id: panelColContent
@@ -581,6 +595,7 @@ SectionCard {
                         }
 
                         BlockDragArea {
+                            id: poolDragArea
                             root: self.root
                             anchors.fill: parent
                             widgetId: poolCard.modelData.id
@@ -592,9 +607,9 @@ SectionCard {
                                 if (BarConfig.addWidgetToPanel(wid, 0)) {
                                     const targetPanel = BarConfig.getWidgetPanelIndex(wid);
                                     const targetTitle = targetPanel >= 0 ? BarConfig.getPanelTitle(targetPanel) : "Panel";
-                                    self.root.showToast("Added " + wname + " to " + targetTitle);
+                                    poolDragArea.root.showToast("Added " + wname + " to " + targetTitle);
                                 } else {
-                                    self.root.showToast("Already maxed out, please move somewhere else", true);
+                                    poolDragArea.root.showToast("Already maxed out, please move somewhere else", true);
                                 }
                             }
                         }

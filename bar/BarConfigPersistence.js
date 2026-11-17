@@ -14,6 +14,7 @@ function buildSaveData(root) {
     dashed: primary && primary.dashed !== undefined ? Boolean(primary.dashed) : Boolean(root.dashed),
     barOpacity: root.barOpacity !== undefined ? root.barOpacity : (primary ? primary.barOpacity : 1.0),
     pillRadius: primary && primary.pillRadius !== undefined ? primary.pillRadius : root.pillRadius,
+    barRadius: primary && primary.barRadius !== undefined ? primary.barRadius : root.barRadius,
     pillOpacity: primary && primary.pillOpacity !== undefined ? primary.pillOpacity : root.pillOpacity,
     hidePill: primary && primary.hidePill !== undefined ? Boolean(primary.hidePill) : root.hidePill,
     activeStyle: primary && primary.activeStyle !== undefined ? primary.activeStyle : root.activeStyle,
@@ -36,6 +37,7 @@ function buildSaveData(root) {
     screenBorderCorners: root.screenBorderCorners !== undefined ? Boolean(root.screenBorderCorners) : true,
     screenBorderShadow: root.screenBorderShadow !== undefined ? Boolean(root.screenBorderShadow) : false,
     screenBorderShadowSize: root.screenBorderShadowSize !== undefined ? Number(root.screenBorderShadowSize) : 12,
+    screenFrameOpacity: root.screenFrameOpacity !== undefined ? Number(root.screenFrameOpacity) : 1.0,
     bars: root.bars,
     panels: primaryPanels,
     leftWidgets: primaryPanels.length > 0 ? primaryPanels[0] : [],
@@ -58,6 +60,9 @@ function buildSaveData(root) {
     showWorkspaces: true,
     workspaceStyle: root.workspaceStyle,
     workspaceScrollSwitch: root.workspaceScrollSwitch,
+    taskSwitcherMode: root.taskSwitcherMode,
+    taskSwitcherScope: root.taskSwitcherScope,
+    taskSwitcherMaxLabelWidth: root.taskSwitcherMaxLabelWidth,
     showWeather: true,
     weatherLocation: root.weatherLocation,
     weatherUnit: root.weatherUnit,
@@ -112,7 +117,13 @@ function applyConfig(root, cfg) {
   if (cfg.floating !== undefined) root.floating = Boolean(cfg.floating);
   if (cfg.dashed !== undefined) root.dashed = Boolean(cfg.dashed);
   if (cfg.barOpacity !== undefined) root.barOpacity = Number(cfg.barOpacity);
+  if (cfg.screenFrameOpacity !== undefined) {
+    root.screenFrameOpacity = Math.max(0.0, Math.min(1.0, Number(cfg.screenFrameOpacity)));
+  } else if (cfg.barOpacity !== undefined) {
+    root.screenFrameOpacity = Math.max(0.0, Math.min(1.0, Number(cfg.barOpacity)));
+  }
   if (cfg.pillRadius !== undefined) root.pillRadius = Number(cfg.pillRadius);
+  if (cfg.barRadius !== undefined) root.barRadius = Math.max(0, Math.min(24, Number(cfg.barRadius)));
   if (cfg.pillOpacity !== undefined) root.pillOpacity = Number(cfg.pillOpacity);
   if (cfg.hidePill !== undefined) root.hidePill = Boolean(cfg.hidePill);
   if (cfg.allMonitors !== undefined) root.allMonitors = Boolean(cfg.allMonitors);
@@ -209,6 +220,7 @@ function applyConfig(root, cfg) {
       dashed: b.dashed !== undefined ? Boolean(b.dashed) : false,
       barOpacity: b.barOpacity !== undefined ? Number(b.barOpacity) : globalOpacity,
       pillRadius: b.pillRadius !== undefined ? Number(b.pillRadius) : root.pillRadius,
+      barRadius: b.barRadius !== undefined ? Number(b.barRadius) : root.barRadius,
       pillOpacity: b.pillOpacity !== undefined ? Number(b.pillOpacity) : root.pillOpacity,
       hidePill: b.hidePill !== undefined ? Boolean(b.hidePill) : root.hidePill,
       activeStyle: b.activeStyle || cfg.activeStyle || root.activeStyle,
@@ -248,6 +260,7 @@ function applyConfig(root, cfg) {
       dashed: Boolean(root.dashed),
       barOpacity: root.barOpacity,
       pillRadius: root.pillRadius,
+      barRadius: root.barRadius,
       pillOpacity: root.pillOpacity,
       hidePill: root.hidePill,
       activeStyle: root.activeStyle,
@@ -288,6 +301,9 @@ function applyConfig(root, cfg) {
   if (cfg.activeStyle !== undefined) root.activeStyle = String(cfg.activeStyle);
   if (cfg.workspaceStyle !== undefined) root.workspaceStyle = String(cfg.workspaceStyle);
   if (cfg.workspaceScrollSwitch !== undefined) root.workspaceScrollSwitch = Boolean(cfg.workspaceScrollSwitch);
+  if (cfg.taskSwitcherMode !== undefined) root.taskSwitcherMode = String(cfg.taskSwitcherMode);
+  if (cfg.taskSwitcherScope !== undefined) root.taskSwitcherScope = String(cfg.taskSwitcherScope);
+  if (cfg.taskSwitcherMaxLabelWidth !== undefined) root.taskSwitcherMaxLabelWidth = Math.max(60, Math.min(280, Number(cfg.taskSwitcherMaxLabelWidth) || 140));
   if (cfg.weatherUnit !== undefined) root.weatherUnit = String(cfg.weatherUnit);
   if (cfg.weatherMode !== undefined) root.weatherMode = String(cfg.weatherMode);
   if (cfg.weatherIntervalMinutes !== undefined) root.weatherIntervalMinutes = Number(cfg.weatherIntervalMinutes);
@@ -336,12 +352,17 @@ function resetDefaults(root) {
   root.barHeight = 32;
   root.floating = false;
   root.barOpacity = 0.85;
+  root.screenFrameOpacity = 1.0;
   root.pillRadius = 10;
+  root.barRadius = 12;
   root.pillOpacity = 1.0;
   root.hidePill = false;
   root.activeStyle = "pill";
   root.workspaceStyle = "index";
   root.workspaceScrollSwitch = true;
+  root.taskSwitcherMode = "icon_desc";
+  root.taskSwitcherScope = "all";
+  root.taskSwitcherMaxLabelWidth = 140;
   root.weatherUnit = "m";
   root.weatherMode = "compact";
   root.weatherIntervalMinutes = 15;

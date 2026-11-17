@@ -213,6 +213,7 @@ Scope {
       readonly property bool isDashed: Boolean(barCfg.dashed)
       readonly property real barAlpha: (barCfg.barOpacity !== undefined && barCfg.barOpacity !== null) ? Number(barCfg.barOpacity) : BarConfig.barOpacity
       readonly property int pillRadius: (barCfg.pillRadius !== undefined) ? Number(barCfg.pillRadius) : BarConfig.pillRadius
+      readonly property int barRadius: (barCfg.barRadius !== undefined) ? Number(barCfg.barRadius) : BarConfig.barRadius
       readonly property real pillOpacity: (barCfg.pillOpacity !== undefined) ? Number(barCfg.pillOpacity) : BarConfig.pillOpacity
       readonly property bool hidePill: (barCfg.hidePill !== undefined) ? Boolean(barCfg.hidePill) : BarConfig.hidePill
       readonly property var barPanels: barCfg.panels || []
@@ -433,6 +434,8 @@ Scope {
 
           property string lastPos: barWindow.windowBarPos
           onLastPosChanged: barPosSwitchAnim.restart()
+          property int panelItemsRev: 0
+          property int knownPanelCount: 0
           Component.onCompleted: barPosSwitchAnim.restart()
 
           ParallelAnimation {
@@ -494,7 +497,9 @@ Scope {
               : (barWindow.windowIsVert
                 ? ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "left") ? barInstanceScope.innerCornerRadius : 0)
                 : 0)
-            radius: barWindow.windowIsFloating ? 12 : 0
+            radius: barWindow.windowIsFloating
+              ? Math.min(Math.max(0, barInstanceScope.barRadius), Math.floor(Math.min(width, height) / 2))
+              : 0
             color: barWindow.windowIsDashed ? "transparent" : barWindow.effectiveBarColor
             border.color: (barWindow.windowIsFloating && !barWindow.windowIsDashed) ? root.theme.bgBorder : "transparent"
             border.width: (barWindow.windowIsFloating && !barWindow.windowIsDashed) ? 1 : 0
@@ -513,7 +518,7 @@ Scope {
           property bool dashMorphActive: false
           Timer {
             id: dashMorphTimer
-            interval: 260
+            interval: 300
             onTriggered: barWindow.dashMorphActive = false
           }
           onWindowIsDashedChanged: {
@@ -525,7 +530,9 @@ Scope {
             model: panelsOuterRepeater.count
             delegate: Rectangle {
               required property int index
-              readonly property var secGrid: panelsOuterRepeater.itemAt(index)
+              // itemAt() is not reactive: re-resolve whenever the panel Grids are rebuilt,
+              // otherwise the island keeps a stale (destroyed) reference and disappears.
+              readonly property var secGrid: { void barWindow.panelItemsRev; return panelsOuterRepeater.itemAt(index); }
               readonly property bool hasContent: secGrid && secGrid.width > 0 && secGrid.height > 0
               readonly property real targetX: barWindow.windowIsDashed
                 ? (secGrid ? (barContentContainer.isVert ? barBackground.x : (barContentContainer.x + secGrid.x - 10)) : barBackground.x)
@@ -540,26 +547,30 @@ Scope {
                 ? (secGrid ? (barContentContainer.isVert ? (secGrid.height + 16) : barBackground.height) : 0)
                 : barBackground.height
 
-              visible: hasContent && !barWindow.isBlankBar && barInstanceScope.barThickness >= 18 && opacity > 0.01
+              visible: hasContent && !barWindow.isBlankBar && barInstanceScope.barThickness >= 18 && (barWindow.windowIsDashed || barWindow.dashMorphActive || opacity > 0.01)
               x: targetX
               y: targetY
               width: targetW
               height: targetH
               radius: barWindow.windowIsDashed
-                ? Math.min(12, Math.floor(Math.min(width, height) / 2))
+                ? Math.min(Math.max(0, barInstanceScope.barRadius), Math.floor(Math.min(width, height) / 2))
                 : barBackground.radius
               color: barWindow.effectiveBarColor
               border.color: root.theme.bgBorder
               border.width: 1
-              opacity: barWindow.windowIsDashed ? barBackground.opacity : 0.0
-              transform: Translate { x: barSlideTransform.x; y: barSlideTransform.y }
+              opacity: ((barWindow.windowIsDashed || barWindow.dashMorphActive) ? barBackground.opacity : 0.0) * (secGrid ? secGrid.enter : 1.0)
+              transform: Translate {
+                x: barSlideTransform.x + (secGrid && !barContentContainer.isVert ? secGrid.slideOff : 0)
+                y: barSlideTransform.y + (secGrid && barContentContainer.isVert ? secGrid.slideOff : 0)
+              }
 
-              Behavior on x { enabled: barWindow.dashMorphActive; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-              Behavior on y { enabled: barWindow.dashMorphActive; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-              Behavior on width { enabled: barWindow.dashMorphActive; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-              Behavior on height { enabled: barWindow.dashMorphActive; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+              Behavior on x { enabled: barWindow.dashMorphActive || barWindow.windowIsDashed; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+              Behavior on y { enabled: barWindow.dashMorphActive || barWindow.windowIsDashed; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+              Behavior on width { enabled: barWindow.dashMorphActive || barWindow.windowIsDashed; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+              Behavior on height { enabled: barWindow.dashMorphActive || barWindow.windowIsDashed; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
               Behavior on radius { enabled: barWindow.dashMorphActive; NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-              Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+              // No opacity fade: islands start fully overlaying the docked bar and morph apart
+              // (or together) while the bar background cross-fades, so there is no see-through dip.
               Behavior on color { ColorAnimation { duration: 180 } }
             }
           }
@@ -738,13 +749,58 @@ Scope {
             // Dynamic Panel Section Layouts (Supports Horizontal Top/Bottom and Vertical Left/Right)
             Repeater {
               id: panelsOuterRepeater
-              model: barWindow.effectivePanels
+              // Integer model keeps the Grid delegates alive when panels change,
+              // so their x/y can animate (slide) instead of being rebuilt in place.
+              model: barWindow.effectivePanels.length
+              onItemAdded: barWindow.panelItemsRev++
+              onItemRemoved: barWindow.panelItemsRev++
 
               Grid {
                 id: panelSectionGrid
                 required property var modelData
                 required property int index
+                readonly property var panelItems: barWindow.effectivePanels[index] || []
 
+                // Slide-out entrance for newly added panels (existing ones stay still)
+                property real enter: 1.0
+                property real slideOff: 0
+                opacity: enter
+                transform: Translate {
+                  x: barContentContainer.isVert ? 0 : panelSectionGrid.slideOff
+                  y: barContentContainer.isVert ? panelSectionGrid.slideOff : 0
+                }
+                ParallelAnimation {
+                  id: panelEnterAnim
+                  NumberAnimation { target: panelSectionGrid; property: "enter"; from: 0.0; to: 1.0; duration: 300; easing.type: Easing.OutCubic }
+                  NumberAnimation { target: panelSectionGrid; property: "slideOff"; from: 36; to: 0; duration: 360; easing.type: Easing.OutCubic }
+                }
+                Component.onCompleted: {
+                  panelSectionGrid.x = targetX; panelSectionGrid.y = targetY;
+                  Qt.callLater(() => { panelSectionGrid.posReady = true; });
+                  if (index >= barWindow.knownPanelCount && barWindow.knownPanelCount > 0)
+                    panelEnterAnim.start();
+                  Qt.callLater(() => { barWindow.knownPanelCount = barWindow.effectivePanels.length; });
+                }
+
+                // Slide to new position only on big jumps (module moved / panel added);
+                // tiny changes (text width jitter) snap so nothing lags or spams.
+                property bool posReady: false
+                NumberAnimation { id: xSlide; target: panelSectionGrid; property: "x"; duration: 300; easing.type: Easing.OutCubic }
+                NumberAnimation { id: ySlide; target: panelSectionGrid; property: "y"; duration: 300; easing.type: Easing.OutCubic }
+                function moveTo(anim, prop, target) {
+                  const cur = panelSectionGrid[prop];
+                  if (!posReady || (!anim.running && Math.abs(target - cur) < 14)) {
+                    anim.stop();
+                    panelSectionGrid[prop] = target;
+                    return;
+                  }
+                  anim.stop();
+                  anim.from = panelSectionGrid[prop];
+                  anim.to = target;
+                  anim.start();
+                }
+                onTargetXChanged: moveTo(xSlide, "x", targetX)
+                onTargetYChanged: moveTo(ySlide, "y", targetY)
                 readonly property int totalPanels: barWindow.effectivePanels.length
                 columns: barContentContainer.isVert ? 1 : Math.max(1, sectionWidgetRepeater.count)
                 spacing: barContentContainer.isVert ? 6 : 8
@@ -754,7 +810,7 @@ Scope {
                 height: barContentContainer.isVert ? implicitHeight : barContentContainer.height
                 width: barContentContainer.isVert ? barContentContainer.width : implicitWidth
 
-                x: {
+                readonly property real targetX: {
                   if (barContentContainer.isVert) return 0;
                   if (totalPanels <= 1 || index === 0) return 0;
                   if (index === totalPanels - 1) return Math.max(0, barContentContainer.width - width);
@@ -782,7 +838,7 @@ Scope {
                   return Math.max(0, Math.min(barContentContainer.width - width, minX));
                 }
 
-                y: {
+                readonly property real targetY: {
                   if (!barContentContainer.isVert) return 0;
                   if (totalPanels <= 1 || index === 0) return 0;
                   if (index === totalPanels - 1) return Math.max(0, barContentContainer.height - height);
@@ -812,7 +868,7 @@ Scope {
 
                 Repeater {
                   id: sectionWidgetRepeater
-                  model: panelSectionGrid.modelData
+                  model: panelSectionGrid.panelItems
                   delegate: Loader {
                     id: panelWidgetLoader
                     required property string modelData

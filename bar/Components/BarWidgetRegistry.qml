@@ -86,6 +86,15 @@ Item {
     }
   }
 
+  // Task Switcher
+  Component {
+    id: taskSwitcherComp
+    TaskSwitcherWidget {
+      hostRoot: registry.hostRoot
+      hostContainer: registry.hostContainer
+    }
+  }
+
   // 8. Weather Info Pill
   Component {
     id: weatherComp
@@ -263,6 +272,7 @@ Item {
       case "customScript": return customScriptComp;
       case "idleInhibitor": return idleInhibitorComp;
       case "windowTitle": return windowTitleComp;
+      case "taskSwitcher": return taskSwitcherComp;
       case "globalMenu": return globalMenuComp;
       case "workspaces": return workspacesComp;
       case "weather": return weatherComp;
