@@ -263,8 +263,8 @@ Item {
       anchors.right: parent.right
       anchors.top: parent.top
       anchors.bottom: parent.bottom
-      anchors.topMargin: borderRoot.effectiveDockedTop
-      anchors.bottomMargin: borderRoot.effectiveDockedBottom
+      anchors.topMargin: borderRoot.hasAnyFloatingBar ? borderRoot.effectiveDockedTop : 0
+      anchors.bottomMargin: borderRoot.hasAnyFloatingBar ? borderRoot.effectiveDockedBottom : 0
       color: borderRoot.resolveBarColorForPos("left")
       Behavior on color { ColorAnimation { duration: 180 } }
     }
@@ -317,8 +317,8 @@ Item {
       anchors.right: parent.right
       anchors.top: parent.top
       anchors.bottom: parent.bottom
-      anchors.topMargin: borderRoot.effectiveDockedTop
-      anchors.bottomMargin: borderRoot.effectiveDockedBottom
+      anchors.topMargin: borderRoot.hasAnyFloatingBar ? borderRoot.effectiveDockedTop : 0
+      anchors.bottomMargin: borderRoot.hasAnyFloatingBar ? borderRoot.effectiveDockedBottom : 0
       color: borderRoot.resolveBarColorForPos("right")
       Behavior on color { ColorAnimation { duration: 180 } }
     }
