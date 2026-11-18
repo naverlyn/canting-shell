@@ -4,6 +4,7 @@
 import json
 import os
 import shutil
+import subprocess
 import sys
 from datetime import datetime, timezone
 
@@ -26,7 +27,80 @@ TOOL_CHECKS = [
     ("cava", ("cava",)),
     ("grim", ("grim",)),
     ("magick", ("magick",)),
+    ("kitty", ("kitty", "alacritty", "foot", "wezterm", "ghostty", "konsole", "gnome-terminal")),
 ]
+
+DISTRO_PKG_MAP = {
+    "arch": {
+        "awww": "awww",
+        "wallust": "wallust",
+        "cliphist": "cliphist",
+        "cava": "cava",
+        "grim": "grim",
+        "magick": "imagemagick",
+        "kitty": "kitty",
+    },
+    "fedora": {
+        "awww": "swww",
+        "wallust": "wallust",
+        "cliphist": "cliphist",
+        "cava": "cava",
+        "grim": "grim",
+        "magick": "ImageMagick",
+        "kitty": "kitty",
+    },
+    "debian": {
+        "awww": "swww",
+        "wallust": "wallust",
+        "cliphist": "cliphist",
+        "cava": "cava",
+        "grim": "grim",
+        "magick": "imagemagick",
+        "kitty": "kitty",
+    },
+    "opensuse": {
+        "awww": "swww",
+        "wallust": "wallust",
+        "cliphist": "cliphist",
+        "cava": "cava",
+        "grim": "grim",
+        "magick": "ImageMagick",
+        "kitty": "kitty",
+    },
+    "void": {
+        "awww": "swww",
+        "wallust": "wallust",
+        "cliphist": "cliphist",
+        "cava": "cava",
+        "grim": "grim",
+        "magick": "ImageMagick",
+        "kitty": "kitty",
+    },
+}
+
+
+def detect_distro():
+    os_release = {}
+    if os.path.isfile("/etc/os-release"):
+        with open("/etc/os-release", "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if "=" in line and not line.startswith("#"):
+                    k, v = line.split("=", 1)
+                    os_release[k] = v.strip().strip('"').strip("'")
+    distro_id = os_release.get("ID", "").lower()
+    id_like = os_release.get("ID_LIKE", "").lower()
+    if distro_id in ("arch", "cachyos", "endeavouros", "manjaro", "garuda", "artix") or "arch" in id_like:
+        return "arch"
+    if distro_id in ("fedora", "nobara") or "fedora" in id_like or "rhel" in id_like:
+        return "fedora"
+    if distro_id in ("ubuntu", "debian", "pop", "linuxmint", "zorin", "elementary") or "debian" in id_like or "ubuntu" in id_like:
+        return "debian"
+    if distro_id.startswith("opensuse") or "suse" in id_like:
+        return "opensuse"
+    if distro_id == "void":
+        return "void"
+    return "unknown"
 
 
 def cmd_status():
@@ -76,6 +150,56 @@ def cmd_mark_done():
     print(json.dumps({"ok": True}))
 
 
+def cmd_install_tools(keys):
+    distro = detect_distro()
+    pkg_map = DISTRO_PKG_MAP.get(distro, {})
+    pkgs = []
+    for k in keys:
+        pkg = pkg_map.get(k, k)
+        if pkg not in pkgs:
+            pkgs.append(pkg)
+
+    if not pkgs:
+        print("No packages specified.", flush=True)
+        sys.exit(1)
+
+    if distro == "arch":
+        aur_helper = shutil.which("paru") or shutil.which("yay")
+        if aur_helper:
+            cmd = [aur_helper, "--sudo", "pkexec", "-S", "--noconfirm", "--needed", *pkgs]
+        else:
+            cmd = ["pkexec", "pacman", "-S", "--noconfirm", "--needed", *pkgs]
+    elif distro == "fedora":
+        cmd = ["pkexec", "dnf", "install", "-y", *pkgs]
+    elif distro == "debian":
+        cmd = ["pkexec", "apt-get", "install", "-y", *pkgs]
+    elif distro == "opensuse":
+        cmd = ["pkexec", "zypper", "install", "-y", *pkgs]
+    elif distro == "void":
+        cmd = ["pkexec", "xbps-install", "-Sy", *pkgs]
+    else:
+        print(f"Unsupported distro '{distro}'. Please install manually: {' '.join(pkgs)}", flush=True)
+        sys.exit(1)
+
+    print(f"$ {' '.join(cmd)}", flush=True)
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    )
+    if proc.stdout:
+        for line in proc.stdout:
+            print(line.rstrip("\n"), flush=True)
+    rc = proc.wait()
+    if rc == 0:
+        print("Done.", flush=True)
+    else:
+        print(f"Exited with code {rc}.", flush=True)
+    sys.exit(rc)
+
+
 def main():
     action = sys.argv[1] if len(sys.argv) > 1 else ""
     if action == "status":
@@ -84,8 +208,10 @@ def main():
         cmd_apply_preset(sys.argv[2])
     elif action == "mark_done":
         cmd_mark_done()
+    elif action == "install_tools" and len(sys.argv) > 2:
+        cmd_install_tools(sys.argv[2:])
     else:
-        print(json.dumps({"ok": False, "error": "Usage: setup_wizard.py [status|apply_preset <name>|mark_done]"}))
+        print(json.dumps({"ok": False, "error": "Usage: setup_wizard.py [status|apply_preset <name>|mark_done|install_tools <key>...]"}))
         sys.exit(1)
 
 

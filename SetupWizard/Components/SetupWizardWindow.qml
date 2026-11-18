@@ -10,10 +10,12 @@ PanelWindow {
     required property string font
     required property string selectedPreset
     required property var detectedTools
+    required property string scriptPath
 
     signal presetChosen(string name)
     signal finishRequested()
     signal skipRequested()
+    signal refreshToolsRequested()
     signal launchIpcRequested(string target, string fnName, string arg)
 
     property int step: 0
@@ -137,7 +139,7 @@ PanelWindow {
                     }
 
                     Text {
-                        text: "Draw your own palette — configure your initial setup in a few clicks."
+                        text: "configure your initial setup in a few clicks."
                         font.family: root.font
                         font.pixelSize: 12
                         color: root.theme.textMuted
@@ -228,6 +230,8 @@ PanelWindow {
                             theme: root.theme
                             font: root.font
                             detectedTools: root.detectedTools
+                            scriptPath: root.scriptPath
+                            onRefreshToolsRequested: root.refreshToolsRequested()
                         }
                     }
                 }

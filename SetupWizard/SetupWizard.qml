@@ -15,9 +15,13 @@ Scope {
     readonly property string scriptPath: Quickshell.shellPath("SetupWizard/scripts/setup_wizard.py")
 
     function openWizard() {
+        refreshStatus();
+        root.panelVisible = true;
+    }
+
+    function refreshStatus() {
         statusProc.openIfNotDone = false;
         statusProc.running = true;
-        root.panelVisible = true;
     }
 
     function finishWizard() {
@@ -111,9 +115,11 @@ Scope {
                 font: root.font
                 selectedPreset: root.selectedPreset
                 detectedTools: root.detectedTools
+                scriptPath: root.scriptPath
                 onPresetChosen: name => root.applyPreset(name)
                 onFinishRequested: root.finishWizard()
                 onSkipRequested: root.finishWizard()
+                onRefreshToolsRequested: root.refreshStatus()
                 onLaunchIpcRequested: (target, fnName, arg) => root.finishAndLaunch(target, fnName, arg)
             }
         }
