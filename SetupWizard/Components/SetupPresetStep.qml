@@ -159,7 +159,10 @@ ColumnLayout {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: root.customizingBar = true
+            onClicked: {
+                root.presetChosen("custom");
+                root.customizingBar = true;
+            }
         }
 
         Row {

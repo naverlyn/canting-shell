@@ -10,6 +10,7 @@ PanelWindow {
     required property string font
     required property string selectedPreset
     required property var detectedTools
+    required property var detectedHardware
     required property string scriptPath
 
     signal presetChosen(string name)
@@ -229,7 +230,9 @@ PanelWindow {
                         SetupReadyStep {
                             theme: root.theme
                             font: root.font
+                            selectedPreset: root.selectedPreset
                             detectedTools: root.detectedTools
+                            detectedHardware: root.detectedHardware
                             scriptPath: root.scriptPath
                             onRefreshToolsRequested: root.refreshToolsRequested()
                         }

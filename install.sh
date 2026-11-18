@@ -390,7 +390,7 @@ check_dependencies() {
         fi
     done
 
-    for cmd in wpctl brightnessctl nmcli bluetoothctl grim slurp wl-copy cliphist cava pkexec magick curl hypridle; do
+    for cmd in wpctl brightnessctl nmcli bluetoothctl grim slurp swappy wl-copy cliphist cava pkexec magick curl hypridle; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
             missing_opt+=("$cmd")
         fi

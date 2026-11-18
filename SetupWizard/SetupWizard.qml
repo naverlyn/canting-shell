@@ -11,6 +11,7 @@ Scope {
     property bool panelVisible: false
     property string selectedPreset: "laptop"
     property var detectedTools: ({})
+    property var detectedHardware: ({})
 
     readonly property string scriptPath: Quickshell.shellPath("SetupWizard/scripts/setup_wizard.py")
 
@@ -31,6 +32,7 @@ Scope {
 
     function applyPreset(name) {
         root.selectedPreset = name;
+        if (name === "custom") return;
         applyPresetProc.command = ["python3", root.scriptPath, "apply_preset", name];
         applyPresetProc.running = true;
     }
@@ -76,6 +78,7 @@ Scope {
                 try {
                     const data = JSON.parse(text.trim() || "{}");
                     root.detectedTools = data.tools || {};
+                    root.detectedHardware = data.hardware || {};
                     if (statusProc.openIfNotDone && data.done === false) {
                         root.panelVisible = true;
                     }
@@ -115,6 +118,7 @@ Scope {
                 font: root.font
                 selectedPreset: root.selectedPreset
                 detectedTools: root.detectedTools
+                detectedHardware: root.detectedHardware
                 scriptPath: root.scriptPath
                 onPresetChosen: name => root.applyPreset(name)
                 onFinishRequested: root.finishWizard()

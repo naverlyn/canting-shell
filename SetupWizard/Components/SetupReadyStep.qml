@@ -8,30 +8,67 @@ ColumnLayout {
 
     required property var theme
     required property string font
+    required property string selectedPreset
     required property var detectedTools
+    required property var detectedHardware
     required property string scriptPath
 
     signal refreshToolsRequested()
 
     property bool isInstalling: false
+    property bool showAllTools: false
     property string installingTarget: ""
     property string installLog: ""
     property int lastExitCode: -1
+
+    readonly property var presetToolKeys: ({
+        laptop: ["awww", "wallust", "wl-copy", "wpctl", "brightnessctl", "nmcli", "bluetoothctl", "grim", "hyprsunset", "hypridle", "kitty", "nerd-font"],
+        pc: ["awww", "wallust", "wl-copy", "wpctl", "nmcli", "cliphist", "grim", "swappy", "magick", "cava", "hyprsunset", "hypridle", "curl", "kitty", "nerd-font"],
+        gaming: ["awww", "wallust", "wl-copy", "wpctl", "nmcli", "cliphist", "grim", "jq", "kitty", "nerd-font"],
+        minimal: ["awww", "wallust", "wl-copy", "wpctl", "nmcli", "bluetoothctl", "grim", "kitty", "nerd-font"]
+    })
 
     readonly property var toolItems: [
         { key: "awww", label: "Wallpaper (awww/swww)" },
         { key: "wallust", label: "Palette (wallust/matugen)" },
         { key: "cliphist", label: "Clipboard (cliphist)" },
         { key: "cava", label: "Audio Visualizer (cava)" },
-        { key: "grim", label: "Screenshot (grim)" },
+        { key: "grim", label: "Screenshot (grim/slurp)" },
+        { key: "swappy", label: "Screenshot Annotate (swappy)" },
         { key: "magick", label: "ImageMagick (magick)" },
-        { key: "kitty", label: "Terminal (kitty/alacritty/foot)" }
+        { key: "kitty", label: "Terminal (kitty/alacritty/foot)" },
+        { key: "wl-copy", label: "Clipboard Copy (wl-copy)" },
+        { key: "brightnessctl", label: "Brightness (brightnessctl)" },
+        { key: "wpctl", label: "Audio Control (wireplumber)" },
+        { key: "nmcli", label: "Wi-Fi (NetworkManager)" },
+        { key: "bluetoothctl", label: "Bluetooth (bluez)" },
+        { key: "hypridle", label: "Idle Daemon (hypridle)" },
+        { key: "hyprsunset", label: "Night Light (hyprsunset)" },
+        { key: "curl", label: "Network Fetch (curl)" },
+        { key: "jq", label: "JSON Helper (jq)" },
+        { key: "nerd-font", label: "Icons Font (Nerd Font)" }
     ]
+
+    readonly property var visibleToolItems: {
+        if (root.showAllTools || root.selectedPreset === "custom") return root.toolItems;
+        const allowed = root.presetToolKeys[root.selectedPreset] || root.presetToolKeys.laptop;
+        const hasBt = Boolean(root.detectedHardware && root.detectedHardware.bluetooth);
+        const hasBl = Boolean(root.detectedHardware && root.detectedHardware.backlight);
+        const out = [];
+        for (let i = 0; i < root.toolItems.length; i++) {
+            const item = root.toolItems[i];
+            let include = allowed.indexOf(item.key) !== -1;
+            if (item.key === "bluetoothctl") include = hasBt;
+            if (item.key === "brightnessctl") include = hasBl || root.selectedPreset === "laptop";
+            if (include) out.push(item);
+        }
+        return out;
+    }
 
     readonly property var missingKeys: {
         const out = [];
-        for (let i = 0; i < root.toolItems.length; i++) {
-            const k = root.toolItems[i].key;
+        for (let i = 0; i < root.visibleToolItems.length; i++) {
+            const k = root.visibleToolItems[i].key;
             if (!root.detectedTools || !root.detectedTools[k]) {
                 out.push(k);
             }
@@ -87,12 +124,45 @@ ColumnLayout {
         spacing: 8
 
         Text {
-            text: "Detected Optional Tools"
+            text: (root.showAllTools || root.selectedPreset === "custom")
+                ? "All Optional Tools"
+                : ("Optional Tools (" + root.selectedPreset + ")")
             font.family: root.font
             font.pixelSize: 14
             font.bold: true
             color: root.theme.textPrimary
             Layout.fillWidth: true
+        }
+
+        Rectangle {
+            visible: root.selectedPreset !== "custom"
+            radius: 7
+            color: toggleAllToolsMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
+            border.color: toggleAllToolsMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgBorder
+            border.width: 1
+            implicitWidth: toggleAllToolsLbl.implicitWidth + 16
+            implicitHeight: 26
+            scale: toggleAllToolsMouse.pressed ? 0.96 : (toggleAllToolsMouse.containsMouse ? 1.02 : 1.0)
+            Behavior on color { ColorAnimation { duration: 130; easing.type: Easing.OutQuad } }
+            Behavior on border.color { ColorAnimation { duration: 130; easing.type: Easing.OutQuad } }
+            Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+
+            MouseArea {
+                id: toggleAllToolsMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.showAllTools = !root.showAllTools
+            }
+
+            Text {
+                id: toggleAllToolsLbl
+                anchors.centerIn: parent
+                text: root.showAllTools ? "Preset only" : "Show all (" + root.toolItems.length + ")"
+                font.family: root.font
+                font.pixelSize: 11
+                color: root.theme.textSecondary
+            }
         }
 
         Rectangle {
@@ -133,75 +203,87 @@ ColumnLayout {
 
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: toolsListCol.implicitHeight + 16
+        Layout.fillHeight: true
+        Layout.minimumHeight: 140
         radius: 10
         color: root.theme.bgSurface
         border.color: root.theme.bgBorder
         border.width: 1
+        clip: true
 
-        ColumnLayout {
-            id: toolsListCol
+        Flickable {
             anchors.fill: parent
             anchors.margins: 8
-            spacing: 4
+            clip: true
+            contentWidth: width
+            contentHeight: toolsListCol.implicitHeight
+            boundsBehavior: Flickable.StopAtBounds
 
-            Repeater {
-                model: root.toolItems
-                delegate: RowLayout {
-                    required property var modelData
-                    readonly property bool installed: Boolean(root.detectedTools && root.detectedTools[modelData.key])
-                    Layout.fillWidth: true
-                    height: 24
-                    spacing: 5
+            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-                    Text {
-                        text: modelData.label + " is"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        color: installed ? root.theme.textPrimary : root.theme.textMuted
-                    }
+            ColumnLayout {
+                id: toolsListCol
+                width: parent.width
+                spacing: 4
 
-                    Text {
-                        text: installed ? "installed" : "not installed"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        font.bold: installed
-                        color: installed ? root.theme.accentPrimary : root.theme.textMuted
-                    }
+                Repeater {
+                    model: root.visibleToolItems
+                    delegate: RowLayout {
+                        required property var modelData
+                        readonly property bool installed: Boolean(root.detectedTools && root.detectedTools[modelData.key])
+                        Layout.fillWidth: true
+                        height: 24
+                        spacing: 5
 
-                    Item { Layout.fillWidth: true }
-
-                    Rectangle {
-                        visible: !installed
-                        radius: 6
-                        color: installOneMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase
-                        border.color: installOneMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgBorder
-                        border.width: 1
-                        implicitWidth: installOneLbl.implicitWidth + 14
-                        implicitHeight: 22
-                        opacity: root.isInstalling ? 0.45 : 1.0
-                        scale: (!root.isInstalling && installOneMouse.pressed) ? 0.95 : ((!root.isInstalling && installOneMouse.containsMouse) ? 1.03 : 1.0)
-                        Behavior on color { ColorAnimation { duration: 130; easing.type: Easing.OutQuad } }
-                        Behavior on border.color { ColorAnimation { duration: 130; easing.type: Easing.OutQuad } }
-                        Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
-
-                        MouseArea {
-                            id: installOneMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            enabled: !root.isInstalling
-                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                            onClicked: root.installKeys([modelData.key], modelData.label)
+                        Text {
+                            text: modelData.label + " is"
+                            font.family: root.font
+                            font.pixelSize: 12
+                            color: installed ? root.theme.textPrimary : root.theme.textMuted
                         }
 
                         Text {
-                            id: installOneLbl
-                            anchors.centerIn: parent
-                            text: "Install"
+                            text: installed ? "installed" : "not installed"
                             font.family: root.font
-                            font.pixelSize: 10
-                            font.bold: true
-                            color: root.theme.accentPrimary
+                            font.pixelSize: 12
+                            font.bold: installed
+                            color: installed ? root.theme.accentPrimary : root.theme.textMuted
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        Rectangle {
+                            visible: !installed
+                            radius: 6
+                            color: installOneMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase
+                            border.color: installOneMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgBorder
+                            border.width: 1
+                            implicitWidth: installOneLbl.implicitWidth + 14
+                            implicitHeight: 22
+                            opacity: root.isInstalling ? 0.45 : 1.0
+                            scale: (!root.isInstalling && installOneMouse.pressed) ? 0.95 : ((!root.isInstalling && installOneMouse.containsMouse) ? 1.03 : 1.0)
+                            Behavior on color { ColorAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                            Behavior on border.color { ColorAnimation { duration: 130; easing.type: Easing.OutQuad } }
+                            Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
+
+                            MouseArea {
+                                id: installOneMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                enabled: !root.isInstalling
+                                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                onClicked: root.installKeys([modelData.key], modelData.label)
+                            }
+
+                            Text {
+                                id: installOneLbl
+                                anchors.centerIn: parent
+                                text: "Install"
+                                font.family: root.font
+                                font.pixelSize: 10
+                                font.bold: true
+                                color: root.theme.accentPrimary
+                            }
                         }
                     }
                 }
