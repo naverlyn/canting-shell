@@ -244,8 +244,14 @@ install_packages() {
                     quickshell) need_qs_copr=true ;;
                 esac
             done
-            [[ "$need_qs_copr" == true ]] && coprs+=("errornointernet/quickshell")
-            [[ "$need_hypr_copr" == true ]] && coprs+=("lionheartp/Hyprland")
+            local enabled_coprs=""
+            enabled_coprs="$(dnf copr list --enabled 2>/dev/null || true)"
+            if [[ "$need_qs_copr" == true ]] && ! grep -qiF "errornointernet/quickshell" <<< "$enabled_coprs"; then
+                coprs+=("errornointernet/quickshell")
+            fi
+            if [[ "$need_hypr_copr" == true ]] && ! grep -qiF "lionheartp/Hyprland" <<< "$enabled_coprs"; then
+                coprs+=("lionheartp/Hyprland")
+            fi
             if [[ ${#coprs[@]} -gt 0 ]]; then
                 echo -e "${YELLOW}Note:${NC} On Fedora, Hyprland/Quickshell require COPR repos: ${CYAN}${coprs[*]}${NC}"
                 if [[ "$DRY_RUN" == true ]]; then
