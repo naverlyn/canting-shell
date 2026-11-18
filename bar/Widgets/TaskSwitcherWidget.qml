@@ -40,8 +40,9 @@ Item {
     target: Hyprland
     function onRawEvent(event) {
       const n = event.name;
-      if (n === "openwindow" || n === "closewindow" || n === "movewindow"
-          || n === "movewindowv2" || n === "windowtitle" || n === "windowtitlev2")
+      if (n === "openwindow" || n === "closewindow" || n === "destroywindow"
+          || n === "movewindow" || n === "movewindowv2"
+          || n === "windowtitle" || n === "windowtitlev2")
         refreshTimer.restart();
     }
   }
@@ -57,6 +58,30 @@ Item {
 
   readonly property int activeWsId: Hyprland.focusedWorkspace ? Hyprland.focusedWorkspace.id : -1
 
+  function isValidTaskToplevel(t) {
+    if (!t || !t.address) return false;
+
+    const ws = t.workspace;
+    const wsId = ws ? ws.id : -1;
+    const wsName = ws && ws.name ? String(ws.name) : "";
+    if (!ws || (wsId <= 0 && !wsName.startsWith("special:"))) return false;
+
+    const ipc = t.lastIpcObject;
+    if (ipc) {
+      if (ipc.mapped === false || ipc.hidden === true) return false;
+      if (Array.isArray(ipc.size) && (ipc.size[0] <= 1 || ipc.size[1] <= 1)) return false;
+      const cls = String(ipc.class || ipc.initialClass || "").toLowerCase();
+      if (cls === "xsettingsd" || cls === "xwaylandvideobridge") return false;
+    } else if (!t.wayland) {
+      return false;
+    }
+
+    const title = String(t.title || "").trim().toLowerCase();
+    if (title === "xsettingsd") return false;
+
+    return true;
+  }
+
   readonly property var taskList: {
     const _rev = Hyprland.toplevels.values;
     const activeWs = taskContainer.activeWsId;
@@ -64,7 +89,7 @@ Item {
     const list = [];
     for (let i = 0; i < _rev.length; i++) {
       const t = _rev[i];
-      if (!t || !t.address) continue;
+      if (!taskContainer.isValidTaskToplevel(t)) continue;
       const wsId = t.workspace ? t.workspace.id : -1;
       if (onlyCurWs && activeWs > 0 && wsId !== activeWs) continue;
       list.push(t);
@@ -79,6 +104,13 @@ Item {
       return String(a.address).localeCompare(String(b.address));
     });
     return list;
+  }
+
+  onTaskListChanged: {
+    if (hoveredToplevel && !taskList.includes(hoveredToplevel)) {
+      hoveredPill = null;
+      hoveredToplevel = null;
+    }
   }
 
   // Adaptive per-item label cap so many open windows don't crowd adjacent bar sections
