@@ -29,7 +29,7 @@ function buildSaveData(root) {
     blankOnSecondary: primary && primary.blankOnSecondary !== undefined ? Boolean(primary.blankOnSecondary) : root.blankOnSecondary,
     secondaryPanels: primary && primary.secondaryPanels ? primary.secondaryPanels : root.secondaryPanels,
     innerCorners: primary && primary.innerCorners !== undefined ? Boolean(primary.innerCorners) : root.innerCorners,
-    fluidCards: primary && primary.fluidCards !== undefined ? Boolean(primary.fluidCards) : (root.fluidCards !== undefined ? Boolean(root.fluidCards) : true),
+    fluidCards: primary && primary.fluidCards !== undefined ? Boolean(primary.fluidCards) : (root.fluidCards !== undefined ? Boolean(root.fluidCards) : false),
     barBorder: primary && primary.barBorder !== undefined ? Boolean(primary.barBorder) : root.barBorder,
     barBorderWidth: primary && primary.barBorderWidth !== undefined ? Number(primary.barBorderWidth) : root.barBorderWidth,
     barBorderColor: primary && primary.barBorderColor !== undefined ? String(primary.barBorderColor) : root.barBorderColor,
@@ -248,7 +248,7 @@ function applyConfig(root, cfg) {
           ? root.secondaryPanels.map(arr => arr.slice())
           : root.defaultSecondaryPanels.map(arr => arr.slice())),
       innerCorners: b.innerCorners !== undefined ? Boolean(b.innerCorners) : root.innerCorners,
-      fluidCards: b.fluidCards !== undefined ? Boolean(b.fluidCards) : (root.fluidCards !== undefined ? Boolean(root.fluidCards) : true),
+      fluidCards: b.fluidCards !== undefined ? Boolean(b.fluidCards) : (root.fluidCards !== undefined ? Boolean(root.fluidCards) : false),
       barBorder: b.barBorder !== undefined ? Boolean(b.barBorder) : (root.barBorder !== undefined ? Boolean(root.barBorder) : true),
       barBorderWidth: b.barBorderWidth !== undefined ? Number(b.barBorderWidth) : (root.barBorderWidth !== undefined ? Number(root.barBorderWidth) : 1),
       barBorderColor: b.barBorderColor !== undefined ? String(b.barBorderColor) : (root.barBorderColor || ""),
@@ -284,7 +284,7 @@ function applyConfig(root, cfg) {
       blankOnSecondary: root.blankOnSecondary,
       secondaryPanels: root.secondaryPanels,
       innerCorners: root.innerCorners,
-      fluidCards: root.fluidCards !== undefined ? Boolean(root.fluidCards) : true,
+      fluidCards: root.fluidCards !== undefined ? Boolean(root.fluidCards) : false,
       barColor: "",
       secondaryBarColor: "",
       barBorder: root.barBorder,
@@ -425,7 +425,7 @@ function resetDefaults(root) {
   ];
   root.activeEditingDisplay = "primary";
   root.innerCorners = true;
-  root.fluidCards = true;
+  root.fluidCards = false;
   root.screenBorder = false;
   root.screenBorderThickness = 4;
   root.screenBorderColor = "";
@@ -460,7 +460,7 @@ function resetDefaults(root) {
       barColor: "",
       secondaryBarColor: "",
       innerCorners: true,
-      fluidCards: true,
+      fluidCards: false,
       panels: [
         root.defaultLeftWidgets.slice(),
         root.defaultCenterWidgets.slice(),

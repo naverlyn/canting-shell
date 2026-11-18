@@ -47,7 +47,7 @@ Singleton {
     root.panelsUpdated();
   }
   property bool innerCorners: true
-  property bool fluidCards: true
+  property bool fluidCards: false
   property bool barBorder: true
   property int barBorderWidth: 1
   property string barBorderColor: ""
@@ -125,7 +125,7 @@ Singleton {
         ["weather", "clock"]
       ],
       innerCorners: true,
-      fluidCards: true,
+      fluidCards: false,
       barBorder: true,
       barBorderWidth: 1,
       barBorderColor: "",
