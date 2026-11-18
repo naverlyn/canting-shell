@@ -15,7 +15,7 @@ PanelWindow {
     signal presetChosen(string name)
     signal finishRequested()
     signal skipRequested()
-    signal launchIpcRequested(string target, string fnName)
+    signal launchIpcRequested(string target, string fnName, string arg)
 
     property int step: 0
     readonly property var stepTitles: ["1. Choose Preset", "2. Theme & Wallpaper", "3. Shortcuts & Ready"]
@@ -120,7 +120,6 @@ PanelWindow {
                 spacing: 12
 
                 ColumnLayout {
-                    Layout.fillWidth: true
                     spacing: 2
 
                     Text {
@@ -139,7 +138,10 @@ PanelWindow {
                     }
                 }
 
+                Item { Layout.fillWidth: true }
+
                 Rectangle {
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     radius: 8
                     color: root.theme.bgSurface
                     border.color: root.theme.bgBorder
@@ -184,83 +186,143 @@ PanelWindow {
                 currentIndex: root.step
 
                 // Step 0: Presets
-                GridLayout {
-                    columns: 2
-                    rowSpacing: 12
-                    columnSpacing: 12
+                ColumnLayout {
+                    spacing: 12
 
-                    Repeater {
-                        model: root.presetOptions
-                        delegate: Rectangle {
-                            required property var modelData
-                            readonly property bool isSel: root.selectedPreset === modelData.id
+                    GridLayout {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        columns: 2
+                        rowSpacing: 12
+                        columnSpacing: 12
 
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-                            radius: 12
-                            color: isSel ? root.theme.bgHover : root.theme.bgSurface
-                            border.color: isSel ? root.theme.accentPrimary : root.theme.bgBorder
-                            border.width: isSel ? 2 : 1
+                        Repeater {
+                            model: root.presetOptions
+                            delegate: Rectangle {
+                                required property var modelData
+                                readonly property bool isSel: root.selectedPreset === modelData.id
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.presetChosen(modelData.id)
-                            }
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                radius: 12
+                                color: isSel ? root.theme.bgHover : root.theme.bgSurface
+                                border.color: isSel ? root.theme.accentPrimary : root.theme.bgBorder
+                                border.width: isSel ? 2 : 1
 
-                            ColumnLayout {
-                                anchors.fill: parent
-                                anchors.margins: 16
-                                spacing: 8
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.presetChosen(modelData.id)
+                                }
 
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 10
+                                ColumnLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 16
+                                    spacing: 8
 
-                                    Text {
-                                        text: modelData.icon
-                                        font.family: root.font
-                                        font.pixelSize: 22
-                                        color: isSel ? root.theme.accentPrimary : root.theme.textSecondary
-                                    }
-
-                                    Text {
-                                        text: modelData.title
-                                        font.family: root.font
-                                        font.pixelSize: 15
-                                        font.bold: true
-                                        color: root.theme.textPrimary
+                                    RowLayout {
                                         Layout.fillWidth: true
-                                    }
-
-                                    Rectangle {
-                                        visible: isSel
-                                        radius: 6
-                                        color: root.theme.accentPrimary
-                                        implicitWidth: activeLbl.implicitWidth + 12
-                                        implicitHeight: 20
+                                        spacing: 10
 
                                         Text {
-                                            id: activeLbl
-                                            anchors.centerIn: parent
-                                            text: "Active"
+                                            text: modelData.icon
                                             font.family: root.font
-                                            font.pixelSize: 10
+                                            font.pixelSize: 22
+                                            color: isSel ? root.theme.accentPrimary : root.theme.textSecondary
+                                        }
+
+                                        Text {
+                                            text: modelData.title
+                                            font.family: root.font
+                                            font.pixelSize: 15
                                             font.bold: true
-                                            color: root.theme.bgBase
+                                            color: root.theme.textPrimary
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Rectangle {
+                                            visible: isSel
+                                            radius: 6
+                                            color: root.theme.accentPrimary
+                                            implicitWidth: activeLbl.implicitWidth + 12
+                                            implicitHeight: 20
+
+                                            Text {
+                                                id: activeLbl
+                                                anchors.centerIn: parent
+                                                text: "Active"
+                                                font.family: root.font
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: root.theme.bgBase
+                                            }
                                         }
                                     }
-                                }
 
-                                Text {
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    text: modelData.desc
-                                    font.family: root.font
-                                    font.pixelSize: 12
-                                    color: root.theme.textSecondary
-                                    wrapMode: Text.WordWrap
+                                    Text {
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        text: modelData.desc
+                                        font.family: root.font
+                                        font.pixelSize: 12
+                                        color: root.theme.textSecondary
+                                        wrapMode: Text.WordWrap
+                                    }
                                 }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 44
+                        radius: 10
+                        color: customHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+                        border.color: root.theme.bgBorder
+                        border.width: 1
+
+                        HoverHandler { id: customHover }
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.launchIpcRequested("settings", "open", "bar")
+                        }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 16
+                            anchors.rightMargin: 16
+                            spacing: 10
+
+                            Text {
+                                text: "󰒓"
+                                font.family: root.font
+                                font.pixelSize: 16
+                                color: root.theme.accentPrimary
+                            }
+
+                            Text {
+                                text: "Customize myself"
+                                font.family: root.font
+                                font.pixelSize: 13
+                                font.bold: true
+                                color: root.theme.textPrimary
+                            }
+
+                            Text {
+                                text: "— Open Bar Settings to configure layout, widgets, and appearance"
+                                font.family: root.font
+                                font.pixelSize: 12
+                                color: root.theme.textMuted
+                                Layout.fillWidth: true
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                text: "→"
+                                font.family: root.font
+                                font.pixelSize: 14
+                                color: root.theme.textSecondary
                             }
                         }
                     }
@@ -375,7 +437,7 @@ PanelWindow {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.launchIpcRequested("theme", "toggle")
+                                onClicked: root.launchIpcRequested("theme", "toggle", "")
                             }
 
                             Text {
@@ -398,7 +460,7 @@ PanelWindow {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.launchIpcRequested("wallpaper", "toggle")
+                                onClicked: root.launchIpcRequested("wallpaper", "toggle", "")
                             }
 
                             Text {

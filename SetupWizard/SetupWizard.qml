@@ -31,10 +31,14 @@ Scope {
         applyPresetProc.running = true;
     }
 
-    function finishAndLaunch(target, fnName) {
+    function finishAndLaunch(target, fnName, arg) {
         markDoneProc.running = true;
         root.panelVisible = false;
-        launchIpcProc.command = ["qs", "ipc", "call", target, fnName];
+        if (arg !== undefined && arg !== "") {
+            launchIpcProc.command = ["qs", "ipc", "call", target, fnName, arg];
+        } else {
+            launchIpcProc.command = ["qs", "ipc", "call", target, fnName];
+        }
         launchIpcProc.running = true;
     }
 
@@ -110,7 +114,7 @@ Scope {
                 onPresetChosen: name => root.applyPreset(name)
                 onFinishRequested: root.finishWizard()
                 onSkipRequested: root.finishWizard()
-                onLaunchIpcRequested: (target, fnName) => root.finishAndLaunch(target, fnName)
+                onLaunchIpcRequested: (target, fnName, arg) => root.finishAndLaunch(target, fnName, arg)
             }
         }
     }
