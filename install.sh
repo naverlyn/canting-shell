@@ -419,10 +419,10 @@ ensure_install_location() {
         fi
 
         if [[ "$DRY_RUN" == true ]]; then
-            echo "[dry-run] mkdir -p \"$TARGET_QS_DIR\" && cp -a \"$real_script/.\" \"$TARGET_QS_DIR/\""
+            echo "[dry-run] mkdir -p \"$TARGET_QS_DIR\" && copy repo (excluding .git, backups) to \"$TARGET_QS_DIR/\""
         else
             mkdir -p "$TARGET_QS_DIR"
-            cp -a "$real_script/." "$TARGET_QS_DIR/"
+            tar -C "$real_script" --exclude='.git' --exclude='backups' -cf - . | tar -C "$TARGET_QS_DIR" -xf -
             echo -e "${GREEN}✓${NC} Installed canting-shell to $TARGET_QS_DIR"
         fi
 
