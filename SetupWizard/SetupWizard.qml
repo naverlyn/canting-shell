@@ -25,9 +25,12 @@ Scope {
         statusProc.running = true;
     }
 
-    function finishWizard() {
+    function finishWizard(sendNotify) {
         markDoneProc.running = true;
         root.panelVisible = false;
+        if (sendNotify) {
+            Quickshell.execDetached(["notify-send", "canting-shell", "Setup complete — enjoy your desktop shell!"]);
+        }
     }
 
     function applyPreset(name) {
@@ -121,8 +124,8 @@ Scope {
                 detectedHardware: root.detectedHardware
                 scriptPath: root.scriptPath
                 onPresetChosen: name => root.applyPreset(name)
-                onFinishRequested: root.finishWizard()
-                onSkipRequested: root.finishWizard()
+                onFinishRequested: root.finishWizard(true)
+                onSkipRequested: root.finishWizard(false)
                 onRefreshToolsRequested: root.refreshStatus()
                 onLaunchIpcRequested: (target, fnName, arg) => root.finishAndLaunch(target, fnName, arg)
             }
