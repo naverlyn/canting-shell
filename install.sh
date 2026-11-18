@@ -278,11 +278,12 @@ install_packages() {
             ;;
         fedora)
             local coprs=()
-            local need_hypr_copr=false need_qs_copr=false
+            local need_hypr_copr=false need_qs_copr=false need_pkg_copr=false
             for p in "${pkgs[@]}"; do
                 case "$p" in
                     hyprland|hyprland-guiutils|xdg-desktop-portal-hyprland|hypridle|hyprsunset) need_hypr_copr=true ;;
                     quickshell) need_qs_copr=true ;;
+                    wallust) need_pkg_copr=true ;;
                 esac
             done
             local enabled_repos=""
@@ -291,6 +292,9 @@ install_packages() {
             enabled_repos+=$'\n'"$(ls /etc/yum.repos.d/_copr* 2>/dev/null || true)"
             if [[ "$need_qs_copr" == true ]] && ! grep -qiE "errornointernet[:/]quickshell" <<< "$enabled_repos"; then
                 coprs+=("errornointernet/quickshell")
+            fi
+            if [[ "$need_pkg_copr" == true ]] && ! grep -qiE "errornointernet[:/]packages" <<< "$enabled_repos"; then
+                coprs+=("errornointernet/packages")
             fi
             if [[ "$need_hypr_copr" == true ]] && ! grep -qiE "lionheartp[:/]Hyprland" <<< "$enabled_repos"; then
                 coprs+=("lionheartp/Hyprland")
