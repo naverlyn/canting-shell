@@ -583,15 +583,6 @@ SectionCard {
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
-
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: "󰐕"
-                                font.family: root.font
-                                font.pixelSize: 10
-                                color: poolHover.hovered ? poolCard.blockAccent : root.theme.textMuted
-                                opacity: poolHover.hovered ? 1.0 : 0.6
-                            }
                         }
 
                         BlockDragArea {
