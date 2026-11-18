@@ -19,6 +19,11 @@
     { "id": "monitor",  "label": "Monitor",  "icon": "󰍛", "cmd": "missioncenter || gnome-system-monitor || kitty -e btop || alacritty -e btop" },
     { "id": "settings", "label": "Settings", "icon": "󰒓", "cmd": "__settings__" }
   ],
+  "mediaWidgetStyle": "auto",
+  "cards": {
+    "header": true
+  },
+  "mediaAutoHide": true,
   "mediaShowCava": false,
   "tiles": [
     { "id": "wifi", "enabled": true },

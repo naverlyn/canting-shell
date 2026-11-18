@@ -17,6 +17,11 @@
     { "id": "launcher", "label": "Apps",     "icon": "󰀻", "cmd": "__appgrid__" },
     { "id": "settings", "label": "Settings", "icon": "󰒓", "cmd": "__settings__" }
   ],
+  "mediaWidgetStyle": "auto",
+  "cards": {
+    "header": true
+  },
+  "mediaAutoHide": true,
   "mediaShowCava": false,
   "tiles": [
     { "id": "wifi", "enabled": true },

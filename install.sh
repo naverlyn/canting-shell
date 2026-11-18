@@ -13,6 +13,10 @@ NO_BACKUP=false
 DRY_RUN=false
 LIST_ONLY=false
 SKIP_DEPS=false
+WITH_KEYBINDS=false
+SKIP_KEYBINDS=false
+WITH_HYPR_LUA=false
+SKIP_HYPR_LUA=false
 
 if [[ -t 1 ]]; then
     BOLD='\033[1m'
@@ -35,6 +39,10 @@ Install canting-shell and configure a preset (bar, notifications, control center
 Options:
   -p, --preset <name>   Preset to apply (laptop, pc, gaming, minimal)
   -l, --list            List available presets and exit
+      --with-hypr-lua   Generate minimal ~/.config/hypr/hyprland.lua if missing
+      --skip-hypr-lua   Skip minimal hyprland.lua generation prompt
+      --with-keybinds   Add minimal Hyprland keybinds without prompting
+      --skip-keybinds   Skip minimal Hyprland keybinds prompt
       --skip-deps       Skip missing dependency installation prompt
       --no-backup       Do not back up existing config files
       --dry-run         Show what would be done without modifying files
@@ -63,6 +71,22 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-deps)
             SKIP_DEPS=true
+            shift
+            ;;
+        --with-hypr-lua)
+            WITH_HYPR_LUA=true
+            shift
+            ;;
+        --skip-hypr-lua)
+            SKIP_HYPR_LUA=true
+            shift
+            ;;
+        --with-keybinds)
+            WITH_KEYBINDS=true
+            shift
+            ;;
+        --skip-keybinds)
+            SKIP_KEYBINDS=true
             shift
             ;;
         --no-backup)
@@ -132,6 +156,9 @@ map_pkg_for_distro() {
         arch:bluetoothctl)     echo "bluez-utils" ;;
         arch:wpctl)            echo "wireplumber" ;;
         arch:wl-copy)          echo "wl-clipboard" ;;
+        arch:pkexec)           echo "polkit" ;;
+        arch:magick)           echo "imagemagick" ;;
+        arch:nerd-font)        echo "ttf-jetbrains-mono-nerd" ;;
 
         fedora:quickshell)     echo "quickshell" ;;
         fedora:hyprctl)        echo "hyprland" ;;
@@ -140,6 +167,8 @@ map_pkg_for_distro() {
         fedora:bluetoothctl)   echo "bluez" ;;
         fedora:wpctl)          echo "wireplumber" ;;
         fedora:wl-copy)        echo "wl-clipboard" ;;
+        fedora:pkexec)         echo "polkit" ;;
+        fedora:magick)         echo "ImageMagick" ;;
 
         debian:quickshell)     echo "quickshell" ;;
         debian:hyprctl)        echo "hyprland" ;;
@@ -148,6 +177,8 @@ map_pkg_for_distro() {
         debian:bluetoothctl)   echo "bluez" ;;
         debian:wpctl)          echo "wireplumber" ;;
         debian:wl-copy)        echo "wl-clipboard" ;;
+        debian:pkexec)         echo "pkexec" ;;
+        debian:magick)         echo "imagemagick" ;;
 
         opensuse:quickshell)   echo "quickshell" ;;
         opensuse:hyprctl)      echo "hyprland" ;;
@@ -156,6 +187,8 @@ map_pkg_for_distro() {
         opensuse:bluetoothctl) echo "bluez" ;;
         opensuse:wpctl)        echo "wireplumber" ;;
         opensuse:wl-copy)      echo "wl-clipboard" ;;
+        opensuse:pkexec)       echo "polkit" ;;
+        opensuse:magick)       echo "ImageMagick" ;;
 
         void:quickshell)       echo "quickshell" ;;
         void:hyprctl)          echo "hyprland" ;;
@@ -164,17 +197,54 @@ map_pkg_for_distro() {
         void:bluetoothctl)     echo "bluez" ;;
         void:wpctl)            echo "wireplumber" ;;
         void:wl-copy)          echo "wl-clipboard" ;;
+        void:pkexec)           echo "polkit" ;;
+        void:magick)           echo "ImageMagick" ;;
 
         *)                     echo "$cmd" ;;
     esac
+}
+
+# Install JetBrainsMono Nerd Font from GitHub releases into ~/.local/share/fonts
+install_nerd_font_fallback() {
+    local font_dir="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/JetBrainsMonoNerdFont"
+    local url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz"
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "[dry-run] Would download and install JetBrainsMono Nerd Font to $font_dir"
+        return 0
+    fi
+    if ! command -v curl >/dev/null 2>&1 || ! command -v tar >/dev/null 2>&1; then
+        echo -e "${YELLOW}Warning:${NC} curl and tar are required to install Nerd Font automatically."
+        return 0
+    fi
+    echo -e "Installing ${CYAN}JetBrainsMono Nerd Font${NC} to $font_dir..."
+    mkdir -p "$font_dir"
+    if curl -fsSL "$url" | tar -xJ -C "$font_dir"; then
+        command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$font_dir" >/dev/null 2>&1 || true
+        echo -e "${GREEN}✓${NC} Installed JetBrainsMono Nerd Font"
+    else
+        echo -e "${YELLOW}Warning:${NC} Failed to download JetBrainsMono Nerd Font."
+    fi
 }
 
 # Install a list of packages using the detected distro's package manager
 install_packages() {
     local distro="$1"
     shift
-    local pkgs=("$@")
-    [[ ${#pkgs[@]} -eq 0 ]] && return 0
+    local raw_pkgs=("$@")
+    local pkgs=()
+    local need_nerd_font=false
+    for p in "${raw_pkgs[@]}"; do
+        if [[ "$p" == "nerd-font" ]]; then
+            need_nerd_font=true
+        else
+            pkgs+=("$p")
+        fi
+    done
+
+    if [[ ${#pkgs[@]} -eq 0 ]]; then
+        [[ "$need_nerd_font" == true ]] && install_nerd_font_fallback
+        return 0
+    fi
 
     local cmd_str=""
     case "$distro" in
@@ -191,7 +261,7 @@ install_packages() {
             else
                 local repo_pkgs=() aur_pkgs=()
                 for p in "${pkgs[@]}"; do
-                    if [[ "$p" == "quickshell" ]]; then
+                    if [[ "$p" == "quickshell" || "$p" == "awww" ]]; then
                         aur_pkgs+=("$p")
                     else
                         repo_pkgs+=("$p")
@@ -207,13 +277,49 @@ install_packages() {
             fi
             ;;
         fedora)
-            cmd_str="sudo dnf install -y ${pkgs[*]}"
+            local coprs=()
+            local need_hypr_copr=false need_qs_copr=false need_pkg_copr=false
             for p in "${pkgs[@]}"; do
-                if [[ "$p" == "quickshell" ]]; then
-                    echo -e "${YELLOW}Note:${NC} On Fedora, 'quickshell' may require enabling a COPR (e.g. solopasha/hyprland or errornointernet/quickshell)."
-                    break
-                fi
+                case "$p" in
+                    hyprland|hyprland-guiutils|xdg-desktop-portal-hyprland|hypridle|hyprsunset) need_hypr_copr=true ;;
+                    quickshell) need_qs_copr=true ;;
+                    wallust) need_pkg_copr=true ;;
+                esac
             done
+            local enabled_repos=""
+            enabled_repos="$(dnf repolist --enabled 2>/dev/null || true)"
+            enabled_repos+=$'\n'"$(dnf copr list --enabled 2>/dev/null || true)"
+            enabled_repos+=$'\n'"$(ls /etc/yum.repos.d/_copr* 2>/dev/null || true)"
+            if [[ "$need_qs_copr" == true ]] && ! grep -qiE "errornointernet[:/]quickshell" <<< "$enabled_repos"; then
+                coprs+=("errornointernet/quickshell")
+            fi
+            if [[ "$need_pkg_copr" == true ]] && ! grep -qiE "errornointernet[:/]packages" <<< "$enabled_repos"; then
+                coprs+=("errornointernet/packages")
+            fi
+            if [[ "$need_hypr_copr" == true ]] && ! grep -qiE "lionheartp[:/]Hyprland" <<< "$enabled_repos"; then
+                coprs+=("lionheartp/Hyprland")
+            fi
+            if [[ ${#coprs[@]} -gt 0 ]]; then
+                echo -e "${YELLOW}Note:${NC} On Fedora, Hyprland/Quickshell require COPR repos: ${CYAN}${coprs[*]}${NC}"
+                if [[ "$DRY_RUN" == true ]]; then
+                    for copr in "${coprs[@]}"; do
+                        echo "[dry-run] Would run: sudo dnf copr enable -y $copr"
+                    done
+                elif [[ -t 0 ]]; then
+                    read -rp "Enable required COPR repo(s) (${coprs[*]})? [Y/n]: " copr_ans
+                    if [[ "${copr_ans,,}" != "n" ]]; then
+                        for copr in "${coprs[@]}"; do
+                            if ! sudo dnf copr enable -y "$copr"; then
+                                echo -e "${YELLOW}Warning:${NC} Failed to enable COPR $copr"
+                                if [[ "$copr" == "lionheartp/Hyprland" ]]; then
+                                    echo -e "${YELLOW}Note:${NC} lionheartp/Hyprland requires Fedora 44+. Install Hyprland manually or upgrade to Fedora 44+."
+                                fi
+                            fi
+                        done
+                    fi
+                fi
+            fi
+            cmd_str="sudo dnf install -y --skip-unavailable ${pkgs[*]}"
             ;;
         debian)
             cmd_str="sudo apt update && sudo apt install -y ${pkgs[*]}"
@@ -241,7 +347,13 @@ install_packages() {
         echo "[dry-run] Would run: $cmd_str"
     else
         echo -e "Running: ${CYAN}$cmd_str${NC}"
-        bash -c "$cmd_str"
+        if ! bash -c "$cmd_str"; then
+            echo -e "${YELLOW}Warning:${NC} Package installation exited with errors; continuing with configuration."
+        fi
+    fi
+
+    if [[ "$need_nerd_font" == true ]]; then
+        install_nerd_font_fallback
     fi
 }
 
@@ -256,11 +368,40 @@ check_dependencies() {
         fi
     done
 
-    for cmd in wpctl brightnessctl nmcli bluetoothctl grim slurp wl-copy cava; do
+    for cmd in wpctl brightnessctl nmcli bluetoothctl grim slurp wl-copy cliphist cava pkexec magick curl hypridle; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
             missing_opt+=("$cmd")
         fi
     done
+
+    if ! command -v awww >/dev/null 2>&1 && ! command -v swww >/dev/null 2>&1 && ! command -v hyprpaper >/dev/null 2>&1; then
+        missing_opt+=("awww")
+    fi
+
+    if ! command -v wallust >/dev/null 2>&1 && ! command -v matugen >/dev/null 2>&1; then
+        missing_opt+=("wallust")
+    fi
+
+    if ! command -v hyprsunset >/dev/null 2>&1 && ! command -v wlsunset >/dev/null 2>&1 && ! command -v gammastep >/dev/null 2>&1; then
+        missing_opt+=("hyprsunset")
+    fi
+
+    if ! command -v hyprland-dialog >/dev/null 2>&1; then
+        missing_opt+=("hyprland-guiutils")
+    fi
+
+    if ! command -v xdg-desktop-portal-hyprland >/dev/null 2>&1 \
+        && [[ ! -x /usr/libexec/xdg-desktop-portal-hyprland ]] \
+        && [[ ! -x /usr/lib/xdg-desktop-portal-hyprland ]] \
+        && [[ ! -x /usr/lib/xdg-desktop-portal/xdg-desktop-portal-hyprland ]]; then
+        missing_opt+=("xdg-desktop-portal-hyprland")
+    fi
+
+    if command -v fc-list >/dev/null 2>&1; then
+        if ! fc-list : family 2>/dev/null | grep -qi "Nerd Font"; then
+            missing_opt+=("nerd-font")
+        fi
+    fi
 
     if [[ ${#missing_core[@]} -eq 0 && ${#missing_opt[@]} -eq 0 ]]; then
         echo -e "${GREEN}✓${NC} All core and optional dependencies are installed"
@@ -327,7 +468,7 @@ choose_preset_interactive() {
     list_presets
     echo ""
     while true; do
-        read -rp "Select a bar preset [1-4 or name, default: laptop]: " choice
+        read -rp "Select a preset [1-4 or name, default: laptop]: " choice
         case "${choice,,}" in
             ""|1|laptop)  PRESET="laptop"; break ;;
             2|pc|desktop) PRESET="pc"; break ;;
@@ -371,10 +512,10 @@ ensure_install_location() {
         fi
 
         if [[ "$DRY_RUN" == true ]]; then
-            echo "[dry-run] mkdir -p \"$TARGET_QS_DIR\" && cp -a \"$real_script/.\" \"$TARGET_QS_DIR/\""
+            echo "[dry-run] mkdir -p \"$TARGET_QS_DIR\" && copy repo (excluding .git, backups) to \"$TARGET_QS_DIR/\""
         else
             mkdir -p "$TARGET_QS_DIR"
-            cp -a "$real_script/." "$TARGET_QS_DIR/"
+            tar -C "$real_script" --exclude='.git' --exclude='backups' -cf - . | tar -C "$TARGET_QS_DIR" -xf -
             echo -e "${GREEN}✓${NC} Installed canting-shell to $TARGET_QS_DIR"
         fi
 
@@ -461,6 +602,326 @@ apply_preset() {
     fi
 }
 
+# Optionally generate a minimal ~/.config/hypr/hyprland.lua + Configs/ layout
+setup_minimal_hypr_lua() {
+    if [[ "$SKIP_HYPR_LUA" == true ]]; then
+        return 0
+    fi
+
+    local hypr_dir="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
+    local hypr_lua="$hypr_dir/hyprland.lua"
+    local configs_dir="$hypr_dir/Configs"
+
+    if [[ -f "$hypr_lua" ]]; then
+        return 0
+    fi
+
+    if [[ "$WITH_HYPR_LUA" == false ]]; then
+        if [[ ! -t 0 ]]; then
+            return 0
+        fi
+        echo ""
+        read -rp "No ~/.config/hypr/hyprland.lua found. Generate minimal Hyprland Lua config (with Configs/ modules)? [y/N]: " lua_ans
+        if [[ "${lua_ans,,}" != "y" ]]; then
+            echo -e "${DIM}Skipping hyprland.lua generation.${NC}"
+            return 0
+        fi
+    fi
+
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "[dry-run] Would generate $hypr_lua and minimal modules in $configs_dir"
+        return 0
+    fi
+
+    mkdir -p "$configs_dir"
+
+    if [[ -f "$hypr_dir/hyprland.conf" && "$NO_BACKUP" == false ]]; then
+        local bak="$hypr_dir/hyprland.conf.bak.$(date +%Y%m%d_%H%M%S)"
+        cp "$hypr_dir/hyprland.conf" "$bak"
+        echo -e "${GREEN}✓${NC} Backed up existing hyprland.conf to $bak"
+    fi
+
+    cat > "$hypr_lua" <<'LUA'
+-- Minimal Hyprland Lua config generated by canting-shell installer
+
+pcall(require, "Configs.Keybinds")
+pcall(require, "Configs.Monitors")
+pcall(require, "Configs.AutoStart")
+pcall(require, "Configs.ENVAR")
+pcall(require, "Configs.Input")
+pcall(require, "Configs.Misc")
+pcall(require, "Configs.WindowDecoration")
+pcall(require, "theme-borders")
+pcall(require, "custom_hypr")
+pcall(require, "custom_keybinds")
+pcall(require, "custom_animations")
+LUA
+
+    if [[ ! -f "$configs_dir/Monitors.lua" ]]; then
+        cat > "$configs_dir/Monitors.lua" <<'LUA'
+-- Default monitor rule (manage displays visually via MonitorManager)
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = 1 })
+LUA
+    fi
+
+    if [[ ! -f "$configs_dir/ENVAR.lua" ]]; then
+        cat > "$configs_dir/ENVAR.lua" <<'LUA'
+hl.env("XCURSOR_SIZE", "24")
+hl.env("HYPRCURSOR_SIZE", "24")
+LUA
+    fi
+
+    if [[ ! -f "$configs_dir/AutoStart.lua" ]]; then
+        cat > "$configs_dir/AutoStart.lua" <<'LUA'
+local envs = {
+    XDG_CURRENT_DESKTOP = "Hyprland",
+    XDG_SESSION_DESKTOP = "Hyprland",
+    XDG_SESSION_TYPE = "wayland",
+    GDK_BACKEND = "wayland,x11,*",
+    QT_QPA_PLATFORM = "wayland;xcb",
+    QT_WAYLAND_DISABLE_WINDOWDECORATION = "1",
+    ELECTRON_OZONE_PLATFORM_HINT = "auto",
+    MOZ_ENABLE_WAYLAND = "1",
+}
+
+for k, v in pairs(envs) do
+    if hl.env then hl.env(k, v) end
+    if os.setenv then os.setenv(k, v) end
+end
+
+hl.on("hyprland.start", function()
+    hl.exec_cmd("quickshell")
+end)
+LUA
+    fi
+
+    if [[ ! -f "$configs_dir/Input.lua" ]]; then
+        cat > "$configs_dir/Input.lua" <<'LUA'
+hl.config({
+    input = {
+        kb_layout = "us",
+        follow_mouse = 1,
+        sensitivity = 0,
+        touchpad = {
+            natural_scroll = false,
+        },
+    },
+})
+LUA
+    fi
+
+    if [[ ! -f "$configs_dir/Misc.lua" ]]; then
+        cat > "$configs_dir/Misc.lua" <<'LUA'
+hl.config({
+    misc = {
+        vrr = 2,
+        focus_on_activate = true,
+        force_default_wallpaper = 0,
+        disable_hyprland_logo = true,
+    },
+    binds = {
+        workspace_back_and_forth = true,
+        allow_workspace_cycles = true,
+    },
+})
+LUA
+    fi
+
+    if [[ ! -f "$configs_dir/WindowDecoration.lua" ]]; then
+        cat > "$configs_dir/WindowDecoration.lua" <<'LUA'
+hl.config({
+    general = {
+        gaps_in = 4,
+        gaps_out = 8,
+        border_size = 2,
+        layout = "dwindle",
+    },
+    decoration = {
+        rounding = 10,
+    },
+})
+LUA
+    fi
+
+    if [[ ! -f "$configs_dir/Keybinds.lua" ]]; then
+        cat > "$configs_dir/Keybinds.lua" <<'LUA'
+-- Essential WM keybinds (canting-shell binds live in custom_keybinds.lua)
+local term = "kitty || alacritty || foot || wezterm || xdg-terminal-exec"
+hl.bind("SUPER + Return", hl.dsp.exec_cmd(term), { desc = "Terminal" })
+hl.bind("SUPER + Q", hl.dsp.window.close(), { desc = "Close Window" })
+hl.bind("SUPER + Space", hl.dsp.window.float({ action = "toggle" }), { desc = "Toggle Floating" })
+hl.bind("SUPER + F", hl.dsp.window.fullscreen({ action = "toggle" }), { desc = "Toggle Fullscreen" })
+hl.bind("SUPER + M", hl.dsp.exit(), { desc = "Exit Hyprland" })
+
+for i = 1, 9 do
+    hl.bind("SUPER + " .. i, hl.dsp.focus({ workspace = i }))
+    hl.bind("SUPER + SHIFT + " .. i, hl.dsp.window.move({ workspace = i }))
+end
+
+hl.bind("SUPER + left", hl.dsp.focus({ direction = "left" }))
+hl.bind("SUPER + right", hl.dsp.focus({ direction = "right" }))
+hl.bind("SUPER + up", hl.dsp.focus({ direction = "up" }))
+hl.bind("SUPER + down", hl.dsp.focus({ direction = "down" }))
+
+hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true })
+hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
+
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { locked = true, repeating = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true, repeating = true })
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { locked = true, repeating = true })
+LUA
+    fi
+
+    echo -e "${GREEN}✓${NC} Generated minimal Hyprland Lua config at $hypr_lua"
+}
+
+# Optionally add minimal Hyprland keybinds for first-time setup
+setup_minimal_keybinds() {
+    if [[ "$SKIP_KEYBINDS" == true ]]; then
+        return 0
+    fi
+
+    if [[ "$WITH_KEYBINDS" == false ]]; then
+        if [[ ! -t 0 ]]; then
+            return 0
+        fi
+        echo ""
+        read -rp "Add minimal canting-shell Hyprland keybinds (launcher, settings, clipboard, lockscreen, etc.)? [y/N]: " kb_ans
+        if [[ "${kb_ans,,}" != "y" ]]; then
+            echo -e "${DIM}Skipping keybind setup.${NC}"
+            return 0
+        fi
+    fi
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo -e "${YELLOW}Warning:${NC} python3 not found; skipping Hyprland keybind setup."
+        return 0
+    fi
+
+    local hypr_dir="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
+    python3 - "$hypr_dir" "$DRY_RUN" <<'PY'
+import json
+import os
+import subprocess
+import sys
+
+hypr_dir = sys.argv[1]
+dry_run = sys.argv[2] == "true"
+
+BINDINGS = [
+    ("SUPER", "D", "qs ipc call launcher toggle", "App Launcher"),
+    ("SUPER", "I", "qs ipc call settings toggle", "Settings"),
+    ("SUPER", "V", "qs ipc call clipboard toggle", "Clipboard History"),
+    ("SUPER", "L", "qs ipc call lockscreen lock", "Lock Screen"),
+    ("SUPER", "Tab", "qs ipc call overview toggle", "Workspace Overview"),
+    ("ALT", "Tab", "qs ipc call overview switcher", "Window Switcher"),
+    ("SUPER", "H", "qs ipc call keybinds toggle", "Keybinds Cheat Sheet"),
+    ("SUPER", "W", "qs ipc call wallpaper toggle", "Wallpaper Picker"),
+    ("SUPER", "B", "qs ipc call theme toggle", "Theme Switcher"),
+    ("SUPER SHIFT", "S", "qs ipc call screenshot toggle", "Screenshot HUD"),
+    ("SUPER SHIFT", "E", "qs ipc call powermenu toggle", "Power Menu"),
+]
+
+MOD_BITS = {"SHIFT": 1, "CTRL": 4, "ALT": 8, "SUPER": 64}
+
+def modmask(mods):
+    mask = 0
+    for part in mods.split():
+        mask |= MOD_BITS.get(part.upper(), 0)
+    return mask
+
+active_binds = set()
+if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+    try:
+        res = subprocess.run(["hyprctl", "binds", "-j"], capture_output=True, text=True, timeout=2)
+        if res.returncode == 0 and res.stdout.strip():
+            for b in json.loads(res.stdout):
+                active_binds.add((int(b.get("modmask", 0)), str(b.get("key", "")).lower()))
+    except Exception:
+        pass
+
+is_lua = os.path.isfile(os.path.join(hypr_dir, "hyprland.lua"))
+target = os.path.join(hypr_dir, "custom_keybinds.lua" if is_lua else "custom_keybinds.conf")
+
+existing_text = ""
+if os.path.isfile(target):
+    with open(target, "r", encoding="utf-8", errors="ignore") as f:
+        existing_text = f.read()
+
+lines_to_add = []
+skipped_present = []
+skipped_conflict = []
+
+for mods, key, cmd, desc in BINDINGS:
+    if cmd in existing_text:
+        skipped_present.append(f"{mods} + {key}")
+        continue
+    if (modmask(mods), key.lower()) in active_binds:
+        skipped_conflict.append(f"{mods} + {key} ({desc})")
+        continue
+    if is_lua:
+        lua_keys = " + ".join(mods.split() + [key])
+        lines_to_add.append(f'hl.bind("{lua_keys}", hl.dsp.exec_cmd("{cmd}"), {{ desc = "{desc}" }})')
+    else:
+        lines_to_add.append(f"bindd = {mods}, {key}, {desc}, exec, {cmd}")
+
+if dry_run:
+    print(f"[dry-run] Keybind target: {target}")
+    for line in lines_to_add:
+        print(f"[dry-run] Would add: {line}")
+    if skipped_present:
+        print(f"[dry-run] Already configured: {', '.join(skipped_present)}")
+    if skipped_conflict:
+        print(f"[dry-run] Skipped existing binds: {', '.join(skipped_conflict)}")
+    sys.exit(0)
+
+if lines_to_add:
+    os.makedirs(hypr_dir, exist_ok=True)
+    header = ""
+    if not os.path.isfile(target):
+        header = (
+            "-- Custom Keybindings managed by canting-shell\n"
+            if is_lua else
+            "# Custom Keybindings managed by canting-shell\n"
+        )
+    prefix = ""
+    if existing_text and not existing_text.endswith("\n"):
+        prefix = "\n"
+    with open(target, "a", encoding="utf-8") as f:
+        if header:
+            f.write(header)
+        f.write(prefix + "\n".join(lines_to_add) + "\n")
+
+    main_cfg = os.path.join(hypr_dir, "hyprland.lua" if is_lua else "hyprland.conf")
+    if os.path.isfile(main_cfg):
+        with open(main_cfg, "r", encoding="utf-8", errors="ignore") as f:
+            main_txt = f.read()
+        needle = "custom_keybinds" if is_lua else "custom_keybinds.conf"
+        if needle not in main_txt:
+            hook = (
+                '\npcall(require, "custom_keybinds")\n'
+                if is_lua else
+                "\nsource = ~/.config/hypr/custom_keybinds.conf\n"
+            )
+            with open(main_cfg, "a", encoding="utf-8") as f:
+                f.write(hook)
+
+    print(f"\033[0;32m✓\033[0m Added {len(lines_to_add)} minimal keybind(s) to {target}")
+else:
+    print(f"\033[0;32m✓\033[0m Minimal keybinds already present in {target}")
+
+if skipped_conflict:
+    print(f"\033[0;33mNote:\033[0m Skipped keybind(s) already bound in Hyprland: {', '.join(skipped_conflict)}")
+PY
+
+    if [[ "$DRY_RUN" != true && -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && command -v hyprctl >/dev/null 2>&1; then
+        hyprctl reload >/dev/null 2>&1 || true
+    fi
+}
+
 check_dependencies
 ensure_install_location
 
@@ -469,8 +930,10 @@ if [[ -z "$PRESET" ]]; then
 fi
 
 apply_preset
+setup_minimal_hypr_lua
+setup_minimal_keybinds
 
 echo ""
 echo -e "${BOLD}Next steps:${NC}"
 echo -e "  Run ${CYAN}quickshell${NC} to start the shell (or reload if already running)."
-echo -e "  You can re-run ${CYAN}./install.sh --preset <name>${NC} anytime to switch bar presets."
+echo -e "  You can re-run ${CYAN}./install.sh --preset <name>${NC} anytime to switch presets."
