@@ -167,7 +167,8 @@ map_pkg_for_distro() {
     local cmd="$1" distro="$2"
     case "$distro:$cmd" in
         arch:quickshell)       echo "quickshell" ;;
-        arch:hyprctl)          echo "hyprland" ;;
+        arch:hyprctl|arch:hyprland) echo "hyprland" ;;
+        arch:wayland)          echo "wayland" ;;
         arch:python3)          echo "python" ;;
         arch:nmcli)            echo "networkmanager" ;;
         arch:bluetoothctl)     echo "bluez-utils" ;;
@@ -178,7 +179,8 @@ map_pkg_for_distro() {
         arch:nerd-font)        echo "ttf-jetbrains-mono-nerd" ;;
 
         fedora:quickshell)     echo "quickshell" ;;
-        fedora:hyprctl)        echo "hyprland" ;;
+        fedora:hyprctl|fedora:hyprland) echo "hyprland" ;;
+        fedora:wayland)        echo "libwayland-client" ;;
         fedora:python3)        echo "python3" ;;
         fedora:nmcli)          echo "NetworkManager" ;;
         fedora:bluetoothctl)   echo "bluez" ;;
@@ -188,7 +190,8 @@ map_pkg_for_distro() {
         fedora:magick)         echo "ImageMagick" ;;
 
         debian:quickshell)     echo "quickshell" ;;
-        debian:hyprctl)        echo "hyprland" ;;
+        debian:hyprctl|debian:hyprland) echo "hyprland" ;;
+        debian:wayland)        echo "libwayland-client0" ;;
         debian:python3)        echo "python3" ;;
         debian:nmcli)          echo "network-manager" ;;
         debian:bluetoothctl)   echo "bluez" ;;
@@ -198,7 +201,8 @@ map_pkg_for_distro() {
         debian:magick)         echo "imagemagick" ;;
 
         opensuse:quickshell)   echo "quickshell" ;;
-        opensuse:hyprctl)      echo "hyprland" ;;
+        opensuse:hyprctl|opensuse:hyprland) echo "hyprland" ;;
+        opensuse:wayland)      echo "libwayland-client0" ;;
         opensuse:python3)      echo "python3" ;;
         opensuse:nmcli)        echo "NetworkManager" ;;
         opensuse:bluetoothctl) echo "bluez" ;;
@@ -208,7 +212,8 @@ map_pkg_for_distro() {
         opensuse:magick)       echo "ImageMagick" ;;
 
         void:quickshell)       echo "quickshell" ;;
-        void:hyprctl)          echo "hyprland" ;;
+        void:hyprctl|void:hyprland) echo "hyprland" ;;
+        void:wayland)          echo "wayland" ;;
         void:python3)          echo "python3" ;;
         void:nmcli)            echo "NetworkManager" ;;
         void:bluetoothctl)     echo "bluez" ;;
@@ -1037,7 +1042,48 @@ PY
     fi
 }
 
-check_dependencies
+ensure_wayland_hyprland() {
+    local has_wayland=false has_hyprland=false
+    if ldconfig -p 2>/dev/null | grep -q "libwayland-client" \
+        || compgen -G "/usr/lib*/libwayland-client.so*" >/dev/null 2>&1 \
+        || pkg-config --exists wayland-client 2>/dev/null; then
+        has_wayland=true
+    fi
+    if command -v Hyprland >/dev/null 2>&1 || command -v hyprland >/dev/null 2>&1 || command -v hyprctl >/dev/null 2>&1; then
+        has_hyprland=true
+    fi
+
+    if [[ "$has_wayland" == true && "$has_hyprland" == true ]]; then
+        echo -e "${GREEN}✓${NC} Wayland and Hyprland are installed"
+        echo ""
+        return 0
+    fi
+
+    local distro missing_cmds=() missing_pkgs=()
+    distro="$(detect_distro)"
+    [[ "$has_wayland" == false ]] && missing_cmds+=("wayland")
+    [[ "$has_hyprland" == false ]] && missing_cmds+=("hyprland")
+
+    for cmd in "${missing_cmds[@]}"; do
+        missing_pkgs+=("$(map_pkg_for_distro "$cmd" "$distro")")
+    done
+
+    echo -e "${YELLOW}Missing required packages:${NC} ${missing_pkgs[*]}"
+    if [[ "$SKIP_DEPS" == true ]]; then
+        echo -e "${DIM}Skipping installation (--skip-deps).${NC}"
+        echo ""
+        return 0
+    fi
+
+    install_packages "$distro" "${missing_pkgs[@]}"
+    echo ""
+}
+
+if [[ "$INSTALL_MODE" == true && "$CLI_MODE" == false ]]; then
+    ensure_wayland_hyprland
+else
+    check_dependencies
+fi
 ensure_install_location
 
 if [[ "$CLI_MODE" == true || -n "$PRESET" ]]; then
