@@ -9,6 +9,8 @@ BACKUP_SCRIPT="$SCRIPT_DIR/Settings/scripts/manage_backup.py"
 TARGET_QS_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/quickshell"
 
 PRESET=""
+INSTALL_MODE=false
+CLI_MODE=false
 NO_BACKUP=false
 DRY_RUN=false
 LIST_ONLY=false
@@ -37,8 +39,10 @@ Usage: $(basename "$0") [OPTIONS]
 Install canting-shell and configure a preset (bar, notifications, control center, lockscreen).
 
 Options:
+      --install         Install canting-shell to ~/.config/quickshell and configure Hyprland autostart for the Setup Wizard
   -p, --preset <name>   Preset to apply (laptop, pc, gaming, minimal)
   -l, --list            List available presets and exit
+      --CLI             Configure preset interactively in CLI (for installs without Hyprland/Wayland)
       --with-hypr-lua   Generate minimal ~/.config/hypr/hyprland.lua if missing
       --skip-hypr-lua   Skip minimal hyprland.lua generation prompt
       --with-keybinds   Add minimal Hyprland keybinds without prompting
@@ -58,8 +62,17 @@ list_presets() {
     echo -e "  ${CYAN}minimal${NC}  - Floating minimal bar, compact toasts, 1-panel vertical CC & clean lockscreen"
 }
 
+if [[ $# -eq 0 ]]; then
+    usage
+    exit 0
+fi
+
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --install)
+            INSTALL_MODE=true
+            shift
+            ;;
         -p|--preset)
             [[ $# -ge 2 ]] || { echo -e "${RED}Error:${NC} --preset requires an argument" >&2; exit 1; }
             PRESET="$2"
@@ -67,6 +80,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -l|--list)
             LIST_ONLY=true
+            shift
+            ;;
+        --CLI|--cli)
+            CLI_MODE=true
             shift
             ;;
         --skip-deps)
@@ -703,8 +720,8 @@ for k, v in pairs(envs) do
 end
 
 hl.on("hyprland.start", function()
-    hl.exec_cmd("command -v awww-daemon >/dev/null 2>&1 && awww-daemon --format xrgb || (command -v swww-daemon >/dev/null 2>&1 && swww-daemon)")
     hl.exec_cmd("quickshell")
+    hl.exec_cmd("command -v awww-daemon >/dev/null 2>&1 && awww-daemon --format xrgb || (command -v swww-daemon >/dev/null 2>&1 && swww-daemon)")
 end)
 LUA
     fi
@@ -790,6 +807,84 @@ LUA
     fi
 
     echo -e "${GREEN}✓${NC} Generated minimal Hyprland Lua config at $hypr_lua"
+}
+
+# Ensure Hyprland autostart launches quickshell (for start-hyprland TTY or login manager)
+ensure_hypr_quickshell_autostart() {
+    if [[ "$SKIP_HYPR_LUA" == true ]]; then
+        return 0
+    fi
+
+    local hypr_dir="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
+    local hypr_lua="$hypr_dir/hyprland.lua"
+    local hypr_conf="$hypr_dir/hyprland.conf"
+    local autostart_lua="$hypr_dir/Configs/AutoStart.lua"
+
+    if [[ ! -f "$hypr_lua" && ! -f "$hypr_conf" ]]; then
+        if [[ "$INSTALL_MODE" == true ]]; then
+            WITH_HYPR_LUA=true
+        fi
+        setup_minimal_hypr_lua
+        return 0
+    fi
+
+    if [[ -f "$hypr_lua" ]]; then
+        if [[ "$DRY_RUN" == true ]]; then
+            echo "[dry-run] Would ensure quickshell autostart in $autostart_lua / $hypr_lua"
+            return 0
+        fi
+        mkdir -p "$hypr_dir/Configs"
+        if ! grep -qE 'pcall\(require,\s*"Configs\.AutoStart"\)' "$hypr_lua"; then
+            printf '\npcall(require, "Configs.AutoStart")\n' >> "$hypr_lua"
+        fi
+        if [[ -f "$autostart_lua" ]]; then
+            if grep -q 'quickshell' "$autostart_lua"; then
+                echo -e "${GREEN}✓${NC} Quickshell autostart already present in $autostart_lua"
+                return 0
+            fi
+            if [[ "$NO_BACKUP" == false ]]; then
+                cp "$autostart_lua" "${autostart_lua}.bak.$(date +%Y%m%d_%H%M%S)"
+            fi
+            python3 - "$autostart_lua" <<'PY'
+import re, sys
+path = sys.argv[1]
+with open(path, "r", encoding="utf-8") as f:
+    txt = f.read()
+m = re.search(r'hl\.on\(\s*["\']hyprland\.start["\']\s*,\s*function\s*\(\)\s*\n?', txt)
+if m:
+    idx = m.end()
+    txt = txt[:idx] + '    hl.exec_cmd("quickshell")\n' + txt[idx:]
+else:
+    txt = txt.rstrip() + '\n\nhl.on("hyprland.start", function()\n    hl.exec_cmd("quickshell")\nend)\n'
+with open(path, "w", encoding="utf-8") as f:
+    f.write(txt)
+PY
+        else
+            cat > "$autostart_lua" <<'LUA'
+hl.on("hyprland.start", function()
+    hl.exec_cmd("quickshell")
+    hl.exec_cmd("command -v awww-daemon >/dev/null 2>&1 && awww-daemon --format xrgb || (command -v swww-daemon >/dev/null 2>&1 && swww-daemon)")
+end)
+LUA
+        fi
+        echo -e "${GREEN}✓${NC} Configured quickshell autostart in $autostart_lua"
+        return 0
+    fi
+
+    # Fallback: hyprland.conf exists without hyprland.lua
+    if grep -rqE '^\s*exec-once\s*=.*quickshell' "$hypr_dir" 2>/dev/null; then
+        echo -e "${GREEN}✓${NC} Quickshell autostart already present in $hypr_dir"
+        return 0
+    fi
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "[dry-run] Would add 'exec-once = quickshell' to $hypr_conf"
+        return 0
+    fi
+    if [[ "$NO_BACKUP" == false ]]; then
+        cp "$hypr_conf" "${hypr_conf}.bak.$(date +%Y%m%d_%H%M%S)"
+    fi
+    printf '\n# Auto-start canting-shell (Setup Wizard opens on first run)\nexec-once = quickshell\n' >> "$hypr_conf"
+    echo -e "${GREEN}✓${NC} Added 'exec-once = quickshell' to $hypr_conf"
 }
 
 # Optionally add minimal Hyprland keybinds for first-time setup
@@ -939,15 +1034,24 @@ PY
 check_dependencies
 ensure_install_location
 
-if [[ -z "$PRESET" ]]; then
-    choose_preset_interactive
+if [[ "$CLI_MODE" == true || -n "$PRESET" ]]; then
+    if [[ -z "$PRESET" ]]; then
+        choose_preset_interactive
+    fi
+    apply_preset
+else
+    if [[ "$DRY_RUN" != true && ! -f "$THEME_CONF" ]]; then
+        mkdir -p "$CONFIGS_DIR"
+        printf '0\n' > "$THEME_CONF"
+        echo -e "${GREEN}✓${NC} Initialized default theme in configs/theme.conf"
+    fi
+    echo -e "${GREEN}✓${NC} Ready for first-run GUI Setup Wizard (skipping CLI preset prompt)"
 fi
 
-apply_preset
-setup_minimal_hypr_lua
+ensure_hypr_quickshell_autostart
 setup_minimal_keybinds
 
 echo ""
 echo -e "${BOLD}Next steps:${NC}"
-echo -e "  Run ${CYAN}quickshell${NC} to start the shell (or reload if already running)."
-echo -e "  You can re-run ${CYAN}./install.sh --preset <name>${NC} anytime to switch presets."
+echo -e "  Run ${CYAN}quickshell${NC} to start the shell (the Setup Wizard will open on first launch)."
+echo -e "  Or run ${CYAN}./install.sh --CLI${NC} (or ${CYAN}--preset <name>${NC}) to configure presets from the terminal."
