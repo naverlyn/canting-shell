@@ -609,6 +609,10 @@ apply_preset() {
         printf '0\n' > "$THEME_CONF"
         echo -e "${GREEN}✓${NC} Initialized default theme in configs/theme.conf"
     fi
+
+    if [[ "$DRY_RUN" != true ]]; then
+        date -u +"%Y-%m-%dT%H:%M:%SZ" > "$CONFIGS_DIR/.setup_done"
+    fi
 }
 
 # Optionally generate a minimal ~/.config/hypr/hyprland.lua + Configs/ layout

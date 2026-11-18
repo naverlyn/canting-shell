@@ -14,3 +14,4 @@ backups
 !configs/presets/notifications/*.json
 !configs/presets/control_center/*.json
 !configs/presets/lockscreen/*.json
+configs/.setup_done

@@ -27,6 +27,7 @@ import "Polkit"
 import "Overview"
 import "Keybinds"
 import "Screenshot"
+import "SetupWizard"
 
 Scope {
   ThemeSwitcher { id: ts }
@@ -46,4 +47,5 @@ Scope {
   OverviewService { theme: ts.theme }
   KeybindsCheatSheet { theme: ts.theme }
   ScreenshotHUD { theme: ts.theme }
+  SetupWizard { theme: ts.theme }
 }
