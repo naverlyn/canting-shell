@@ -157,6 +157,7 @@ map_pkg_for_distro() {
         arch:wpctl)            echo "wireplumber" ;;
         arch:wl-copy)          echo "wl-clipboard" ;;
         arch:pkexec)           echo "polkit" ;;
+        arch:magick)           echo "imagemagick" ;;
 
         fedora:quickshell)     echo "quickshell" ;;
         fedora:hyprctl)        echo "hyprland" ;;
@@ -166,6 +167,7 @@ map_pkg_for_distro() {
         fedora:wpctl)          echo "wireplumber" ;;
         fedora:wl-copy)        echo "wl-clipboard" ;;
         fedora:pkexec)         echo "polkit" ;;
+        fedora:magick)         echo "ImageMagick" ;;
 
         debian:quickshell)     echo "quickshell" ;;
         debian:hyprctl)        echo "hyprland" ;;
@@ -175,6 +177,7 @@ map_pkg_for_distro() {
         debian:wpctl)          echo "wireplumber" ;;
         debian:wl-copy)        echo "wl-clipboard" ;;
         debian:pkexec)         echo "pkexec" ;;
+        debian:magick)         echo "imagemagick" ;;
 
         opensuse:quickshell)   echo "quickshell" ;;
         opensuse:hyprctl)      echo "hyprland" ;;
@@ -184,6 +187,7 @@ map_pkg_for_distro() {
         opensuse:wpctl)        echo "wireplumber" ;;
         opensuse:wl-copy)      echo "wl-clipboard" ;;
         opensuse:pkexec)       echo "polkit" ;;
+        opensuse:magick)       echo "ImageMagick" ;;
 
         void:quickshell)       echo "quickshell" ;;
         void:hyprctl)          echo "hyprland" ;;
@@ -193,6 +197,7 @@ map_pkg_for_distro() {
         void:wpctl)            echo "wireplumber" ;;
         void:wl-copy)          echo "wl-clipboard" ;;
         void:pkexec)           echo "polkit" ;;
+        void:magick)           echo "ImageMagick" ;;
 
         *)                     echo "$cmd" ;;
     esac
@@ -240,7 +245,7 @@ install_packages() {
             local need_hypr_copr=false need_qs_copr=false
             for p in "${pkgs[@]}"; do
                 case "$p" in
-                    hyprland|hyprland-guiutils|xdg-desktop-portal-hyprland) need_hypr_copr=true ;;
+                    hyprland|hyprland-guiutils|xdg-desktop-portal-hyprland|hypridle|hyprsunset) need_hypr_copr=true ;;
                     quickshell) need_qs_copr=true ;;
                 esac
             done
@@ -317,11 +322,23 @@ check_dependencies() {
         fi
     done
 
-    for cmd in wpctl brightnessctl nmcli bluetoothctl grim slurp wl-copy cava pkexec; do
+    for cmd in wpctl brightnessctl nmcli bluetoothctl grim slurp wl-copy cliphist cava pkexec magick curl hypridle; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
             missing_opt+=("$cmd")
         fi
     done
+
+    if ! command -v awww >/dev/null 2>&1 && ! command -v swww >/dev/null 2>&1 && ! command -v hyprpaper >/dev/null 2>&1; then
+        missing_opt+=("awww")
+    fi
+
+    if ! command -v wallust >/dev/null 2>&1 && ! command -v matugen >/dev/null 2>&1; then
+        missing_opt+=("wallust")
+    fi
+
+    if ! command -v hyprsunset >/dev/null 2>&1 && ! command -v wlsunset >/dev/null 2>&1 && ! command -v gammastep >/dev/null 2>&1; then
+        missing_opt+=("hyprsunset")
+    fi
 
     if ! command -v hyprland-dialog >/dev/null 2>&1; then
         missing_opt+=("hyprland-guiutils")
