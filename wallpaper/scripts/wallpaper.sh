@@ -35,6 +35,13 @@ apply_eff() {
 send_to_daemon() {
     local path="$1" target="$2" mode="$3" filter="$4"
     if command -v awww >/dev/null 2>&1; then
+        if ! awww query >/dev/null 2>&1 && command -v awww-daemon >/dev/null 2>&1; then
+            nohup awww-daemon --format xrgb >/dev/null 2>&1 &
+            for _ in 1 2 3 4 5 6 7 8 9 10; do
+                awww query >/dev/null 2>&1 && break
+                sleep 0.1
+            done
+        fi
         local filterArg=()
         [ -n "$filter" ] && filterArg=(--filter "$filter")
         if [ -n "$target" ] && [ "$target" != "all" ]; then
@@ -43,6 +50,13 @@ send_to_daemon() {
             awww img "$path" --resize "$mode" "${filterArg[@]}" --transition-type grow --transition-pos center --transition-duration 1 || true
         fi
     elif command -v swww >/dev/null 2>&1; then
+        if ! swww query >/dev/null 2>&1 && command -v swww-daemon >/dev/null 2>&1; then
+            nohup swww-daemon >/dev/null 2>&1 &
+            for _ in 1 2 3 4 5 6 7 8 9 10; do
+                swww query >/dev/null 2>&1 && break
+                sleep 0.1
+            done
+        fi
         local filterArg=()
         [ -n "$filter" ] && filterArg=(--filter "$filter")
         if [ -n "$target" ] && [ "$target" != "all" ]; then
