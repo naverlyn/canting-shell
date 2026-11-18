@@ -6,6 +6,11 @@ Loader {
     required property string cardId
     required property var theme
     required property string font
+    // Used by the "tiles" block: a run of individual tile modules placed in a panel
+    property var tileIds: []
+    property int panelIndex: -1
+    property int blockStart: 0
+    property real extraHeight: 0
 
     signal closeParentRequested()
     signal openWifiRequested()
@@ -20,6 +25,8 @@ Loader {
         case "quickSettings":
         case "quickSettings2":
             return quickSettingsComp;
+        case "tiles":
+            return panelTilesComp;
         case "brightness":
             return brightnessComp;
         case "audio":
@@ -53,6 +60,23 @@ Loader {
             onCloseParentRequested: loader.closeParentRequested()
             onOpenWifiRequested: loader.openWifiRequested()
             Component.onCompleted: loader.quickSettingsReady(qsGrid)
+        }
+    }
+
+    Component {
+        id: panelTilesComp
+        QuickSettingsGrid {
+            id: tilesGrid
+            mode: "panelTiles"
+            tileIds: loader.tileIds
+            panelIndex: loader.panelIndex
+            blockStart: loader.blockStart
+            extraHeight: loader.extraHeight
+            theme: loader.theme
+            font: loader.font
+            onCloseParentRequested: loader.closeParentRequested()
+            onOpenWifiRequested: loader.openWifiRequested()
+            Component.onCompleted: loader.quickSettingsReady(tilesGrid)
         }
     }
 

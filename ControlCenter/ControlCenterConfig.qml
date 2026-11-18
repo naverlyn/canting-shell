@@ -20,6 +20,47 @@ Singleton {
     property var panel2: ["brightness", "media"]
     property var panel3: ["audio"]
     property bool groupTilesEnabled: true
+
+    // Connectivity group grid size: N columns, up to N x N tiles (2x2 .. 6x6)
+    property int groupSize: 2
+    readonly property int groupCapacity: root.groupSize * root.groupSize
+
+    function setGroupSize(n) {
+        const size = Math.max(2, Math.min(6, Math.round(Number(n) || 2)));
+        if (size === root.groupSize) return;
+        root.groupSize = size;
+        const cap = size * size;
+        if (root.groupedTileIds.length > cap) {
+            // Tiles that no longer fit go back to the Available Tiles pool
+            const overflow = root.groupedTileIds.slice(cap);
+            root.groupedTileIds = root.groupedTileIds.slice(0, cap);
+            for (let i = 0; i < overflow.length; i++) root.setTileEnabled(overflow[i], false);
+        }
+        root.saveConfig();
+    }
+
+    function cycleGroupSize() {
+        root.setGroupSize(root.groupSize >= 6 ? 2 : root.groupSize + 1);
+        return root.groupSize;
+    }
+
+    // User-editable titles for the tile cards (empty string hides the title)
+    property var cardTitles: ({})
+    readonly property var defaultCardTitles: ({ connectivity: "Connectivity", quickSettings: "Quick Tiles", quickSettings2: "Quick Tiles 2" })
+
+    function getCardTitle(id) {
+        if (root.cardTitles && root.cardTitles[id] !== undefined) return root.cardTitles[id];
+        return root.defaultCardTitles[id] !== undefined ? root.defaultCardTitles[id] : "";
+    }
+
+    function setCardTitle(id, text) {
+        const t = String(text).trim();
+        if (t === root.getCardTitle(id)) return;
+        let copy = Object.assign({}, root.cardTitles);
+        copy[id] = t;
+        root.cardTitles = copy;
+        root.saveConfig();
+    }
     property var groupedTileIds: ["wifi", "bluetooth", "dnd", "airplane"]
     property var secondaryTileIds: ["mute", "gamemode", "clipboard", "darkmode"]
     property string mediaWidgetStyle: "auto" // "auto", "compact", or "full"
@@ -62,7 +103,7 @@ Singleton {
 
     // Master list of all available building-block modules
     readonly property var allCardDefs: [
-        { id: "connectivity",   label: "Connectivity (2x2)", icon: "󰖩", desc: "2x2 Wi-Fi, Bluetooth, DND & Airplane card" },
+        { id: "connectivity",   label: "Connectivity",       icon: "󰖩", desc: "Wi-Fi, Bluetooth, DND & Airplane tile grid (2x2 up to 6x6)" },
         { id: "quickSettings",  label: "Quick Tiles",        icon: "󰒓", desc: "Primary system toggle tiles grid" },
         { id: "quickSettings2", label: "Quick Tiles 2",      icon: "󰕰", desc: "Secondary quick toggle tiles grid for another panel" },
         { id: "brightness",     label: "Brightness",         icon: "󰃠", desc: "Screen backlight brightness slider" },
@@ -78,7 +119,35 @@ Singleton {
     signal cardsUpdated()
     property int cardOrderRevision: 0
 
+    // Individual quick tiles can be placed straight into a panel as "tile:<tileId>" modules.
+    function isTileCardId(id) {
+        return typeof id === "string" && id.indexOf("tile:") === 0;
+    }
+
+    function tileInPanel(tileId) {
+        return root.isCardVisible("tile:" + tileId);
+    }
+
+    // Remove a tile module from every panel (does not save; callers save).
+    function dropTileFromPanels(tileId) {
+        const cid = "tile:" + tileId;
+        const p0 = root.panel1.filter(id => id !== cid);
+        const p1 = root.panel2.filter(id => id !== cid);
+        const p2 = root.panel3.filter(id => id !== cid);
+        if (p0.length === root.panel1.length && p1.length === root.panel2.length && p2.length === root.panel3.length) return;
+        root.panel1 = p0;
+        root.panel2 = p1;
+        root.panel3 = p2;
+        root.cardOrderRevision++;
+        root.cardsUpdated();
+    }
+
     function getCardDef(id) {
+        if (root.isTileCardId(id)) {
+            const td = root.getTileDef(id.substring(5));
+            if (!td) return null;
+            return { id: id, label: td.label, icon: td.icon, desc: td.desc, isTile: true };
+        }
         for (let i = 0; i < allCardDefs.length; i++) {
             if (allCardDefs[i].id === id) return allCardDefs[i];
         }
@@ -256,6 +325,15 @@ Singleton {
         root.panel1 = p0;
         root.panel2 = p1;
         root.panel3 = p2;
+
+        // A tile placed in a panel no longer belongs to any Quick Tiles card
+        if (root.isTileCardId(cardId) && targetPanelIdx >= 0 && targetPanelIdx < 3) {
+            const tid = cardId.substring(5);
+            root.groupedTileIds = root.groupedTileIds.filter(t => t !== tid);
+            root.secondaryTileIds = root.secondaryTileIds.filter(t => t !== tid);
+            root.setTileEnabled(tid, false);
+        }
+
         root.cardOrderRevision++;
         root.cardsUpdated();
         root.saveConfig();
@@ -406,12 +484,13 @@ Singleton {
     function canAddTileToGroup(id) {
         if (!root.groupTilesEnabled) return false;
         if (root.groupedTileIds.indexOf(id) !== -1) return true;
-        return root.groupedTileIds.length < 4;
+        return root.groupedTileIds.length < root.groupCapacity;
     }
 
     function addTileToGroup(id) {
+        root.dropTileFromPanels(id);
         if (root.groupedTileIds.indexOf(id) === -1) {
-            if (root.groupedTileIds.length >= 4) return false;
+            if (root.groupedTileIds.length >= root.groupCapacity) return false;
             root.secondaryTileIds = root.secondaryTileIds.filter(tid => tid !== id);
             let copy = [...root.groupedTileIds, id];
             root.groupedTileIds = copy;
@@ -424,6 +503,7 @@ Singleton {
 
     function addTileToSecondary(id) {
         if (!root.getTileDef(id)) return false;
+        root.dropTileFromPanels(id);
         root.groupedTileIds = root.groupedTileIds.filter(tid => tid !== id);
         if (root.secondaryTileIds.indexOf(id) === -1) {
             root.secondaryTileIds = [...root.secondaryTileIds, id];
@@ -462,6 +542,7 @@ Singleton {
 
     // Remove tile completely from Connectivity Group, Primary Tiles, or Secondary Tiles to Available Pool
     function removeTileToPool(id) {
+        root.dropTileFromPanels(id);
         if (root.groupedTileIds.indexOf(id) !== -1) {
             root.groupedTileIds = root.groupedTileIds.filter(tid => tid !== id);
         }
@@ -505,6 +586,7 @@ Singleton {
 
     function moveTileToPanelAt(tileId, targetPanel, targetIdx) {
         if (!root.getTileDef(tileId)) return false;
+        if (targetPanel !== -1) root.dropTileFromPanels(tileId);
         // targetPanel: -1 = pool, 1 = connectivity group (2x2), 2 = primary quick tiles, 3 = secondary quick tiles
         if (targetPanel === -1) {
             root.removeTileToPool(tileId);
@@ -513,7 +595,7 @@ Singleton {
         if (targetPanel === 1) {
             if (!root.groupTilesEnabled) return false;
             const inGroup = root.groupedTileIds.indexOf(tileId) !== -1;
-            if (!inGroup && root.groupedTileIds.length >= 4) return false;
+            if (!inGroup && root.groupedTileIds.length >= root.groupCapacity) return false;
             root.secondaryTileIds = root.secondaryTileIds.filter(id => id !== tileId);
             let copy = root.groupedTileIds.filter(id => id !== tileId);
             const ins = (targetIdx >= 0 && targetIdx <= copy.length) ? targetIdx : copy.length;
@@ -631,7 +713,7 @@ Singleton {
             const def = root.allTileDefs[i];
             const inGroup = (root.isCardVisible("connectivity") || root.groupTilesEnabled) && root.groupedTileIds.indexOf(def.id) !== -1;
             const inSec = qs2Active && root.secondaryTileIds.indexOf(def.id) !== -1;
-            if (!root.isTileEnabled(def.id) && !inGroup && !inSec) {
+            if (!root.isTileEnabled(def.id) && !inGroup && !inSec && !root.tileInPanel(def.id)) {
                 res.push({
                     id: def.id,
                     label: def.label,
@@ -670,6 +752,7 @@ Singleton {
     }
 
     function setTileEnabled(id, enabled) {
+        if (enabled) root.dropTileFromPanels(id);
         let copy = [];
         let found = false;
         for (let i = 0; i < root.tiles.length; i++) {
@@ -740,11 +823,32 @@ Singleton {
         if (!root.getCardDef(cardName)) return;
         if (val) {
             if (!root.isCardVisible(cardName)) {
+                // Re-adding an emptied Connectivity card restores its default 2x2 tiles
+                if (cardName === "connectivity" && root.groupedTileIds.length === 0) {
+                    const defaults = ["wifi", "bluetooth", "dnd", "airplane"];
+                    root.secondaryTileIds = root.secondaryTileIds.filter(t => defaults.indexOf(t) === -1);
+                    for (let i = 0; i < defaults.length; i++) root.dropTileFromPanels(defaults[i]);
+                    root.groupTilesEnabled = true;
+                    root.groupedTileIds = defaults;
+                    for (let i = 0; i < defaults.length; i++) root.setTileEnabled(defaults[i], true);
+                }
                 root.insertCardAtEnabledIndex(cardName, -1);
             }
         } else {
             if (root.isCardVisible(cardName)) {
+                // Removing a tile card detaches its tiles: they return to the Available Tiles pool
+                let released = [];
+                if (cardName === "connectivity") {
+                    released = root.groupedTileIds.slice();
+                    root.groupedTileIds = [];
+                } else if (cardName === "quickSettings2") {
+                    released = root.secondaryTileIds.slice();
+                    root.secondaryTileIds = [];
+                } else if (cardName === "quickSettings") {
+                    released = root.ungroupedTiles.map(t => t.id);
+                }
                 root.moveCardToPanelAt(cardName, -1, -1);
+                for (let i = 0; i < released.length; i++) root.setTileEnabled(released[i], false);
             }
         }
     }

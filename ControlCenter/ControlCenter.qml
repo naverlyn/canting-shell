@@ -191,6 +191,7 @@ PanelWindow {
 
     property var quickSettingsRef: null
     property var brightnessSliderRef: null
+    property alias mainRect: ccMainRect
     readonly property bool hasOpenModal: wifiModalLoader.item ? wifiModalLoader.item.visible : false
 
     // Card Drag & Drop State for Live Edit Mode (supports cross-panel drag & drop)
@@ -232,11 +233,18 @@ PanelWindow {
                         const iPt = item.mapFromItem(ccMainRect, mouseX, mouseY);
                         if (iPt.y >= -6 && iPt.y <= item.height + 6) {
                             dragCardHoverIndex = item.enabledIdx;
-                            dragCardTargetItemIdx = i;
+                            let within = 0;
+                            if (item.isTileBlock) {
+                                // Individual tiles: resolve the tile under the cursor (or the block end)
+                                const gridItem = item.loaderItem;
+                                const ti = gridItem ? gridItem.tileIndexAtMain(mouseX, mouseY, ccMainRect) : -1;
+                                within = ti >= 0 ? ti : item.blockLength;
+                            }
+                            dragCardTargetItemIdx = item.blockStart + within;
                             return;
                         }
                     }
-                    dragCardTargetItemIdx = rep.count;
+                    dragCardTargetItemIdx = panelCol.panelIds.length;
                 }
                 return;
             }
@@ -423,6 +431,34 @@ PanelWindow {
                         rowSpacing: 12
                         uniformCellWidths: true
 
+                        // Stretch the last tile row of shorter panels so every column has the same height
+                        function equalizePanels() {
+                            const n = panelsRepeater.count;
+                            let natural = [];
+                            let maxH = 0;
+                            for (let i = 0; i < n; i++) {
+                                const p = panelsRepeater.itemAt(i);
+                                if (!p || !p.visible) { natural.push(-1); continue; }
+                                const h = p.implicitHeight - p.appliedExtra;
+                                natural.push(h);
+                                maxH = Math.max(maxH, h);
+                            }
+                            for (let i = 0; i < n; i++) {
+                                const p = panelsRepeater.itemAt(i);
+                                if (!p) continue;
+                                const canStretch = natural[i] >= 0 && controlCenter.activePanelCols > 1
+                                    && !ControlCenterConfig.isLiveEdit;
+                                const extra = canStretch ? Math.round(maxH - natural[i]) : 0;
+                                if (p.appliedExtra !== extra) p.appliedExtra = extra;
+                            }
+                        }
+
+                        Connections {
+                            target: ControlCenterConfig
+                            function onIsLiveEditChanged() { Qt.callLater(cardsGridLayout.equalizePanels); }
+                            function onCardsUpdated() { Qt.callLater(cardsGridLayout.equalizePanels); }
+                        }
+
                         Repeater {
                             id: panelsRepeater
                             model: ControlCenterConfig.panelLayout === "horizontal"
@@ -437,6 +473,23 @@ PanelWindow {
                                     var _rev = ControlCenterConfig.cardsRevision;
                                     return ControlCenterConfig.getPanelIds(panelIndex);
                                 }
+                                // Consecutive "tile:" modules are merged into one tile grid block
+                                readonly property var blocks: {
+                                    const ids = panelIds;
+                                    let res = [];
+                                    for (let i = 0; i < ids.length; i++) {
+                                        const isTile = ControlCenterConfig.isTileCardId(ids[i]);
+                                        const last = res.length > 0 ? res[res.length - 1] : null;
+                                        if (isTile && last && last.kind === "tiles") {
+                                            last.ids.push(ids[i].substring(5));
+                                        } else if (isTile) {
+                                            res.push({ kind: "tiles", start: i, ids: [ids[i].substring(5)] });
+                                        } else {
+                                            res.push({ kind: "card", start: i, id: ids[i] });
+                                        }
+                                    }
+                                    return res;
+                                }
                                 readonly property bool hasVisibleModules: {
                                     var _rev = ControlCenterConfig.cardsRevision;
                                     if (ControlCenterConfig.isLiveEdit) return true;
@@ -447,6 +500,11 @@ PanelWindow {
                                     : cardsGridLayout.width
 
                                 property alias cardsRep: panelCardsRepeater
+
+                                // Extra height given to this panel's last tile row so all panels end level
+                                property real appliedExtra: 0
+                                onImplicitHeightChanged: Qt.callLater(cardsGridLayout.equalizePanels)
+                                onVisibleChanged: Qt.callLater(cardsGridLayout.equalizePanels)
 
                                 visible: hasVisibleModules
                                 width: cellWidth
@@ -460,7 +518,7 @@ PanelWindow {
 
                                 // Panel Header Badge in Live Edit Mode
                                 Rectangle {
-                                    readonly property bool isPanelDropTarget: controlCenter.isDraggingCard && controlCenter.dragTargetPanel === panelCol.panelIndex
+                                    readonly property bool isPanelDropTarget: controlCenter.isDraggingCard && controlCenter.dragCardTargetPanel === panelCol.panelIndex
                                     visible: ControlCenterConfig.isLiveEdit
                                     width: panelCol.cellWidth
                                     height: 24
@@ -502,23 +560,29 @@ PanelWindow {
                                 // Modules inside this Panel
                                 Repeater {
                                     id: panelCardsRepeater
-                                    model: panelCol.panelIds
+                                    model: panelCol.blocks
 
                                     delegate: Column {
                                         id: cardWrapper
-                                        required property string modelData
+                                        required property var modelData
                                         required property int index
 
-                                        readonly property string cardId: modelData
+                                        readonly property bool isTileBlock: modelData.kind === "tiles"
+                                        readonly property int blockStart: modelData.start
+                                        readonly property int blockLength: isTileBlock ? modelData.ids.length : 1
+                                        readonly property var loaderItem: cardLoader.item
+                                        readonly property string cardId: isTileBlock ? ("tile:" + modelData.ids[0]) : modelData.id
                                         readonly property int panelIndex: panelCol.panelIndex
                                         readonly property int itemIndex: index
                                         readonly property int panelLength: panelCol.panelIds.length
                                         readonly property int enabledIdx: ControlCenterConfig.getEnabledCardIndex(cardId)
-                                        readonly property bool isCardEnabled: true
-                                        readonly property bool isBeingDragged: controlCenter.isDraggingCard && controlCenter.draggedCardId === cardId
-                                        readonly property bool isDropTarget: controlCenter.isDraggingCard
-                                            && controlCenter.dragTargetPanel === panelCol.panelIndex
-                                            && controlCenter.dragTargetIndex === index
+                                        readonly property bool isCardEnabled: !isTileBlock
+                                        readonly property bool isBeingDragged: !isTileBlock
+                                            && controlCenter.isDraggingCard && controlCenter.draggedCardId === cardId
+                                        readonly property bool isDropTarget: !isTileBlock
+                                            && controlCenter.isDraggingCard
+                                            && controlCenter.dragCardTargetPanel === panelCol.panelIndex
+                                            && controlCenter.dragCardTargetItemIdx === modelData.start
                                             && controlCenter.draggedCardId !== cardId
 
                                         readonly property real cellWidth: panelCol.cellWidth
@@ -557,7 +621,12 @@ PanelWindow {
                                         ControlCenterCardLoader {
                                             id: cardLoader
                                             width: cardWrapper.cellWidth
-                                            cardId: cardWrapper.cardId
+                                            cardId: cardWrapper.isTileBlock ? "tiles" : cardWrapper.cardId
+                                            tileIds: cardWrapper.isTileBlock ? cardWrapper.modelData.ids : []
+                                            panelIndex: cardWrapper.panelIndex
+                                            blockStart: cardWrapper.blockStart
+                                            extraHeight: (cardWrapper.isTileBlock && cardWrapper.index === panelCol.blocks.length - 1)
+                                                ? panelCol.appliedExtra : 0
                                             theme: controlCenter.theme
                                             font: controlCenter.font
                                             onCloseParentRequested: controlCenter.visible = false
@@ -647,7 +716,7 @@ PanelWindow {
                                                         spacing: 4
 
                                                         Text {
-                                                            text: "+ " + (modelData.icon || "󰒓")
+                                                            text: (modelData.icon || "󰒓")
                                                             font.family: controlCenter.font
                                                             font.pixelSize: 10
                                                             color: controlCenter.theme.accentPrimary
@@ -668,6 +737,50 @@ PanelWindow {
                                                         hoverEnabled: true
                                                         cursorShape: Qt.PointingHandCursor
                                                         onClicked: ControlCenterConfig.moveCardToPanelAt(modelData.id, panelCol.panelIndex, 0)
+                                                    }
+                                                }
+                                            }
+
+                                            // Unassigned individual tiles
+                                            Repeater {
+                                                model: ControlCenterConfig.unassignedTiles
+                                                delegate: Rectangle {
+                                                    required property var modelData
+                                                    height: 24
+                                                    implicitWidth: empTileRow.implicitWidth + 14
+                                                    radius: 12
+                                                    color: empTileMouse.containsMouse
+                                                        ? Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.2)
+                                                        : Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.06)
+                                                    border.color: controlCenter.theme.bgBorder
+                                                    border.width: 1
+
+                                                    Row {
+                                                        id: empTileRow
+                                                        anchors.centerIn: parent
+                                                        spacing: 4
+
+                                                        Text {
+                                                            text: (modelData.icon || "󰒓")
+                                                            font.family: controlCenter.font
+                                                            font.pixelSize: 10
+                                                            color: controlCenter.theme.accentPrimary
+                                                        }
+
+                                                        Text {
+                                                            text: modelData.label || ""
+                                                            font.family: controlCenter.font
+                                                            font.pixelSize: 10
+                                                            color: controlCenter.theme.textPrimary
+                                                        }
+                                                    }
+
+                                                    MouseArea {
+                                                        id: empTileMouse
+                                                        anchors.fill: parent
+                                                        hoverEnabled: true
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: ControlCenterConfig.moveCardToPanelAt("tile:" + modelData.id, panelCol.panelIndex, -1)
                                                     }
                                                 }
                                             }

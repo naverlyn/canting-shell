@@ -68,7 +68,7 @@ Rectangle {
                             spacing: 5
 
                             Text {
-                                text: modelData.icon ? ("+ " + modelData.icon) : "+"
+                                text: modelData.icon || ""
                                 font.family: hostCenter.font
                                 font.pixelSize: 11
                                 color: hostCenter.theme.accentPrimary
@@ -103,7 +103,7 @@ Rectangle {
             visible: ControlCenterConfig.unassignedTiles.length > 0
 
             Text {
-                text: "Available Quick Settings Tiles"
+                text: "Available Tiles (click to add to a panel)"
                 font.family: hostCenter.font
                 font.pixelSize: 11
                 font.bold: true
@@ -138,7 +138,7 @@ Rectangle {
                             spacing: 5
 
                             Text {
-                                text: "+ " + (modelData.icon || "󰒓")
+                                text: (modelData.icon || "󰒓")
                                 font.family: hostCenter.font
                                 font.pixelSize: 11
                                 color: hostCenter.theme.accentPrimary
@@ -158,7 +158,8 @@ Rectangle {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             preventStealing: true
-                            onClicked: ControlCenterConfig.addTile(modelData.id)
+                            // Place the tile as its own module in the emptiest panel; drag it to rearrange
+                            onClicked: ControlCenterConfig.setCardVisible("tile:" + modelData.id, true)
                         }
                     }
                 }
