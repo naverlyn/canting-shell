@@ -678,9 +678,10 @@ LUA
         cat > "$configs_dir/Keybinds.lua" <<'LUA'
 -- Essential WM keybinds (canting-shell binds live in custom_keybinds.lua)
 local term = "kitty || alacritty || foot || wezterm || xdg-terminal-exec"
-hl.bind("SUPER + Q", hl.dsp.exec_cmd(term), { desc = "Terminal" })
-hl.bind("SUPER + C", hl.dsp.window.close(), { desc = "Close Window" })
-hl.bind("SUPER + F", hl.dsp.window.float({ action = "toggle" }), { desc = "Toggle Floating" })
+hl.bind("SUPER + Return", hl.dsp.exec_cmd(term), { desc = "Terminal" })
+hl.bind("SUPER + Q", hl.dsp.window.close(), { desc = "Close Window" })
+hl.bind("SUPER + Space", hl.dsp.window.float({ action = "toggle" }), { desc = "Toggle Floating" })
+hl.bind("SUPER + F", hl.dsp.window.fullscreen({ action = "toggle" }), { desc = "Toggle Fullscreen" })
 hl.bind("SUPER + M", hl.dsp.exit(), { desc = "Exit Hyprland" })
 
 for i = 1, 9 do
@@ -692,6 +693,16 @@ hl.bind("SUPER + left", hl.dsp.focus({ direction = "left" }))
 hl.bind("SUPER + right", hl.dsp.focus({ direction = "right" }))
 hl.bind("SUPER + up", hl.dsp.focus({ direction = "up" }))
 hl.bind("SUPER + down", hl.dsp.focus({ direction = "down" }))
+
+hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true })
+hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
+
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { locked = true, repeating = true })
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true, repeating = true })
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"), { locked = true, repeating = true })
 LUA
     fi
 
@@ -737,7 +748,10 @@ BINDINGS = [
     ("SUPER", "V", "qs ipc call clipboard toggle", "Clipboard History"),
     ("SUPER", "L", "qs ipc call lockscreen lock", "Lock Screen"),
     ("SUPER", "Tab", "qs ipc call overview toggle", "Workspace Overview"),
-    ("SUPER", "slash", "qs ipc call keybinds toggle", "Keybinds Cheat Sheet"),
+    ("ALT", "Tab", "qs ipc call overview switcher", "Window Switcher"),
+    ("SUPER", "H", "qs ipc call keybinds toggle", "Keybinds Cheat Sheet"),
+    ("SUPER", "W", "qs ipc call wallpaper toggle", "Wallpaper Picker"),
+    ("SUPER", "B", "qs ipc call theme toggle", "Theme Switcher"),
     ("SUPER SHIFT", "S", "qs ipc call screenshot toggle", "Screenshot HUD"),
     ("SUPER SHIFT", "E", "qs ipc call powermenu toggle", "Power Menu"),
 ]
