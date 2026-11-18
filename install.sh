@@ -219,13 +219,30 @@ install_packages() {
             fi
             ;;
         fedora)
-            cmd_str="sudo dnf install -y ${pkgs[*]}"
+            local coprs=()
             for p in "${pkgs[@]}"; do
-                if [[ "$p" == "quickshell" ]]; then
-                    echo -e "${YELLOW}Note:${NC} On Fedora, 'quickshell' may require enabling a COPR (e.g. solopasha/hyprland or errornointernet/quickshell)."
-                    break
+                if [[ "$p" == "hyprland" ]]; then
+                    coprs+=("lionheartp/Hyprland")
+                elif [[ "$p" == "quickshell" ]]; then
+                    coprs+=("errornointernet/quickshell")
                 fi
             done
+            if [[ ${#coprs[@]} -gt 0 ]]; then
+                echo -e "${YELLOW}Note:${NC} On Fedora, Hyprland/Quickshell require COPR repos: ${CYAN}${coprs[*]}${NC}"
+                if [[ "$DRY_RUN" == true ]]; then
+                    for copr in "${coprs[@]}"; do
+                        echo "[dry-run] Would run: sudo dnf copr enable -y $copr"
+                    done
+                elif [[ -t 0 ]]; then
+                    read -rp "Enable required COPR repo(s) (${coprs[*]})? [Y/n]: " copr_ans
+                    if [[ "${copr_ans,,}" != "n" ]]; then
+                        for copr in "${coprs[@]}"; do
+                            sudo dnf copr enable -y "$copr" || echo -e "${YELLOW}Warning:${NC} Failed to enable COPR $copr"
+                        done
+                    fi
+                fi
+            fi
+            cmd_str="sudo dnf install -y ${pkgs[*]}"
             ;;
         debian)
             cmd_str="sudo apt update && sudo apt install -y ${pkgs[*]}"
@@ -253,7 +270,9 @@ install_packages() {
         echo "[dry-run] Would run: $cmd_str"
     else
         echo -e "Running: ${CYAN}$cmd_str${NC}"
-        bash -c "$cmd_str"
+        if ! bash -c "$cmd_str"; then
+            echo -e "${YELLOW}Warning:${NC} Package installation exited with errors; continuing with configuration."
+        fi
     fi
 }
 
