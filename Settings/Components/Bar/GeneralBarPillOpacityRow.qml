@@ -4,14 +4,6 @@ import "../Common"
 
 SettingSliderRow {
     required property var root
-<<<<<<< HEAD
-    id: pillOpacityItem
-    Layout.fillWidth: true
-    visible: !root.generalTab.curHidePill
-    height: visible ? 52 : 0
-    implicitHeight: visible ? 52 : 0
-    readonly property real activePillOpacity: root.generalTab.curPillOpacity
-=======
 
     title: "Pill Background Opacity"
     desc: "Transparency of widget cards"
@@ -21,7 +13,7 @@ SettingSliderRow {
     step: 0.05
     isFloat: true
     unit: "%"
->>>>>>> d760579 (refactor(bar-settings): reuse SettingSliderRow for opacity rows)
+    visible: !root.generalTab.curHidePill
     opacity: root.generalTab.curHidePill ? 0.45 : 1.0
     enabled: !root.generalTab.curHidePill
     Behavior on opacity { NumberAnimation { duration: 150 } }
