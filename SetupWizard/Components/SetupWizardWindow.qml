@@ -22,7 +22,7 @@ PanelWindow {
     property int step: 0
     property bool closing: false
     property var pendingCloseAction: null
-    readonly property var stepTitles: ["Choose Preset", "Theme & Wallpaper", "Shortcuts", "Finish"]
+    readonly property var stepTitles: ["Choose Preset", "Theme & Wallpaper", "Lockscreen", "Shortcuts", "Finish"]
 
     function closeWith(action) {
         if (root.closing) return;
@@ -102,8 +102,9 @@ PanelWindow {
         anchors.centerIn: parent
         readonly property bool isExpanded: (presetStep.customizingBar && root.step === 0)
             || (root.step === 1 && themeStep.subView !== "main")
-            || (shortcutsStep.customizingShortcuts && root.step === 2)
-        readonly property bool isShortcutsWithLegend: shortcutsStep.customizingShortcuts && root.step === 2 && shortcutsStep.showIpcLegend
+            || (root.step === 2)
+            || (shortcutsStep.customizingShortcuts && root.step === 3)
+        readonly property bool isShortcutsWithLegend: shortcutsStep.customizingShortcuts && root.step === 3 && shortcutsStep.showIpcLegend
         width: Math.min(isExpanded ? (isShortcutsWithLegend ? 1160 : 960) : 760, root.width - 48)
         height: Math.min(isExpanded ? 680 : 580, root.height - 48)
         Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -220,6 +221,12 @@ PanelWindow {
                             onSubViewChanged: stepAnim.restart()
                         }
 
+                        SetupLockscreenStep {
+                            theme: root.theme
+                            font: root.font
+                            isActive: root.step === 2
+                        }
+
                         SetupShortcutsStep {
                             id: shortcutsStep
                             theme: root.theme
@@ -266,7 +273,7 @@ PanelWindow {
                 Item { Layout.fillWidth: true }
 
                 Rectangle {
-                    visible: root.step > 0
+                    visible: root.step > 0 || (root.step === 0 && presetStep.customizingBar)
                     radius: 8
                     color: backBtnMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
                     border.color: backBtnMouse.containsMouse
@@ -285,7 +292,17 @@ PanelWindow {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.step = Math.max(0, root.step - 1)
+                        onClicked: {
+                            if (root.step === 0 && presetStep.customizingBar) {
+                                presetStep.customizingBar = false;
+                            } else if (root.step === 1 && themeStep.subView !== "main") {
+                                themeStep.subView = "main";
+                            } else if (root.step === 3 && shortcutsStep.customizingShortcuts) {
+                                shortcutsStep.customizingShortcuts = false;
+                            } else {
+                                root.step = Math.max(0, root.step - 1);
+                            }
+                        }
                     }
 
                     Text {

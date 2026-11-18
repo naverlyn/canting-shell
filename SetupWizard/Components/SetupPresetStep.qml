@@ -189,57 +189,16 @@ ColumnLayout {
     }
 
     // Inline BarSettings view
-    ColumnLayout {
+    Loader {
         visible: root.customizingBar
+        active: root.customizingBar
         Layout.fillWidth: true
         Layout.fillHeight: true
-        spacing: 8
-
-        RowLayout {
-            Layout.fillWidth: true
-
-            Rectangle {
-                radius: 8
-                color: backPresetMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
-                border.color: backPresetMouse.containsMouse ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.55) : root.theme.bgBorder
-                border.width: 1
-                implicitWidth: backPresetLbl.implicitWidth + 20
-                implicitHeight: 28
-                scale: backPresetMouse.pressed ? 0.96 : (backPresetMouse.containsMouse ? 1.03 : 1.0)
-                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-
-                MouseArea {
-                    id: backPresetMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.customizingBar = false
-                }
-
-                Text {
-                    id: backPresetLbl
-                    anchors.centerIn: parent
-                    text: "Back to Presets"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    color: root.theme.textPrimary
-                }
-            }
-
-            Item { Layout.fillWidth: true }
-        }
-
-        Loader {
-            active: root.customizingBar
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            sourceComponent: Component {
-                BarSettings {
-                    theme: root.theme
-                    font: root.font
-                }
+        sourceComponent: Component {
+            BarSettings {
+                theme: root.theme
+                font: root.font
+                showHeaderActions: false
             }
         }
     }

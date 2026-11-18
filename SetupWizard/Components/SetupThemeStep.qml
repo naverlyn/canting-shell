@@ -177,36 +177,6 @@ ColumnLayout {
             spacing: 10
 
             Rectangle {
-                radius: 8
-                color: backThemeMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
-                border.color: backThemeMouse.containsMouse ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.55) : root.theme.bgBorder
-                border.width: 1
-                implicitWidth: backThemeLbl.implicitWidth + 20
-                implicitHeight: 32
-                scale: backThemeMouse.pressed ? 0.96 : (backThemeMouse.containsMouse ? 1.03 : 1.0)
-                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-
-                MouseArea {
-                    id: backThemeMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.subView = "main"
-                }
-
-                Text {
-                    id: backThemeLbl
-                    anchors.centerIn: parent
-                    text: "Back"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    color: root.theme.textPrimary
-                }
-            }
-
-            Rectangle {
                 Layout.fillWidth: true
                 height: 32
                 radius: 8
@@ -299,56 +269,14 @@ ColumnLayout {
     }
 
     // Inline WallpaperSettings view
-    ColumnLayout {
+    Loader {
         visible: root.subView === "wallpapers"
+        active: root.subView === "wallpapers"
         Layout.fillWidth: true
         Layout.fillHeight: true
-        spacing: 8
-
-        RowLayout {
-            Layout.fillWidth: true
-
-            Rectangle {
-                radius: 8
-                color: backWallMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
-                border.color: backWallMouse.containsMouse ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.55) : root.theme.bgBorder
-                border.width: 1
-                implicitWidth: backWallLbl.implicitWidth + 20
-                implicitHeight: 28
-                scale: backWallMouse.pressed ? 0.96 : (backWallMouse.containsMouse ? 1.03 : 1.0)
-                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-
-                MouseArea {
-                    id: backWallMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.subView = "main"
-                }
-
-                Text {
-                    id: backWallLbl
-                    anchors.centerIn: parent
-                    text: "Back"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    color: root.theme.textPrimary
-                }
-            }
-
-            Item { Layout.fillWidth: true }
-        }
-
-        Loader {
-            active: root.subView === "wallpapers"
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            sourceComponent: Component {
-                WallpaperSettings {
-                    theme: root.theme
-                }
+        sourceComponent: Component {
+            WallpaperSettings {
+                theme: root.theme
             }
         }
     }

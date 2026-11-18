@@ -134,38 +134,6 @@ ColumnLayout {
             Layout.fillWidth: true
             spacing: 8
 
-            Rectangle {
-                radius: 8
-                color: backShortcutsMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
-                border.color: backShortcutsMouse.containsMouse
-                    ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.55)
-                    : root.theme.bgBorder
-                border.width: 1
-                implicitWidth: backShortcutsLbl.implicitWidth + 20
-                implicitHeight: 28
-                scale: backShortcutsMouse.pressed ? 0.96 : (backShortcutsMouse.containsMouse ? 1.03 : 1.0)
-                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutQuad } }
-                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-
-                MouseArea {
-                    id: backShortcutsMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.customizingShortcuts = false
-                }
-
-                Text {
-                    id: backShortcutsLbl
-                    anchors.centerIn: parent
-                    text: "Back to Shortcuts"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    color: root.theme.textPrimary
-                }
-            }
-
             Item { Layout.fillWidth: true }
 
             Rectangle {
