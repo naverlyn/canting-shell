@@ -20,7 +20,45 @@ PanelWindow {
 
     property int step: 0
     property bool customizingBar: false
+    property bool closing: false
+    property var pendingCloseAction: null
     readonly property var stepTitles: ["1. Choose Preset", "2. Theme & Wallpaper", "3. Shortcuts & Ready"]
+
+    function closeWith(action) {
+        if (root.closing) return;
+        root.closing = true;
+        root.pendingCloseAction = action || null;
+        openAnim.stop();
+        closeAnim.start();
+    }
+
+    onStepChanged: stepAnim.restart()
+    onCustomizingBarChanged: stepAnim.restart()
+
+    Component.onCompleted: openAnim.start()
+
+    ParallelAnimation {
+        id: openAnim
+        NumberAnimation { target: backdrop; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+        NumberAnimation { target: card; property: "opacity"; from: 0.0; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+        NumberAnimation { target: card; property: "scale"; from: 0.96; to: 1.0; duration: 180; easing.type: Easing.OutCubic }
+    }
+
+    ParallelAnimation {
+        id: closeAnim
+        NumberAnimation { target: backdrop; property: "opacity"; to: 0.0; duration: 120; easing.type: Easing.InCubic }
+        NumberAnimation { target: card; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+        NumberAnimation { target: card; property: "scale"; to: 0.96; duration: 110; easing.type: Easing.InCubic }
+        onFinished: {
+            if (root.pendingCloseAction) root.pendingCloseAction();
+        }
+    }
+
+    ParallelAnimation {
+        id: stepAnim
+        NumberAnimation { target: stepContentWrap; property: "opacity"; from: 0.0; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+        NumberAnimation { target: stepContentWrap; property: "y"; from: 8; to: 0; duration: 160; easing.type: Easing.OutCubic }
+    }
 
     readonly property var presetOptions: [
         {
@@ -85,17 +123,19 @@ PanelWindow {
 
     // Dimmed backdrop
     Rectangle {
+        id: backdrop
         anchors.fill: parent
         color: "#66000000"
+        opacity: 0.0
         MouseArea {
             anchors.fill: parent
-            onClicked: root.skipRequested()
+            onClicked: root.closeWith(() => root.skipRequested())
         }
     }
 
     Shortcut {
         sequence: "Escape"
-        onActivated: root.skipRequested()
+        onActivated: root.closeWith(() => root.skipRequested())
     }
 
     Rectangle {
@@ -103,11 +143,15 @@ PanelWindow {
         anchors.centerIn: parent
         width: Math.min(root.customizingBar && root.step === 0 ? 920 : 700, root.width - 48)
         height: Math.min(root.customizingBar && root.step === 0 ? 660 : 540, root.height - 48)
+        Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+        Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         radius: 18
         color: root.theme.bgBase
         border.color: root.theme.bgBorder
         border.width: 1
         clip: true
+        opacity: 0.0
+        scale: 0.96
 
         MouseArea { anchors.fill: parent }
 
@@ -182,10 +226,19 @@ PanelWindow {
             }
 
             // Step content
-            StackLayout {
+            Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                currentIndex: root.step
+                clip: true
+
+                Item {
+                    id: stepContentWrap
+                    width: parent.width
+                    height: parent.height
+
+                    StackLayout {
+                        anchors.fill: parent
+                        currentIndex: root.step
 
                 // Step 0: Presets (or inline BarSettings when customizing)
                 ColumnLayout {
@@ -492,7 +545,7 @@ PanelWindow {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.launchIpcRequested("theme", "toggle", "")
+                                onClicked: root.closeWith(() => root.launchIpcRequested("theme", "toggle", ""))
                             }
 
                             Text {
@@ -515,7 +568,7 @@ PanelWindow {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.launchIpcRequested("wallpaper", "toggle", "")
+                                onClicked: root.closeWith(() => root.launchIpcRequested("wallpaper", "toggle", ""))
                             }
 
                             Text {
@@ -622,7 +675,9 @@ PanelWindow {
                         }
                     }
 
-                    Item { Layout.fillHeight: true }
+                            Item { Layout.fillHeight: true }
+                        }
+                    }
                 }
             }
 
@@ -640,7 +695,7 @@ PanelWindow {
                     MouseArea {
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: root.skipRequested()
+                        onClicked: root.closeWith(() => root.skipRequested())
                     }
                 }
 
@@ -683,7 +738,7 @@ PanelWindow {
                             if (root.step < 2) {
                                 root.step++;
                             } else {
-                                root.finishRequested();
+                                root.closeWith(() => root.finishRequested());
                             }
                         }
                     }
