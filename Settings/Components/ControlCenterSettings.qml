@@ -66,7 +66,7 @@ Item {
             if (root.draggedBlockType !== "tile") return false;
             if (!ControlCenterConfig.groupTilesEnabled) return false;
             if (root.dragSourcePanelIndex === 3) return true;
-            return ControlCenterConfig.groupedTiles.length < 4;
+            return ControlCenterConfig.groupedTiles.length < ControlCenterConfig.groupCapacity;
         }
         if (panelIdx === 4 || panelIdx === 5) {
             return root.draggedBlockType === "tile";
@@ -213,7 +213,7 @@ Item {
         if (panelIdx === 3) {
             if (bType !== "tile" || !ControlCenterConfig.groupTilesEnabled) return false;
             if (ControlCenterConfig.isTileInGroup(root.draggedBlockId)) return true;
-            return ControlCenterConfig.groupedTiles.length < 4;
+            return ControlCenterConfig.groupedTiles.length < ControlCenterConfig.groupCapacity;
         }
         if (panelIdx === 4 || panelIdx === 5) return bType === "tile";
         return false;

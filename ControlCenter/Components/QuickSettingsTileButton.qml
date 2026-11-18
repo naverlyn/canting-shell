@@ -13,18 +13,27 @@ import ".."
                 readonly property var activeTileList: hostGrid.activeTileModel
                 readonly property bool isLastOdd: (tileBtn.index === activeTileList.length - 1) && (activeTileList.length % 2 === 1)
                 readonly property bool isBeingDragged: hostGrid.isDragging && hostGrid.draggedTileId === tileBtn.tid
-                readonly property bool isDropTarget: hostGrid.isDragging && hostGrid.dragHoverIndex === tileBtn.index && hostGrid.draggedTileId !== tileBtn.tid
-                readonly property real singleColWidth: Math.max(80, Math.floor((hostGrid.width - 8) / 2))
+                readonly property bool isDropTarget: hostGrid.isPanelTiles
+                    ? (hostGrid.hostCenterRef !== null
+                        && hostGrid.hostCenterRef.isDraggingCard
+                        && hostGrid.hostCenterRef.dragCardTargetPanel === hostGrid.panelIndex
+                        && hostGrid.hostCenterRef.dragCardTargetItemIdx === hostGrid.blockStart + tileBtn.index
+                        && hostGrid.hostCenterRef.draggedCardId !== "tile:" + tileBtn.tid)
+                    : (hostGrid.isDragging && hostGrid.dragHoverIndex === tileBtn.index && hostGrid.draggedTileId !== tileBtn.tid)
+                readonly property real singleColWidth: Math.max(80, Math.floor((hostGrid.tileAreaWidth - 8) / 2))
 
                 Layout.fillWidth: true
-                Layout.preferredWidth: isLastOdd ? hostGrid.width : singleColWidth
-                Layout.minimumWidth: isLastOdd ? hostGrid.width : singleColWidth
-                Layout.maximumWidth: isLastOdd ? hostGrid.width : singleColWidth
+                Layout.preferredWidth: isLastOdd ? hostGrid.tileAreaWidth : singleColWidth
+                Layout.minimumWidth: isLastOdd ? hostGrid.tileAreaWidth : singleColWidth
+                Layout.maximumWidth: isLastOdd ? hostGrid.tileAreaWidth : singleColWidth
                 Layout.columnSpan: isLastOdd ? 2 : 1
-                Layout.preferredHeight: 40
-                implicitHeight: 40
-                height: 40
-                radius: 8
+                // Tiles on the last row absorb extra height so neighbouring panels end at the same level
+                readonly property bool isLastRow: tileBtn.index >= activeTileList.length - (activeTileList.length % 2 === 1 ? 1 : 2)
+                readonly property real tileHeight: 50 + (isLastRow ? hostGrid.extraHeight : 0)
+                Layout.preferredHeight: tileHeight
+                implicitHeight: tileHeight
+                height: tileHeight
+                radius: 10
 
                 scale: isBeingDragged ? 0.94 : (isDropTarget ? 1.04 : (tileClickArea.pressed ? 0.98 : 1.0))
 
@@ -100,88 +109,73 @@ import ".."
                 Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
                 Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
-                // Display icon & label
+                // Display icon & label (same layout as the Connectivity group tiles)
                 RowLayout {
-                    anchors.centerIn: parent
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 8
                     spacing: 8
 
-                    Text {
-                        id: tileIcon
-                        font.family: hostGrid.font
-                        font.pixelSize: 16
-                        color: {
-                            if ((tileBtn.tid === "mic" && hostGrid.micMuted) || (tileBtn.tid === "mute" && hostGrid.sinkMuted)) {
-                                return hostGrid.theme.accentRed;
-                            }
-                            return hostGrid.theme.textPrimary;
-                        }
-                        text: {
-                            switch (tileBtn.tid) {
-                            case "wifi": return hostGrid.wifiEnabled ? "󰖩" : "󰖪";
-                            case "nightlight": return hostGrid.nightLightEnabled ? "󰛨" : "󰛩";
-                            case "caffeine": return SystemInfo.idleInhibited ? "" : "";
-                            case "dnd": return hostGrid.dndEnabled ? "󰂛" : "󰂚";
-                            case "mic": return hostGrid.micMuted ? "󰍭" : "󰍬";
-                            case "mute": return hostGrid.sinkMuted ? "󰝟" : "󰕾";
-                            case "gamemode": return "󰊴";
-                            case "clipboard": return "󰅍";
-                            case "darkmode": return hostGrid.isDarkMode ? "󰔎" : "󰃚";
-                            case "emoji": return "󰞅";
-                            case "screenshot": return "󰄄";
-                            case "lock": return "󰌾";
-                            case "bluetooth": return (hostGrid.btAvailable && hostGrid.btEnabled) ? "󰂯" : "󰂲";
-                            case "airplane": return hostGrid.airplaneEnabled ? "󰀝" : "󰀞";
-                            default: return tileBtn.modelData.icon ?? "󰅃";
-                            }
+                    Rectangle {
+                        width: 32
+                        height: 32
+                        radius: 16
+                        Layout.alignment: Qt.AlignVCenter
+                        color: tileBtn.isActive
+                            ? Qt.rgba(hostGrid.theme.accentPrimary.r, hostGrid.theme.accentPrimary.g, hostGrid.theme.accentPrimary.b, 0.38)
+                            : Qt.rgba(hostGrid.theme.textPrimary.r, hostGrid.theme.textPrimary.g, hostGrid.theme.textPrimary.b, 0.10)
+
+                        Text {
+                            id: tileIcon
+                            anchors.centerIn: parent
+                            font.family: hostGrid.font
+                            font.pixelSize: 14
+                            color: ((tileBtn.tid === "mic" && hostGrid.micMuted) || (tileBtn.tid === "mute" && hostGrid.sinkMuted))
+                                ? hostGrid.theme.accentRed
+                                : hostGrid.theme.textPrimary
+                            text: hostGrid.getTileIcon(tileBtn.tid)
                         }
                     }
 
-                    Text {
-                        id: tileLabel
-                        font.family: hostGrid.font
-                        font.pixelSize: 12
-                        font.bold: tileBtn.isActive
-                        elide: Text.ElideRight
-                        Layout.maximumWidth: tileBtn.isLastOdd ? 200 : (ControlCenterConfig.isLiveEdit ? 84 : 100)
-                        color: {
-                            if ((tileBtn.tid === "mic" && hostGrid.micMuted) || (tileBtn.tid === "mute" && hostGrid.sinkMuted)) {
-                                return hostGrid.theme.accentRed;
-                            }
-                            return hostGrid.theme.textPrimary;
+                    ColumnLayout {
+                        spacing: 1
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+
+                        Text {
+                            id: tileLabel
+                            text: tileBtn.modelData.label ?? ""
+                            font.family: hostGrid.font
+                            font.pixelSize: 11
+                            font.bold: true
+                            color: ((tileBtn.tid === "mic" && hostGrid.micMuted) || (tileBtn.tid === "mute" && hostGrid.sinkMuted))
+                                ? hostGrid.theme.accentRed
+                                : hostGrid.theme.textPrimary
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                            Layout.rightMargin: ControlCenterConfig.isLiveEdit ? 14 : 0
                         }
-                        text: {
-                            switch (tileBtn.tid) {
-                            case "wifi":
-                                return (hostGrid.wifiEnabled && hostGrid.currentSsid !== "") ? hostGrid.currentSsid : "Wi-Fi";
-                            case "nightlight":
-                                return "Night Light";
-                            case "caffeine":
-                                return SystemInfo.idleInhibited ? "Awake: On" : "Keep Awake";
-                            case "dnd":
-                                return hostGrid.dndEnabled ? "DND: On" : "DND";
-                            case "mic":
-                                return hostGrid.micMuted ? "Mic Muted" : "Microphone";
-                            case "mute":
-                                return hostGrid.sinkMuted ? "Audio Muted" : "Mute Audio";
-                            case "gamemode":
-                                return hostGrid.gameModeEnabled ? "Game: On" : "Game Mode";
-                            case "clipboard":
-                                return "Clipboard";
-                            case "darkmode":
-                                return hostGrid.isDarkMode ? "Dark Mode" : "Light Mode";
-                            case "emoji":
-                                return "Emoji Picker";
-                            case "screenshot":
-                                return "Screenshot";
-                            case "lock":
-                                return "Lock";
-                            case "bluetooth":
-                                return hostGrid.btAvailable ? (hostGrid.btEnabled ? "Bluetooth" : "Bluetooth: Off") : "No BT";
-                            case "airplane":
-                                return hostGrid.airplaneEnabled ? "Airplane: On" : "Airplane";
-                            default:
-                                return tileBtn.modelData.label ?? "";
+
+                        Text {
+                            text: {
+                                switch (tileBtn.tid) {
+                                case "wifi": return hostGrid.wifiEnabled ? (hostGrid.currentSsid || "On") : "Off";
+                                case "bluetooth": return hostGrid.btAvailable ? (hostGrid.btEnabled ? "On" : "Off") : "No adapter";
+                                case "darkmode": return hostGrid.isDarkMode ? "Dark" : "Light";
+                                case "mic": return hostGrid.micMuted ? "Muted" : "Live";
+                                case "mute": return hostGrid.sinkMuted ? "Muted" : "Live";
+                                case "clipboard": return "History";
+                                case "emoji": return "Picker";
+                                case "screenshot": return "Capture";
+                                case "lock": return "Session";
+                                default: return tileBtn.isActive ? "On" : "Off";
+                                }
                             }
+                            font.family: hostGrid.font
+                            font.pixelSize: 9
+                            color: tileBtn.isActive ? hostGrid.theme.accentPrimary : hostGrid.theme.textMuted
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
                         }
                     }
                 }

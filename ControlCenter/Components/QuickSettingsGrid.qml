@@ -13,7 +13,18 @@ ColumnLayout {
 
     property var theme: DefaultTheme {}
     property string font: "Lato Nerd Font"
-    property string mode: "tiles" // "connectivity", "tiles", or "both"
+    property string mode: "tiles" // "connectivity", "tiles", "tiles2", "both" or "panelTiles"
+
+    // "panelTiles" mode: individual tiles placed directly in a panel
+    property var tileIds: []
+    property int panelIndex: -1
+    property int blockStart: 0
+    readonly property bool isPanelTiles: root.mode === "panelTiles"
+    // Extra pixels added to the last tile row (used to equalise panel heights)
+    property real extraHeight: 0
+    // Quick Tiles cards are drawn inside a rounded card, like the Connectivity group
+    readonly property bool carded: root.mode === "tiles" || root.mode === "tiles2" || root.mode === "both"
+    readonly property real tileAreaWidth: root.carded ? root.width - 16 : root.width
 
     // Toggle states
     property bool wifiEnabled: true
@@ -51,6 +62,19 @@ ColumnLayout {
     property real dragMouseX: 0
     property real dragMouseY: 0
 
+    // Index (within this block) of the tile under a point given in the control center main rect
+    function tileIndexAtMain(mx, my, mainRect) {
+        for (let i = 0; i < tilesRepeater.count; i++) {
+            const item = tilesRepeater.itemAt(i);
+            if (!item) continue;
+            const pt = item.mapFromItem(mainRect, mx, my);
+            if (pt.x >= -4 && pt.x <= item.width + 4 && pt.y >= -4 && pt.y <= item.height + 4) return i;
+        }
+        return -1;
+    }
+
+    readonly property var hostCenterRef: (typeof controlCenter !== "undefined") ? controlCenter : null
+
     function startTileDrag(tid, srcIdx, rootX, rootY) {
         draggedTileId = tid;
         dragSourceIndex = srcIdx;
@@ -58,12 +82,21 @@ ColumnLayout {
         dragMouseX = rootX;
         dragMouseY = rootY;
         isDragging = true;
+        if (root.isPanelTiles && root.hostCenterRef) {
+            const p = root.mapToItem(root.hostCenterRef.mainRect, rootX, rootY);
+            root.hostCenterRef.startCardDrag("tile:" + tid, -1, p.x, p.y);
+        }
     }
 
     function updateTileDrag(rootX, rootY) {
         dragMouseX = rootX;
         dragMouseY = rootY;
         if (!isDragging) return;
+        if (root.isPanelTiles && root.hostCenterRef) {
+            const p = root.mapToItem(root.hostCenterRef.mainRect, rootX, rootY);
+            root.hostCenterRef.updateCardDrag(p.x, p.y);
+            return;
+        }
         for (let i = 0; i < tilesRepeater.count; i++) {
             const item = tilesRepeater.itemAt(i);
             if (!item) continue;
@@ -76,6 +109,14 @@ ColumnLayout {
     }
 
     readonly property var activeTileModel: {
+        if (root.mode === "panelTiles") {
+            let res = [];
+            for (let i = 0; i < root.tileIds.length; i++) {
+                const def = ControlCenterConfig.getTileDef(root.tileIds[i]);
+                if (def) res.push({ id: def.id, label: def.label, icon: def.icon, desc: def.desc });
+            }
+            return res;
+        }
         if (root.mode === "tiles2") return ControlCenterConfig.secondaryTiles;
         return (ControlCenterConfig.isCardVisible("connectivity") || ControlCenterConfig.groupTilesEnabled)
             ? ControlCenterConfig.ungroupedTiles
@@ -90,6 +131,10 @@ ColumnLayout {
         draggedTileId = "";
         dragHoverIndex = -1;
         dragSourceIndex = -1;
+        if (root.isPanelTiles) {
+            if (root.hostCenterRef) root.hostCenterRef.finishCardDrag();
+            return;
+        }
         if (srcIdx >= 0 && targetIdx >= 0 && srcIdx !== targetIdx) {
             if (root.mode === "tiles2") {
                 ControlCenterConfig.moveSecondaryTile(srcIdx, targetIdx);
@@ -435,7 +480,7 @@ ColumnLayout {
         Text {
             anchors.centerIn: parent
             text: root.mode === "connectivity"
-                ? "No 2x2 connectivity tiles assigned"
+                ? "No connectivity tiles assigned"
                 : (root.mode === "tiles2" ? "No Quick Tiles 2 assigned (click + below)" : "No quick settings tiles enabled")
             font.family: root.font
             font.pixelSize: 11
@@ -452,31 +497,100 @@ ColumnLayout {
     }
 
     // 2. Ungrouped / Standalone Quick Tiles Grid (Primary "tiles" or Secondary "tiles2")
-    GridLayout {
+    Rectangle {
         Layout.fillWidth: true
-        columns: 2
-        rowSpacing: 8
-        columnSpacing: 8
-        uniformCellWidths: true
-        visible: (root.mode === "tiles" || root.mode === "tiles2" || root.mode === "both")
+        implicitHeight: tilesGrid.implicitHeight + (root.carded ? 16 : 0)
+            + (tilesTitle.visible ? tilesTitle.height + 6 : 0)
+        Layout.preferredHeight: implicitHeight
+        radius: 12
+        color: root.carded
+            ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.04)
+            : "transparent"
+        border.color: root.carded ? root.theme.bgBorder : "transparent"
+        border.width: root.carded ? 1 : 0
+        visible: (root.mode === "tiles" || root.mode === "tiles2" || root.mode === "both" || root.isPanelTiles)
             && root.activeTileModel.length > 0
 
-        Repeater {
-            id: tilesRepeater
-            model: root.activeTileModel
+        // Card title (hidden in edit mode, where the module toolbar already shows the name)
+        Text {
+            id: tilesTitle
+            visible: root.carded && (ControlCenterConfig.isLiveEdit || text !== "")
+            readonly property string cardKey: root.mode === "tiles2" ? "quickSettings2" : "quickSettings"
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.leftMargin: 12
+            anchors.topMargin: 8
+            height: 14
+            text: ControlCenterConfig.isLiveEdit ? "" : ControlCenterConfig.getCardTitle(cardKey)
+            font.family: root.font
+            font.pixelSize: 10
+            font.bold: true
+            color: root.theme.textSecondary
 
-            delegate: QuickSettingsTileButton {
-                hostGrid: root
+            // Inline editor (live edit): click, type, press Enter
+            TextInput {
+                id: tilesTitleEdit
+                visible: ControlCenterConfig.isLiveEdit
+                width: Math.max(80, root.width - 40)
+                height: 14
+                text: ControlCenterConfig.getCardTitle(tilesTitle.cardKey)
+                font.family: root.font
+                font.pixelSize: 10
+                font.bold: true
+                color: root.theme.textPrimary
+                selectByMouse: true
+                clip: true
+                maximumLength: 28
+                onEditingFinished: ControlCenterConfig.setCardTitle(tilesTitle.cardKey, text)
+
+                Text {
+                    visible: parent.text === "" && !parent.activeFocus
+                    text: "Add a title…"
+                    font: parent.font
+                    color: root.theme.textMuted
+                }
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.bottom
+                    height: 1
+                    color: parent.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
+                }
+            }
+        }
+
+        GridLayout {
+            id: tilesGrid
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: tilesTitle.visible ? tilesTitle.bottom : parent.top
+                topMargin: root.carded ? (tilesTitle.visible ? 6 : 8) : 0
+                leftMargin: root.carded ? 8 : 0
+                rightMargin: root.carded ? 8 : 0
+            }
+            columns: 2
+            rowSpacing: 8
+            columnSpacing: 8
+            uniformCellWidths: true
+
+            Repeater {
+                id: tilesRepeater
+                model: root.activeTileModel
+
+                delegate: QuickSettingsTileButton {
+                    hostGrid: root
+                }
             }
         }
     }
 
-    // Quick Add Tile row in Live Edit Mode when this grid is empty
+    // Quick Add Tile row in Live Edit Mode (always available while tiles remain unassigned)
     Flow {
         visible: ControlCenterConfig.isLiveEdit
-            && (root.mode === "tiles" || root.mode === "tiles2")
-            && root.activeTileModel.length === 0
             && ControlCenterConfig.unassignedTiles.length > 0
+            && ((root.mode === "tiles" || root.mode === "tiles2")
+                || (root.mode === "connectivity" && ControlCenterConfig.groupedTiles.length < ControlCenterConfig.groupCapacity))
         Layout.fillWidth: true
         spacing: 5
 
@@ -499,7 +613,7 @@ ColumnLayout {
                     spacing: 4
 
                     Text {
-                        text: "+ " + (modelData.icon || "󰒓")
+                        text: (modelData.icon || "󰒓")
                         font.family: root.font
                         font.pixelSize: 10
                         color: root.theme.accentPrimary
@@ -519,7 +633,10 @@ ColumnLayout {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        if (root.mode === "tiles2") {
+                        if (root.mode === "connectivity") {
+                            ControlCenterConfig.setGroupTilesEnabled(true);
+                            ControlCenterConfig.addTileToGroup(modelData.id);
+                        } else if (root.mode === "tiles2") {
                             ControlCenterConfig.addTileToSecondary(modelData.id);
                         } else {
                             ControlCenterConfig.setTileEnabled(modelData.id, true);

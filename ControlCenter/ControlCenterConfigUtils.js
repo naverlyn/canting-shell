@@ -117,6 +117,8 @@ function resetDefaults(root) {
     root.panelWidth = 320;
     root.panelLayout = "horizontal";
     root.panelCount = 3;
+    root.cardTitles = {};
+    root.groupSize = 2;
     root.panel1 = ["connectivity", "quickSettings", "systemInfo"];
     root.panel2 = ["brightness", "media"];
     root.panel3 = ["audio", "notifications"];
@@ -158,6 +160,8 @@ function buildConfigData(root) {
         panel1: root.panel1,
         panel2: root.panel2,
         panel3: root.panel3,
+        cardTitles: root.cardTitles,
+        groupSize: root.groupSize,
         groupTilesEnabled: root.groupTilesEnabled,
         groupedTileIds: root.groupedTileIds,
         secondaryTileIds: root.secondaryTileIds,
@@ -196,6 +200,16 @@ function applyConfig(root, cfg) {
     }
     if (cfg.panelCount !== undefined) {
         root.panelCount = Math.max(1, Math.min(3, Math.round(Number(cfg.panelCount) || 3)));
+    }
+    if (cfg.groupSize !== undefined) {
+        root.groupSize = Math.max(2, Math.min(6, Math.round(Number(cfg.groupSize) || 2)));
+    }
+    if (cfg.cardTitles && typeof cfg.cardTitles === "object") {
+        var titles = {};
+        for (var k in cfg.cardTitles) {
+            if (typeof cfg.cardTitles[k] === "string") titles[k] = cfg.cardTitles[k];
+        }
+        root.cardTitles = titles;
     }
     if (cfg.groupTilesEnabled !== undefined) {
         root.groupTilesEnabled = Boolean(cfg.groupTilesEnabled);

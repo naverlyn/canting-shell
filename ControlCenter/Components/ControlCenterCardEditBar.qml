@@ -109,6 +109,41 @@ Rectangle {
                 }
             }
 
+            // Connectivity grid size (2x2 .. 6x6)
+            Rectangle {
+                visible: hostWrapper.cardId === "connectivity"
+                implicitWidth: sizeTxt.implicitWidth + 12
+                height: 20
+                radius: 5
+                color: sizeMouse.containsMouse
+                    ? Qt.rgba(hostCenter.theme.accentPrimary.r, hostCenter.theme.accentPrimary.g, hostCenter.theme.accentPrimary.b, 0.24)
+                    : Qt.rgba(hostCenter.theme.accentPrimary.r, hostCenter.theme.accentPrimary.g, hostCenter.theme.accentPrimary.b, 0.12)
+                border.color: Qt.rgba(hostCenter.theme.accentPrimary.r, hostCenter.theme.accentPrimary.g, hostCenter.theme.accentPrimary.b, sizeMouse.containsMouse ? 0.9 : 0.5)
+                border.width: 1
+                scale: sizeMouse.pressed ? 0.95 : 1.0
+                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on scale { NumberAnimation { duration: 100 } }
+
+                Text {
+                    id: sizeTxt
+                    anchors.centerIn: parent
+                    text: ControlCenterConfig.groupSize + "x" + ControlCenterConfig.groupSize
+                    font.family: hostCenter.font
+                    font.pixelSize: 9
+                    font.bold: true
+                    color: hostCenter.theme.accentPrimary
+                }
+
+                MouseArea {
+                    id: sizeMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    preventStealing: true
+                    onClicked: ControlCenterConfig.cycleGroupSize()
+                }
+            }
+
             // Remove Card Button
             Rectangle {
                 implicitWidth: removeText.implicitWidth + 14

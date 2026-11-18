@@ -106,7 +106,7 @@ Rectangle {
                 panelTotalItems: quickPanel.itemCount
                 canMoveUp: index > 0
                 canMoveDown: index < quickPanel.itemCount - 1
-                canMoveLeft: ControlCenterConfig.groupedTiles.length < 4
+                canMoveLeft: ControlCenterConfig.groupedTiles.length < ControlCenterConfig.groupCapacity
                 canMoveRight: true
                 showConfigBtn: false
                 onMoveUpClicked: ControlCenterConfig.moveUngroupedTile(index, index - 1)
