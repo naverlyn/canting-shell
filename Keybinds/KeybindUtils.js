@@ -87,6 +87,10 @@ function normalizeBinds(rawList) {
         const mods = formatModmask(b.modmask);
         const keyLabel = formatKeyName(rawKey);
         const dispClean = cleanDispatcher(b.dispatcher);
+        const argClean = String(b.arg || "").trim();
+        const dispatcherLabel = argClean !== ""
+            ? (dispClean !== "" ? (dispClean + " · " + argClean) : argClean)
+            : dispClean;
         const desc = String(b.description || "").trim();
         const title = desc !== "" ? desc : (dispClean !== "" ? dispClean : rawKey);
         const category = categorizeBind(rawKey, dispClean, title);
@@ -99,9 +103,9 @@ function normalizeBinds(rawList) {
             keyLabel: keyLabel,
             comboText: comboText,
             title: title,
-            dispatcherLabel: dispClean,
+            dispatcherLabel: dispatcherLabel,
             category: category,
-            searchBlob: (title + " " + comboText + " " + rawKey + " " + dispClean + " " + category).toLowerCase()
+            searchBlob: (title + " " + comboText + " " + rawKey + " " + dispClean + " " + argClean + " " + category).toLowerCase()
         });
     }
     return out;
