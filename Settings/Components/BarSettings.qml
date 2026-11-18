@@ -13,6 +13,7 @@ Item {
     id: root
     property var theme
     property string font: "Lato Nerd Font"
+    property bool showHeaderActions: true
 
     property int currentSubTab: 0
     onCurrentSubTabChanged: {
@@ -701,12 +702,14 @@ Item {
                 }
 
                 ActionButton {
+                    visible: root.showHeaderActions
                     iconText: "󰁯"
                     label: "Backup & Restore"
                     onClicked: openBackupProc.running = true
                 }
 
                 ActionButton {
+                    visible: root.showHeaderActions
                     iconText: "󰦛"
                     label: root.confirmReset ? "Confirm Reset?" : "Reset to Default"
                     danger: true

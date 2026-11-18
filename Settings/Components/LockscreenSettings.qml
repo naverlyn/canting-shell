@@ -26,6 +26,7 @@ Item {
     property alias loadSettingsProcRef: loadSettingsProc
     property var theme: Style.theme
     property string font: Style.font
+    property bool showHeaderActions: true
     readonly property string scriptPath: "/usr/bin/true"
 
     /* State bound directly to native LockscreenConfig */

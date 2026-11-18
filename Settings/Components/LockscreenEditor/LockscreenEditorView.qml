@@ -59,6 +59,7 @@ ColumnLayout {
         // Backup & Restore Button
         Rectangle {
             id: backupBtn
+            visible: root.showHeaderActions
             implicitWidth: backupText.implicitWidth + 24
             height: 32
             radius: 6
@@ -96,6 +97,7 @@ ColumnLayout {
         // Restore Defaults Button
         Rectangle {
             id: restoreBtn
+            visible: root.showHeaderActions
             implicitWidth: restoreText.implicitWidth + 24
             height: 32
             radius: 6
@@ -133,6 +135,7 @@ ColumnLayout {
         // Test Lock Button
         Rectangle {
             id: testLockBtn
+            visible: root.showHeaderActions
             implicitWidth: testLockText.implicitWidth + 24
             height: 32
             radius: 6

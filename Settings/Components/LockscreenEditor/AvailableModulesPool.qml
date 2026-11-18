@@ -147,15 +147,6 @@ Rectangle {
                             font.bold: true
                             color: hostRoot.theme.textPrimary
                         }
-
-                        // Plus Icon (+) strictly matching Picture 2
-                        Text {
-                            text: "󰐕"
-                            font.family: hostRoot.font
-                            font.pixelSize: 10
-                            color: chipHover.hovered ? hostRoot.theme.accentPrimary : hostRoot.theme.textMuted
-                            opacity: chipHover.hovered ? 1.0 : 0.6
-                        }
                     }
 
                     MouseArea {
