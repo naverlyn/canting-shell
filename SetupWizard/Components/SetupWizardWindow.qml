@@ -20,9 +20,25 @@ PanelWindow {
 
     property int step: 0
     property bool customizingBar: false
+    property string step1SubView: "main" // "main" | "themes" | "wallpapers"
+    property string themeSearchQuery: ""
     property bool closing: false
     property var pendingCloseAction: null
     readonly property var stepTitles: ["1. Choose Preset", "2. Theme & Wallpaper", "3. Shortcuts & Ready"]
+
+    readonly property var filteredThemes: {
+        const list = root.theme && root.theme.themes ? root.theme.themes : [];
+        const q = root.themeSearchQuery.trim().toLowerCase();
+        const out = [];
+        for (let i = 0; i < list.length; i++) {
+            const t = list[i];
+            if (!t) continue;
+            if (q === "" || String(t.name || "").toLowerCase().indexOf(q) !== -1) {
+                out.push({ index: i, themeObj: t });
+            }
+        }
+        return out;
+    }
 
     function closeWith(action) {
         if (root.closing) return;
@@ -32,8 +48,12 @@ PanelWindow {
         closeAnim.start();
     }
 
-    onStepChanged: stepAnim.restart()
+    onStepChanged: {
+        root.step1SubView = "main";
+        stepAnim.restart();
+    }
     onCustomizingBarChanged: stepAnim.restart()
+    onStep1SubViewChanged: stepAnim.restart()
 
     Component.onCompleted: openAnim.start()
 
@@ -141,8 +161,9 @@ PanelWindow {
     Rectangle {
         id: card
         anchors.centerIn: parent
-        width: Math.min(root.customizingBar && root.step === 0 ? 920 : 700, root.width - 48)
-        height: Math.min(root.customizingBar && root.step === 0 ? 660 : 540, root.height - 48)
+        readonly property bool isExpanded: (root.customizingBar && root.step === 0) || (root.step === 1 && root.step1SubView !== "main")
+        width: Math.min(isExpanded ? 920 : 700, root.width - 48)
+        height: Math.min(isExpanded ? 660 : 540, root.height - 48)
         Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         radius: 18
@@ -438,150 +459,363 @@ PanelWindow {
 
                 // Step 1: Theme & Wallpaper
                 ColumnLayout {
-                    spacing: 14
+                    spacing: 12
 
-                    RowLayout {
+                    // Main Step 1 view
+                    ColumnLayout {
+                        visible: root.step1SubView === "main"
                         Layout.fillWidth: true
-                        spacing: 10
+                        Layout.fillHeight: true
+                        spacing: 14
 
-                        Text {
-                            text: "Starter Palette"
-                            font.family: root.font
-                            font.pixelSize: 14
-                            font.bold: true
-                            color: root.theme.textPrimary
+                        RowLayout {
                             Layout.fillWidth: true
-                        }
-
-                        Rectangle {
-                            radius: 8
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-                            implicitWidth: modeTxt.implicitWidth + 20
-                            implicitHeight: 32
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.theme.toggleDarkLight()
-                            }
+                            spacing: 10
 
                             Text {
-                                id: modeTxt
-                                anchors.centerIn: parent
-                                text: root.theme.isDark ? "󰖔  Dark Mode" : "󰖨  Light Mode"
+                                text: "Starter Palette"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: 14
+                                font.bold: true
                                 color: root.theme.textPrimary
-                            }
-                        }
-                    }
-
-                    GridLayout {
-                        Layout.fillWidth: true
-                        columns: 4
-                        rowSpacing: 10
-                        columnSpacing: 10
-
-                        Repeater {
-                            model: Math.min(8, root.theme.themes ? root.theme.themes.length : 0)
-                            delegate: Rectangle {
-                                required property int index
-                                readonly property var themeObj: root.theme.themes[index]
-                                readonly property bool isCur: root.theme.currentIndex === index
-
                                 Layout.fillWidth: true
-                                height: 64
-                                radius: 10
-                                color: themeObj ? themeObj.bgSurface : root.theme.bgSurface
-                                border.color: isCur ? root.theme.accentPrimary : root.theme.bgBorder
-                                border.width: isCur ? 2 : 1
+                            }
+
+                            Rectangle {
+                                radius: 8
+                                color: root.theme.bgSurface
+                                border.color: root.theme.bgBorder
+                                border.width: 1
+                                implicitWidth: modeTxt.implicitWidth + 20
+                                implicitHeight: 32
 
                                 MouseArea {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.theme.setTheme(index)
+                                    onClicked: root.theme.toggleDarkLight()
                                 }
 
-                                ColumnLayout {
-                                    anchors.fill: parent
-                                    anchors.margins: 10
-                                    spacing: 6
+                                Text {
+                                    id: modeTxt
+                                    anchors.centerIn: parent
+                                    text: root.theme.isDark ? "󰖔  Dark Mode" : "󰖨  Light Mode"
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    color: root.theme.textPrimary
+                                }
+                            }
+                        }
 
-                                    Row {
-                                        spacing: 4
-                                        Rectangle { width: 14; height: 14; radius: 7; color: themeObj ? themeObj.bgBase : "#000" }
-                                        Rectangle { width: 14; height: 14; radius: 7; color: themeObj ? themeObj.accentPrimary : "#fff" }
-                                        Rectangle { width: 14; height: 14; radius: 7; color: themeObj ? themeObj.accentSecondary : "#888" }
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 4
+                            rowSpacing: 10
+                            columnSpacing: 10
+
+                            Repeater {
+                                model: Math.min(8, root.theme.themes ? root.theme.themes.length : 0)
+                                delegate: Rectangle {
+                                    required property int index
+                                    readonly property var themeObj: root.theme.themes[index]
+                                    readonly property bool isCur: root.theme.currentIndex === index
+
+                                    Layout.fillWidth: true
+                                    height: 64
+                                    radius: 10
+                                    color: themeObj ? themeObj.bgSurface : root.theme.bgSurface
+                                    border.color: isCur ? root.theme.accentPrimary : root.theme.bgBorder
+                                    border.width: isCur ? 2 : 1
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.theme.setTheme(index)
                                     }
 
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: themeObj ? themeObj.name : ""
-                                        font.family: root.font
-                                        font.pixelSize: 11
-                                        font.bold: isCur
-                                        color: themeObj ? themeObj.textPrimary : root.theme.textPrimary
-                                        elide: Text.ElideRight
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 10
+                                        spacing: 6
+
+                                        Row {
+                                            spacing: 4
+                                            Rectangle { width: 14; height: 14; radius: 7; color: themeObj ? themeObj.bgBase : "#000" }
+                                            Rectangle { width: 14; height: 14; radius: 7; color: themeObj ? themeObj.accentPrimary : "#fff" }
+                                            Rectangle { width: 14; height: 14; radius: 7; color: themeObj ? themeObj.accentSecondary : "#888" }
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: themeObj ? themeObj.name : ""
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            font.bold: isCur
+                                            color: themeObj ? themeObj.textPrimary : root.theme.textPrimary
+                                            elide: Text.ElideRight
+                                        }
                                     }
                                 }
                             }
                         }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 40
+                                radius: 10
+                                color: browseThemesHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+                                border.color: root.theme.bgBorder
+                                border.width: 1
+
+                                HoverHandler { id: browseThemesHover }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.step1SubView = "themes"
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰏘  Browse 200+ Themes"
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    color: root.theme.textPrimary
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 40
+                                radius: 10
+                                color: pickWallHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+                                border.color: root.theme.bgBorder
+                                border.width: 1
+
+                                HoverHandler { id: pickWallHover }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.step1SubView = "wallpapers"
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "󰸉  Open Wallpaper Picker"
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    color: root.theme.textPrimary
+                                }
+                            }
+                        }
+
+                        Item { Layout.fillHeight: true }
                     }
 
-                    RowLayout {
+                    // Inline All Themes browser
+                    ColumnLayout {
+                        visible: root.step1SubView === "themes"
                         Layout.fillWidth: true
+                        Layout.fillHeight: true
                         spacing: 10
 
-                        Rectangle {
+                        RowLayout {
                             Layout.fillWidth: true
-                            height: 40
-                            radius: 10
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
+                            spacing: 10
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.closeWith(() => root.launchIpcRequested("theme", "toggle", ""))
+                            Rectangle {
+                                radius: 8
+                                color: backThemeHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+                                border.color: root.theme.bgBorder
+                                border.width: 1
+                                implicitWidth: backThemeLbl.implicitWidth + 20
+                                implicitHeight: 32
+
+                                HoverHandler { id: backThemeHover }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.step1SubView = "main"
+                                }
+
+                                Text {
+                                    id: backThemeLbl
+                                    anchors.centerIn: parent
+                                    text: "← Back"
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    color: root.theme.textPrimary
+                                }
                             }
 
-                            Text {
-                                anchors.centerIn: parent
-                                text: "󰏘  Browse 200+ Themes"
-                                font.family: root.font
-                                font.pixelSize: 12
-                                color: root.theme.textPrimary
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 32
+                                radius: 8
+                                color: root.theme.bgSurface
+                                border.color: themeSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
+                                border.width: 1
+
+                                TextInput {
+                                    id: themeSearchInput
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 10
+                                    anchors.rightMargin: 10
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    color: root.theme.textPrimary
+                                    clip: true
+                                    text: root.themeSearchQuery
+                                    onTextChanged: root.themeSearchQuery = text
+
+                                    Text {
+                                        anchors.fill: parent
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: "Search themes..."
+                                        font.family: root.font
+                                        font.pixelSize: 12
+                                        color: root.theme.textMuted
+                                        visible: !themeSearchInput.text
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                radius: 8
+                                color: root.theme.bgSurface
+                                border.color: root.theme.bgBorder
+                                border.width: 1
+                                implicitWidth: modeTxt2.implicitWidth + 20
+                                implicitHeight: 32
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.theme.toggleDarkLight()
+                                }
+
+                                Text {
+                                    id: modeTxt2
+                                    anchors.centerIn: parent
+                                    text: root.theme.isDark ? "󰖔  Dark" : "󰖨  Light"
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    color: root.theme.textPrimary
+                                }
                             }
                         }
 
-                        Rectangle {
+                        GridView {
                             Layout.fillWidth: true
-                            height: 40
-                            radius: 10
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
+                            Layout.fillHeight: true
+                            clip: true
+                            cellWidth: Math.floor(width / 4)
+                            cellHeight: 74
+                            model: root.filteredThemes
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.closeWith(() => root.launchIpcRequested("wallpaper", "toggle", ""))
-                            }
+                            ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
-                            Text {
-                                anchors.centerIn: parent
-                                text: "󰸉  Open Wallpaper Picker"
-                                font.family: root.font
-                                font.pixelSize: 12
-                                color: root.theme.textPrimary
+                            delegate: Item {
+                                required property var modelData
+                                width: GridView.view.cellWidth
+                                height: GridView.view.cellHeight
+
+                                readonly property var themeObj: modelData.themeObj
+                                readonly property bool isCur: root.theme.currentIndex === modelData.index
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    anchors.margins: 4
+                                    radius: 10
+                                    color: themeObj ? themeObj.bgSurface : root.theme.bgSurface
+                                    border.color: isCur ? root.theme.accentPrimary : root.theme.bgBorder
+                                    border.width: isCur ? 2 : 1
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.theme.setTheme(modelData.index)
+                                    }
+
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 10
+                                        spacing: 6
+
+                                        Row {
+                                            spacing: 4
+                                            Rectangle { width: 14; height: 14; radius: 7; color: themeObj ? themeObj.bgBase : "#000" }
+                                            Rectangle { width: 14; height: 14; radius: 7; color: themeObj ? themeObj.accentPrimary : "#fff" }
+                                            Rectangle { width: 14; height: 14; radius: 7; color: themeObj ? themeObj.accentSecondary : "#888" }
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: themeObj ? themeObj.name : ""
+                                            font.family: root.font
+                                            font.pixelSize: 11
+                                            font.bold: isCur
+                                            color: themeObj ? themeObj.textPrimary : root.theme.textPrimary
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
 
-                    Item { Layout.fillHeight: true }
+                    // Inline WallpaperSettings view
+                    ColumnLayout {
+                        visible: root.step1SubView === "wallpapers"
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        spacing: 8
+
+                        RowLayout {
+                            Layout.fillWidth: true
+
+                            Rectangle {
+                                radius: 8
+                                color: backWallHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+                                border.color: root.theme.bgBorder
+                                border.width: 1
+                                implicitWidth: backWallLbl.implicitWidth + 20
+                                implicitHeight: 28
+
+                                HoverHandler { id: backWallHover }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.step1SubView = "main"
+                                }
+
+                                Text {
+                                    id: backWallLbl
+                                    anchors.centerIn: parent
+                                    text: "← Back"
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    color: root.theme.textPrimary
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+                        }
+
+                        Loader {
+                            active: root.step1SubView === "wallpapers"
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            sourceComponent: Component {
+                                WallpaperSettings {
+                                    theme: root.theme
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Step 2: Shortcuts & Tools
