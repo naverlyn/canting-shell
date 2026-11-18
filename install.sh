@@ -249,12 +249,14 @@ install_packages() {
                     quickshell) need_qs_copr=true ;;
                 esac
             done
-            local enabled_coprs=""
-            enabled_coprs="$(dnf copr list --enabled 2>/dev/null || true)"
-            if [[ "$need_qs_copr" == true ]] && ! grep -qiF "errornointernet/quickshell" <<< "$enabled_coprs"; then
+            local enabled_repos=""
+            enabled_repos="$(dnf repolist --enabled 2>/dev/null || true)"
+            enabled_repos+=$'\n'"$(dnf copr list --enabled 2>/dev/null || true)"
+            enabled_repos+=$'\n'"$(ls /etc/yum.repos.d/_copr* 2>/dev/null || true)"
+            if [[ "$need_qs_copr" == true ]] && ! grep -qiE "errornointernet[:/]quickshell" <<< "$enabled_repos"; then
                 coprs+=("errornointernet/quickshell")
             fi
-            if [[ "$need_hypr_copr" == true ]] && ! grep -qiF "lionheartp/Hyprland" <<< "$enabled_coprs"; then
+            if [[ "$need_hypr_copr" == true ]] && ! grep -qiE "lionheartp[:/]Hyprland" <<< "$enabled_repos"; then
                 coprs+=("lionheartp/Hyprland")
             fi
             if [[ ${#coprs[@]} -gt 0 ]]; then
