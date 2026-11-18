@@ -690,6 +690,7 @@ for k, v in pairs(envs) do
 end
 
 hl.on("hyprland.start", function()
+    hl.exec_cmd("command -v awww-daemon >/dev/null 2>&1 && awww-daemon --format xrgb || (command -v swww-daemon >/dev/null 2>&1 && swww-daemon)")
     hl.exec_cmd("quickshell")
 end)
 LUA
