@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import Quickshell.Wayland
 
 PanelWindow {
@@ -16,6 +15,7 @@ PanelWindow {
     signal presetChosen(string name)
     signal finishRequested()
     signal skipRequested()
+    signal launchIpcRequested(string target, string fnName)
 
     property int step: 0
     readonly property var stepTitles: ["1. Choose Preset", "2. Theme & Wallpaper", "3. Shortcuts & Ready"]
@@ -79,16 +79,6 @@ PanelWindow {
         bottom: true
         left: true
         right: true
-    }
-
-    Process {
-        id: ipcProc
-        running: false
-    }
-
-    function runIpc(target, fnName) {
-        ipcProc.command = ["qs", "ipc", "call", target, fnName];
-        ipcProc.running = true;
     }
 
     // Dimmed backdrop
@@ -385,10 +375,7 @@ PanelWindow {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.finishRequested();
-                                    root.runIpc("theme", "toggle");
-                                }
+                                onClicked: root.launchIpcRequested("theme", "toggle")
                             }
 
                             Text {
@@ -411,10 +398,7 @@ PanelWindow {
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.finishRequested();
-                                    root.runIpc("wallpaper", "toggle");
-                                }
+                                onClicked: root.launchIpcRequested("wallpaper", "toggle")
                             }
 
                             Text {

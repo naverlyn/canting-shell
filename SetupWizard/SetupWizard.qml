@@ -31,6 +31,13 @@ Scope {
         applyPresetProc.running = true;
     }
 
+    function finishAndLaunch(target, fnName) {
+        markDoneProc.running = true;
+        root.panelVisible = false;
+        launchIpcProc.command = ["qs", "ipc", "call", target, fnName];
+        launchIpcProc.running = true;
+    }
+
     IpcHandler {
         target: "setup"
 
@@ -82,6 +89,11 @@ Scope {
         running: false
     }
 
+    Process {
+        id: launchIpcProc
+        running: false
+    }
+
     Component.onCompleted: {
         statusProc.openIfNotDone = true;
         statusProc.running = true;
@@ -98,6 +110,7 @@ Scope {
                 onPresetChosen: name => root.applyPreset(name)
                 onFinishRequested: root.finishWizard()
                 onSkipRequested: root.finishWizard()
+                onLaunchIpcRequested: (target, fnName) => root.finishAndLaunch(target, fnName)
             }
         }
     }
