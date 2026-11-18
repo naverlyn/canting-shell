@@ -16,6 +16,11 @@
     { "id": "launcher", "label": "Apps",     "icon": "󰀻", "cmd": "__appgrid__" },
     { "id": "settings", "label": "Settings", "icon": "󰒓", "cmd": "__settings__" }
   ],
+  "mediaWidgetStyle": "compact",
+  "cards": {
+    "header": true
+  },
+  "mediaAutoHide": true,
   "mediaShowCava": false,
   "tiles": [
     { "id": "gamemode", "enabled": true },

@@ -13,6 +13,8 @@ NO_BACKUP=false
 DRY_RUN=false
 LIST_ONLY=false
 SKIP_DEPS=false
+WITH_KEYBINDS=false
+SKIP_KEYBINDS=false
 
 if [[ -t 1 ]]; then
     BOLD='\033[1m'
@@ -35,6 +37,8 @@ Install canting-shell and configure a preset (bar, notifications, control center
 Options:
   -p, --preset <name>   Preset to apply (laptop, pc, gaming, minimal)
   -l, --list            List available presets and exit
+      --with-keybinds   Add minimal Hyprland keybinds without prompting
+      --skip-keybinds   Skip minimal Hyprland keybinds prompt
       --skip-deps       Skip missing dependency installation prompt
       --no-backup       Do not back up existing config files
       --dry-run         Show what would be done without modifying files
@@ -63,6 +67,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-deps)
             SKIP_DEPS=true
+            shift
+            ;;
+        --with-keybinds)
+            WITH_KEYBINDS=true
+            shift
+            ;;
+        --skip-keybinds)
+            SKIP_KEYBINDS=true
             shift
             ;;
         --no-backup)
@@ -327,7 +339,7 @@ choose_preset_interactive() {
     list_presets
     echo ""
     while true; do
-        read -rp "Select a bar preset [1-4 or name, default: laptop]: " choice
+        read -rp "Select a preset [1-4 or name, default: laptop]: " choice
         case "${choice,,}" in
             ""|1|laptop)  PRESET="laptop"; break ;;
             2|pc|desktop) PRESET="pc"; break ;;
@@ -461,6 +473,147 @@ apply_preset() {
     fi
 }
 
+# Optionally add minimal Hyprland keybinds for first-time setup
+setup_minimal_keybinds() {
+    if [[ "$SKIP_KEYBINDS" == true ]]; then
+        return 0
+    fi
+
+    if [[ "$WITH_KEYBINDS" == false ]]; then
+        if [[ ! -t 0 ]]; then
+            return 0
+        fi
+        echo ""
+        read -rp "Add minimal canting-shell Hyprland keybinds (launcher, settings, clipboard, lockscreen, etc.)? [y/N]: " kb_ans
+        if [[ "${kb_ans,,}" != "y" ]]; then
+            echo -e "${DIM}Skipping keybind setup.${NC}"
+            return 0
+        fi
+    fi
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo -e "${YELLOW}Warning:${NC} python3 not found; skipping Hyprland keybind setup."
+        return 0
+    fi
+
+    local hypr_dir="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
+    python3 - "$hypr_dir" "$DRY_RUN" <<'PY'
+import json
+import os
+import subprocess
+import sys
+
+hypr_dir = sys.argv[1]
+dry_run = sys.argv[2] == "true"
+
+BINDINGS = [
+    ("SUPER", "D", "qs ipc call launcher toggle", "App Launcher"),
+    ("SUPER", "I", "qs ipc call settings toggle", "Settings"),
+    ("SUPER", "V", "qs ipc call clipboard toggle", "Clipboard History"),
+    ("SUPER", "L", "qs ipc call lockscreen lock", "Lock Screen"),
+    ("SUPER", "Tab", "qs ipc call overview toggle", "Workspace Overview"),
+    ("SUPER", "slash", "qs ipc call keybinds toggle", "Keybinds Cheat Sheet"),
+    ("SUPER SHIFT", "S", "qs ipc call screenshot toggle", "Screenshot HUD"),
+    ("SUPER SHIFT", "E", "qs ipc call powermenu toggle", "Power Menu"),
+]
+
+MOD_BITS = {"SHIFT": 1, "CTRL": 4, "ALT": 8, "SUPER": 64}
+
+def modmask(mods):
+    mask = 0
+    for part in mods.split():
+        mask |= MOD_BITS.get(part.upper(), 0)
+    return mask
+
+active_binds = set()
+if os.environ.get("HYPRLAND_INSTANCE_SIGNATURE"):
+    try:
+        res = subprocess.run(["hyprctl", "binds", "-j"], capture_output=True, text=True, timeout=2)
+        if res.returncode == 0 and res.stdout.strip():
+            for b in json.loads(res.stdout):
+                active_binds.add((int(b.get("modmask", 0)), str(b.get("key", "")).lower()))
+    except Exception:
+        pass
+
+is_lua = os.path.isfile(os.path.join(hypr_dir, "hyprland.lua"))
+target = os.path.join(hypr_dir, "custom_keybinds.lua" if is_lua else "custom_keybinds.conf")
+
+existing_text = ""
+if os.path.isfile(target):
+    with open(target, "r", encoding="utf-8", errors="ignore") as f:
+        existing_text = f.read()
+
+lines_to_add = []
+skipped_present = []
+skipped_conflict = []
+
+for mods, key, cmd, desc in BINDINGS:
+    if cmd in existing_text:
+        skipped_present.append(f"{mods} + {key}")
+        continue
+    if (modmask(mods), key.lower()) in active_binds:
+        skipped_conflict.append(f"{mods} + {key} ({desc})")
+        continue
+    if is_lua:
+        lua_keys = " + ".join(mods.split() + [key])
+        lines_to_add.append(f'hl.bind("{lua_keys}", hl.dsp.exec_cmd("{cmd}"), {{ desc = "{desc}" }})')
+    else:
+        lines_to_add.append(f"bindd = {mods}, {key}, {desc}, exec, {cmd}")
+
+if dry_run:
+    print(f"[dry-run] Keybind target: {target}")
+    for line in lines_to_add:
+        print(f"[dry-run] Would add: {line}")
+    if skipped_present:
+        print(f"[dry-run] Already configured: {', '.join(skipped_present)}")
+    if skipped_conflict:
+        print(f"[dry-run] Skipped existing binds: {', '.join(skipped_conflict)}")
+    sys.exit(0)
+
+if lines_to_add:
+    os.makedirs(hypr_dir, exist_ok=True)
+    header = ""
+    if not os.path.isfile(target):
+        header = (
+            "-- Custom Keybindings managed by canting-shell\n"
+            if is_lua else
+            "# Custom Keybindings managed by canting-shell\n"
+        )
+    prefix = ""
+    if existing_text and not existing_text.endswith("\n"):
+        prefix = "\n"
+    with open(target, "a", encoding="utf-8") as f:
+        if header:
+            f.write(header)
+        f.write(prefix + "\n".join(lines_to_add) + "\n")
+
+    main_cfg = os.path.join(hypr_dir, "hyprland.lua" if is_lua else "hyprland.conf")
+    if os.path.isfile(main_cfg):
+        with open(main_cfg, "r", encoding="utf-8", errors="ignore") as f:
+            main_txt = f.read()
+        needle = "custom_keybinds" if is_lua else "custom_keybinds.conf"
+        if needle not in main_txt:
+            hook = (
+                '\npcall(require, "custom_keybinds")\n'
+                if is_lua else
+                "\nsource = ~/.config/hypr/custom_keybinds.conf\n"
+            )
+            with open(main_cfg, "a", encoding="utf-8") as f:
+                f.write(hook)
+
+    print(f"\033[0;32m✓\033[0m Added {len(lines_to_add)} minimal keybind(s) to {target}")
+else:
+    print(f"\033[0;32m✓\033[0m Minimal keybinds already present in {target}")
+
+if skipped_conflict:
+    print(f"\033[0;33mNote:\033[0m Skipped keybind(s) already bound in Hyprland: {', '.join(skipped_conflict)}")
+PY
+
+    if [[ "$DRY_RUN" != true && -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && command -v hyprctl >/dev/null 2>&1; then
+        hyprctl reload >/dev/null 2>&1 || true
+    fi
+}
+
 check_dependencies
 ensure_install_location
 
@@ -469,8 +622,9 @@ if [[ -z "$PRESET" ]]; then
 fi
 
 apply_preset
+setup_minimal_keybinds
 
 echo ""
 echo -e "${BOLD}Next steps:${NC}"
 echo -e "  Run ${CYAN}quickshell${NC} to start the shell (or reload if already running)."
-echo -e "  You can re-run ${CYAN}./install.sh --preset <name>${NC} anytime to switch bar presets."
+echo -e "  You can re-run ${CYAN}./install.sh --preset <name>${NC} anytime to switch presets."
