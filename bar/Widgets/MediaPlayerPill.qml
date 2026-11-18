@@ -21,10 +21,10 @@ Rectangle {
   readonly property bool isPlaying: player !== null && player.playbackState === MprisPlaybackState.Playing
   property bool isPinned: false
 
-  implicitHeight: hostContainer.isVert ? 28 : (hostContainer.hidePill ? hostContainer.height : 24)
+  implicitHeight: hostContainer.isVert ? hostContainer.scaled(28) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
   implicitWidth: hostContainer.isVert
     ? hostContainer.vertPillWidth
-    : (hasMedia ? Math.min(200, mediaContent.implicitWidth + 16) : (mediaEmptyContent.implicitWidth + 14))
+    : (hasMedia ? Math.min(200, mediaContent.implicitWidth + hostContainer.scaled(16)) : (mediaEmptyContent.implicitWidth + hostContainer.scaled(14)))
   height: implicitHeight
   width: implicitWidth
   scale: mediaMouse.pressed ? 0.92 : 1.0
@@ -162,7 +162,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: mediaPill.isPlaying ? "󰏤" : "󰐊"
       color: hostContainer.wAccent("media", hostRoot.theme.accentPrimary)
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
 
@@ -170,7 +170,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: mediaPill.player ? (mediaPill.player.trackTitle || mediaPill.player.identity || "Media") : ""
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
       elide: Text.ElideRight
       width: Math.min(implicitWidth, 160)
@@ -189,7 +189,7 @@ Rectangle {
       color: hostContainer.hasCustomColor("media")
         ? hostContainer.wAccent("media", hostRoot.theme.textMuted)
         : hostRoot.theme.textMuted
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
 
@@ -197,7 +197,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: "No Media"
       color: hostRoot.theme.textMuted
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -209,7 +209,7 @@ Rectangle {
     color: (mediaPill.hasMedia || hostContainer.hasCustomColor("media"))
       ? hostContainer.wAccent("media", hostRoot.theme.accentPrimary)
       : hostRoot.theme.textMuted
-    font.pixelSize: 13
+    font.pixelSize: hostContainer.scaled(13)
     font.family: hostRoot.font
   }
 

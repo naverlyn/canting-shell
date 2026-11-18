@@ -16,8 +16,8 @@ Rectangle {
   required property var hostRoot
   required property var hostContainer
   id: batPill
-  implicitHeight: hostContainer.isVert ? (batVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (batContent.implicitWidth + 14)
+  implicitHeight: hostContainer.isVert ? (batVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (batContent.implicitWidth + hostContainer.scaled(14))
   height: implicitHeight
   width: implicitWidth
   radius: hostContainer.pillRadius
@@ -53,7 +53,7 @@ Rectangle {
         : (SystemInfo.batteryCharging
           ? hostRoot.theme.accentGreen
           : (SystemInfo.batteryLevelRaw <= (BarConfig.batteryLowThreshold || 20) ? hostRoot.theme.accentRed : hostRoot.theme.accentPrimary))
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
 
@@ -62,7 +62,7 @@ Rectangle {
       visible: BarConfig.batteryShowPercentage !== false
       text: SystemInfo.batteryLevel
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -81,7 +81,7 @@ Rectangle {
         : (SystemInfo.batteryCharging
           ? hostRoot.theme.accentGreen
           : (SystemInfo.batteryLevelRaw <= (BarConfig.batteryLowThreshold || 20) ? hostRoot.theme.accentRed : hostRoot.theme.accentPrimary))
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
 
@@ -90,7 +90,7 @@ Rectangle {
       visible: BarConfig.batteryShowPercentage !== false
       text: SystemInfo.batteryLevel
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 9
+      font.pixelSize: hostContainer.scaled(9)
       font.family: hostRoot.font
     }
   }

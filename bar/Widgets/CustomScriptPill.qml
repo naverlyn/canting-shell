@@ -24,8 +24,8 @@ Rectangle {
   readonly property bool shouldHide: Boolean(BarConfig.customScriptHideWhenEmpty) && outputText === ""
 
   visible: !shouldHide
-  implicitHeight: shouldHide ? 0 : (hostContainer.isVert ? (csVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24))
-  implicitWidth: shouldHide ? 0 : (hostContainer.isVert ? hostContainer.vertPillWidth : (csContent.implicitWidth + 14))
+  implicitHeight: shouldHide ? 0 : (hostContainer.isVert ? (csVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight))
+  implicitWidth: shouldHide ? 0 : (hostContainer.isVert ? hostContainer.vertPillWidth : (csContent.implicitWidth + hostContainer.scaled(14)))
   height: implicitHeight
   width: implicitWidth
   scale: csMouse.pressed ? 0.92 : 1.0
@@ -238,7 +238,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: csPill.resolvedIcon
       color: hostContainer.wAccent("customScript", hostRoot.theme.accentCyan)
-      font.pixelSize: 14
+      font.pixelSize: hostContainer.scaled(14)
       font.family: hostRoot.font
     }
 
@@ -247,7 +247,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: csPill.truncatedText
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -263,7 +263,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: csPill.resolvedIcon
       color: hostContainer.wAccent("customScript", hostRoot.theme.accentCyan)
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
 
@@ -272,7 +272,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: csPill.outputText.substring(0, 4)
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 9
+      font.pixelSize: hostContainer.scaled(9)
       font.family: hostRoot.font
     }
   }

@@ -19,8 +19,8 @@ Rectangle {
   property bool isPinned: false
   readonly property int diskVal: parseInt(SystemInfo.diskUsage) || 0
   readonly property bool isAlert: Boolean(BarConfig.hwAlertEnabled) && (diskVal >= (BarConfig.hwAlertThreshold || 85))
-  implicitHeight: hostContainer.isVert ? (diskVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (diskContent.implicitWidth + 14)
+  implicitHeight: hostContainer.isVert ? (diskVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (diskContent.implicitWidth + hostContainer.scaled(14))
   height: implicitHeight
   width: implicitWidth
   scale: diskMouseArea.pressed ? 0.93 : 1.0
@@ -72,7 +72,7 @@ Rectangle {
       text: ""
       visible: BarConfig.hwShowIcons !== false
       color: isAlert ? hostRoot.theme.accentRed : hostContainer.wAccent("disk", hostRoot.theme.accentPrimary)
-      font.pixelSize: 14
+      font.pixelSize: hostContainer.scaled(14)
       font.family: hostRoot.font
     }
 
@@ -80,7 +80,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: "" + SystemInfo.diskUsage + ""
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -96,7 +96,7 @@ Rectangle {
       text: ""
       visible: BarConfig.hwShowIcons !== false
       color: isAlert ? hostRoot.theme.accentRed : hostContainer.wAccent("disk", hostRoot.theme.accentPrimary)
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
 
@@ -104,7 +104,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: SystemInfo.diskUsage
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 9
+      font.pixelSize: hostContainer.scaled(9)
       font.family: hostRoot.font
     }
   }

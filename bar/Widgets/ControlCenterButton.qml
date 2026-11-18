@@ -19,8 +19,8 @@ Rectangle {
   required property var hostWindow
   required property var hostScope
   id: controlCenterButton
-  implicitHeight: hostContainer.isVert ? 28 : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : 28
+  implicitHeight: hostContainer.isVert ? hostContainer.scaled(28) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : hostContainer.scaled(28)
   height: implicitHeight
   width: implicitWidth
   scale: controlCenterArea.pressed ? 0.92 : 1.0
@@ -49,7 +49,7 @@ Rectangle {
     color: ((controlCenterLoader.item && controlCenterLoader.item.visible) || hostContainer.hasCustomColor("controlCenter"))
       ? hostContainer.wAccent("controlCenter", hostRoot.theme.accentPrimary)
       : hostRoot.theme.textPrimary
-    font.pixelSize: 12
+    font.pixelSize: hostContainer.scaled(12)
     font.family: hostRoot.font
   }
 

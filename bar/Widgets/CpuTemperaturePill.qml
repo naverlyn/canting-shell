@@ -19,8 +19,8 @@ Rectangle {
   property bool isPinned: false
   readonly property int tempVal: parseInt(SystemInfo.temperature) || 0
   readonly property bool isAlert: Boolean(BarConfig.hwAlertEnabled) && (tempVal >= (BarConfig.hwAlertThreshold || 85))
-  implicitHeight: hostContainer.isVert ? (tempVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (tempContent.implicitWidth + 14)
+  implicitHeight: hostContainer.isVert ? (tempVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (tempContent.implicitWidth + hostContainer.scaled(14))
   height: implicitHeight
   width: implicitWidth
   scale: tempMouse.pressed ? 0.93 : 1.0
@@ -78,14 +78,14 @@ Rectangle {
       text: "󰔏"
       visible: BarConfig.hwShowIcons !== false
       color: isAlert ? hostRoot.theme.accentRed : hostContainer.wAccent("temp", hostRoot.theme.accentRed)
-      font.pixelSize: 14
+      font.pixelSize: hostContainer.scaled(14)
       font.family: hostRoot.font
     }
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: SystemInfo.temperature
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -101,14 +101,14 @@ Rectangle {
       text: "󰔏"
       visible: BarConfig.hwShowIcons !== false
       color: isAlert ? hostRoot.theme.accentRed : hostContainer.wAccent("temp", hostRoot.theme.accentRed)
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
     Text {
       anchors.horizontalCenter: parent.horizontalCenter
       text: SystemInfo.temperature
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 9
+      font.pixelSize: hostContainer.scaled(9)
       font.family: hostRoot.font
     }
   }

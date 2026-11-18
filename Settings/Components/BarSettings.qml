@@ -809,6 +809,7 @@ Item {
                     readonly property int curPillRadius: BarConfig.currentBar ? (BarConfig.currentBar.pillRadius !== undefined ? Number(BarConfig.currentBar.pillRadius) : 10) : BarConfig.pillRadius
                     readonly property real curPillOpacity: BarConfig.currentBar ? (BarConfig.currentBar.pillOpacity !== undefined ? Number(BarConfig.currentBar.pillOpacity) : 1.0) : BarConfig.pillOpacity
                     readonly property bool curHidePill: BarConfig.currentBar ? Boolean(BarConfig.currentBar.hidePill) : BarConfig.hidePill
+                    readonly property bool curScaleWidgets: BarConfig.currentBar ? (BarConfig.currentBar.scaleWidgets !== undefined ? Boolean(BarConfig.currentBar.scaleWidgets) : Boolean(BarConfig.scaleWidgets)) : Boolean(BarConfig.scaleWidgets)
                     readonly property string curActiveStyle: BarConfig.currentBar ? (BarConfig.currentBar.activeStyle || BarConfig.activeStyle || "pill") : (BarConfig.activeStyle || "pill")
                     readonly property string curBarColor: BarConfig.currentBar
                         ? (isEditingSecondary && BarConfig.currentBar.secondaryBarColor !== undefined

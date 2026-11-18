@@ -217,6 +217,7 @@ Scope {
       readonly property int barMargin: (barCfg.barMargin !== undefined) ? Math.max(0, Number(barCfg.barMargin)) : Math.max(0, BarConfig.barMargin)
       readonly property real pillOpacity: (barCfg.pillOpacity !== undefined) ? Number(barCfg.pillOpacity) : BarConfig.pillOpacity
       readonly property bool hidePill: (barCfg.hidePill !== undefined) ? Boolean(barCfg.hidePill) : BarConfig.hidePill
+      readonly property bool scaleWidgets: (barCfg.scaleWidgets !== undefined) ? Boolean(barCfg.scaleWidgets) : BarConfig.scaleWidgets
       readonly property var barPanels: barCfg.panels || []
       readonly property bool hasInnerCorners: (barCfg.innerCorners !== undefined ? Boolean(barCfg.innerCorners) : Boolean(BarConfig.innerCorners)) && !barInstanceScope.isFloating
       readonly property bool fluidCards: (barCfg.fluidCards !== undefined) ? Boolean(barCfg.fluidCards) : Boolean(BarConfig.fluidCards)
@@ -605,6 +606,9 @@ Scope {
             readonly property string activeStyle: barInstanceScope.activeStyle
             readonly property string barColorSpec: barWindow.windowBarColorSpec
             readonly property int barThickness: barInstanceScope.barThickness
+            readonly property real barScale: barInstanceScope.scaleWidgets ? Math.max(0.65, barThickness / 28.0) : 1.0
+            readonly property int horizPillHeight: barInstanceScope.scaleWidgets ? Math.max(16, barThickness - 4) : 24
+            function scaled(px) { return Math.max(1, Math.round(px * barScale)); }
             readonly property bool isFloating: barWindow.windowIsFloating
             readonly property int barEdgeOffset: (
               barWindow.windowBarPos === "top" ? (barWindow.windowIsFloating ? barWindow.floatTopClearance : 0)

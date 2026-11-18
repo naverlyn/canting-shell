@@ -19,10 +19,10 @@ Rectangle {
   property bool isPinned: false
   implicitHeight: hostContainer.isVert
     ? (weatherVertRow.implicitWidth + 24)
-    : (hostContainer.hidePill ? hostContainer.height : 24)
+    : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
   implicitWidth: hostContainer.isVert
     ? hostContainer.vertPillWidth
-    : (weatherContent.implicitWidth + 16)
+    : (weatherContent.implicitWidth + hostContainer.scaled(16))
   height: implicitHeight
   width: implicitWidth
   scale: weatherMouse.pressed ? 0.92 : 1.0
@@ -59,7 +59,7 @@ Rectangle {
       color: hostContainer.hasCustomColor("weather")
         ? hostContainer.wAccent("weather", hostRoot.theme.textPrimary)
         : hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -83,7 +83,7 @@ Rectangle {
         color: hostContainer.hasCustomColor("weather")
           ? hostContainer.wAccent("weather", hostRoot.theme.textPrimary)
           : hostRoot.theme.textPrimary
-        font.pixelSize: 11
+        font.pixelSize: hostContainer.scaled(11)
         font.family: hostRoot.font
       }
     }

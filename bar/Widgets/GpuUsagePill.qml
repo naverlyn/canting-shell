@@ -26,8 +26,8 @@ Rectangle {
     return SystemInfo.gpuUsage;
   }
 
-  implicitHeight: hostContainer.isVert ? (gpuVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (gpuContent.implicitWidth + 14)
+  implicitHeight: hostContainer.isVert ? (gpuVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (gpuContent.implicitWidth + hostContainer.scaled(14))
   height: implicitHeight
   width: implicitWidth
   scale: gpuMouse.pressed ? 0.93 : 1.0
@@ -85,14 +85,14 @@ Rectangle {
       text: "󰢮"
       visible: BarConfig.hwShowIcons !== false
       color: isAlert ? hostRoot.theme.accentRed : hostContainer.wAccent("gpu", hostRoot.theme.accentGreen)
-      font.pixelSize: 14
+      font.pixelSize: hostContainer.scaled(14)
       font.family: hostRoot.font
     }
     Text {
       anchors.verticalCenter: parent.verticalCenter
       text: gpuPill.displayLabel
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -108,14 +108,14 @@ Rectangle {
       text: "󰢮"
       visible: BarConfig.hwShowIcons !== false
       color: isAlert ? hostRoot.theme.accentRed : hostContainer.wAccent("gpu", hostRoot.theme.accentGreen)
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
     Text {
       anchors.horizontalCenter: parent.horizontalCenter
       text: SystemInfo.gpuUsage
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 9
+      font.pixelSize: hostContainer.scaled(9)
       font.family: hostRoot.font
     }
   }

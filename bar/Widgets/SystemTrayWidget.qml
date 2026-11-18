@@ -16,8 +16,8 @@ Rectangle {
   required property var hostRoot
   required property var hostContainer
   id: trayWidget
-  implicitHeight: hostContainer.isVert ? Math.max(28, trayGrid.implicitHeight + 10) : 24
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : Math.max(24, trayGrid.implicitWidth + 8)
+  implicitHeight: hostContainer.isVert ? Math.max(hostContainer.scaled(28), trayGrid.implicitHeight + 10) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : Math.max(hostContainer.horizPillHeight, trayGrid.implicitWidth + 8)
   height: implicitHeight
   width: implicitWidth
   radius: hostContainer.pillRadius
@@ -54,8 +54,8 @@ Rectangle {
         Accessible.role: Accessible.Button
         Accessible.name: modelData.tooltipTitle || modelData.title || "System tray item"
 
-        width: 24
-        height: hostContainer.isVert ? 24 : Math.max(24, hostContainer.height)
+        width: hostContainer.scaled(24)
+        height: hostContainer.isVert ? hostContainer.scaled(24) : Math.max(hostContainer.horizPillHeight, hostContainer.height)
 
         acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
 
@@ -74,7 +74,7 @@ Rectangle {
         IconImage {
           anchors.centerIn: parent
           source: trayDelegate.modelData.icon
-          implicitSize: 16
+          implicitSize: hostContainer.scaled(16)
         }
 
         QsMenuAnchor {
