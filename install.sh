@@ -237,12 +237,17 @@ install_packages() {
                     read -rp "Enable required COPR repo(s) (${coprs[*]})? [Y/n]: " copr_ans
                     if [[ "${copr_ans,,}" != "n" ]]; then
                         for copr in "${coprs[@]}"; do
-                            sudo dnf copr enable -y "$copr" || echo -e "${YELLOW}Warning:${NC} Failed to enable COPR $copr"
+                            if ! sudo dnf copr enable -y "$copr"; then
+                                echo -e "${YELLOW}Warning:${NC} Failed to enable COPR $copr"
+                                if [[ "$copr" == "lionheartp/Hyprland" ]]; then
+                                    echo -e "${YELLOW}Note:${NC} lionheartp/Hyprland requires Fedora 44+. Install Hyprland manually or upgrade to Fedora 44+."
+                                fi
+                            fi
                         done
                     fi
                 fi
             fi
-            cmd_str="sudo dnf install -y ${pkgs[*]}"
+            cmd_str="sudo dnf install -y --skip-unavailable ${pkgs[*]}"
             ;;
         debian)
             cmd_str="sudo apt update && sudo apt install -y ${pkgs[*]}"
