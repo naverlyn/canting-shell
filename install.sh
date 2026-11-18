@@ -596,7 +596,9 @@ for k, v in pairs(envs) do
     if os.setenv then os.setenv(k, v) end
 end
 
-hl.exec_once("quickshell")
+hl.on("hyprland.start", function()
+    hl.exec_cmd("quickshell")
+end)
 LUA
     fi
 
