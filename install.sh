@@ -458,7 +458,7 @@ check_dependencies() {
         echo -e "  ${DIM}Packages ($distro): ${opt_pkgs[*]}${NC}"
     fi
 
-    if [[ "$SKIP_DEPS" == true || ! -t 0 ]]; then
+    if [[ "$SKIP_DEPS" == true || ( "$INSTALL_MODE" == true && "$CLI_MODE" == false ) || ! -t 0 ]]; then
         echo ""
         return 0
     fi
@@ -514,7 +514,10 @@ ensure_install_location() {
     if [[ "$real_script" != "$real_target" ]]; then
         echo -e "${YELLOW}Note:${NC} Repo is at ${CYAN}$real_script${NC}. Quickshell reads from ${CYAN}$TARGET_QS_DIR${NC}."
         if [[ -e "$TARGET_QS_DIR" || -L "$TARGET_QS_DIR" ]]; then
-            read -rp "Existing $TARGET_QS_DIR found. Back it up and install there? [Y/n]: " copy_ans
+            local copy_ans="y"
+            if [[ "$INSTALL_MODE" == false || "$CLI_MODE" == true ]]; then
+                read -rp "Existing $TARGET_QS_DIR found. Back it up and install there? [Y/n]: " copy_ans
+            fi
             if [[ "${copy_ans,,}" == "n" ]]; then
                 echo -e "${YELLOW}Skipping copy.${NC} Configuring $SCRIPT_DIR in place."
                 echo ""
@@ -894,14 +897,17 @@ setup_minimal_keybinds() {
     fi
 
     if [[ "$WITH_KEYBINDS" == false ]]; then
-        if [[ ! -t 0 ]]; then
+        if [[ "$INSTALL_MODE" == true && "$CLI_MODE" == false ]]; then
+            WITH_KEYBINDS=true
+        elif [[ ! -t 0 ]]; then
             return 0
-        fi
-        echo ""
-        read -rp "Add minimal canting-shell Hyprland keybinds (launcher, settings, clipboard, lockscreen, etc.)? [y/N]: " kb_ans
-        if [[ "${kb_ans,,}" != "y" ]]; then
-            echo -e "${DIM}Skipping keybind setup.${NC}"
-            return 0
+        else
+            echo ""
+            read -rp "Add minimal canting-shell Hyprland keybinds (launcher, settings, clipboard, lockscreen, etc.)? [y/N]: " kb_ans
+            if [[ "${kb_ans,,}" != "y" ]]; then
+                echo -e "${DIM}Skipping keybind setup.${NC}"
+                return 0
+            fi
         fi
     fi
 
