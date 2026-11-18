@@ -1042,8 +1042,8 @@ PY
     fi
 }
 
-ensure_wayland_hyprland() {
-    local has_wayland=false has_hyprland=false
+ensure_core_prereqs() {
+    local has_wayland=false has_hyprland=false has_quickshell=false
     if ldconfig -p 2>/dev/null | grep -q "libwayland-client" \
         || compgen -G "/usr/lib*/libwayland-client.so*" >/dev/null 2>&1 \
         || pkg-config --exists wayland-client 2>/dev/null; then
@@ -1052,9 +1052,12 @@ ensure_wayland_hyprland() {
     if command -v Hyprland >/dev/null 2>&1 || command -v hyprland >/dev/null 2>&1 || command -v hyprctl >/dev/null 2>&1; then
         has_hyprland=true
     fi
+    if command -v quickshell >/dev/null 2>&1 || command -v qs >/dev/null 2>&1; then
+        has_quickshell=true
+    fi
 
-    if [[ "$has_wayland" == true && "$has_hyprland" == true ]]; then
-        echo -e "${GREEN}✓${NC} Wayland and Hyprland are installed"
+    if [[ "$has_wayland" == true && "$has_hyprland" == true && "$has_quickshell" == true ]]; then
+        echo -e "${GREEN}✓${NC} Wayland, Hyprland, and Quickshell are installed"
         echo ""
         return 0
     fi
@@ -1063,6 +1066,7 @@ ensure_wayland_hyprland() {
     distro="$(detect_distro)"
     [[ "$has_wayland" == false ]] && missing_cmds+=("wayland")
     [[ "$has_hyprland" == false ]] && missing_cmds+=("hyprland")
+    [[ "$has_quickshell" == false ]] && missing_cmds+=("quickshell")
 
     for cmd in "${missing_cmds[@]}"; do
         missing_pkgs+=("$(map_pkg_for_distro "$cmd" "$distro")")
@@ -1075,12 +1079,22 @@ ensure_wayland_hyprland() {
         return 0
     fi
 
+    if [[ -t 0 && "$DRY_RUN" != true ]]; then
+        local prereq_ans
+        read -rp "Install missing required packages (${missing_pkgs[*]})? [Y/n]: " prereq_ans
+        if [[ "${prereq_ans,,}" == "n" ]]; then
+            echo -e "${YELLOW}Skipped package installation.${NC} Please install ${missing_pkgs[*]} before starting canting-shell."
+            echo ""
+            return 0
+        fi
+    fi
+
     install_packages "$distro" "${missing_pkgs[@]}"
     echo ""
 }
 
 if [[ "$INSTALL_MODE" == true && "$CLI_MODE" == false ]]; then
-    ensure_wayland_hyprland
+    ensure_core_prereqs
 else
     check_dependencies
 fi
@@ -1105,5 +1119,12 @@ setup_minimal_keybinds
 
 echo ""
 echo -e "${BOLD}Next steps:${NC}"
-echo -e "  Run ${CYAN}quickshell${NC} to start the shell (the Setup Wizard will open on first launch)."
+if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    echo -e "  Run ${CYAN}quickshell${NC} to start the shell (the Setup Wizard will open on first launch)."
+elif [[ -n "${DISPLAY:-}" || -n "${WAYLAND_DISPLAY:-}" ]]; then
+    echo -e "  Log out of your current desktop session and switch to ${CYAN}Hyprland${NC} at your login manager."
+    echo -e "  ${DIM}Quickshell and the Setup Wizard will start automatically.${NC}"
+else
+    echo -e "  Run ${CYAN}start-hyprland${NC} to start Hyprland (Quickshell and the Setup Wizard will launch automatically)."
+fi
 echo -e "  Or run ${CYAN}./install.sh --CLI${NC} (or ${CYAN}--preset <name>${NC}) to configure presets from the terminal."
