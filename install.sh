@@ -156,6 +156,7 @@ map_pkg_for_distro() {
         arch:bluetoothctl)     echo "bluez-utils" ;;
         arch:wpctl)            echo "wireplumber" ;;
         arch:wl-copy)          echo "wl-clipboard" ;;
+        arch:pkexec)           echo "polkit" ;;
 
         fedora:quickshell)     echo "quickshell" ;;
         fedora:hyprctl)        echo "hyprland" ;;
@@ -164,6 +165,7 @@ map_pkg_for_distro() {
         fedora:bluetoothctl)   echo "bluez" ;;
         fedora:wpctl)          echo "wireplumber" ;;
         fedora:wl-copy)        echo "wl-clipboard" ;;
+        fedora:pkexec)         echo "polkit" ;;
 
         debian:quickshell)     echo "quickshell" ;;
         debian:hyprctl)        echo "hyprland" ;;
@@ -172,6 +174,7 @@ map_pkg_for_distro() {
         debian:bluetoothctl)   echo "bluez" ;;
         debian:wpctl)          echo "wireplumber" ;;
         debian:wl-copy)        echo "wl-clipboard" ;;
+        debian:pkexec)         echo "pkexec" ;;
 
         opensuse:quickshell)   echo "quickshell" ;;
         opensuse:hyprctl)      echo "hyprland" ;;
@@ -180,6 +183,7 @@ map_pkg_for_distro() {
         opensuse:bluetoothctl) echo "bluez" ;;
         opensuse:wpctl)        echo "wireplumber" ;;
         opensuse:wl-copy)      echo "wl-clipboard" ;;
+        opensuse:pkexec)       echo "polkit" ;;
 
         void:quickshell)       echo "quickshell" ;;
         void:hyprctl)          echo "hyprland" ;;
@@ -188,6 +192,7 @@ map_pkg_for_distro() {
         void:bluetoothctl)     echo "bluez" ;;
         void:wpctl)            echo "wireplumber" ;;
         void:wl-copy)          echo "wl-clipboard" ;;
+        void:pkexec)           echo "polkit" ;;
 
         *)                     echo "$cmd" ;;
     esac
@@ -232,13 +237,15 @@ install_packages() {
             ;;
         fedora)
             local coprs=()
+            local need_hypr_copr=false need_qs_copr=false
             for p in "${pkgs[@]}"; do
-                if [[ "$p" == "hyprland" ]]; then
-                    coprs+=("lionheartp/Hyprland")
-                elif [[ "$p" == "quickshell" ]]; then
-                    coprs+=("errornointernet/quickshell")
-                fi
+                case "$p" in
+                    hyprland|hyprland-guiutils|xdg-desktop-portal-hyprland) need_hypr_copr=true ;;
+                    quickshell) need_qs_copr=true ;;
+                esac
             done
+            [[ "$need_qs_copr" == true ]] && coprs+=("errornointernet/quickshell")
+            [[ "$need_hypr_copr" == true ]] && coprs+=("lionheartp/Hyprland")
             if [[ ${#coprs[@]} -gt 0 ]]; then
                 echo -e "${YELLOW}Note:${NC} On Fedora, Hyprland/Quickshell require COPR repos: ${CYAN}${coprs[*]}${NC}"
                 if [[ "$DRY_RUN" == true ]]; then
@@ -304,11 +311,22 @@ check_dependencies() {
         fi
     done
 
-    for cmd in wpctl brightnessctl nmcli bluetoothctl grim slurp wl-copy cava; do
+    for cmd in wpctl brightnessctl nmcli bluetoothctl grim slurp wl-copy cava pkexec; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
             missing_opt+=("$cmd")
         fi
     done
+
+    if ! command -v hyprland-dialog >/dev/null 2>&1; then
+        missing_opt+=("hyprland-guiutils")
+    fi
+
+    if ! command -v xdg-desktop-portal-hyprland >/dev/null 2>&1 \
+        && [[ ! -x /usr/libexec/xdg-desktop-portal-hyprland ]] \
+        && [[ ! -x /usr/lib/xdg-desktop-portal-hyprland ]] \
+        && [[ ! -x /usr/lib/xdg-desktop-portal/xdg-desktop-portal-hyprland ]]; then
+        missing_opt+=("xdg-desktop-portal-hyprland")
+    fi
 
     if [[ ${#missing_core[@]} -eq 0 && ${#missing_opt[@]} -eq 0 ]]; then
         echo -e "${GREEN}✓${NC} All core and optional dependencies are installed"
