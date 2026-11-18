@@ -21,10 +21,10 @@ Rectangle {
   property bool isPinned: false
   implicitHeight: hostContainer.isVert
     ? (netVertRow.implicitWidth + 20)
-    : (hostContainer.hidePill ? hostContainer.height : 24)
+    : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
   implicitWidth: hostContainer.isVert
     ? hostContainer.vertPillWidth
-    : (netRow.implicitWidth + 16)
+    : (netRow.implicitWidth + hostContainer.scaled(16))
   height: implicitHeight
   width: implicitWidth
   scale: netMouse.pressed ? 0.93 : 1.0
@@ -87,7 +87,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text: "󰇚"
         color: hostContainer.wAccent("network", hostRoot.theme.accentCyan ?? hostRoot.theme.accentGreen)
-        font.pixelSize: 13
+        font.pixelSize: hostContainer.scaled(13)
         font.family: hostRoot.font
       }
 
@@ -95,7 +95,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text: BarConfig.netCompact ? SystemInfo.networkDownCompact : SystemInfo.networkDownSpeed
         color: hostRoot.theme.textPrimary
-        font.pixelSize: 11
+        font.pixelSize: hostContainer.scaled(11)
         font.family: hostRoot.font
       }
     }
@@ -110,7 +110,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text: "󰕒"
         color: hostContainer.wAccent("network", hostRoot.theme.accentOrange ?? hostRoot.theme.accentPrimary)
-        font.pixelSize: 13
+        font.pixelSize: hostContainer.scaled(13)
         font.family: hostRoot.font
       }
 
@@ -118,7 +118,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text: BarConfig.netCompact ? SystemInfo.networkUpCompact : SystemInfo.networkUpSpeed
         color: hostRoot.theme.textPrimary
-        font.pixelSize: 11
+        font.pixelSize: hostContainer.scaled(11)
         font.family: hostRoot.font
       }
     }
@@ -147,7 +147,7 @@ Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰇚"
           color: hostContainer.wAccent("network", hostRoot.theme.accentCyan ?? hostRoot.theme.accentGreen)
-          font.pixelSize: 12
+          font.pixelSize: hostContainer.scaled(12)
           font.family: hostRoot.font
         }
 
@@ -155,7 +155,7 @@ Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           text: BarConfig.netCompact ? SystemInfo.networkDownCompact : SystemInfo.networkDownSpeed
           color: hostRoot.theme.textPrimary
-          font.pixelSize: 10
+          font.pixelSize: hostContainer.scaled(10)
           font.family: hostRoot.font
         }
       }
@@ -170,7 +170,7 @@ Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           text: "󰕒"
           color: hostContainer.wAccent("network", hostRoot.theme.accentOrange ?? hostRoot.theme.accentPrimary)
-          font.pixelSize: 12
+          font.pixelSize: hostContainer.scaled(12)
           font.family: hostRoot.font
         }
 
@@ -178,7 +178,7 @@ Rectangle {
           anchors.verticalCenter: parent.verticalCenter
           text: BarConfig.netCompact ? SystemInfo.networkUpCompact : SystemInfo.networkUpSpeed
           color: hostRoot.theme.textPrimary
-          font.pixelSize: 10
+          font.pixelSize: hostContainer.scaled(10)
           font.family: hostRoot.font
         }
       }

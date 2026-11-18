@@ -18,6 +18,7 @@ function buildSaveData(root) {
     barMargin: primary && primary.barMargin !== undefined ? primary.barMargin : root.barMargin,
     pillOpacity: primary && primary.pillOpacity !== undefined ? primary.pillOpacity : root.pillOpacity,
     hidePill: primary && primary.hidePill !== undefined ? Boolean(primary.hidePill) : root.hidePill,
+    scaleWidgets: primary && primary.scaleWidgets !== undefined ? Boolean(primary.scaleWidgets) : root.scaleWidgets,
     activeStyle: primary && primary.activeStyle !== undefined ? primary.activeStyle : root.activeStyle,
     allMonitors: primary ? primary.allMonitors : root.allMonitors,
     displayTarget: primary && primary.displayTarget !== undefined ? primary.displayTarget : root.displayTarget,
@@ -128,6 +129,7 @@ function applyConfig(root, cfg) {
   if (cfg.barMargin !== undefined) root.barMargin = Math.max(0, Math.min(24, Number(cfg.barMargin)));
   if (cfg.pillOpacity !== undefined) root.pillOpacity = Number(cfg.pillOpacity);
   if (cfg.hidePill !== undefined) root.hidePill = Boolean(cfg.hidePill);
+  if (cfg.scaleWidgets !== undefined) root.scaleWidgets = Boolean(cfg.scaleWidgets);
   if (cfg.allMonitors !== undefined) root.allMonitors = Boolean(cfg.allMonitors);
   if (cfg.displayTarget !== undefined) {
     root.displayTarget = String(cfg.displayTarget);
@@ -226,6 +228,7 @@ function applyConfig(root, cfg) {
       barMargin: b.barMargin !== undefined ? Number(b.barMargin) : root.barMargin,
       pillOpacity: b.pillOpacity !== undefined ? Number(b.pillOpacity) : root.pillOpacity,
       hidePill: b.hidePill !== undefined ? Boolean(b.hidePill) : root.hidePill,
+      scaleWidgets: b.scaleWidgets !== undefined ? Boolean(b.scaleWidgets) : root.scaleWidgets,
       activeStyle: b.activeStyle || cfg.activeStyle || root.activeStyle,
       barColor: b.barColor !== undefined ? String(b.barColor) : "",
       secondaryBarColor: b.secondaryBarColor !== undefined ? String(b.secondaryBarColor) : (b.barColor !== undefined ? String(b.barColor) : ""),
@@ -267,6 +270,7 @@ function applyConfig(root, cfg) {
       barMargin: root.barMargin,
       pillOpacity: root.pillOpacity,
       hidePill: root.hidePill,
+      scaleWidgets: root.scaleWidgets,
       activeStyle: root.activeStyle,
       allMonitors: root.allMonitors,
       displayTarget: root.displayTarget,
@@ -362,6 +366,7 @@ function resetDefaults(root) {
   root.barMargin = 6;
   root.pillOpacity = 1.0;
   root.hidePill = false;
+  root.scaleWidgets = true;
   root.activeStyle = "pill";
   root.workspaceStyle = "index";
   root.workspaceScrollSwitch = true;
@@ -432,6 +437,7 @@ function resetDefaults(root) {
       pillRadius: 10,
       pillOpacity: 1.0,
       hidePill: false,
+      scaleWidgets: true,
       allMonitors: true,
       displayTarget: "all",
       secondaryPosition: "top",

@@ -22,7 +22,7 @@ Rectangle {
   readonly property int vertCalcHeight: titleMeasureText.implicitWidth + 32
   implicitHeight: hostContainer.isVert
     ? (titleMeasureText.text !== "" ? Math.max(36, Math.min(vertMaxHeight, vertCalcHeight)) : 0)
-    : (hostContainer.hidePill ? hostContainer.height : 24)
+    : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
   height: implicitHeight
   readonly property string curSec: BarConfig.getWidgetSection("windowTitle")
   readonly property real availableCenterSpace: curSec === "center"
@@ -56,7 +56,7 @@ Rectangle {
     id: titleMeasureText
     visible: false
     text: Hyprland.activeToplevel ? Hyprland.activeToplevel.title : ""
-    font.pixelSize: 11
+    font.pixelSize: hostContainer.scaled(11)
     font.family: hostRoot.font
   }
 
@@ -69,7 +69,7 @@ Rectangle {
     color: hostContainer.hasCustomColor("windowTitle")
       ? hostContainer.wAccent("windowTitle", hostRoot.theme.textPrimary)
       : hostRoot.theme.textPrimary
-    font.pixelSize: 13
+    font.pixelSize: hostContainer.scaled(13)
     font.family: hostRoot.font
     elide: Text.ElideRight
     width: Math.min(implicitWidth, parent.width - 16)
@@ -92,7 +92,7 @@ Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         text: ""
         color: hostContainer.wAccent("windowTitle", hostRoot.theme.accentPrimary)
-        font.pixelSize: 12
+        font.pixelSize: hostContainer.scaled(12)
         font.family: hostRoot.font
       }
 
@@ -102,7 +102,7 @@ Rectangle {
         color: hostContainer.hasCustomColor("windowTitle")
           ? hostContainer.wAccent("windowTitle", hostRoot.theme.textPrimary)
           : hostRoot.theme.textPrimary
-        font.pixelSize: 11
+        font.pixelSize: hostContainer.scaled(11)
         font.family: hostRoot.font
         elide: Text.ElideRight
         width: Math.max(20, vertContent.width - 28)

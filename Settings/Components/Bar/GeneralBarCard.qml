@@ -153,6 +153,15 @@ SectionCard {
 
     RowDivider {}
 
+    SettingToggleRow {
+        title: "Auto-Scale Widgets"
+        desc: "Scale widget icons and text proportionally with bar thickness"
+        checked: root.generalTab.curScaleWidgets
+        onToggled: (val) => BarConfig.updateBarProp("scaleWidgets", val)
+    }
+
+    RowDivider {}
+
     GeneralBarActiveStyleRow {
         root: generalSection.root
     }

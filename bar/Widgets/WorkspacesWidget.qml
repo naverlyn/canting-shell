@@ -19,7 +19,7 @@ Item {
   required property var hostContainer
   id: wsContainer
   implicitWidth: wsGrid.implicitWidth
-  implicitHeight: hostContainer.isVert ? wsGrid.implicitHeight : (hostContainer.hidePill ? hostContainer.height : 24)
+  implicitHeight: hostContainer.isVert ? wsGrid.implicitHeight : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
   width: implicitWidth
   height: hostContainer.isVert ? implicitHeight : hostContainer.height
 
@@ -122,9 +122,9 @@ Item {
         Accessible.role: Accessible.Button
         Accessible.name: "Workspace " + modelData.id + (modelData.focused ? ", active" : "") + (modelData.urgent ? ", urgent" : "")
 
-        width: hostContainer.isVert ? hostContainer.vertPillWidth : (modelData.focused ? 32 : 24)
+        width: hostContainer.isVert ? hostContainer.vertPillWidth : (modelData.focused ? hostContainer.scaled(32) : hostContainer.scaled(24))
         implicitWidth: width
-        height: hostContainer.isVert ? (modelData.focused ? 30 : 22) : (hostContainer.hidePill ? hostContainer.height : 24)
+        height: hostContainer.isVert ? (modelData.focused ? hostContainer.scaled(30) : hostContainer.scaled(22)) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
         implicitHeight: height
         scale: wsMouse.pressed ? 0.90 : 1.0
         Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
@@ -196,7 +196,7 @@ Item {
                 : (hostContainer.hasCustomColor("workspaces")
                     ? hostContainer.wAccent("workspaces", hostRoot.theme.textPrimary)
                     : hostRoot.theme.textSecondary))
-          font.pixelSize: 11
+          font.pixelSize: hostContainer.scaled(11)
           font.family: hostRoot.font
           font.bold: wsPill.modelData.focused
           Behavior on color { ColorAnimation { duration: 120 } }

@@ -33,8 +33,8 @@ Rectangle {
     return "󰖩";
   }
 
-  implicitHeight: hostContainer.isVert ? (wifiVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (wifiContent.implicitWidth + 14)
+  implicitHeight: hostContainer.isVert ? (wifiVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (wifiContent.implicitWidth + hostContainer.scaled(14))
   height: implicitHeight
   width: implicitWidth
   scale: wifiMouse.pressed ? 0.92 : 1.0
@@ -529,7 +529,7 @@ Rectangle {
       color: wifiPill.wifiEnabled
         ? hostContainer.wAccent("wifi", hostRoot.theme.accentCyan)
         : hostRoot.theme.textMuted
-      font.pixelSize: 14
+      font.pixelSize: hostContainer.scaled(14)
       font.family: hostRoot.font
     }
 
@@ -538,7 +538,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: wifiPill.wifiEnabled ? wifiPill.currentSsid : "Off"
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -555,7 +555,7 @@ Rectangle {
       color: wifiPill.wifiEnabled
         ? hostContainer.wAccent("wifi", hostRoot.theme.accentCyan)
         : hostRoot.theme.textMuted
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
   }

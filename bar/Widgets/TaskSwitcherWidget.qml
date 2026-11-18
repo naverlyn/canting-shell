@@ -1,6 +1,7 @@
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
+import Quickshell.Wayland
 import Quickshell.Widgets
 import QtQuick
 import QtQuick.Layouts
@@ -88,12 +89,18 @@ Item {
   }
 
   property var hoveredPill: null
+  property var hoveredToplevel: null
   property string hoveredTitle: ""
   property string hoveredSubtitle: ""
+  property string hoveredIconSource: ""
+  property int hoveredWsId: -1
+
+  readonly property int iconSize: hostContainer.scaled(15)
+  readonly property int horizPillHeight: hostContainer.horizPillHeight
 
   implicitWidth: taskList.length > 0 ? taskGrid.implicitWidth : 0
   implicitHeight: taskList.length > 0
-    ? (hostContainer.isVert ? taskGrid.implicitHeight : (hostContainer.hidePill ? hostContainer.height : 24))
+    ? (hostContainer.isVert ? taskGrid.implicitHeight : (hostContainer.hidePill ? hostContainer.height : horizPillHeight))
     : 0
   Behavior on implicitWidth { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
   Behavior on implicitHeight { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -185,12 +192,12 @@ Item {
         readonly property bool showDesc: taskContainer.effectiveMode === "icon_desc" || taskContainer.effectiveMode === "desc"
 
         readonly property int contentWidth: {
-          if (taskContainer.effectiveMode === "icon") return 28;
+          if (taskContainer.effectiveMode === "icon") return Math.max(hostContainer.scaled(28), taskContainer.iconSize + hostContainer.scaled(12));
           const textW = Math.min(titleMeasure.implicitWidth, taskContainer.adaptiveLabelWidth);
           if (taskContainer.effectiveMode === "icon_desc") {
-            return Math.max(44, 15 + 6 + textW + 16);
+            return Math.max(hostContainer.scaled(44), taskContainer.iconSize + 6 + textW + 16);
           }
-          return Math.max(36, textW + 16);
+          return Math.max(hostContainer.scaled(36), textW + 16);
         }
 
         Accessible.role: Accessible.Button
@@ -198,7 +205,7 @@ Item {
 
         width: hostContainer.isVert ? hostContainer.vertPillWidth : contentWidth
         implicitWidth: width
-        height: hostContainer.isVert ? 26 : (hostContainer.hidePill ? hostContainer.height : 24)
+        height: hostContainer.isVert ? Math.max(hostContainer.scaled(26), taskContainer.iconSize + 10) : (hostContainer.hidePill ? hostContainer.height : taskContainer.horizPillHeight)
         implicitHeight: height
 
         scale: taskMouse.pressed ? 0.94 : enterScale
@@ -258,15 +265,15 @@ Item {
 
           Item {
             visible: taskPill.showIcon
-            Layout.preferredWidth: 15
-            Layout.preferredHeight: 15
+            Layout.preferredWidth: taskContainer.iconSize
+            Layout.preferredHeight: taskContainer.iconSize
             Layout.alignment: Qt.AlignVCenter | (taskPill.showDesc ? Qt.AlignLeft : Qt.AlignHCenter)
             Layout.fillWidth: !taskPill.showDesc
 
             IconImage {
               anchors.centerIn: parent
-              width: 15
-              height: 15
+              width: taskContainer.iconSize
+              height: taskContainer.iconSize
               source: taskPill.iconSource
               visible: taskPill.iconSource !== ""
             }
@@ -276,7 +283,7 @@ Item {
               visible: taskPill.iconSource === ""
               text: "󰖯"
               font.family: hostRoot ? hostRoot.font : "Lato Nerd Font"
-              font.pixelSize: 13
+              font.pixelSize: Math.max(10, Math.round(taskContainer.iconSize * 0.87))
               color: taskPill.isFocused && hostContainer.activeStyle === "pill"
                 ? hostRoot.theme.bgBase
                 : (hostContainer.hasCustomColor("taskSwitcher")
@@ -316,7 +323,10 @@ Item {
           cursorShape: Qt.PointingHandCursor
           onEntered: {
             taskContainer.hoveredPill = taskPill;
+            taskContainer.hoveredToplevel = taskPill.modelData;
             taskContainer.hoveredTitle = taskPill.windowTitle;
+            taskContainer.hoveredIconSource = taskPill.iconSource;
+            taskContainer.hoveredWsId = taskPill.wsId;
             const cls = taskPill.appClass !== "" ? taskPill.appClass : "Window";
             taskContainer.hoveredSubtitle = taskPill.wsId > 0
               ? (cls + " • Workspace " + taskPill.wsId)
@@ -343,6 +353,7 @@ Item {
   }
 
   InfoPopup {
+    id: taskInfoPopup
     target: taskContainer.hoveredPill ? taskContainer.hoveredPill : taskContainer
     barItem: taskContainer.hostContainer
     hovered: taskContainer.hoveredPill !== null
@@ -351,9 +362,130 @@ Item {
     title: taskContainer.hoveredTitle
     icon: "󰖯"
     summaryText: taskContainer.hoveredSubtitle
+    preferredWidth: 256
     accent: taskContainer.hostContainer && taskContainer.hostRoot
       ? taskContainer.hostContainer.wAccent("taskSwitcher", taskContainer.hostRoot.theme.accentPrimary)
       : "#89b4fa"
     barPosition: taskContainer.hostContainer ? taskContainer.hostContainer.barPos : "top"
+
+    contentComponent: Component {
+      ColumnLayout {
+        spacing: 8
+        readonly property var th: taskInfoPopup.theme
+
+        // Window Header: App Icon + Title + Workspace Badge
+        RowLayout {
+          Layout.fillWidth: true
+          spacing: 7
+
+          Item {
+            Layout.preferredWidth: 16
+            Layout.preferredHeight: 16
+            Layout.alignment: Qt.AlignVCenter
+
+            IconImage {
+              anchors.fill: parent
+              source: taskContainer.hoveredIconSource
+              visible: taskContainer.hoveredIconSource !== ""
+            }
+
+            Text {
+              anchors.centerIn: parent
+              visible: taskContainer.hoveredIconSource === ""
+              text: "󰖯"
+              font.family: taskInfoPopup.font
+              font.pixelSize: 14
+              color: taskInfoPopup.accent
+            }
+          }
+
+          Text {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+            text: taskContainer.hoveredTitle
+            elide: Text.ElideRight
+            font.family: taskInfoPopup.font
+            font.pixelSize: 12
+            font.bold: true
+            color: th.textPrimary
+          }
+
+          Rectangle {
+            visible: taskContainer.hoveredWsId > 0
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: wsBadgeTxt.implicitWidth + 10
+            implicitHeight: 18
+            radius: 5
+            color: Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.08)
+
+            Text {
+              id: wsBadgeTxt
+              anchors.centerIn: parent
+              text: "WS " + taskContainer.hoveredWsId
+              font.family: taskInfoPopup.font
+              font.pixelSize: 10
+              font.bold: true
+              color: th.textSecondary
+            }
+          }
+        }
+
+        // Live Window Thumbnail Preview
+        Rectangle {
+          Layout.fillWidth: true
+          implicitHeight: 146
+          radius: 8
+          color: th.bgBase
+          border.width: 1
+          border.color: Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.10)
+          clip: true
+
+          ScreencopyView {
+            id: previewView
+            anchors.fill: parent
+            captureSource: (taskInfoPopup.isDetailsActive && taskContainer.hoveredToplevel && taskContainer.hoveredToplevel.wayland)
+              ? taskContainer.hoveredToplevel.wayland
+              : null
+            live: true
+            paintCursor: false
+            constraintSize: Qt.size(Math.max(1, width), Math.max(1, height))
+            visible: hasContent
+          }
+
+          Item {
+            anchors.fill: parent
+            visible: !previewView.hasContent
+
+            IconImage {
+              anchors.centerIn: parent
+              width: 36
+              height: 36
+              source: taskContainer.hoveredIconSource
+              visible: taskContainer.hoveredIconSource !== ""
+              opacity: 0.75
+            }
+
+            Text {
+              anchors.centerIn: parent
+              visible: taskContainer.hoveredIconSource === ""
+              text: "󰖯"
+              font.family: taskInfoPopup.font
+              font.pixelSize: 28
+              color: th.textMuted
+            }
+          }
+
+          MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+              if (taskContainer.hoveredToplevel) {
+                taskContainer.focusTask(taskContainer.hoveredToplevel);
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

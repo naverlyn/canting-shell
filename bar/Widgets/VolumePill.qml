@@ -30,8 +30,8 @@ Rectangle {
     return Math.round(sinkAudio.volume * 100);
   }
 
-  implicitHeight: hostContainer.isVert ? (volVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (volContent.implicitWidth + 14)
+  implicitHeight: hostContainer.isVert ? (volVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (volContent.implicitWidth + hostContainer.scaled(14))
   height: implicitHeight
   width: implicitWidth
   scale: volMouse.pressed ? 0.92 : 1.0
@@ -286,7 +286,7 @@ Rectangle {
       color: volPill.isMuted
         ? hostRoot.theme.accentRed
         : hostContainer.wAccent("volume", hostRoot.theme.accentPrimary)
-      font.pixelSize: 14
+      font.pixelSize: hostContainer.scaled(14)
       font.family: hostRoot.font
     }
 
@@ -294,7 +294,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: volPill.isMuted ? "Muted" : (volPill.volPct + "%")
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -311,7 +311,7 @@ Rectangle {
       color: volPill.isMuted
         ? hostRoot.theme.accentRed
         : hostContainer.wAccent("volume", hostRoot.theme.accentPrimary)
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
 
@@ -319,7 +319,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: volPill.isMuted ? "Mute" : (volPill.volPct + "%")
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 9
+      font.pixelSize: hostContainer.scaled(9)
       font.family: hostRoot.font
     }
   }

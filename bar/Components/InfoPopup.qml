@@ -169,19 +169,23 @@ Item {
         Item { Layout.fillWidth: true }
       }
 
-      // Loading card when rows haven't arrived yet
+      // Summary card when no sensor script is used, or loading card while sensor rows arrive
       Rectangle {
-        visible: provider.sections.length === 0
+        visible: provider.sections.length === 0 && (provider.script !== "" || provider.summaryText !== "")
         Layout.fillWidth: true
-        implicitHeight: 38
+        implicitHeight: provider.script === "" ? (fallbackInfoText.implicitHeight + 14) : 38
         radius: 8
         color: Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.05)
         border.color: Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.08)
         border.width: 1
 
         Text {
+          id: fallbackInfoText
           anchors.centerIn: parent
-          text: "Reading sensor data..."
+          width: parent.width - 16
+          horizontalAlignment: provider.script === "" ? Text.AlignLeft : Text.AlignHCenter
+          wrapMode: Text.WordWrap
+          text: provider.script !== "" ? "Reading sensor data..." : provider.summaryText
           font.family: provider.font
           font.pixelSize: 11
           color: th.textMuted

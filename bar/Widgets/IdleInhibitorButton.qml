@@ -20,8 +20,8 @@ Rectangle {
   id: idlePill
   readonly property bool isActive: SystemInfo.idleInhibited
 
-  implicitHeight: hostContainer.isVert ? 28 : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : 28
+  implicitHeight: hostContainer.isVert ? hostContainer.scaled(28) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : hostContainer.scaled(28)
   height: implicitHeight
   width: implicitWidth
   scale: idleMouse.pressed ? 0.92 : 1.0
@@ -64,7 +64,7 @@ Rectangle {
       : (hostContainer.hasCustomColor("idleInhibitor")
         ? hostContainer.wAccent("idleInhibitor", hostRoot.theme.textPrimary)
         : hostRoot.theme.textPrimary)
-    font.pixelSize: 13
+    font.pixelSize: hostContainer.scaled(13)
     font.family: hostRoot.font
   }
 

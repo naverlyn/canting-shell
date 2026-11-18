@@ -23,6 +23,7 @@ Singleton {
   property int barMargin: 6
   property real pillOpacity: 1.0
   property bool hidePill: false
+  property bool scaleWidgets: true
   property bool allMonitors: true
   property string displayTarget: "all" // "all" | "primary" | "secondary" | monitor name
   property string secondaryPosition: "bottom" // "top" | "bottom" | "left" | "right"
@@ -110,6 +111,7 @@ Singleton {
       barMargin: 6,
       pillOpacity: 1.0,
       hidePill: false,
+      scaleWidgets: true,
       allMonitors: true,
       displayTarget: "all",
       secondaryPosition: "bottom",
@@ -171,7 +173,7 @@ Singleton {
     const idx = Math.max(0, Math.min((root.bars ? root.bars.length : 1) - 1, root.selectedBarIndex));
     return (root.bars && root.bars.length > 0) ? root.bars[idx] : {
       id: "bar_1", name: "Primary Bar", enabled: true, position: "top",
-      barHeight: 32, floating: false, barOpacity: 0.85, pillRadius: 10, pillOpacity: 1.0, hidePill: false,
+      barHeight: 32, floating: false, barOpacity: 0.85, pillRadius: 10, pillOpacity: 1.0, hidePill: false, scaleWidgets: true,
       allMonitors: true, displayTarget: "all", secondaryPosition: (root.secondaryPosition || "top"), secondaryFloating: Boolean(root.secondaryFloating), secondaryMode: "custom", blankOnSecondary: false,
       secondaryPanels: root.defaultSecondaryPanels,
       innerCorners: root.innerCorners,
@@ -382,6 +384,7 @@ Singleton {
       else if (propName === "barMargin") root.barMargin = Number(val);
       else if (propName === "pillOpacity") root.pillOpacity = Number(val);
       else if (propName === "hidePill") root.hidePill = Boolean(val);
+      else if (propName === "scaleWidgets") root.scaleWidgets = Boolean(val);
       else if (propName === "activeStyle") root.activeStyle = String(val);
       else if (propName === "allMonitors") root.allMonitors = Boolean(val);
       else if (propName === "displayTarget") {
@@ -457,6 +460,7 @@ Singleton {
       barMargin: root.barMargin,
       pillOpacity: root.pillOpacity,
       hidePill: root.hidePill,
+      scaleWidgets: root.scaleWidgets,
       allMonitors: isAll,
       displayTarget: finalTarget,
       secondaryPosition: nextPos,

@@ -33,8 +33,8 @@ Rectangle {
     return isFloatingWin ? "Dwindle · Float" : "Dwindle";
   }
 
-  implicitHeight: hostContainer.isVert ? (hyprVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (hyprContent.implicitWidth + 14)
+  implicitHeight: hostContainer.isVert ? (hyprVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (hyprContent.implicitWidth + hostContainer.scaled(14))
   height: implicitHeight
   width: implicitWidth
   scale: hyprMouse.pressed ? 0.92 : 1.0
@@ -432,7 +432,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: hyprPill.modeIcon
       color: hostContainer.wAccent("hyprLayout", hostRoot.theme.accentPrimary)
-      font.pixelSize: 14
+      font.pixelSize: hostContainer.scaled(14)
       font.family: hostRoot.font
     }
 
@@ -441,7 +441,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: hyprPill.modeLabel
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.bold: true
       font.family: hostRoot.font
     }
@@ -457,7 +457,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: hyprPill.modeIcon
       color: hostContainer.wAccent("hyprLayout", hostRoot.theme.accentPrimary)
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
 
@@ -466,7 +466,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: hyprPill.isMonocle ? "Mono" : (hyprPill.currentLayout === "master" ? "Mst" : "Dwn")
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 9
+      font.pixelSize: hostContainer.scaled(9)
       font.family: hostRoot.font
     }
   }

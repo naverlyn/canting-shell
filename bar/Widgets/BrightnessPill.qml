@@ -23,8 +23,8 @@ Rectangle {
     return "󰃞";
   }
 
-  implicitHeight: hostContainer.isVert ? (brVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (brContent.implicitWidth + 14)
+  implicitHeight: hostContainer.isVert ? (brVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (brContent.implicitWidth + hostContainer.scaled(14))
   height: implicitHeight
   width: implicitWidth
   scale: brMouse.pressed ? 0.92 : 1.0
@@ -271,7 +271,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: brPill.brIcon
       color: hostContainer.wAccent("brightness", hostRoot.theme.accentOrange)
-      font.pixelSize: 14
+      font.pixelSize: hostContainer.scaled(14)
       font.family: hostRoot.font
     }
 
@@ -280,7 +280,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: brPill.currentPct + "%"
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -295,7 +295,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: brPill.brIcon
       color: hostContainer.wAccent("brightness", hostRoot.theme.accentOrange)
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
 
@@ -304,7 +304,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: brPill.currentPct + "%"
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 9
+      font.pixelSize: hostContainer.scaled(9)
       font.family: hostRoot.font
     }
   }

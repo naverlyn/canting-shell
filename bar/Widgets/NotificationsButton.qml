@@ -17,10 +17,10 @@ Rectangle {
   readonly property int historyCount: NotificationService.historyCount
   readonly property bool popupOpen: notifPopupLoader.item ? notifPopupLoader.item.visible : false
 
-  implicitHeight: hostContainer.isVert ? 28 : (hostContainer.hidePill ? hostContainer.height : 24)
+  implicitHeight: hostContainer.isVert ? hostContainer.scaled(28) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
   implicitWidth: hostContainer.isVert
     ? hostContainer.vertPillWidth
-    : ((notifButton.historyCount > 9 && !notifButton.isDnd) ? 34 : 28)
+    : ((notifButton.historyCount > 9 && !notifButton.isDnd) ? hostContainer.scaled(34) : hostContainer.scaled(28))
   height: implicitHeight
   width: implicitWidth
   Behavior on implicitWidth { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
@@ -52,14 +52,14 @@ Rectangle {
     color: (notifButton.popupOpen || notifButton.isDnd || hostContainer.hasCustomColor("notifications"))
       ? hostContainer.wAccent("notifications", hostRoot.theme.accentPrimary)
       : hostRoot.theme.textPrimary
-    font.pixelSize: 13
+    font.pixelSize: hostContainer.scaled(13)
     font.family: hostRoot.font
   }
 
   Rectangle {
     visible: notifButton.historyCount > 0 && !notifButton.isDnd
-    width: Math.max(13, countBadgeText.implicitWidth + 5)
-    height: 13
+    width: Math.max(hostContainer.scaled(13), countBadgeText.implicitWidth + 5)
+    height: hostContainer.scaled(13)
     radius: height / 2
     color: hostRoot.theme.accentRed
     anchors.top: notifIcon.top
@@ -73,7 +73,7 @@ Rectangle {
       text: notifButton.historyCount > 99 ? "99+" : String(notifButton.historyCount)
       color: hostRoot.theme.bgBase
       font.family: hostRoot.font
-      font.pixelSize: 8
+      font.pixelSize: hostContainer.scaled(8)
       font.bold: true
     }
   }

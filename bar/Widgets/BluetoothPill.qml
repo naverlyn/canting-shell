@@ -25,8 +25,8 @@ Rectangle {
     return "󰂯";
   }
 
-  implicitHeight: hostContainer.isVert ? (btVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (btContent.implicitWidth + 14)
+  implicitHeight: hostContainer.isVert ? (btVertCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (btContent.implicitWidth + hostContainer.scaled(14))
   height: implicitHeight
   width: implicitWidth
   scale: btMouse.pressed ? 0.92 : 1.0
@@ -599,7 +599,7 @@ Rectangle {
       color: btPill.btEnabled
         ? hostContainer.wAccent("bluetooth", hostRoot.theme.accentPrimary)
         : hostRoot.theme.textMuted
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
 
@@ -608,7 +608,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: btPill.connectedDeviceName
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.family: hostRoot.font
     }
   }
@@ -625,7 +625,7 @@ Rectangle {
       color: btPill.btEnabled
         ? hostContainer.wAccent("bluetooth", hostRoot.theme.accentPrimary)
         : hostRoot.theme.textMuted
-      font.pixelSize: 13
+      font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
     }
   }

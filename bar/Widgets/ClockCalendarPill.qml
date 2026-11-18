@@ -18,8 +18,8 @@ Rectangle {
   required property var hostRoot
   required property var hostContainer
   id: timeWidget
-  implicitHeight: hostContainer.isVert ? (vertClockCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : 24)
-  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (timeDate.implicitWidth + 16)
+  implicitHeight: hostContainer.isVert ? (vertClockCol.implicitHeight + 12) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
+  implicitWidth: hostContainer.isVert ? hostContainer.vertPillWidth : (timeDate.implicitWidth + hostContainer.scaled(16))
   height: implicitHeight
   width: implicitWidth
   scale: timeMouse.pressed ? 0.92 : 1.0
@@ -65,21 +65,21 @@ Rectangle {
       Text {
         text: Time.timeString.split(":")[0] || "00"
         color: hostRoot.theme.textPrimary
-        font.pixelSize: 12
+        font.pixelSize: hostContainer.scaled(12)
         font.bold: true
         font.family: hostRoot.font
       }
       Text {
         text: ":"
         color: hostRoot.theme.textPrimary
-        font.pixelSize: 12
+        font.pixelSize: hostContainer.scaled(12)
         font.bold: true
         font.family: hostRoot.font
       }
       Text {
         text: Time.timeString.split(":").slice(1).join(":") || "00"
         color: hostContainer.wAccent("clock", hostRoot.theme.accentPrimary)
-        font.pixelSize: 12
+        font.pixelSize: hostContainer.scaled(12)
         font.bold: true
         font.family: hostRoot.font
       }
@@ -91,7 +91,7 @@ Rectangle {
       text: Time.dateString
       visible: BarConfig.showDate
       color: hostRoot.theme.textSecondary
-      font.pixelSize: 12
+      font.pixelSize: hostContainer.scaled(12)
       font.bold: true
       font.family: hostRoot.font
     }
@@ -107,7 +107,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: Time.timeString.split(":")[0] || "00"
       color: hostRoot.theme.textPrimary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.bold: true
       font.family: hostRoot.font
     }
@@ -115,7 +115,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: Time.timeString.split(":")[1] || "00"
       color: hostContainer.wAccent("clock", hostRoot.theme.accentPrimary)
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.bold: true
       font.family: hostRoot.font
     }
@@ -124,7 +124,7 @@ Rectangle {
       visible: BarConfig.showDate && BarConfig.showYear
       text: Qt.formatDateTime(new Date(), "yyyy")
       color: hostRoot.theme.textSecondary
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       font.bold: true
       font.family: hostRoot.font
     }

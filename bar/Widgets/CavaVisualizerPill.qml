@@ -24,10 +24,10 @@ Rectangle {
 
   visible: !autoHide || hasAudio || cavaMouse.containsMouse
 
-  implicitHeight: isVert ? Math.max(28, (cavaVertCol ? cavaVertCol.implicitHeight + 10 : 28)) : (hostContainer.hidePill ? hostContainer.height : 24)
+  implicitHeight: isVert ? Math.max(hostContainer.scaled(28), (cavaVertCol ? cavaVertCol.implicitHeight + 10 : hostContainer.scaled(28))) : (hostContainer.hidePill ? hostContainer.height : hostContainer.horizPillHeight)
   implicitWidth: isVert
     ? hostContainer.vertPillWidth
-    : (cavaHorizRow.implicitWidth + 14)
+    : (cavaHorizRow.implicitWidth + hostContainer.scaled(14))
   height: implicitHeight
   width: implicitWidth
   scale: cavaMouse.pressed ? 0.92 : 1.0
@@ -60,7 +60,7 @@ Rectangle {
       visible: BarConfig.cavaStyle !== "glyphs"
       anchors.verticalCenter: parent.verticalCenter
       spacing: 2
-      height: 16
+      height: hostContainer.scaled(16)
 
       Repeater {
         model: (cavaPill.visible && !cavaPill.isVert && BarConfig.cavaStyle !== "glyphs") ? CavaService.values.length : 0
@@ -68,8 +68,8 @@ Rectangle {
           required property int index
           readonly property int val: (CavaService.values && index < CavaService.values.length) ? CavaService.values[index] : 0
 
-          width: 3
-          height: Math.max(2, Math.round((val / 100) * 16))
+          width: Math.max(2, hostContainer.scaled(3))
+          height: Math.max(2, Math.round((val / 100) * hostContainer.scaled(16)))
           radius: 1.5
           color: hostContainer.wAccent("cava", hostRoot.theme.accentPrimary)
           anchors.bottom: (BarConfig.cavaStyle === "line") ? undefined : parent.bottom
@@ -92,7 +92,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: CavaService.glyphText
       font.family: hostRoot.font
-      font.pixelSize: 11
+      font.pixelSize: hostContainer.scaled(11)
       color: hostContainer.wAccent("cava", hostRoot.theme.accentPrimary)
     }
   }
