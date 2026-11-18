@@ -397,10 +397,19 @@ check_dependencies() {
         missing_opt+=("xdg-desktop-portal-hyprland")
     fi
 
+    local has_nerd_font=false
     if command -v fc-list >/dev/null 2>&1; then
-        if ! fc-list : family 2>/dev/null | grep -qi "Nerd Font"; then
-            missing_opt+=("nerd-font")
+        if fc-list : family 2>/dev/null | grep -qiE "Nerd ?Font| NF(,|$)| NFM(,|$)| NFP(,|$)"; then
+            has_nerd_font=true
         fi
+    fi
+    if [[ "$has_nerd_font" == false ]]; then
+        if find "${XDG_DATA_HOME:-$HOME/.local/share}/fonts" /usr/share/fonts /usr/local/share/fonts -iname "*Nerd*" -print -quit 2>/dev/null | grep -q .; then
+            has_nerd_font=true
+        fi
+    fi
+    if [[ "$has_nerd_font" == false ]]; then
+        missing_opt+=("nerd-font")
     fi
 
     if [[ ${#missing_core[@]} -eq 0 && ${#missing_opt[@]} -eq 0 ]]; then
@@ -690,6 +699,7 @@ for k, v in pairs(envs) do
 end
 
 hl.on("hyprland.start", function()
+    hl.exec_cmd("command -v awww-daemon >/dev/null 2>&1 && awww-daemon --format xrgb || (command -v swww-daemon >/dev/null 2>&1 && swww-daemon)")
     hl.exec_cmd("quickshell")
 end)
 LUA
