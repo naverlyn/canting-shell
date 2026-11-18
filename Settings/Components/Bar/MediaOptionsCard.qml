@@ -11,7 +11,6 @@ SectionCard {
 
     PreferenceRow {
         title: "Popup Layout Style"
-        subtitle: "Choose between full controls or compact inline bar popup"
 
         SegmentedControl {
             trackWidth: 200
@@ -32,7 +31,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Album Art"
-        desc: "Display cover artwork inside the bar media popup"
         checked: BarConfig.mediaShowAlbumArt
         onToggled: (val) => {
             BarConfig.mediaShowAlbumArt = val;
@@ -45,7 +43,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Seekbar"
-        desc: "Display interactive track progress and timestamps"
         checked: BarConfig.mediaShowSeekbar
         onToggled: (val) => {
             BarConfig.mediaShowSeekbar = val;

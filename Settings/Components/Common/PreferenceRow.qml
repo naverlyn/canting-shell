@@ -9,7 +9,7 @@ Item {
     default property alias content: rowSlot.data
 
     Layout.fillWidth: true
-    height: 52
+    height: pr.subtitle !== "" ? 52 : 40
 
     RowLayout {
         anchors.fill: parent

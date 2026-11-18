@@ -12,7 +12,7 @@ Item {
     required property var root
     id: rowSelf
     Layout.fillWidth: true
-    height: 52
+    height: 40
 
     RowLayout {
         anchors.fill: parent
@@ -30,15 +30,6 @@ Item {
                 font.pixelSize: 13
                 font.bold: true
                 color: root.theme.textPrimary
-            }
-
-            Text {
-                text: (root.generalTab.curDisplayTarget === "all" && root.hasMultipleMonitors)
-                    ? "Dock to Top, Bottom, Left, or Right edge on your primary display"
-                    : "Dock to Top, Bottom, Left, or Right edge of the display"
-                font.family: root.font
-                font.pixelSize: 11
-                color: root.theme.textSecondary
             }
         }
 

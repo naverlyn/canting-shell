@@ -17,7 +17,7 @@ SectionCard {
     // 1. Command to Execute
     Item {
         Layout.fillWidth: true
-        height: 62
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -28,7 +28,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Script / Shell Command"
@@ -37,16 +36,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Supports plain text (line 1 = pill, line 2+ = tooltip) or Waybar JSON {\"text\", \"tooltip\", \"icon\"}"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             RowLayout {
                 spacing: 8
@@ -98,7 +90,7 @@ SectionCard {
     // 2. Icon & Left-Click Action
     Item {
         Layout.fillWidth: true
-        height: 60
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -116,13 +108,6 @@ SectionCard {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: "Nerd Font glyph and optional command triggered when clicking the pill"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 
@@ -210,7 +195,7 @@ SectionCard {
     // 3. Poll Interval
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -228,13 +213,6 @@ SectionCard {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: "How often the custom script is executed in the background"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 
@@ -322,7 +300,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Hover Popup Card"
-        desc: "Display a popup card with full script/tooltip output when hovering or clicking the pill"
         checked: Boolean(BarConfig.customScriptShowPopup)
         onToggled: (val) => {
             BarConfig.customScriptShowPopup = val;
@@ -335,7 +312,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Auto-Hide When Output is Empty"
-        desc: "Collapse the Custom Script pill automatically if the command produces no output"
         checked: Boolean(BarConfig.customScriptHideWhenEmpty)
         onToggled: (val) => {
             BarConfig.customScriptHideWhenEmpty = val;

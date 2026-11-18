@@ -16,7 +16,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Brightness Percentage"
-        desc: "Display numerical backlight level (%) next to the brightness icon"
         checked: BarConfig.brightnessShowPercentage !== false
         onToggled: (val) => {
             BarConfig.brightnessShowPercentage = val;
@@ -29,7 +28,7 @@ SectionCard {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -47,13 +46,6 @@ SectionCard {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: "Percentage increment per mouse wheel notch on the Brightness pill"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 
@@ -139,7 +131,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Hyprland Layout Name Label"
-        desc: "Display active layout text (Dwindle, Master, Monocle) next to the switcher icon"
         checked: BarConfig.hyprLayoutShowLabel !== false
         onToggled: (val) => {
             BarConfig.hyprLayoutShowLabel = val;

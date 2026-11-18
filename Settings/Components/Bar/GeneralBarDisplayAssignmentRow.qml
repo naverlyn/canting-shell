@@ -13,7 +13,7 @@ Item {
     id: rowSelf
     visible: root.hasMultipleMonitors
     Layout.fillWidth: true
-    height: 52
+    height: 40
 
     RowLayout {
         anchors.fill: parent
@@ -31,13 +31,6 @@ Item {
                 font.pixelSize: 13
                 font.bold: true
                 color: root.theme.textPrimary
-            }
-
-            Text {
-                text: "Show on all connected monitors, or only primary / secondary display"
-                font.family: root.font
-                font.pixelSize: 11
-                color: root.theme.textSecondary
             }
         }
 

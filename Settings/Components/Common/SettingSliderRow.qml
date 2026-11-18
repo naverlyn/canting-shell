@@ -44,7 +44,7 @@ Item {
     }
 
     Layout.fillWidth: true
-    implicitHeight: (presets.length > 0 && isCustomEffective) ? 94 : 52
+    implicitHeight: (presets.length > 0 && isCustomEffective) ? (sliderRow.desc !== "" ? 94 : 82) : (sliderRow.desc !== "" ? 52 : 40)
     height: implicitHeight
 
     Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
@@ -59,7 +59,7 @@ Item {
         /* Top Main Row */
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 52
+            Layout.preferredHeight: sliderRow.desc !== "" ? 52 : 40
             spacing: 12
 
             ColumnLayout {

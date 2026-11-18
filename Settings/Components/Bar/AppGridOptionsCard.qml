@@ -74,7 +74,7 @@ SectionCard {
     // 1. Mode Switcher Row
     Item {
         Layout.fillWidth: true
-        height: 60
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -85,7 +85,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Icon Source"
@@ -94,16 +93,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Choose between a built-in preset, custom glyph, or PNG image"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             SegmentedControl {
                 trackWidth: 310
@@ -127,7 +119,7 @@ SectionCard {
         id: presetRow
         visible: self.iconMode === "preset"
         Layout.fillWidth: true
-        height: 60
+        height: 40
         opacity: self.rowAnimProgress
         transform: Translate { y: (1.0 - self.rowAnimProgress) * 6 }
 
@@ -142,7 +134,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Icon Preset"
@@ -151,16 +142,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Select a launcher, distro, or grid icon for the bar AppGrid button"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             RowLayout {
                 spacing: 8
@@ -347,7 +331,7 @@ SectionCard {
     Item {
         visible: self.iconMode === "glyph"
         Layout.fillWidth: true
-        height: 60
+        height: 40
         opacity: self.rowAnimProgress
         transform: Translate { y: (1.0 - self.rowAnimProgress) * 6 }
 
@@ -360,7 +344,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Custom Glyph or Label"
@@ -369,16 +352,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Enter any Nerd Font glyph, symbol, or short text for the Applications button"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             RowLayout {
                 spacing: 8
@@ -494,7 +470,7 @@ SectionCard {
         id: pngRow
         visible: self.iconMode === "png"
         Layout.fillWidth: true
-        height: 60
+        height: 40
         opacity: self.rowAnimProgress
         transform: Translate { y: (1.0 - self.rowAnimProgress) * 6 }
 
@@ -510,7 +486,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Custom PNG Image"
@@ -519,18 +494,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: pngRow.isImageActive
-                        ? "Active PNG image overrides the glyph icon on the bar"
-                        : "Choose a .png image file for the Applications button"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             RowLayout {
                 spacing: 8

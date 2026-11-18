@@ -17,7 +17,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Sensor Glyphs"
-        desc: "Display icons (CPU, GPU, RAM, Temp, Disk) before numerical utilization figures"
         checked: BarConfig.hwShowIcons !== false
         onToggled: (val) => {
             BarConfig.hwShowIcons = val;
@@ -30,7 +29,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show GPU Temperature on GPU Pill"
-        desc: "Display live GPU thermal readout alongside GPU utilization percentage"
         checked: Boolean(BarConfig.gpuShowTemp)
         onToggled: (val) => {
             BarConfig.gpuShowTemp = val;
@@ -43,7 +41,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "High Load Warning Alerts"
-        desc: "Highlight hardware pills in red when processor, memory, or thermal levels reach critical levels"
         checked: BarConfig.hwAlertEnabled !== false
         onToggled: (val) => {
             BarConfig.hwAlertEnabled = val;
@@ -56,7 +53,7 @@ SectionCard {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -74,13 +71,6 @@ SectionCard {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: "Percentage (%) or temperature (°C) that triggers warning highlights"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 
@@ -113,7 +103,7 @@ SectionCard {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -131,13 +121,6 @@ SectionCard {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: "Update interval for CPU, memory, network, and thermal sensors"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 

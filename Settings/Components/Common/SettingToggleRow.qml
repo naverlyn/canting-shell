@@ -13,7 +13,7 @@ Item {
     signal toggled(bool val)
 
     Layout.fillWidth: true
-    height: 52
+    height: toggleRow.desc !== "" ? 52 : 40
     opacity: rowEnabled ? 1.0 : 0.45
 
     Behavior on opacity { NumberAnimation { duration: 140 } }

@@ -16,7 +16,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Network SSID & Connected Device Labels"
-        desc: "Display active Wi-Fi SSID on the Wi-Fi pill and connected device name on the Bluetooth pill"
         checked: Boolean(BarConfig.wifiBtShowLabels)
         onToggled: (val) => {
             BarConfig.wifiBtShowLabels = val;

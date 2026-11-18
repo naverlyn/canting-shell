@@ -17,7 +17,7 @@ SectionCard {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -28,7 +28,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Display Mode"
@@ -37,16 +36,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Choose icon-only, icon with description, or description-only (vertical bars auto-use icons)"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             AppDropdown {
                 theme: root.theme
@@ -74,7 +66,7 @@ SectionCard {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -85,7 +77,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Window Scope"
@@ -94,16 +85,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Show windows from all workspaces or only the active workspace"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             AppDropdown {
                 theme: root.theme
@@ -133,7 +117,7 @@ SectionCard {
     Item {
         visible: (BarConfig.taskSwitcherMode || "icon_desc") !== "icon"
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -144,7 +128,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Max Label Width"
@@ -153,16 +136,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Maximum text width per task pill before eliding"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             AppDropdown {
                 theme: root.theme

@@ -17,7 +17,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Enable Cava Visualizer"
-        desc: "Allow audio spectrum streaming when Cava is placed on a bar"
         checked: BarConfig.showCava !== false
         onToggled: (val) => {
             BarConfig.showCava = val;
@@ -32,7 +31,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Auto-Hide When Silent"
-        desc: "Hide or minimize the spectrum pill when no audio is currently playing"
         checked: BarConfig.cavaAutoHide
         onToggled: (val) => {
             BarConfig.cavaAutoHide = val;
@@ -46,7 +44,7 @@ SectionCard {
     // Visual Style Selector: Smooth Bars / Glyphs / Line Waves
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -64,13 +62,6 @@ SectionCard {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: "Choose between smooth rounded bars, centered waves, or terminal glyphs"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 
@@ -103,7 +94,7 @@ SectionCard {
     // Cava Visualizer Mode Selector: Compact (Current) / Medium / Wide
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -121,13 +112,6 @@ SectionCard {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: "Choose visualizer size: Compact (current), Medium, or Wide"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 
@@ -159,7 +143,7 @@ SectionCard {
     // Refresh Framerate Selector: 20, 30, 60 FPS
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -177,13 +161,6 @@ SectionCard {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: "Update rate in frames per second (higher is smoother, lower uses less CPU)"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 

@@ -41,9 +41,7 @@ SectionCard {
 
     SettingToggleRow {
         title: "Inner Corners"
-        desc: frameSection.cornerOrShadowDisabled
-            ? frameSection.noEdgeReason
-            : "Round the inner corners where docked bars or the screen frame meet the desktop"
+        desc: frameSection.cornerOrShadowDisabled ? frameSection.noEdgeReason : ""
         checked: Boolean(BarConfig.innerCorners) && !frameSection.cornerOrShadowDisabled
         rowEnabled: !frameSection.cornerOrShadowDisabled
         onToggled: (val) => BarConfig.setInnerCorners(val)
@@ -53,7 +51,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Framed Screen Border"
-        desc: "Add a thin border along un-docked desktop edges to frame the screen"
         checked: Boolean(BarConfig.screenBorder)
         onToggled: (val) => BarConfig.setScreenBorder(val)
     }
@@ -65,7 +62,6 @@ SectionCard {
 
         SettingSliderRow {
             title: "Screen Border Thickness"
-            desc: "Pixel thickness of the border along un-docked desktop edges"
             value: BarConfig.screenBorderThickness
             minVal: 1
             maxVal: 32
@@ -84,7 +80,6 @@ SectionCard {
 
         SettingToggleRow {
             title: "Screen Border Inner Corners"
-            desc: "Display smooth concave rounded corners where border edges meet each other or active bars"
             checked: Boolean(BarConfig.screenBorderCorners)
             onToggled: (val) => BarConfig.setScreenBorderCorners(val)
         }
@@ -94,9 +89,7 @@ SectionCard {
 
     SettingToggleRow {
         title: "Inner Shadow"
-        desc: frameSection.cornerOrShadowDisabled
-            ? frameSection.noEdgeReason
-            : "Cast a soft ambient shadow inward from the bar and border frame onto the desktop"
+        desc: frameSection.cornerOrShadowDisabled ? frameSection.noEdgeReason : ""
         checked: Boolean(BarConfig.screenBorderShadow) && !frameSection.cornerOrShadowDisabled
         rowEnabled: !frameSection.cornerOrShadowDisabled
         onToggled: (val) => BarConfig.setScreenBorderShadow(val)
@@ -109,7 +102,6 @@ SectionCard {
 
         SettingSliderRow {
             title: "Inner Shadow Size"
-            desc: "Spread distance in pixels for the ambient inner shadow"
             value: BarConfig.screenBorderShadowSize
             minVal: 2
             maxVal: 64
@@ -130,7 +122,6 @@ SectionCard {
 
     SettingSliderRow {
         title: "Frame & Corners Opacity"
-        desc: "Background transparency for the global screen border and inner corners"
         value: Math.round((BarConfig.screenFrameOpacity !== undefined ? BarConfig.screenFrameOpacity : 1.0) * 100)
         minVal: 10
         maxVal: 100

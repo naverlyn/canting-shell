@@ -17,7 +17,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Seconds in Clock"
-        desc: "Display precision seconds format (hh:mm:ss)"
         checked: BarConfig.showSeconds
         onToggled: (val) => {
             BarConfig.showSeconds = val;
@@ -30,7 +29,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Date in Clock"
-        desc: "Display weekday and calendar date alongside the time"
         checked: BarConfig.showDate
         onToggled: (val) => {
             BarConfig.showDate = val;
@@ -43,7 +41,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Year in Clock"
-        desc: "Display the year next to the date"
         checked: BarConfig.showYear
         onToggled: (val) => {
             BarConfig.showYear = val;

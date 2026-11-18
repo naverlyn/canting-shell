@@ -29,7 +29,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Desktop Bar"
-        desc: "Display this status bar on the desktop"
         checked: root.generalTab.curEnabled
         onToggled: (val) => BarConfig.updateBarProp("enabled", val)
     }
@@ -83,7 +82,6 @@ SectionCard {
 
         SettingToggleRow {
             title: "Fluid Widget Cards (Experimental)"
-            desc: "Blend detail popups directly into the bar with curved inner corners (Fluid) vs detached floating cards (Flyout)"
             checked: BarConfig.currentBar ? (BarConfig.currentBar.fluidCards !== undefined ? Boolean(BarConfig.currentBar.fluidCards) : Boolean(BarConfig.fluidCards)) : Boolean(BarConfig.fluidCards)
             onToggled: (val) => {
                 BarConfig.fluidCards = val;
@@ -99,7 +97,6 @@ SectionCard {
 
         SettingSliderRow {
             title: "Bar Roundness"
-            desc: "Corner radius in pixels for floating and dashed bars"
             value: BarConfig.currentBar && BarConfig.currentBar.barRadius !== undefined ? Number(BarConfig.currentBar.barRadius) : BarConfig.barRadius
             minVal: 0
             maxVal: 20
@@ -119,7 +116,6 @@ SectionCard {
 
         SettingSliderRow {
             title: "Bar Edge Margin"
-            desc: "Gap in pixels from the screen edge or border for floating and dashed bars"
             value: BarConfig.currentBar && BarConfig.currentBar.barMargin !== undefined ? Number(BarConfig.currentBar.barMargin) : BarConfig.barMargin
             minVal: 0
             maxVal: 24
@@ -146,7 +142,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Hide Pill Backgrounds"
-        desc: "Remove individual widget card backgrounds for a clean, borderless appearance"
         checked: root.generalTab.curHidePill
         onToggled: (val) => BarConfig.updateBarProp("hidePill", val)
     }
@@ -155,7 +150,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Auto-Scale Widgets"
-        desc: "Scale widget icons and text proportionally with bar thickness"
         checked: root.generalTab.curScaleWidgets
         onToggled: (val) => BarConfig.updateBarProp("scaleWidgets", val)
     }

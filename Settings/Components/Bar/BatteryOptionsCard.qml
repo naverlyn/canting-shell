@@ -17,7 +17,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Battery Percentage"
-        desc: "Display numerical charge percentage text alongside the battery status icon"
         checked: BarConfig.batteryShowPercentage !== false
         onToggled: (val) => {
             BarConfig.batteryShowPercentage = val;
@@ -30,7 +29,7 @@ SectionCard {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -48,13 +47,6 @@ SectionCard {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: "Percentage at which battery icon turns red to warn about low charge"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 

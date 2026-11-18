@@ -10,7 +10,7 @@ Item {
     id: styleRow
 
     Layout.fillWidth: true
-    height: 58
+    height: 40
 
     readonly property bool isEditingSecondary: root.generalTab.isEditingSecondary
     readonly property string currentStyle: {
@@ -42,7 +42,6 @@ Item {
         ColumnLayout {
             spacing: 2
             Layout.alignment: Qt.AlignVCenter
-            Layout.fillWidth: true
 
             Text {
                 text: {
@@ -58,23 +57,18 @@ Item {
                 font.bold: true
                 color: root.theme.textPrimary
             }
-
-            Text {
-                text: "Choose between docked, floating, or dashed bar appearance"
-                font.family: root.font
-                font.pixelSize: 11
-                color: root.theme.textSecondary
-                elide: Text.ElideRight
-                Layout.fillWidth: true
-            }
         }
+
+        Item { Layout.fillWidth: true }
 
         AppDropdown {
             id: barStyleDropdown
             theme: root.theme
             font: root.font
+            width: 200
             implicitWidth: 200
             menuWidth: 200
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             currentValue: styleRow.currentStyle
             options: [
                 {

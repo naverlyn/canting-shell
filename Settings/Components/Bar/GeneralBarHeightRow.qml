@@ -12,7 +12,7 @@ Item {
     required property var root
     id: barHeightItem
     Layout.fillWidth: true
-    implicitHeight: customHeightCol.implicitHeight + 20
+    implicitHeight: customHeightCol.implicitHeight + 8
     height: implicitHeight
     clip: true
 
@@ -29,7 +29,10 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 12
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
+        anchors.topMargin: 4
+        anchors.bottomMargin: 4
         spacing: 10
 
         RowLayout {
@@ -46,13 +49,6 @@ Item {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: root.generalTab.curIsVert ? "Horizontal width in pixels for left/right vertical bar" : "Vertical thickness in pixels"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 

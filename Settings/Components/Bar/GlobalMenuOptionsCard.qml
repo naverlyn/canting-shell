@@ -17,7 +17,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Show Menu Glyph (󰍜)"
-        desc: "Display application menu indicator icon before File, Edit, Help menus"
         checked: BarConfig.showGlobalMenuIcon
         onToggled: (val) => {
             BarConfig.showGlobalMenuIcon = val;

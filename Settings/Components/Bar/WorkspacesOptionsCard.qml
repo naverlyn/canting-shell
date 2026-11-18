@@ -17,7 +17,7 @@ SectionCard {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -35,13 +35,6 @@ SectionCard {
                     font.pixelSize: 13
                     font.bold: true
                     color: root.theme.textPrimary
-                }
-
-                Text {
-                    text: "Display numeric digits, Roman numerals, or minimal dots"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
                 }
             }
 
@@ -73,7 +66,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Mouse Wheel Workspace Switching"
-        desc: "Scroll over workspace pills to navigate between active workspaces"
         checked: BarConfig.workspaceScrollSwitch !== false
         onToggled: (val) => {
             BarConfig.workspaceScrollSwitch = val;
