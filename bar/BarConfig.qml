@@ -248,7 +248,7 @@ Singleton {
   // Right & Extra Section Widgets
   property bool showWorkspaces: true
   property bool showWeather: true
-  property string weatherLocation: "Bekasi"
+  property string weatherLocation: ""
   property bool showTime: true
   property bool showSeconds: true
   property bool showDate: true

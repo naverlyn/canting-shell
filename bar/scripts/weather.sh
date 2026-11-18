@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 
-LOC="${1:-Bekasi}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOC="${1:-}"
 UNIT="${2:-m}"
 MODE="${3:-compact}"
 FORCE="${4:-false}"
 
+if [ -z "$LOC" ]; then
+  LOC=$("$SCRIPT_DIR/weather_location.sh" "$FORCE" 2>/dev/null | tr -d '\n')
+fi
+
 REQ_LOC="${LOC// /+}"
-SAFE_LOC=$(echo "$LOC" | tr ' /' '__')
+SAFE_LOC=$(printf '%s' "${LOC:-auto}" | tr ' /' '__')
 CACHE="/tmp/quickshell_wttr_${SAFE_LOC}_j1.json"
 NOW=$(date +%s)
 

@@ -25,6 +25,13 @@ Singleton {
   property string gpuVram: "0%"
   property string diskUsage: "0%"
   property string weatherInfo: "Loading..."
+  property string detectedWeatherLocation: ""
+  readonly property string effectiveWeatherLocation: {
+    const cfg = (typeof BarConfig !== "undefined" && BarConfig.weatherLocation)
+      ? BarConfig.weatherLocation.trim()
+      : "";
+    return cfg !== "" ? cfg : root.detectedWeatherLocation;
+  }
   property bool idleInhibited: false
 
   function toggleIdleInhibitor() {
@@ -191,11 +198,27 @@ Singleton {
     }
   }
 
+  // Weather Location (auto-IP fallback when BarConfig.weatherLocation is blank)
+  Process {
+    id: locationProc
+    command: ["sh", Qt.resolvedUrl("scripts/weather_location.sh").toString().replace(/^file:\/\//, ""), "false"]
+    running: false
+
+    stdout: StdioCollector {
+      onStreamFinished: {
+        const res = text.trim();
+        if (res) {
+          root.detectedWeatherLocation = res;
+        }
+        root._fetchWeatherWithLocation(root.effectiveWeatherLocation);
+      }
+    }
+  }
+
   // Weather Info
   Process {
     id: weatherProc
-    command: ["sh", "-c", "loc=\"" + (BarConfig.weatherLocation || "Bekasi") + "\"; w=$(curl -s --connect-timeout 5 \"wttr.in/${loc}?format=4\" 2>/dev/null | grep -v '<' | tr -d '\\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g'); [ -n \"$w\" ] && echo \"$w\" || echo '󰖐 N/A'"]
-    running: true
+    running: false
 
     stdout: StdioCollector {
       onStreamFinished: {
@@ -209,12 +232,25 @@ Singleton {
     }
   }
 
-  function refreshWeather() {
-    const loc = BarConfig.weatherLocation || "Bekasi";
-    const u = BarConfig.weatherUnit === "u" ? "u" : "m";
-    weatherProc.command = ["sh", "-c", "loc=\"" + loc + "\"; w=$(curl -s --connect-timeout 5 \"wttr.in/${loc}?format=4&" + u + "\" 2>/dev/null | grep -v '<' | tr -d '\\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g'); [ -n \"$w\" ] && echo \"$w\" || echo '󰖐 N/A'"];
+  function _fetchWeatherWithLocation(loc) {
+    const u = (typeof BarConfig !== "undefined" && BarConfig.weatherUnit === "u") ? "u" : "m";
+    const reqLoc = (loc || "").trim().replace(/\s+/g, "+").replace(/"/g, "");
+    weatherProc.command = ["sh", "-c", "loc=\"" + reqLoc + "\"; w=$(curl -s --connect-timeout 5 \"https://wttr.in/${loc}?format=4&" + u + "\" 2>/dev/null | grep -v '<' | tr -d '\\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g'); [ -n \"$w\" ] && echo \"$w\" || echo '󰖐 N/A'"];
     weatherProc.running = true;
   }
+
+  function refreshWeather() {
+    const cfg = (typeof BarConfig !== "undefined" && BarConfig.weatherLocation)
+      ? BarConfig.weatherLocation.trim()
+      : "";
+    if (cfg !== "") {
+      root._fetchWeatherWithLocation(cfg);
+    } else if (!locationProc.running) {
+      locationProc.running = true;
+    }
+  }
+
+  Component.onCompleted: root.refreshWeather()
 
   function refreshDisk() {
     diskProc.running = true

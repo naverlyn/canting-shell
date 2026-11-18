@@ -37,7 +37,7 @@ Item {
     }
     return popup.font || "monospace";
   }
-  property string location: "Bekasi"
+  property string location: ""
   property color accent: "#ffffff"
   property string barPosition: BarConfig.position
   property string title: "Weather"
@@ -157,7 +157,7 @@ Item {
 
   Process {
     id: proc
-    command: ["sh", Qt.resolvedUrl("../scripts/weather.sh").toString().replace("file://", ""), popup.location || "Bekasi", BarConfig.weatherUnit || "m", BarConfig.weatherMode || "compact", "false"]
+    command: ["sh", Qt.resolvedUrl("../scripts/weather.sh").toString().replace("file://", ""), popup.location || "", BarConfig.weatherUnit || "m", BarConfig.weatherMode || "compact", "false"]
     running: false
     stdout: StdioCollector {
       onStreamFinished: {
@@ -196,7 +196,7 @@ Item {
       proc.running = false;
     }
     const forceFlag = (force === true) ? "true" : "false";
-    proc.command = ["sh", Qt.resolvedUrl("../scripts/weather.sh").toString().replace("file://", ""), popup.location || "Bekasi", BarConfig.weatherUnit || "m", BarConfig.weatherMode || "compact", forceFlag];
+    proc.command = ["sh", Qt.resolvedUrl("../scripts/weather.sh").toString().replace("file://", ""), popup.location || "", BarConfig.weatherUnit || "m", BarConfig.weatherMode || "compact", forceFlag];
     proc.running = true;
   }
 
@@ -262,7 +262,7 @@ Item {
         }
 
         Text {
-          text: "Weather Forecast · " + (popup.location || "Bekasi")
+          text: "Weather Forecast · " + (popup.location || "Auto-detect")
           color: popup.theme.textPrimary
           font.pixelSize: 14
           font.bold: true
@@ -391,7 +391,7 @@ Item {
             }
 
             Text {
-              text: (popup.location || "Bekasi") + (popup.forecastDays.length > 0 ? ("  •  High " + popup.forecastDays[0].maxTemp + "  ·  Low " + popup.forecastDays[0].minTemp) : "")
+              text: (popup.location || "Auto-detect") + (popup.forecastDays.length > 0 ? ("  •  High " + popup.forecastDays[0].maxTemp + "  ·  Low " + popup.forecastDays[0].minTemp) : "")
               font.family: popup.font
               font.pixelSize: 12
               color: popup.theme.textMuted

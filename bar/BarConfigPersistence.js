@@ -361,7 +361,7 @@ function applyConfig(root, cfg) {
 
 function resetDefaults(root) {
   root.barVisible = true;
-  root.weatherLocation = "Bekasi";
+  root.weatherLocation = "";
   root.position = "top";
   root.barHeight = 32;
   root.floating = false;

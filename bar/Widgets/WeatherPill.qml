@@ -107,7 +107,7 @@ Rectangle {
     pinned: weatherWidget.isPinned
     theme: hostRoot.theme
     font: hostRoot.font
-    location: BarConfig.weatherLocation || "Bekasi"
+    location: SystemInfo.effectiveWeatherLocation || ""
     accent: hostContainer.wAccent("weather", hostRoot.theme.accentPrimary)
     barPosition: hostContainer.barPos
     onPinToggled: weatherWidget.isPinned = !weatherWidget.isPinned

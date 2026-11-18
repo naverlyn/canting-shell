@@ -49,10 +49,13 @@ SectionCard {
 
             RowLayout {
                 spacing: 8
+                Layout.preferredWidth: 200
+                Layout.minimumWidth: 200
+                Layout.maximumWidth: 200
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
                 Rectangle {
-                    width: 220
+                    Layout.fillWidth: true
                     height: 32
                     radius: 7
                     color: root.theme.bgBase

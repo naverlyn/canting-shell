@@ -18,9 +18,9 @@ Rectangle {
     property string windText: "-- km/h"
     property bool isRefreshing: false
 
-    readonly property string locationName: (typeof BarConfig !== "undefined" && BarConfig.weatherLocation)
-        ? BarConfig.weatherLocation
-        : "Bekasi"
+    readonly property string locationName: (typeof SystemInfo !== "undefined" && SystemInfo.effectiveWeatherLocation)
+        ? SystemInfo.effectiveWeatherLocation
+        : "Auto-detect"
 
     width: parent ? parent.width : 300
     height: weatherCol.implicitHeight + 24
@@ -62,12 +62,18 @@ Rectangle {
     function refresh() {
         root.parseFromSummary(SystemInfo.weatherInfo);
         if (detailProc.running) return;
+        const rawLoc = (typeof SystemInfo !== "undefined" && SystemInfo.effectiveWeatherLocation)
+            ? SystemInfo.effectiveWeatherLocation
+            : "";
+        const reqLoc = rawLoc.trim().replace(/\s+/g, "+").replace(/"/g, "");
+        if (!reqLoc && typeof SystemInfo !== "undefined") {
+            SystemInfo.refreshWeather();
+        }
         root.isRefreshing = true;
-        const loc = root.locationName;
         const u = (typeof BarConfig !== "undefined" && BarConfig.weatherUnit === "u") ? "u" : "m";
         detailProc.command = [
             "sh", "-c",
-            "curl -s --connect-timeout 5 \"https://wttr.in/" + loc + "?format=%C|%t|%f|%h|%w&" + u + "\" 2>/dev/null | head -n 1"
+            "curl -s --connect-timeout 5 \"https://wttr.in/" + reqLoc + "?format=%C|%t|%f|%h|%w&" + u + "\" 2>/dev/null | head -n 1"
         ];
         detailProc.running = true;
     }
@@ -102,6 +108,9 @@ Rectangle {
         target: SystemInfo
         function onWeatherInfoChanged() {
             root.parseFromSummary(SystemInfo.weatherInfo);
+        }
+        function onEffectiveWeatherLocationChanged() {
+            root.refresh();
         }
     }
 
