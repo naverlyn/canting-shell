@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import "../../Settings/Components"
 
 PanelWindow {
     id: root
@@ -18,6 +19,7 @@ PanelWindow {
     signal launchIpcRequested(string target, string fnName, string arg)
 
     property int step: 0
+    property bool customizingBar: false
     readonly property var stepTitles: ["1. Choose Preset", "2. Theme & Wallpaper", "3. Shortcuts & Ready"]
 
     readonly property var presetOptions: [
@@ -99,8 +101,8 @@ PanelWindow {
     Rectangle {
         id: card
         anchors.centerIn: parent
-        width: Math.min(700, root.width - 64)
-        height: Math.min(540, root.height - 64)
+        width: Math.min(root.customizingBar && root.step === 0 ? 920 : 700, root.width - 48)
+        height: Math.min(root.customizingBar && root.step === 0 ? 660 : 540, root.height - 48)
         radius: 18
         color: root.theme.bgBase
         border.color: root.theme.bgBorder
@@ -185,11 +187,12 @@ PanelWindow {
                 Layout.fillHeight: true
                 currentIndex: root.step
 
-                // Step 0: Presets
+                // Step 0: Presets (or inline BarSettings when customizing)
                 ColumnLayout {
                     spacing: 12
 
                     GridLayout {
+                        visible: !root.customizingBar
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         columns: 2
@@ -274,6 +277,7 @@ PanelWindow {
                     }
 
                     Rectangle {
+                        visible: !root.customizingBar
                         Layout.fillWidth: true
                         height: 44
                         radius: 10
@@ -285,7 +289,7 @@ PanelWindow {
                         MouseArea {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.launchIpcRequested("settings", "open", "bar")
+                            onClicked: root.customizingBar = true
                         }
 
                         RowLayout {
@@ -310,7 +314,7 @@ PanelWindow {
                             }
 
                             Text {
-                                text: "— Open Bar Settings to configure layout, widgets, and appearance"
+                                text: "— Configure bar layout, widgets, and appearance inline"
                                 font.family: root.font
                                 font.pixelSize: 12
                                 color: root.theme.textMuted
@@ -323,6 +327,57 @@ PanelWindow {
                                 font.family: root.font
                                 font.pixelSize: 14
                                 color: root.theme.textSecondary
+                            }
+                        }
+                    }
+
+                    // Inline BarSettings view
+                    ColumnLayout {
+                        visible: root.customizingBar
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        spacing: 8
+
+                        RowLayout {
+                            Layout.fillWidth: true
+
+                            Rectangle {
+                                radius: 8
+                                color: backPresetHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+                                border.color: root.theme.bgBorder
+                                border.width: 1
+                                implicitWidth: backPresetLbl.implicitWidth + 20
+                                implicitHeight: 28
+
+                                HoverHandler { id: backPresetHover }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.customizingBar = false
+                                }
+
+                                Text {
+                                    id: backPresetLbl
+                                    anchors.centerIn: parent
+                                    text: "← Back to Presets"
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    color: root.theme.textPrimary
+                                }
+                            }
+
+                            Item { Layout.fillWidth: true }
+                        }
+
+                        Loader {
+                            active: root.customizingBar
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            sourceComponent: Component {
+                                BarSettings {
+                                    theme: root.theme
+                                    font: root.font
+                                }
                             }
                         }
                     }
