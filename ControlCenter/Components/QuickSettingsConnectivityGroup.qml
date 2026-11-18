@@ -162,14 +162,11 @@ import ".."
                             }
 
                             Text {
-                                visible: groupTileBtn.showStatus
+                                visible: groupTileBtn.showStatus && (groupTileBtn.tid === "wifi" || (groupTileBtn.tid === "bluetooth" && hostGrid.btAvailable && hostGrid.btEnabled))
                                 text: {
                                     if (groupTileBtn.tid === "wifi") return hostGrid.wifiEnabled ? (hostGrid.currentSsid || "On") : "Off";
-                                    if (groupTileBtn.tid === "bluetooth") return (hostGrid.btAvailable && hostGrid.btEnabled) ? "On" : "Off";
-                                    if (groupTileBtn.tid === "airplane") return hostGrid.airplaneEnabled ? "On" : "Off";
-                                    if (groupTileBtn.tid === "dnd") return hostGrid.dndEnabled ? "On" : "Off";
-                                    if (groupTileBtn.tid === "darkmode") return hostGrid.isDarkMode ? "Dark" : "Light";
-                                    return groupTileBtn.isActive ? "On" : "Off";
+                                    if (groupTileBtn.tid === "bluetooth") return (hostGrid.btAvailable && hostGrid.btEnabled) ? "On" : "";
+                                    return "";
                                 }
                                 font.family: hostGrid.font
                                 font.pixelSize: 9

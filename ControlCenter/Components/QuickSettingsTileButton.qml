@@ -157,18 +157,12 @@ import ".."
                         }
 
                         Text {
+                            visible: tileBtn.tid === "wifi" || (tileBtn.tid === "bluetooth" && (!hostGrid.btAvailable || hostGrid.btEnabled))
                             text: {
                                 switch (tileBtn.tid) {
                                 case "wifi": return hostGrid.wifiEnabled ? (hostGrid.currentSsid || "On") : "Off";
-                                case "bluetooth": return hostGrid.btAvailable ? (hostGrid.btEnabled ? "On" : "Off") : "No adapter";
-                                case "darkmode": return hostGrid.isDarkMode ? "Dark" : "Light";
-                                case "mic": return hostGrid.micMuted ? "Muted" : "Live";
-                                case "mute": return hostGrid.sinkMuted ? "Muted" : "Live";
-                                case "clipboard": return "History";
-                                case "emoji": return "Picker";
-                                case "screenshot": return "Capture";
-                                case "lock": return "Session";
-                                default: return tileBtn.isActive ? "On" : "Off";
+                                case "bluetooth": return hostGrid.btAvailable ? (hostGrid.btEnabled ? "On" : "") : "No adapter";
+                                default: return "";
                                 }
                             }
                             font.family: hostGrid.font
