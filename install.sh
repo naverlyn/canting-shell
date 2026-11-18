@@ -370,7 +370,7 @@ install_packages() {
     else
         echo -e "Running: ${CYAN}$cmd_str${NC}"
         if ! bash -c "$cmd_str"; then
-            echo -e "${YELLOW}Warning:${NC} Package installation exited with errors; continuing with configuration."
+            echo -e "${YELLOW}Warning:${NC} Package installation exited with errors."
         fi
     fi
 
@@ -1042,7 +1042,7 @@ PY
     fi
 }
 
-ensure_core_prereqs() {
+detect_missing_core_prereqs() {
     local has_wayland=false has_hyprland=false has_quickshell=false
     if ldconfig -p 2>/dev/null | grep -q "libwayland-client" \
         || compgen -G "/usr/lib*/libwayland-client.so*" >/dev/null 2>&1 \
@@ -1056,40 +1056,87 @@ ensure_core_prereqs() {
         has_quickshell=true
     fi
 
-    if [[ "$has_wayland" == true && "$has_hyprland" == true && "$has_quickshell" == true ]]; then
+    MISSING_CORE_CMDS=()
+    if [[ "$has_wayland" == false ]]; then MISSING_CORE_CMDS+=("wayland"); fi
+    if [[ "$has_hyprland" == false ]]; then MISSING_CORE_CMDS+=("hyprland"); fi
+    if [[ "$has_quickshell" == false ]]; then MISSING_CORE_CMDS+=("quickshell"); fi
+}
+
+ensure_core_prereqs() {
+    MISSING_CORE_CMDS=()
+    detect_missing_core_prereqs
+
+    if [[ ${#MISSING_CORE_CMDS[@]} -eq 0 ]]; then
         echo -e "${GREEN}✓${NC} Wayland, Hyprland, and Quickshell are installed"
         echo ""
         return 0
     fi
 
-    local distro missing_cmds=() missing_pkgs=()
+    local distro missing_pkgs=()
     distro="$(detect_distro)"
-    [[ "$has_wayland" == false ]] && missing_cmds+=("wayland")
-    [[ "$has_hyprland" == false ]] && missing_cmds+=("hyprland")
-    [[ "$has_quickshell" == false ]] && missing_cmds+=("quickshell")
-
-    for cmd in "${missing_cmds[@]}"; do
+    for cmd in "${MISSING_CORE_CMDS[@]}"; do
         missing_pkgs+=("$(map_pkg_for_distro "$cmd" "$distro")")
     done
 
     echo -e "${YELLOW}Missing required packages:${NC} ${missing_pkgs[*]}"
     if [[ "$SKIP_DEPS" == true ]]; then
-        echo -e "${DIM}Skipping installation (--skip-deps).${NC}"
-        echo ""
-        return 0
+        echo -e "${RED}Aborted:${NC} --skip-deps was passed, but required packages (${missing_pkgs[*]}) are missing." >&2
+        echo -e "  Install ${CYAN}${missing_pkgs[*]}${NC} first, then re-run ${CYAN}./install.sh --install${NC}." >&2
+        exit 1
     fi
 
     if [[ -t 0 && "$DRY_RUN" != true ]]; then
         local prereq_ans
         read -rp "Install missing required packages (${missing_pkgs[*]})? [Y/n]: " prereq_ans
         if [[ "${prereq_ans,,}" == "n" ]]; then
-            echo -e "${YELLOW}Skipped package installation.${NC} Please install ${missing_pkgs[*]} before starting canting-shell."
-            echo ""
-            return 0
+            echo -e "${RED}Aborted:${NC} Required packages (${missing_pkgs[*]}) must be installed before copying canting-shell." >&2
+            echo -e "  Install ${CYAN}${missing_pkgs[*]}${NC} manually, then re-run ${CYAN}./install.sh --install${NC}." >&2
+            exit 1
         fi
     fi
 
-    install_packages "$distro" "${missing_pkgs[@]}"
+    install_packages "$distro" "${missing_pkgs[@]}" || true
+
+    if [[ "$DRY_RUN" == true ]]; then
+        echo ""
+        return 0
+    fi
+
+    detect_missing_core_prereqs
+    if [[ ${#MISSING_CORE_CMDS[@]} -gt 0 ]]; then
+        local still_missing_pkgs=()
+        for cmd in "${MISSING_CORE_CMDS[@]}"; do
+            still_missing_pkgs+=("$(map_pkg_for_distro "$cmd" "$distro")")
+        done
+        echo "" >&2
+        echo -e "${RED}Error:${NC} Could not install required package(s): ${still_missing_pkgs[*]}" >&2
+        echo -e "  Nothing was copied to ${CYAN}$TARGET_QS_DIR${NC}." >&2
+        case "$distro" in
+            arch)
+                if [[ " ${MISSING_CORE_CMDS[*]} " == *" quickshell "* ]]; then
+                    echo -e "  On Arch Linux, install an AUR helper (${CYAN}yay${NC} or ${CYAN}paru${NC}) or build ${CYAN}quickshell${NC} from AUR." >&2
+                else
+                    echo -e "  Install ${CYAN}${still_missing_pkgs[*]}${NC} via ${CYAN}pacman${NC} or an AUR helper." >&2
+                fi
+                ;;
+            fedora)
+                echo -e "  On Fedora, enable the required COPR repos (${CYAN}errornointernet/quickshell${NC}, ${CYAN}lionheartp/Hyprland${NC}) or build from source." >&2
+                ;;
+            debian)
+                echo -e "  On Debian/Ubuntu, install ${CYAN}${still_missing_pkgs[*]}${NC} via apt/PPA or build missing packages (such as ${CYAN}quickshell${NC}) from source." >&2
+                ;;
+            nixos)
+                echo -e "  On NixOS, add ${CYAN}${still_missing_pkgs[*]}${NC} to your ${CYAN}configuration.nix${NC} / ${CYAN}home.nix${NC} and rebuild." >&2
+                ;;
+            *)
+                echo -e "  Please install ${CYAN}${still_missing_pkgs[*]}${NC} using your system package manager or from source." >&2
+                ;;
+        esac
+        echo -e "  Then re-run: ${CYAN}./install.sh --install${NC}" >&2
+        exit 1
+    fi
+
+    echo -e "${GREEN}✓${NC} Wayland, Hyprland, and Quickshell are installed"
     echo ""
 }
 
