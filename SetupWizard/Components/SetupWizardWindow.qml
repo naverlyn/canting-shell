@@ -22,7 +22,7 @@ PanelWindow {
     property int step: 0
     property bool closing: false
     property var pendingCloseAction: null
-    readonly property var stepTitles: ["Choose Preset", "Theme & Wallpaper", "Lockscreen", "Shortcuts", "Finish"]
+    readonly property var stepTitles: ["Choose Preset", "Theme & Wallpaper", "Lockscreen", "Display & Input", "Shortcuts", "Optional Tools", "Default Apps"]
 
     function closeWith(action) {
         if (root.closing) return;
@@ -103,8 +103,10 @@ PanelWindow {
         readonly property bool isExpanded: (presetStep.customizingBar && root.step === 0)
             || (root.step === 1 && themeStep.subView !== "main")
             || (root.step === 2)
-            || (shortcutsStep.customizingShortcuts && root.step === 3)
-        readonly property bool isShortcutsWithLegend: shortcutsStep.customizingShortcuts && root.step === 3 && shortcutsStep.showIpcLegend
+            || (root.step === 3)
+            || (shortcutsStep.customizingShortcuts && root.step === 4)
+            || (root.step === 6)
+        readonly property bool isShortcutsWithLegend: shortcutsStep.customizingShortcuts && root.step === 4 && shortcutsStep.showIpcLegend
         width: Math.min(isExpanded ? (isShortcutsWithLegend ? 1160 : 960) : 760, root.width - 48)
         height: Math.min(isExpanded ? 680 : 580, root.height - 48)
         Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
@@ -227,11 +229,23 @@ PanelWindow {
                             isActive: root.step === 2
                         }
 
+                        SetupDisplayInputStep {
+                            theme: root.theme
+                            font: root.font
+                            isActive: root.step === 3
+                        }
+
                         SetupShortcutsStep {
                             id: shortcutsStep
                             theme: root.theme
                             font: root.font
                             onCustomizingShortcutsChanged: stepAnim.restart()
+                        }
+
+                        SetupDefaultAppsStep {
+                            theme: root.theme
+                            font: root.font
+                            isActive: root.step === 5
                         }
 
                         SetupReadyStep {
@@ -297,7 +311,7 @@ PanelWindow {
                                 presetStep.customizingBar = false;
                             } else if (root.step === 1 && themeStep.subView !== "main") {
                                 themeStep.subView = "main";
-                            } else if (root.step === 3 && shortcutsStep.customizingShortcuts) {
+                            } else if (root.step === 4 && shortcutsStep.customizingShortcuts) {
                                 shortcutsStep.customizingShortcuts = false;
                             } else {
                                 root.step = Math.max(0, root.step - 1);
