@@ -158,6 +158,7 @@ map_pkg_for_distro() {
         arch:wl-copy)          echo "wl-clipboard" ;;
         arch:pkexec)           echo "polkit" ;;
         arch:magick)           echo "imagemagick" ;;
+        arch:nerd-font)        echo "ttf-jetbrains-mono-nerd" ;;
 
         fedora:quickshell)     echo "quickshell" ;;
         fedora:hyprctl)        echo "hyprland" ;;
@@ -203,12 +204,47 @@ map_pkg_for_distro() {
     esac
 }
 
+# Install JetBrainsMono Nerd Font from GitHub releases into ~/.local/share/fonts
+install_nerd_font_fallback() {
+    local font_dir="${XDG_DATA_HOME:-$HOME/.local/share}/fonts/JetBrainsMonoNerdFont"
+    local url="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz"
+    if [[ "$DRY_RUN" == true ]]; then
+        echo "[dry-run] Would download and install JetBrainsMono Nerd Font to $font_dir"
+        return 0
+    fi
+    if ! command -v curl >/dev/null 2>&1 || ! command -v tar >/dev/null 2>&1; then
+        echo -e "${YELLOW}Warning:${NC} curl and tar are required to install Nerd Font automatically."
+        return 0
+    fi
+    echo -e "Installing ${CYAN}JetBrainsMono Nerd Font${NC} to $font_dir..."
+    mkdir -p "$font_dir"
+    if curl -fsSL "$url" | tar -xJ -C "$font_dir"; then
+        command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$font_dir" >/dev/null 2>&1 || true
+        echo -e "${GREEN}✓${NC} Installed JetBrainsMono Nerd Font"
+    else
+        echo -e "${YELLOW}Warning:${NC} Failed to download JetBrainsMono Nerd Font."
+    fi
+}
+
 # Install a list of packages using the detected distro's package manager
 install_packages() {
     local distro="$1"
     shift
-    local pkgs=("$@")
-    [[ ${#pkgs[@]} -eq 0 ]] && return 0
+    local raw_pkgs=("$@")
+    local pkgs=()
+    local need_nerd_font=false
+    for p in "${raw_pkgs[@]}"; do
+        if [[ "$p" == "nerd-font" ]]; then
+            need_nerd_font=true
+        else
+            pkgs+=("$p")
+        fi
+    done
+
+    if [[ ${#pkgs[@]} -eq 0 ]]; then
+        [[ "$need_nerd_font" == true ]] && install_nerd_font_fallback
+        return 0
+    fi
 
     local cmd_str=""
     case "$distro" in
@@ -225,7 +261,7 @@ install_packages() {
             else
                 local repo_pkgs=() aur_pkgs=()
                 for p in "${pkgs[@]}"; do
-                    if [[ "$p" == "quickshell" ]]; then
+                    if [[ "$p" == "quickshell" || "$p" == "awww" ]]; then
                         aur_pkgs+=("$p")
                     else
                         repo_pkgs+=("$p")
@@ -311,6 +347,10 @@ install_packages() {
             echo -e "${YELLOW}Warning:${NC} Package installation exited with errors; continuing with configuration."
         fi
     fi
+
+    if [[ "$need_nerd_font" == true ]]; then
+        install_nerd_font_fallback
+    fi
 }
 
 # Check core and optional dependencies and offer to install missing ones
@@ -351,6 +391,12 @@ check_dependencies() {
         && [[ ! -x /usr/lib/xdg-desktop-portal-hyprland ]] \
         && [[ ! -x /usr/lib/xdg-desktop-portal/xdg-desktop-portal-hyprland ]]; then
         missing_opt+=("xdg-desktop-portal-hyprland")
+    fi
+
+    if command -v fc-list >/dev/null 2>&1; then
+        if ! fc-list : family 2>/dev/null | grep -qi "Nerd Font"; then
+            missing_opt+=("nerd-font")
+        fi
     fi
 
     if [[ ${#missing_core[@]} -eq 0 && ${#missing_opt[@]} -eq 0 ]]; then
