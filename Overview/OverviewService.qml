@@ -36,9 +36,33 @@ Scope {
             .sort((a, b) => a.id - b.id);
     }
 
+    function isValidToplevel(t) {
+        if (!t || !t.address) return false;
+
+        const ws = t.workspace;
+        const wsId = ws ? ws.id : -1;
+        const wsName = ws && ws.name ? String(ws.name) : "";
+        if (!ws || (wsId <= 0 && !wsName.startsWith("special:"))) return false;
+
+        const ipc = t.lastIpcObject;
+        if (ipc) {
+            if (ipc.mapped === false || ipc.hidden === true) return false;
+            if (Array.isArray(ipc.size) && (ipc.size[0] <= 1 || ipc.size[1] <= 1)) return false;
+            const cls = String(ipc.class || ipc.initialClass || "").toLowerCase();
+            if (cls === "xsettingsd" || cls === "xwaylandvideobridge") return false;
+        } else if (!t.wayland) {
+            return false;
+        }
+
+        const title = String(t.title || "").trim().toLowerCase();
+        if (title === "xsettingsd") return false;
+
+        return true;
+    }
+
     readonly property var sortedToplevels: {
         if (!root.panelVisible) return [];
-        const list = [...Hyprland.toplevels.values].filter(t => t && t.address);
+        const list = [...Hyprland.toplevels.values].filter(t => root.isValidToplevel(t));
         return list.sort((a, b) => {
             const wsA = a.workspace ? a.workspace.id : 999;
             const wsB = b.workspace ? b.workspace.id : 999;

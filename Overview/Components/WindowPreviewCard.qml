@@ -12,6 +12,7 @@ Rectangle {
     required property var toplevel
     required property bool isSelected
     property bool compact: false
+    property bool showWsBadge: true
     property bool dragEnabled: false
     property bool isDragging: false
 
@@ -28,8 +29,16 @@ Rectangle {
     readonly property bool isFocused: Boolean(toplevel && toplevel.activated)
     readonly property var desktopEntry: appClass !== "" ? DesktopEntries.heuristicLookup(appClass) : null
     readonly property string iconSource: (desktopEntry && desktopEntry.icon) ? Quickshell.iconPath(desktopEntry.icon, true) : ""
+    readonly property var ipcSize: (toplevel && toplevel.lastIpcObject && Array.isArray(toplevel.lastIpcObject.size))
+        ? toplevel.lastIpcObject.size
+        : null
+    readonly property real windowAspect: (ipcSize && ipcSize.length >= 2 && ipcSize[0] > 0 && ipcSize[1] > 0)
+        ? Math.max(0.55, Math.min(2.2, ipcSize[0] / ipcSize[1]))
+        : (16 / 10)
+    readonly property int previewTargetHeight: compact ? 112 : 142
+    readonly property int aspectCardWidth: Math.max(compact ? 128 : 160, Math.round(previewTargetHeight * windowAspect) + 16)
 
-    implicitWidth: compact ? 210 : 250
+    implicitWidth: compact ? aspectCardWidth : 250
     implicitHeight: compact ? 156 : 186
     radius: 14
     color: root.isSelected
@@ -181,7 +190,7 @@ Rectangle {
 
             // Workspace badge (top-left)
             Rectangle {
-                visible: root.wsId > 0
+                visible: root.showWsBadge && root.wsId > 0
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.margins: 6

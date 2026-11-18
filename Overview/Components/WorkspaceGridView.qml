@@ -168,13 +168,21 @@ Item {
         }
 
         Flickable {
+            id: wsFlickable
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.preferredHeight: Math.min(540, wsGrid.implicitHeight)
+            Layout.preferredHeight: Math.min(640, wsGrid.implicitHeight)
             contentHeight: wsGrid.implicitHeight
             clip: true
             interactive: root.draggedToplevel === null
             boundsBehavior: Flickable.StopAtBounds
+
+            Connections {
+                target: root
+                function onVisibleChanged() {
+                    if (root.visible) wsFlickable.contentY = 0;
+                }
+            }
 
             GridLayout {
                 id: wsGrid
@@ -198,6 +206,8 @@ Item {
                             && (!root.draggedToplevel.workspace || root.draggedToplevel.workspace.id !== wsId)
 
                         Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.alignment: Qt.AlignTop
                         implicitHeight: Math.max(196, wsCol.implicitHeight + 24)
                         radius: 14
                         color: isDropTarget
@@ -258,20 +268,27 @@ Item {
                                 color: root.theme.textMuted
                             }
 
-                            GridLayout {
+                            Flow {
                                 Layout.fillWidth: true
                                 visible: wsCard.wsWindows.length > 0
-                                columns: 2
-                                rowSpacing: 10
-                                columnSpacing: 10
+                                spacing: 10
 
                                 Repeater {
                                     model: wsCard.wsWindows
 
                                     delegate: WindowPreviewCard {
                                         required property var modelData
-                                        Layout.fillWidth: true
+                                        readonly property bool isSingle: wsCard.wsWindows.length === 1
+                                        readonly property real maxSlotWidth: Math.max(140, Math.floor((wsCol.width - 10) / 2))
+                                        readonly property int targetPreviewHeight: {
+                                            const availW = (isSingle ? wsCol.width : maxSlotWidth) - 16;
+                                            const capH = isSingle ? 260 : (wsCard.wsWindows.length === 2 ? 220 : 128);
+                                            return Math.min(capH, Math.max(96, Math.round(availW / windowAspect)));
+                                        }
+                                        width: Math.min(isSingle ? wsCol.width : maxSlotWidth, Math.round(targetPreviewHeight * windowAspect) + 16)
+                                        height: targetPreviewHeight + 44
                                         compact: true
+                                        showWsBadge: false
                                         dragEnabled: true
                                         isDragging: root.draggedToplevel === modelData
                                         theme: root.theme
@@ -300,6 +317,8 @@ Item {
                     readonly property bool isDropTarget: root.hoveredWsId === root.firstGapWsId
 
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignTop
                     implicitHeight: 196
                     radius: 14
                     color: isDropTarget
@@ -339,6 +358,8 @@ Item {
                     readonly property bool isDropTarget: root.hoveredWsId === root.nextNewWsId
 
                     Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.alignment: Qt.AlignTop
                     implicitHeight: 196
                     radius: 14
                     color: isDropTarget
