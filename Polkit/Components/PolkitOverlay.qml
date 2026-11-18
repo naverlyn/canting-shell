@@ -51,6 +51,17 @@ PanelWindow {
         right: true
     }
 
+    property bool closing: false
+    property var pendingCloseAction: null
+
+    function closeWith(action) {
+        if (polkitWindow.closing) return;
+        polkitWindow.closing = true;
+        polkitWindow.pendingCloseAction = action || null;
+        openAnim.stop();
+        closeAnim.start();
+    }
+
     Component.onCompleted: {
         Qt.callLater(() => authForm.focusInput());
         openAnim.start();
@@ -58,36 +69,54 @@ PanelWindow {
 
     ParallelAnimation {
         id: openAnim
-        NumberAnimation { target: card; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
-        NumberAnimation { target: card; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+        NumberAnimation { target: backdrop; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+        NumberAnimation { target: card; property: "opacity"; from: 0.0; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+        NumberAnimation { target: card; property: "scale"; from: 0.95; to: 1.0; duration: 180; easing.type: Easing.OutCubic }
+    }
+
+    ParallelAnimation {
+        id: closeAnim
+        NumberAnimation { target: backdrop; property: "opacity"; to: 0.0; duration: 120; easing.type: Easing.InCubic }
+        NumberAnimation { target: card; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
+        NumberAnimation { target: card; property: "scale"; to: 0.95; duration: 110; easing.type: Easing.InCubic }
+        onFinished: {
+            if (polkitWindow.pendingCloseAction) polkitWindow.pendingCloseAction();
+        }
     }
 
     Item {
         id: overlayRoot
         anchors.fill: parent
 
-        // Undimmed transparent backdrop
-        MouseArea {
+        // Dimmed backdrop
+        Rectangle {
+            id: backdrop
             anchors.fill: parent
-            onClicked: polkitWindow.cancelled()
+            color: "#66000000"
+            opacity: 0.0
+            MouseArea {
+                anchors.fill: parent
+                onClicked: polkitWindow.closeWith(() => polkitWindow.cancelled())
+            }
         }
 
         FocusScope {
             anchors.fill: parent
             focus: true
-            Keys.onEscapePressed: polkitWindow.cancelled()
+            Keys.onEscapePressed: polkitWindow.closeWith(() => polkitWindow.cancelled())
 
             Rectangle {
                 id: card
                 anchors.centerIn: parent
                 width: polkitWindow.width > 0 ? Math.min(460, polkitWindow.width - 48) : 460
                 height: cardCol.implicitHeight + 48
+                Behavior on height { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
                 radius: 16
                 color: polkitWindow.theme.bgBase
                 border.width: 1
                 border.color: polkitWindow.theme.bgBorder
                 opacity: 0.0
-                scale: 0.96
+                scale: 0.95
 
                 MouseArea { anchors.fill: parent }
 
@@ -105,7 +134,7 @@ PanelWindow {
                         theme: polkitWindow.theme
                         font: polkitWindow.font
                         actionId: polkitWindow.actionId
-                        onCloseRequested: polkitWindow.cancelled()
+                        onCloseRequested: polkitWindow.closeWith(() => polkitWindow.cancelled())
                     }
 
                     PolkitAuthForm {
@@ -125,7 +154,7 @@ PanelWindow {
 
                         onIdentitySelected: (idObj) => polkitWindow.identitySelected(idObj)
                         onSubmitted: (pwd) => polkitWindow.submitted(pwd)
-                        onCancelled: polkitWindow.cancelled()
+                        onCancelled: polkitWindow.closeWith(() => polkitWindow.cancelled())
                     }
                 }
             }

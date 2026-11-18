@@ -53,30 +53,4 @@ RowLayout {
             Layout.fillWidth: true
         }
     }
-
-    Rectangle {
-        width: 30
-        height: 30
-        radius: 15
-        color: closeMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
-        border.width: 1
-        border.color: root.theme.bgBorder
-        Behavior on color { ColorAnimation { duration: 120 } }
-
-        Text {
-            anchors.centerIn: parent
-            text: "✕"
-            font.family: root.font
-            font.pixelSize: 13
-            color: root.theme.textSecondary
-        }
-
-        MouseArea {
-            id: closeMouse
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.closeRequested()
-        }
-    }
 }

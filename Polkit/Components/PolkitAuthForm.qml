@@ -186,6 +186,9 @@ ColumnLayout {
                 height: 28
                 radius: 8
                 color: eyeMouse.containsMouse ? root.theme.bgHover : "transparent"
+                scale: eyeMouse.pressed ? 0.92 : (eyeMouse.containsMouse ? 1.06 : 1.0)
+                Behavior on color { ColorAnimation { duration: 120; easing.type: Easing.OutQuad } }
+                Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutCubic } }
 
                 Text {
                     anchors.centerIn: parent
@@ -232,16 +235,22 @@ ColumnLayout {
             radius: 10
             color: cancelMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
             border.width: 1
-            border.color: root.theme.bgBorder
-            Behavior on color { ColorAnimation { duration: 120 } }
+            border.color: cancelMouse.containsMouse
+                ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.55)
+                : root.theme.bgBorder
+            scale: cancelMouse.pressed ? 0.96 : (cancelMouse.containsMouse ? 1.03 : 1.0)
+            Behavior on color { ColorAnimation { duration: 130; easing.type: Easing.OutQuad } }
+            Behavior on border.color { ColorAnimation { duration: 130; easing.type: Easing.OutQuad } }
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
             Text {
                 id: cancelLbl
                 anchors.centerIn: parent
-                text: "Cancel (Esc)"
+                text: "Cancel"
                 font.family: root.font
                 font.pixelSize: 12
-                color: root.theme.textSecondary
+                color: cancelMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary
+                Behavior on color { ColorAnimation { duration: 130; easing.type: Easing.OutQuad } }
             }
 
             MouseArea {
@@ -262,7 +271,10 @@ ColumnLayout {
             color: authMouse.containsMouse && canSubmit
                 ? Qt.lighter(root.theme.accentPrimary, 1.1)
                 : root.theme.accentPrimary
-            Behavior on color { ColorAnimation { duration: 120 } }
+            scale: (authMouse.pressed && canSubmit) ? 0.96 : ((authMouse.containsMouse && canSubmit) ? 1.03 : 1.0)
+            Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutQuad } }
+            Behavior on color { ColorAnimation { duration: 130; easing.type: Easing.OutQuad } }
+            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
             Text {
                 id: authLbl
