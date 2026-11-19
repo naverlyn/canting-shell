@@ -27,8 +27,8 @@ ColumnLayout {
     readonly property real tileAreaWidth: root.carded ? root.width - 16 : root.width
 
     // Toggle states
-    property bool wifiEnabled: true
-    property string currentSsid: ""
+    readonly property bool wifiEnabled: WifiService.wifiEnabled
+    readonly property string currentSsid: WifiService.currentSsid
     property bool btEnabled: false
     property bool btAvailable: false
     readonly property bool dndEnabled: NotificationService.doNotDisturb
@@ -147,36 +147,6 @@ ColumnLayout {
     width: parent ? parent.width : 300
     spacing: 8
 
-    // Wi-Fi Processes
-    Process {
-        id: wifiProc
-        running: false
-        onExited: {
-            wifiStatusProc.running = true;
-            activeSsidProc.running = true;
-        }
-    }
-
-    Process {
-        id: wifiStatusProc
-        command: ["nmcli", "radio", "wifi"]
-        running: false
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.wifiEnabled = (text.trim() === "enabled");
-            }
-        }
-    }
-
-    Process {
-        id: activeSsidProc
-        command: ["sh", "-c", "nmcli -t -f active,ssid dev wifi | grep '^yes' | cut -d':' -f2"]
-        running: false
-        stdout: StdioCollector {
-            onStreamFinished: root.currentSsid = text.trim()
-        }
-    }
-
     // Bluetooth Processes
     Process {
         id: btProc
@@ -206,7 +176,11 @@ ColumnLayout {
     }
 
     // Airplane Mode Processes
-    Process { id: airplaneProc; running: false }
+    Process {
+        id: airplaneProc
+        running: false
+        onExited: WifiService.refreshStatus()
+    }
 
     Process {
         id: airplaneStatusProc
@@ -216,7 +190,6 @@ ColumnLayout {
             onStreamFinished: {
                 const blocked = text.trim() !== "";
                 root.airplaneEnabled = blocked;
-                if (blocked) root.wifiEnabled = false;
             }
         }
     }
@@ -288,20 +261,12 @@ ColumnLayout {
     }
 
     function setWifi(enabled) {
-        if (root.wifiEnabled === enabled) return;
-        root.wifiEnabled = enabled;
-        if (root.wifiEnabled) {
-            root.airplaneEnabled = false;
-            activeSsidProc.running = true;
-        } else {
-            root.currentSsid = "";
-        }
-        wifiProc.command = ["nmcli", "radio", "wifi", root.wifiEnabled ? "on" : "off"];
-        wifiProc.running = true;
+        if (enabled) root.airplaneEnabled = false;
+        WifiService.setWifiEnabled(enabled);
     }
 
     function toggleWifi() {
-        setWifi(!root.wifiEnabled);
+        setWifi(!WifiService.wifiEnabled);
     }
 
     function toggleBt() {
@@ -323,15 +288,12 @@ ColumnLayout {
     function toggleAirplane() {
         if (root.airplaneEnabled) {
             root.airplaneEnabled = false;
-            root.wifiEnabled = true;
             airplaneProc.command = [
                 "sh", "-c",
                 "rfkill unblock wifi && notify-send -u low -i network-wireless-signal-excellent-symbolic \"Airplane Mode\" \"OFF\""
             ];
         } else {
             root.airplaneEnabled = true;
-            root.wifiEnabled = false;
-            root.currentSsid = "";
             airplaneProc.command = [
                 "sh", "-c",
                 "rfkill block wifi && notify-send -u low -i airplane-mode-symbolic \"Airplane Mode\" \"ON\""
@@ -389,8 +351,7 @@ ColumnLayout {
     }
 
     function refresh() {
-        wifiStatusProc.running = true;
-        activeSsidProc.running = true;
+        WifiService.refreshStatus();
         btStatusProc.running = true;
         airplaneStatusProc.running = true;
         nlStatusProc.running = true;

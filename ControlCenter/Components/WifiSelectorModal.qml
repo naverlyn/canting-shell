@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import "../../bar"
 import ".."
 
 PanelWindow {
@@ -11,9 +12,9 @@ PanelWindow {
     property var theme: DefaultTheme {}
     property string font: "Lato Nerd Font"
 
-    property bool wifiEnabled: true
-    property string currentSsid: ""
-    property var networkList: []
+    property bool wifiEnabled: WifiService.wifiEnabled
+    readonly property string currentSsid: WifiService.currentSsid
+    readonly property var networkList: WifiService.networkList
     property string selectedSsid: ""
     property bool selectedSsidSecured: false
 
@@ -73,13 +74,14 @@ PanelWindow {
             root.closing = false;
             selectedIndex = 0;
             expandedSsid = "";
-            activeSsidProc.running = true;
+            WifiService.clearError();
+            WifiService.refreshStatus();
             scanWifi();
             openAnim.start();
             Qt.callLater(() => networkListView.forceActiveFocus());
         } else {
-            networkList = [];
             expandedSsid = "";
+            WifiService.clearError();
         }
     }
 
@@ -87,121 +89,53 @@ PanelWindow {
         if (wifiEnabled) {
             if (root.visible) scanDelayTimer.restart();
         } else {
-            root.networkList = [];
             root.expandedSsid = "";
         }
     }
 
     Timer {
         id: scanDelayTimer
-        interval: 1000
+        interval: 800
         repeat: false
         onTriggered: {
             if (root.visible && root.wifiEnabled) {
-                scanWifiProc.running = true;
+                WifiService.scan(false);
             }
         }
     }
 
     Timer {
         id: periodicScanTimer
-        interval: 8000
+        interval: 15000
         repeat: true
         running: root.visible && root.wifiEnabled
-        onTriggered: {
-            if (!scanWifiProc.running) {
-                scanWifiProc.running = true;
-            }
-        }
+        onTriggered: WifiService.scan(false)
     }
 
-    // Scan for available Wi-Fi networks
-    Process {
-        id: scanWifiProc
-        command: ["nmcli", "-t", "-f", "ssid,signal,security", "dev", "wifi"]
-        running: false
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const lines = text.trim().split('\n');
-                const nets = [];
-                const seen = new Set();
-                for (const line of lines) {
-                    if (!line) continue;
-                    const parts = line.split(':');
-                    if (parts.length >= 3) {
-                        const ssid = parts[0];
-                        if (!ssid || seen.has(ssid)) continue;
-                        seen.add(ssid);
-                        nets.push({ ssid: ssid, signal: parseInt(parts[1]), security: parts[2] !== "" });
-                    }
-                }
-                // Sort by signal strength, but always put connected at the top
-                root.networkList = nets.sort((a, b) => {
-                    if (a.ssid === root.currentSsid) return -1;
-                    if (b.ssid === root.currentSsid) return 1;
-                    return b.signal - a.signal;
-                });
-            }
+    Connections {
+        target: WifiService
+        function onNetworkConnected(ssid) {
+            root.networkConnected(ssid);
+            if (root.visible) root.requestClose();
         }
-    }
-
-    // Fetch the currently active SSID
-    Process {
-        id: activeSsidProc
-        command: ["sh", "-c", "nmcli -t -f active,ssid dev wifi | grep '^yes' | cut -d':' -f2"]
-        running: false
-        stdout: StdioCollector {
-            onStreamFinished: root.currentSsid = text.trim()
-        }
-    }
-
-    // Connect to a selected network
-    Process {
-        id: connectWifiProc
-        running: false
-        onExited: {
-            activeSsidProc.running = true;
-            root.networkConnected(root.selectedSsid);
-            root.visible = false;
-        }
-    }
-
-    // Disconnect from network
-    Process {
-        id: disconnectWifiProc
-        running: false
-        onExited: {
-            root.currentSsid = "";
-            activeSsidProc.running = true;
-            root.networkDisconnected(root.selectedSsid);
-            scanWifi();
+        function onNetworkDisconnected(ssid) {
+            root.networkDisconnected(ssid);
         }
     }
 
     function scanWifi() {
         if (root.wifiEnabled) {
-            scanWifiProc.running = true;
+            WifiService.scan(false);
         }
     }
 
     function connectToNetwork(password) {
-        if (!selectedSsidSecured || password === "") {
-            connectWifiProc.command = ["nmcli", "dev", "wifi", "connect", selectedSsid];
-        } else {
-            connectWifiProc.command = ["nmcli", "dev", "wifi", "connect", selectedSsid, "password", password];
-        }
-        connectWifiProc.running = true;
+        WifiService.connect(selectedSsid, selectedSsidSecured, password);
     }
 
     function disconnectFromNetwork(ssid) {
         root.selectedSsid = ssid || root.currentSsid;
-        disconnectWifiProc.command = [
-            "sh", "-c",
-            'IFACE=$(nmcli -t -f DEVICE,TYPE,STATE dev 2>/dev/null | grep ":wifi:connected" | head -n1 | cut -d: -f1); [ -n "$IFACE" ] && nmcli dev disconnect "$IFACE"; [ -n "$1" ] && nmcli con down id "$1" 2>/dev/null || true',
-            "--",
-            root.selectedSsid
-        ];
-        disconnectWifiProc.running = true;
+        WifiService.disconnect(root.selectedSsid);
     }
 
     // Undimmed transparent backdrop
@@ -244,10 +178,7 @@ PanelWindow {
                     } else {
                         root.expandedSsid = selectedNet.ssid;
                         root.selectedSsid = selectedNet.ssid;
-                        root.selectedSsidSecured = selectedNet.security;
-                        if (selectedNet.ssid !== root.currentSsid && !selectedNet.security) {
-                            root.connectToNetwork("");
-                        }
+                        root.selectedSsidSecured = Boolean(selectedNet.secured);
                     }
                 }
             } else if (event.key === Qt.Key_Escape) {
@@ -285,8 +216,8 @@ PanelWindow {
                     width: 84
                     height: 26
                     radius: 6
-                    color: Qt.rgba(1, 1, 1, 0.05)
-                    border.color: Qt.rgba(1, 1, 1, 0.05)
+                    color: root.theme.bgSurface
+                    border.color: root.theme.bgBorder
                     border.width: 1
 
                     Row {
@@ -359,6 +290,43 @@ PanelWindow {
                 }
             }
 
+            // Error banner when connection fails
+            Rectangle {
+                visible: WifiService.lastError !== ""
+                Layout.fillWidth: true
+                implicitHeight: modalErrText.implicitHeight + 14
+                radius: 8
+                color: Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.14)
+                border.color: Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.35)
+                border.width: 1
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: 7
+                    spacing: 8
+                    Text {
+                        id: modalErrText
+                        Layout.fillWidth: true
+                        text: WifiService.lastError
+                        color: root.theme.accentRed
+                        font.pixelSize: 11
+                        font.family: root.font
+                        wrapMode: Text.WordWrap
+                    }
+                    Text {
+                        text: "✕"
+                        color: root.theme.accentRed
+                        font.pixelSize: 11
+                        font.family: root.font
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: WifiService.clearError()
+                        }
+                    }
+                }
+            }
+
             // Wi-Fi Network List
             ListView {
                 id: networkListView
@@ -380,10 +348,12 @@ PanelWindow {
 
                     width: networkListView.width
                     readonly property bool isCurrent: modelData.ssid === root.currentSsid
+                    readonly property bool isSaved: Boolean(WifiService.savedConnections[modelData.ssid])
+                    readonly property bool needsPassword: Boolean(modelData.secured) && !isCurrent && !isSaved
                     readonly property bool isExpanded: root.expandedSsid === modelData.ssid
                     readonly property bool isSelected: root.selectedIndex === index
 
-                    height: isExpanded ? ((modelData.security && !isCurrent) ? 140 : 100) : 44
+                    height: isExpanded ? (needsPassword ? 140 : 100) : 44
                     radius: 8
                     color: (isSelected || isExpanded) 
                         ? root.theme.bgSelected 
@@ -466,7 +436,7 @@ PanelWindow {
 
                             Text {
                                 text: ""
-                                visible: modelData.security && !networkDelegate.isCurrent
+                                visible: Boolean(modelData.secured) && !networkDelegate.isCurrent
                                 color: root.theme.textMuted
                                 font.pixelSize: 12
                                 font.family: root.font
@@ -485,7 +455,7 @@ PanelWindow {
                                 id: pwdInputLoader
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 38
-                                active: networkDelegate.isExpanded && Boolean(modelData.security) && !networkDelegate.isCurrent
+                                active: networkDelegate.isExpanded && networkDelegate.needsPassword
                                 visible: active
 
                                 sourceComponent: Rectangle {
@@ -520,7 +490,7 @@ PanelWindow {
                                         
                                         Keys.onReturnPressed: {
                                             root.selectedSsid = modelData.ssid;
-                                            root.selectedSsidSecured = modelData.security;
+                                            root.selectedSsidSecured = Boolean(modelData.secured);
                                             root.connectToNetwork(pwdInput.text);
                                             root.expandedSsid = "";
                                             pwdInput.text = "";
@@ -551,11 +521,11 @@ PanelWindow {
                                 Rectangle {
                                     id: connectBtnRect
                                     visible: !networkDelegate.isCurrent
-                                    width: 80
+                                    width: WifiService.isConnecting && WifiService.connectingSsid === modelData.ssid ? 102 : 80
                                     height: 32
                                     radius: 6
                                     color: connectBtnMouse.containsMouse
-                                        ? root.theme.accentCyan
+                                        ? Qt.lighter(root.theme.accentPrimary, 1.12)
                                         : root.theme.accentPrimary
                                     border.color: "transparent"
                                     border.width: 1
@@ -564,7 +534,7 @@ PanelWindow {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: "Connect"
+                                        text: (WifiService.isConnecting && WifiService.connectingSsid === modelData.ssid) ? "Connecting..." : "Connect"
                                         color: root.theme.bgBase
                                         font.family: root.font
                                         font.pixelSize: 12
@@ -576,9 +546,10 @@ PanelWindow {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
+                                        enabled: !WifiService.isConnecting
                                         onClicked: {
                                             root.selectedSsid = modelData.ssid;
-                                            root.selectedSsidSecured = modelData.security;
+                                            root.selectedSsidSecured = Boolean(modelData.secured);
                                             root.connectToNetwork(networkDelegate.enteredPassword);
                                             root.expandedSsid = "";
                                             networkDelegate.enteredPassword = "";
@@ -602,7 +573,7 @@ PanelWindow {
 
                                     Text {
                                         anchors.centerIn: parent
-                                        text: disconnectWifiProc.running ? "Disconnecting..." : "Disconnect"
+                                        text: WifiService.isDisconnecting ? "Disconnecting..." : "Disconnect"
                                         color: disconnectBtnMouse.containsMouse
                                             ? root.theme.bgBase
                                             : root.theme.accentRed
@@ -617,7 +588,7 @@ PanelWindow {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        enabled: !disconnectWifiProc.running
+                                        enabled: !WifiService.isDisconnecting
                                         onClicked: {
                                             root.disconnectFromNetwork(modelData.ssid);
                                             root.expandedSsid = "";
@@ -647,7 +618,7 @@ PanelWindow {
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
                                             root.expandedSsid = "";
-                                            pwdInput.text = "";
+                                            networkDelegate.enteredPassword = "";
                                         }
                                     }
                                 }
@@ -671,10 +642,7 @@ PanelWindow {
                             } else {
                                 root.expandedSsid = modelData.ssid;
                                 root.selectedSsid = modelData.ssid;
-                                root.selectedSsidSecured = modelData.security;
-                                if (!networkDelegate.isCurrent && !modelData.security) {
-                                    root.connectToNetwork("");
-                                }
+                                root.selectedSsidSecured = Boolean(modelData.secured);
                             }
                         }
                     }
@@ -686,7 +654,7 @@ PanelWindow {
                     color: root.theme.textMuted
                     font.pixelSize: 13
                     font.family: root.font
-                    visible: scanWifiProc.running && root.wifiEnabled
+                    visible: WifiService.isScanning && root.wifiEnabled && root.networkList.length === 0
                 }
                 
                 Text {
