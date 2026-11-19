@@ -1,49 +1,133 @@
 import QtQuick
 import QtQuick.Layouts
+import "../Common"
 
-Rectangle {
-    id: detailsCard
+ColumnLayout {
+    id: detailsRoot
     required property var theme
     required property string font
-    required property string hostModel
     required property string ramSize
     required property string cpuModel
     required property string gpuModel
     required property string diskSize
     required property string osName
+    required property string archName
     required property string sessionType
+    required property string desktopName
     required property string kernelVer
     required property string uptimeStr
 
-    Layout.fillWidth: true
-    implicitHeight: infoRows.implicitHeight + 16
-    radius: 12
-    color: theme.bgSurface
-    border.color: theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-    border.width: 1
+    signal rowCopied(string label, string value)
 
-    Behavior on color { ColorAnimation { duration: 150 } }
-    Behavior on border.color { ColorAnimation { duration: 150 } }
+    readonly property string osTypeText: {
+        if (!detailsRoot.archName || detailsRoot.archName === "x86_64" || detailsRoot.archName === "aarch64") {
+            return "64-bit (" + (detailsRoot.archName || "x86_64") + ")";
+        }
+        return detailsRoot.archName;
+    }
+
+    readonly property string windowingText: {
+        const sess = detailsRoot.sessionType
+            ? detailsRoot.sessionType.charAt(0).toUpperCase() + detailsRoot.sessionType.slice(1)
+            : "Wayland";
+        if (detailsRoot.desktopName !== "" && detailsRoot.desktopName.toLowerCase() !== sess.toLowerCase()) {
+            return sess + " (" + detailsRoot.desktopName + ")";
+        }
+        return sess;
+    }
+
+    Layout.fillWidth: true
+    spacing: 16
 
     ColumnLayout {
-        id: infoRows
-        anchors {
-            left: parent.left
-            right: parent.right
-            top: parent.top
-            margins: 8
-        }
-        spacing: 0
+        Layout.fillWidth: true
+        spacing: 8
 
-        AboutInfoRow { theme: detailsCard.theme; font: detailsCard.font; label: "Hardware Model"; value: detailsCard.hostModel }
-        AboutInfoRow { theme: detailsCard.theme; font: detailsCard.font; label: "Memory"; value: detailsCard.ramSize }
-        AboutInfoRow { theme: detailsCard.theme; font: detailsCard.font; label: "Processor"; value: detailsCard.cpuModel }
-        AboutInfoRow { theme: detailsCard.theme; font: detailsCard.font; label: "Graphics"; value: detailsCard.gpuModel }
-        AboutInfoRow { theme: detailsCard.theme; font: detailsCard.font; label: "Disk Capacity"; value: detailsCard.diskSize }
-        AboutInfoRow { theme: detailsCard.theme; font: detailsCard.font; label: "OS Name"; value: detailsCard.osName }
-        AboutInfoRow { theme: detailsCard.theme; font: detailsCard.font; label: "OS Type"; value: "64-bit" }
-        AboutInfoRow { theme: detailsCard.theme; font: detailsCard.font; label: "Windowing System"; value: detailsCard.sessionType.charAt(0).toUpperCase() + detailsCard.sessionType.slice(1) }
-        AboutInfoRow { theme: detailsCard.theme; font: detailsCard.font; label: "Kernel Version"; value: detailsCard.kernelVer }
-        AboutInfoRow { theme: detailsCard.theme; font: detailsCard.font; label: "Uptime"; value: detailsCard.uptimeStr; showDivider: false }
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+
+            Text {
+                text: "Hardware"
+                font.family: detailsRoot.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                color: detailsRoot.theme.textSecondary
+                Layout.fillWidth: true
+            }
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: 2
+            columnSpacing: 10
+            rowSpacing: 10
+
+            AboutHardwareTile {
+                theme: detailsRoot.theme; font: detailsRoot.font
+                iconText: "󰍛"
+                label: "Processor"
+                value: detailsRoot.cpuModel
+                onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+            }
+
+            AboutHardwareTile {
+                theme: detailsRoot.theme; font: detailsRoot.font
+                iconText: "󰘚"
+                label: "Memory"
+                value: detailsRoot.ramSize
+                onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+            }
+
+            AboutHardwareTile {
+                theme: detailsRoot.theme; font: detailsRoot.font
+                iconText: "󰢮"
+                label: "Graphics"
+                value: detailsRoot.gpuModel
+                onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+            }
+
+            AboutHardwareTile {
+                theme: detailsRoot.theme; font: detailsRoot.font
+                iconText: "󰋊"
+                label: "Disk Capacity"
+                value: detailsRoot.diskSize
+                onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+            }
+        }
+    }
+
+    SectionCard {
+        title: "System & Session"
+        contentMargins: 8
+        contentSpacing: 0
+
+        AboutInfoRow {
+            theme: detailsRoot.theme; font: detailsRoot.font
+            iconText: "󰣇"; label: "OS Name"; value: detailsRoot.osName
+            onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+        }
+        AboutInfoRow {
+            theme: detailsRoot.theme; font: detailsRoot.font
+            iconText: "󰻠"; label: "Architecture"; value: detailsRoot.osTypeText
+            onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+        }
+        AboutInfoRow {
+            theme: detailsRoot.theme; font: detailsRoot.font
+            iconText: "󰌽"; label: "Kernel Version"; value: detailsRoot.kernelVer
+            onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+        }
+        AboutInfoRow {
+            theme: detailsRoot.theme; font: detailsRoot.font
+            iconText: "󰖲"; label: "Windowing System"; value: detailsRoot.windowingText
+            onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+        }
+        AboutInfoRow {
+            theme: detailsRoot.theme; font: detailsRoot.font
+            iconText: "󰥔"; label: "Uptime"; value: detailsRoot.uptimeStr
+            showDivider: false
+            onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+        }
     }
 }
