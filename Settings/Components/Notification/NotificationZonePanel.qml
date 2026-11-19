@@ -14,9 +14,9 @@ Rectangle {
     property alias repeater: blocksRepeater
 
     readonly property string zoneTitle: {
-        if (zoneIndex === 0) return "Zone 1 · Header Bar";
-        if (zoneIndex === 1) return "Zone 2 · Main Content";
-        return "Zone 3 · Footer & Actions";
+        if (zoneIndex === 0) return "Header Bar";
+        if (zoneIndex === 1) return "Main Content";
+        return "Footer & Actions";
     }
 
     readonly property int itemCount: modelBlocks.length
@@ -34,6 +34,9 @@ Rectangle {
         : hostRoot.theme.bgBorder
     border.width: isZoneDropTarget ? 1.5 : 1
 
+    clip: true
+
+    Behavior on implicitHeight { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
     Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
     Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
 

@@ -41,6 +41,7 @@ var BOOL_DEFAULTS = {
     iconShowBg:           true,
     titleBold:            true,
     imageShowBg:          true,
+    imageShowRing:        true,
     progressShowCritical: false
 };
 

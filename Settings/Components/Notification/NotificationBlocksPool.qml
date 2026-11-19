@@ -24,6 +24,9 @@ Rectangle {
         : hostRoot.theme.bgBorder
     border.width: isPoolDropTarget ? 1.5 : 1
 
+    clip: true
+
+    Behavior on implicitHeight { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
     Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
     Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
@@ -55,7 +58,7 @@ Rectangle {
 
             Text {
                 visible: !availPoolCard.isPoolDropTarget
-                text: "·  Drag any block into Header, Content, or Footer — or click + to restore"
+                text: "Drag any block into Header, Content, or Footer"
                 font.family: hostRoot.font
                 font.pixelSize: 11
                 color: hostRoot.theme.textMuted
@@ -101,14 +104,6 @@ Rectangle {
                         spacing: 6
 
                         Text {
-                            text: "󰍜"
-                            font.family: hostRoot.font
-                            font.pixelSize: 10
-                            color: hostRoot.theme.textMuted
-                            opacity: chipHover.hovered ? 0.9 : 0.45
-                        }
-
-                        Text {
                             visible: poolChip.modelData.icon !== ""
                             text: poolChip.modelData.icon
                             font.family: hostRoot.font
@@ -122,25 +117,6 @@ Rectangle {
                             font.pixelSize: 11
                             font.bold: true
                             color: hostRoot.theme.textPrimary
-                        }
-
-                        Rectangle {
-                            id: quickAddBtn
-                            width: 20
-                            height: 20
-                            radius: 5
-                            color: addHover.hovered ? hostRoot.theme.accentPrimary : hostRoot.theme.bgSelected
-                            Behavior on color { ColorAnimation { duration: 120 } }
-
-                            HoverHandler { id: addHover }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "󰐕"
-                                font.family: hostRoot.font
-                                font.pixelSize: 10
-                                color: addHover.hovered ? hostRoot.theme.bgBase : hostRoot.theme.accentPrimary
-                            }
                         }
                     }
 

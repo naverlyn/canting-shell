@@ -17,8 +17,8 @@ Rectangle {
     radius: NotificationService.imageRadius
     antialiasing: true
     color: NotificationService.imageShowBg ? Qt.alpha(imgBox.urgencyColor, 0.14) : "transparent"
-    border.color: Qt.alpha(imgBox.urgencyColor, 0.3)
-    border.width: 1
+    border.color: NotificationService.imageShowRing ? Qt.alpha(imgBox.urgencyColor, 0.3) : "transparent"
+    border.width: NotificationService.imageShowRing ? 1 : 0
 
     Rectangle {
         id: imgMask

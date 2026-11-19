@@ -31,7 +31,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -39,22 +39,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Button Visual Style"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Button Visual Style"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Choose between compact pills, equal full-width buttons, or minimal ghost buttons"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -110,7 +101,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -118,22 +109,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Button Row Alignment"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Button Row Alignment"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Horizontal alignment of compact pill and ghost buttons"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -224,7 +206,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -232,22 +214,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Urgency Accent Strip"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Urgency Accent Strip"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Position of the colored urgency indicator strip along the card edge"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {

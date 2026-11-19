@@ -75,7 +75,7 @@ ColumnLayout {
     // Title Alignment
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -83,22 +83,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Title Text Alignment"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Title Text Alignment"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Horizontal alignment of the notification summary text"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -167,7 +158,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -175,22 +166,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Body Text Alignment"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Body Text Alignment"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Horizontal alignment of the notification body paragraph"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -223,7 +205,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -231,22 +213,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Preview Image Position"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Preview Image Position"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Place thumbnail beside the body text or expand as a full-width banner"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -283,7 +256,7 @@ ColumnLayout {
     RowDivider {}
 
     SettingSliderRow {
-        title: "Image Corner Radius"
+        title: "Border Radius"
         value: NotificationService.imageRadius
         minVal: 0
         maxVal: 48
@@ -304,6 +277,14 @@ ColumnLayout {
         title: "Show Image Background"
         checked: NotificationService.imageShowBg
         onToggled: (val) => NotificationService.setImageShowBg(val)
+    }
+
+    RowDivider {}
+
+    SettingToggleRow {
+        title: "Show Image Border"
+        checked: NotificationService.imageShowRing
+        onToggled: (val) => NotificationService.setImageShowRing(val)
     }
 }
 

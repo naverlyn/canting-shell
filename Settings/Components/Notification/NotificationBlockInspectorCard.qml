@@ -7,11 +7,11 @@ import "../.."
 import "../Common"
 import ".."
 
-SectionCard {
+ColumnLayout {
     required property var root
     id: inspectorSection
-    title: "Element Styling"
-    subtitle: "Fine-tune the size, typography, and appearance of the selected notification element"
+    Layout.fillWidth: true
+    spacing: 8
 
     readonly property var inspectorTabs: [
         { id: "icon",        label: "App Icon",       icon: "󰂚" },
@@ -45,6 +45,45 @@ SectionCard {
         duration: 160
         easing.type: Easing.OutCubic
     }
+
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin: 4
+        Layout.rightMargin: 4
+        spacing: 8
+        Text {
+            text: "Element Styling"
+            font.family: Style.font
+            font.pixelSize: Style.px(13)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
+            color: Style.theme.textSecondary
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+        }
+        Item { Layout.fillWidth: true }
+    }
+
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: innerCol.implicitHeight + 12 * 2
+        radius: 12
+        color: Style.theme.bgSurface
+        border.color: Style.theme.bgBorder
+        border.width: 1
+
+        ColumnLayout {
+            id: innerCol
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                margins: 12
+            }
+            spacing: 12
 
     // Top Selector Pill Strip
     Rectangle {
@@ -86,13 +125,6 @@ SectionCard {
                     RowLayout {
                         anchors.centerIn: parent
                         spacing: 5
-
-                        Text {
-                            text: tabPill.modelData.icon
-                            font.family: root.font
-                            font.pixelSize: 12
-                            color: tabPill.isSel ? root.theme.accentPrimary : root.theme.textSecondary
-                        }
 
                         Text {
                             text: tabPill.modelData.label
@@ -155,6 +187,8 @@ SectionCard {
                 root: inspectorSection.root
                 activeTabId: inspectorSection.activeTabId
             }
+        }
+    }
         }
     }
 }
