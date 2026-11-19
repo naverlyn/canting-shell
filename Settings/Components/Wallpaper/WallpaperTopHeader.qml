@@ -29,16 +29,6 @@ Item {
             font.bold: true
             color: root.theme.textPrimary
         }
-
-        Text {
-            text: root.currentView === 0
-                ? "Choose desktop background image and color theme"
-                : "Browse folders and manage wallpaper source directories"
-            font.family: root.font
-            font.pixelSize: 12
-            color: root.theme.textSecondary
-            elide: Text.ElideRight
-        }
     }
 
     // Segmented View Switch (Gallery / Folders) - anchored to the far right

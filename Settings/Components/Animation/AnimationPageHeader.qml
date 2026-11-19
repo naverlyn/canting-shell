@@ -23,13 +23,6 @@ RowLayout {
             font.bold: true
             color: root.theme.textPrimary
         }
-
-        Text {
-            text: "Configure Hyprland window motions, workspace transitions, and curve profiles"
-            font.family: root.font
-            font.pixelSize: 12
-            color: root.theme.textSecondary
-        }
     }
 
     Item {

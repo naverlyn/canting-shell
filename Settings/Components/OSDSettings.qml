@@ -149,13 +149,6 @@ Item {
                         font.bold: true
                         color: root.theme.textPrimary
                     }
-
-                    Text {
-                        text: "Customize volume and brightness overlay positioning, adaptive orientation, live X/Y placement, and timing"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        color: root.theme.textSecondary
-                    }
                 }
 
                 Item { Layout.fillWidth: true }
