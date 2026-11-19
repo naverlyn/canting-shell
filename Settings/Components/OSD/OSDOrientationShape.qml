@@ -83,9 +83,9 @@ ColumnLayout {
                 AppDropdown {
                     theme: root.theme
                     font: root.font
-                    width: 220
-                    implicitWidth: 220
-                    menuWidth: 220
+                    Layout.preferredWidth: 380
+                    implicitWidth: 380
+                    menuWidth: 380
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     options: (OSDService.orientationOptions || []).map(o => ({
                         desktop: o.id,
