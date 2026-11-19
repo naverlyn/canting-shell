@@ -25,7 +25,6 @@ SectionCard {
 
             PreferenceRow {
                 title: modelData.title
-                subtitle: modelData.subtitle
 
                 ActionButton {
                     visible: !isConfirming
