@@ -120,12 +120,6 @@ Item {
                         font.bold: true
                         color: root.theme.textPrimary
                     }
-                    Text {
-                        text: "Configure spotlight runner, app grid dimensions, search behavior, and application visibility"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        color: root.theme.textSecondary
-                    }
                 }
 
                 Item { Layout.fillWidth: true }

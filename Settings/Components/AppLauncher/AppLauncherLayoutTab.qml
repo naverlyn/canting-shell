@@ -395,7 +395,6 @@ ColumnLayout {
 
         SettingSliderRow {
             title: "Spotlight Width"
-            desc: "Width of the center spotlight application launcher"
             value: AppLauncherConfig.spotlightWidth
             minVal: 480
             maxVal: 840
@@ -414,7 +413,6 @@ ColumnLayout {
 
         SettingSliderRow {
             title: "Spotlight Height"
-            desc: "Maximum vertical height of the spotlight launcher window"
             value: AppLauncherConfig.spotlightHeight
             minVal: 360
             maxVal: 680
@@ -454,13 +452,6 @@ ColumnLayout {
                         font.bold: true
                         color: root.theme.textPrimary
                     }
-
-                    Text {
-                        text: "Initial tab active when spotlight launcher opens"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                    }
                 }
 
                 Item { Layout.fillWidth: true }
@@ -495,7 +486,6 @@ ColumnLayout {
 
         SettingSliderRow {
             title: "Grid Columns"
-            desc: "Number of horizontal app columns per row in AppGrid"
             value: AppLauncherConfig.gridColumns
             minVal: 3
             maxVal: 8
@@ -514,7 +504,6 @@ ColumnLayout {
 
         SettingSliderRow {
             title: "Cell Size"
-            desc: "Square dimensions of each application icon cell"
             value: AppLauncherConfig.gridCellSize
             minVal: 72
             maxVal: 128

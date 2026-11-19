@@ -120,7 +120,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Match Generic App Names"
-            desc: "Allow searches like 'Browser', 'Terminal', 'Text Editor', or 'File Manager'"
             checked: AppLauncherConfig.matchGenericName
             onToggled: (val) => AppLauncherConfig.setMatchGenericName(val)
         }
@@ -129,7 +128,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Match Keywords"
-            desc: "Match developer tags and search keywords embedded in .desktop entries"
             checked: AppLauncherConfig.matchKeywords
             onToggled: (val) => AppLauncherConfig.setMatchKeywords(val)
         }
@@ -138,7 +136,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Match Categories"
-            desc: "Allow filtering by categories such as 'Development', 'Graphics', or 'AudioVideo'"
             checked: AppLauncherConfig.matchCategories
             onToggled: (val) => AppLauncherConfig.setMatchCategories(val)
         }
@@ -147,7 +144,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Clear Search Query on Close"
-            desc: "Reset search bar and return to default state when the launcher is closed"
             checked: AppLauncherConfig.clearSearchOnClose
             onToggled: (val) => AppLauncherConfig.setClearSearchOnClose(val)
         }
