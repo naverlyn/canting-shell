@@ -337,14 +337,25 @@ Item {
                 font.pixelSize: 11
                 font.bold: true
                 color: Style.theme.textSecondary
-                Layout.preferredWidth: 160
-                Layout.minimumWidth: 160
-                Layout.maximumWidth: 160
+                Layout.maximumWidth: 220
                 elide: Text.ElideRight
             }
 
-            Rectangle {
-                id: sTrackCustom
+            Item { Layout.fillWidth: true }
+
+            Item {
+                Layout.preferredWidth: 380
+                Layout.minimumWidth: 380
+                Layout.maximumWidth: 380
+                implicitHeight: 24
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+                RowLayout {
+                    anchors.fill: parent
+                    spacing: 12
+
+                Rectangle {
+                    id: sTrackCustom
                 Layout.fillWidth: true
                 height: 6
                 radius: 3
@@ -424,15 +435,17 @@ Item {
                 }
             }
 
-            Text {
-                text: (sliderRow.isFloat ? Math.round(sliderRow.value * 100) + "%" : sliderRow.value + sliderRow.unit)
-                font.family: Style.font
-                font.pixelSize: 12
-                font.bold: true
-                color: Style.theme.accentPrimary
-                Layout.preferredWidth: 44
-                horizontalAlignment: Text.AlignRight
-                Layout.alignment: Qt.AlignVCenter
+                    Text {
+                        text: (sliderRow.isFloat ? Math.round(sliderRow.value * 100) + "%" : sliderRow.value + sliderRow.unit)
+                        font.family: Style.font
+                        font.pixelSize: 12
+                        font.bold: true
+                        color: Style.theme.accentPrimary
+                        Layout.preferredWidth: 44
+                        horizontalAlignment: Text.AlignRight
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                }
             }
         }
     }
