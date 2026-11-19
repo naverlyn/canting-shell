@@ -1,148 +1,132 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
-import Quickshell
-import Quickshell.Io
-import "../.."
 import "../Common"
-import ".."
 
-Rectangle {
+SectionCard {
     required property var root
-    Layout.fillWidth: true
-    radius: 12
-    color: root.theme.bgSurface
-    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-    border.width: 1
-    implicitHeight: summaryCol.implicitHeight + 28
+    title: "Active Bezier Curves & Compositor Rules"
+    subtitle: root.activeBeziers.length + " curves · " + root.activeRules.length + " rules"
+    contentMargins: 12
+    contentSpacing: 10
 
-    ColumnLayout {
-        id: summaryCol
-        anchors.fill: parent
-        anchors.margins: 14
-        spacing: 12
+    // Configured Bezier Curves
+    Text {
+        text: "Configured Bezier Curves"
+        font.family: root.font
+        font.pixelSize: 11
+        font.bold: true
+        color: root.theme.textSecondary
+    }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
+    Flow {
+        Layout.fillWidth: true
+        spacing: 8
 
-            Text {
-                text: "Active Bezier Curves & Compositor Rules"
-                font.family: root.font
-                font.pixelSize: 13
-                font.bold: true
-                color: root.theme.textPrimary
-            }
-        }
+        Repeater {
+            model: root.activeBeziers
 
-        // Bezier Chips Flow
-        Text {
-            text: "Configured Bezier Curves (" + root.activeBeziers.length + ")"
-            font.family: root.font
-            font.pixelSize: 11
-            font.bold: true
-            color: root.theme.textSecondary
-        }
+            Rectangle {
+                id: chipRect
+                required property var modelData
+                height: 28
+                width: chipRow.implicitWidth + 20
+                radius: 7
+                color: root.theme.bgBase
+                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.width: 1
 
-        Flow {
-            Layout.fillWidth: true
-            spacing: 8
+                RowLayout {
+                    id: chipRow
+                    anchors.centerIn: parent
+                    spacing: 6
 
-            Repeater {
-                model: root.activeBeziers
+                    Text {
+                        text: chipRect.modelData.name
+                        font.family: root.font
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: root.theme.accentPrimary
+                    }
 
-                Rectangle {
-                    id: chipRect
-                    required property var modelData
-                    height: 26
-                    width: chipRow.implicitWidth + 20
-                    radius: 6
-                    color: root.theme.bgBase
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-                    border.width: 1
-
-                    RowLayout {
-                        id: chipRow
-                        anchors.centerIn: parent
-                        spacing: 6
-
-                        Text {
-                            text: chipRect.modelData.name
-                            font.family: root.font
-                            font.pixelSize: 11
-                            font.bold: true
-                            color: root.theme.accentPrimary
-                        }
-
-                        Text {
-                            text: "(" + chipRect.modelData.curve + ")"
-                            font.family: root.font
-                            font.pixelSize: 10
-                            color: root.theme.textMuted
-                        }
+                    Text {
+                        text: "(" + chipRect.modelData.curve + ")"
+                        font.family: root.font
+                        font.pixelSize: 10
+                        color: root.theme.textMuted
                     }
                 }
             }
         }
+    }
 
-        Rectangle {
-            Layout.fillWidth: true
-            height: 1
-            color: Qt.rgba(1, 1, 1, 0.05)
-        }
+    RowDivider { sideMargin: 0 }
 
-        // Active Animation Rules
-        Text {
-            text: "Active Animation Rules (" + root.activeRules.length + ")"
-            font.family: root.font
-            font.pixelSize: 11
-            font.bold: true
-            color: root.theme.textSecondary
-        }
+    // Active Animation Rules (2-column compact grid)
+    Text {
+        text: "Active Animation Rules"
+        font.family: root.font
+        font.pixelSize: 11
+        font.bold: true
+        color: root.theme.textSecondary
+    }
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: 4
+    GridLayout {
+        Layout.fillWidth: true
+        columns: 2
+        columnSpacing: 8
+        rowSpacing: 6
 
-            Repeater {
-                model: root.activeRules
+        Repeater {
+            model: root.activeRules
 
-                Rectangle {
-                    id: ruleRect
-                    required property var modelData
-                    Layout.fillWidth: true
-                    height: 30
-                    radius: 6
-                    color: Qt.rgba(1, 1, 1, 0.02)
+            Rectangle {
+                id: ruleRect
+                required property var modelData
+                Layout.fillWidth: true
+                Layout.preferredWidth: 1
+                height: 34
+                radius: 7
+                color: root.theme.bgBase
+                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.width: 1
 
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 10
+                    anchors.rightMargin: 10
+                    spacing: 8
 
-                        Text {
-                            text: ruleRect.modelData.target
-                            font.family: root.font
-                            font.pixelSize: 11
-                            font.bold: true
-                            color: root.theme.textPrimary
-                            Layout.preferredWidth: 140
-                        }
+                    Rectangle {
+                        width: 7
+                        height: 7
+                        radius: 3.5
+                        color: ruleRect.modelData.enabled
+                            ? (root.theme.accentGreen ?? "#9ece6a")
+                            : (root.theme.accentRed ?? "#f7768e")
+                        Layout.alignment: Qt.AlignVCenter
+                    }
 
-                        Text {
-                            text: "Speed: " + ruleRect.modelData.speed + " • Curve: " + ruleRect.modelData.curve + (ruleRect.modelData.style ? (" • " + ruleRect.modelData.style) : "")
-                            font.family: root.font
-                            font.pixelSize: 10
-                            color: root.theme.textSecondary
-                            Layout.fillWidth: true
-                        }
+                    Text {
+                        text: ruleRect.modelData.target
+                        font.family: root.font
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: root.theme.textPrimary
+                        elide: Text.ElideRight
+                        Layout.alignment: Qt.AlignVCenter
+                    }
 
-                        Rectangle {
-                            width: 8
-                            height: 8
-                            radius: 4
-                            color: ruleRect.modelData.enabled ? "#9ece6a" : "#f7768e"
-                        }
+                    Item { Layout.fillWidth: true }
+
+                    Text {
+                        text: ruleRect.modelData.speed + " · " + ruleRect.modelData.curve
+                            + (ruleRect.modelData.style ? (" · " + ruleRect.modelData.style) : "")
+                        font.family: root.font
+                        font.pixelSize: 10
+                        color: root.theme.textSecondary
+                        elide: Text.ElideRight
+                        Layout.maximumWidth: 200
+                        Layout.alignment: Qt.AlignVCenter
                     }
                 }
             }
