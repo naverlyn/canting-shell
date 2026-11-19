@@ -84,7 +84,6 @@ ColumnLayout {
             // Immediate Render Toggle
             PreferenceRow {
                 title: "Immediate Render"
-                subtitle: "Render background instantly without waiting for graphical resources"
 
                 SwitchToggle {
                     checked: root.generalImmediateRender
@@ -100,7 +99,6 @@ ColumnLayout {
             // Lock & Unlock Animation Toggle
             PreferenceRow {
                 title: "Lock & Unlock Animation"
-                subtitle: "Play entrance and unlock success transitions on the lock screen"
 
                 SwitchToggle {
                     checked: root.unlockAnimation
@@ -111,188 +109,73 @@ ColumnLayout {
                 }
             }
 
-            // Lock Screen Animation Style Preset Selector (Spacious 2-Row Layout)
+            // Lock Screen Animation Style Dropdown Row
             ColumnLayout {
                 visible: root.unlockAnimation
                 Layout.fillWidth: true
                 spacing: 0
 
-                RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+                RowDivider { sideMargin: 12; color: Qt.rgba(1, 1, 1, 0.05) }
 
-                ColumnLayout {
+                Item {
                     Layout.fillWidth: true
-                    Layout.leftMargin: 16
-                    Layout.rightMargin: 16
-                    Layout.topMargin: 10
-                    Layout.bottomMargin: 12
-                    spacing: 10
+                    height: 44
 
                     RowLayout {
-                        Layout.fillWidth: true
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
                         spacing: 12
 
-                        ColumnLayout {
-                            spacing: 2
-                            Layout.fillWidth: true
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: "Lock Screen Animation Style"
-                                font.family: root.font
-                                font.pixelSize: 13
-                                font.bold: true
-                                color: root.theme.textPrimary
-                                elide: Text.ElideRight
-                            }
-
-                            Text {
-                                Layout.fillWidth: true
-                                text: {
-                                    const st = root.animationStyle || "default";
-                                    if (st === "staggered") return "Modules fly in & cascade out from their screen edges with spring physics";
-                                    if (st === "curtain") return "Cinematic split shutter curtains with glowing horizontal laser seam";
-                                    if (st === "depth") return "Dramatic camera zoom with progressive depth-of-field blur & focus pull";
-                                    if (st === "portal") return "Radial shockwave iris expanding & collapsing from the password box";
-                                    return "Default smooth fade, subtle background zoom, and expanding success ripple";
-                                }
-                                font.family: root.font
-                                font.pixelSize: 11
-                                color: root.theme.textSecondary
-                                elide: Text.ElideRight
-                            }
+                        Text {
+                            text: "Lock Screen Animation Style"
+                            font.family: root.font
+                            font.pixelSize: 13
+                            font.bold: true
+                            color: root.theme.textPrimary
+                            Layout.alignment: Qt.AlignVCenter
                         }
 
-                        // Live Preview Button on Stage
-                        Rectangle {
-                            id: previewAnimBtn
-                            implicitWidth: previewAnimText.implicitWidth + 24
-                            height: 30
-                            radius: 6
-                            color: previewAnimHover.hovered ? root.theme.bgHover : root.theme.bgBase
-                            border.color: previewAnimHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
-                            border.width: 1
-                            scale: previewAnimMouse.pressed ? 0.95 : 1.0
+                        Item { Layout.fillWidth: true }
+
+                        RowLayout {
+                            spacing: 8
                             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on border.color { ColorAnimation { duration: 140 } }
-                            Behavior on scale { NumberAnimation { duration: 100 } }
-
-                            HoverHandler { id: previewAnimHover }
-
-                            Text {
-                                id: previewAnimText
-                                anchors.centerIn: parent
-                                text: "Preview on Stage"
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: true
-                                color: previewAnimHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
-                                Behavior on color { ColorAnimation { duration: 140 } }
+                            AppDropdown {
+                                theme: root.theme
+                                font: root.font
+                                Layout.preferredWidth: 276
+                                implicitWidth: 276
+                                menuWidth: 276
+                                Layout.alignment: Qt.AlignVCenter
+                                options: [
+                                    { desktop: "default",   name: "Default",           desc: "" },
+                                    { desktop: "staggered", name: "Staggered Cascade", desc: "" },
+                                    { desktop: "curtain",   name: "Cinema Curtain",    desc: "" },
+                                    { desktop: "depth",     name: "Zoom & Depth",      desc: "" },
+                                    { desktop: "portal",    name: "Portal Iris",       desc: "" }
+                                ]
+                                currentValue: root.animationStyle || "default"
+                                onSelected: (val, opt) => {
+                                    root.animationStyle = val;
+                                    root.scheduleSave();
+                                    if (root.previewLockAnimation) {
+                                        root.previewLockAnimation(val);
+                                    }
+                                    if (root.showStatus) {
+                                        root.showStatus("Lock screen animation set to " + (opt ? opt.name : val));
+                                    }
+                                }
                             }
 
-                            MouseArea {
-                                id: previewAnimMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
+                            ActionButton {
+                                iconText: "󰐊"
+                                label: "Preview"
+                                btnHeight: 32
                                 onClicked: {
                                     if (root.previewLockAnimation) {
                                         root.previewLockAnimation(root.animationStyle);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Full-Width 5-Preset Segmented Track
-                    Rectangle {
-                        id: animStyleSegmentTrack
-                        Layout.fillWidth: true
-                        height: 34
-                        radius: 7
-                        color: root.theme.bgBase
-                        border.color: root.theme.bgBorder
-                        border.width: 1
-
-                        readonly property var modes: [
-                            { label: "Default", value: "default" },
-                            { label: "Staggered Cascade", value: "staggered" },
-                            { label: "Cinema Curtain", value: "curtain" },
-                            { label: "Zoom & Depth", value: "depth" },
-                            { label: "Portal Iris", value: "portal" }
-                        ]
-
-                        readonly property int activeIdx: {
-                            const st = root.animationStyle || "default";
-                            if (st === "staggered") return 1;
-                            if (st === "curtain") return 2;
-                            if (st === "depth") return 3;
-                            if (st === "portal") return 4;
-                            return 0;
-                        }
-
-                        readonly property real cellWidth: (width - 6 - (modes.length - 1) * 3) / modes.length
-
-                        Rectangle {
-                            visible: animStyleSegmentTrack.activeIdx >= 0
-                            y: 3
-                            height: parent.height - 6
-                            width: animStyleSegmentTrack.cellWidth
-                            x: 3 + Math.max(0, animStyleSegmentTrack.activeIdx) * (animStyleSegmentTrack.cellWidth + 3)
-                            radius: 5
-                            color: root.theme.bgSelected
-                            border.color: root.theme.accentPrimary
-                            border.width: 1
-
-                            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                        }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 3
-                            spacing: 3
-
-                            Repeater {
-                                model: animStyleSegmentTrack.modes
-
-                                delegate: Rectangle {
-                                    id: animSegBtn
-                                    required property var modelData
-                                    required property int index
-                                    readonly property bool isSel: animStyleSegmentTrack.activeIdx === animSegBtn.index
-
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    radius: 5
-                                    color: !isSel && animSegHover.hovered ? root.theme.bgHover : "transparent"
-                                    Behavior on color { ColorAnimation { duration: 140 } }
-
-                                    HoverHandler { id: animSegHover }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: animSegBtn.modelData.label
-                                        font.family: root.font
-                                        font.pixelSize: 11
-                                        font.bold: animSegBtn.isSel
-                                        color: animSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                        opacity: animSegBtn.isSel || animSegHover.hovered ? 1.0 : 0.75
-                                        Behavior on color { ColorAnimation { duration: 140 } }
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            root.animationStyle = animSegBtn.modelData.value;
-                                            root.scheduleSave();
-                                            if (root.previewLockAnimation) {
-                                                root.previewLockAnimation(animSegBtn.modelData.value);
-                                            }
-                                            if (root.showStatus) {
-                                                root.showStatus("Lock screen animation set to " + animSegBtn.modelData.label);
-                                            }
-                                        }
                                     }
                                 }
                             }
@@ -306,7 +189,6 @@ ColumnLayout {
             // Show User Profile Toggle
             PreferenceRow {
                 title: "Show User Profile"
-                subtitle: "Display user avatar picture and account username above password field"
 
                 SwitchToggle {
                     checked: root.showUser
@@ -322,7 +204,6 @@ ColumnLayout {
             // Show Media Player Toggle
             PreferenceRow {
                 title: "Show Media Player"
-                subtitle: "Display floating MPRIS media playback widget on lock screen"
 
                 SwitchToggle {
                     checked: root.showMedia
@@ -338,7 +219,6 @@ ColumnLayout {
             // Placeholder Text Input (Refined Libadwaita styling)
             PreferenceRow {
                 title: "Placeholder Text"
-                subtitle: "Text shown inside empty password field"
 
                 Rectangle {
                     width: 240
@@ -375,7 +255,6 @@ ColumnLayout {
             // Input Field Width
             PreferenceSlider {
                 title: "Input Box Width"
-                subtitle: "Horizontal dimensions of the password entry box"
                 minVal: 180
                 maxVal: 380
                 unit: "px"
@@ -391,7 +270,6 @@ ColumnLayout {
             // Input Field Height
             PreferenceSlider {
                 title: "Input Box Height"
-                subtitle: "Vertical dimensions of the password entry box"
                 minVal: 40
                 maxVal: 80
                 unit: "px"
@@ -407,7 +285,6 @@ ColumnLayout {
             // Outline Thickness
             PreferenceSlider {
                 title: "Outline Border Thickness"
-                subtitle: "Border stroke width around input field"
                 minVal: 0
                 maxVal: 6
                 unit: "px"
@@ -423,7 +300,6 @@ ColumnLayout {
             // Input Box Horizontal Position (X)
             PreferenceSlider {
                 title: "Center Offset X"
-                subtitle: "Horizontal offset from screen center (0 = centered)"
                 minVal: -960
                 maxVal: 960
                 unit: "px"
@@ -439,7 +315,6 @@ ColumnLayout {
             // Input Box Vertical Position (Y)
             PreferenceSlider {
                 title: "Center Offset Y"
-                subtitle: "Vertical offset from screen center (0 = centered)"
                 minVal: -540
                 maxVal: 540
                 unit: "px"
@@ -455,7 +330,6 @@ ColumnLayout {
             // Fade on Empty
             PreferenceRow {
                 title: "Fade on Empty"
-                subtitle: "Fade out field outline when no characters are entered"
 
                 SwitchToggle {
                     checked: root.inputFadeOnEmpty
@@ -471,7 +345,6 @@ ColumnLayout {
             // Center Password Dots
             PreferenceRow {
                 title: "Center Password Dots"
-                subtitle: "Center typed characters horizontally inside the box"
 
                 SwitchToggle {
                     checked: root.inputDotsCenter
@@ -487,36 +360,23 @@ ColumnLayout {
             // Password Input Outer Border Color
             ColumnLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
-                Layout.topMargin: 10
-                Layout.bottomMargin: 10
+                Layout.leftMargin: 12
+                Layout.rightMargin: 12
+                Layout.topMargin: 8
+                Layout.bottomMargin: 8
                 spacing: 8
 
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
 
-                    ColumnLayout {
-                        spacing: 2
-                        Layout.fillWidth: true
-                        Text {
-                            Layout.fillWidth: true
-                            text: "Password Box Border Color (outer_color)"
-                            font.family: root.font
-                            font.pixelSize: 13
-                            font.bold: true
-                            color: root.theme.textPrimary
-                            elide: Text.ElideRight
-                        }
-                        Text {
-                            Layout.fillWidth: true
-                            text: "Outline ring color of the password input box"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
-                            elide: Text.ElideRight
-                        }
+                    Text {
+                        text: "Password Box Border Color"
+                        font.family: root.font
+                        font.pixelSize: 13
+                        font.bold: true
+                        color: root.theme.textPrimary
+                        Layout.alignment: Qt.AlignVCenter
                     }
 
                     Item { Layout.fillWidth: true }
@@ -652,41 +512,28 @@ ColumnLayout {
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider { sideMargin: 12; color: Qt.rgba(1, 1, 1, 0.05) }
 
             // Password Input Inner Background & Font Color
             ColumnLayout {
                 Layout.fillWidth: true
-                Layout.leftMargin: 16
-                Layout.rightMargin: 16
-                Layout.topMargin: 10
-                Layout.bottomMargin: 10
+                Layout.leftMargin: 12
+                Layout.rightMargin: 12
+                Layout.topMargin: 8
+                Layout.bottomMargin: 8
                 spacing: 8
 
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
 
-                    ColumnLayout {
-                        spacing: 2
-                        Layout.fillWidth: true
-                        Text {
-                            Layout.fillWidth: true
-                            text: "Password Box Fill & Dots Color (inner_color / font_color)"
-                            font.family: root.font
-                            font.pixelSize: 13
-                            font.bold: true
-                            color: root.theme.textPrimary
-                            elide: Text.ElideRight
-                        }
-                        Text {
-                            Layout.fillWidth: true
-                            text: "Inner pill background fill and password character dot color"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
-                            elide: Text.ElideRight
-                        }
+                    Text {
+                        text: "Password Box Fill & Dots Color"
+                        font.family: root.font
+                        font.pixelSize: 13
+                        font.bold: true
+                        color: root.theme.textPrimary
+                        Layout.alignment: Qt.AlignVCenter
                     }
 
                     Item { Layout.fillWidth: true }

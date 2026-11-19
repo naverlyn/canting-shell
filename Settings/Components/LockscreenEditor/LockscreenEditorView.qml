@@ -37,15 +37,6 @@ ColumnLayout {
                 color: root.theme.textPrimary
                 elide: Text.ElideRight
             }
-
-            Text {
-                Layout.fillWidth: true
-                text: "Configure lock screen appearance, visual filters and interactive layout"
-                font.family: root.font
-                font.pixelSize: 12
-                color: root.theme.textSecondary
-                elide: Text.ElideRight
-            }
         }
 
         Item { Layout.fillWidth: true }
@@ -427,7 +418,6 @@ ColumnLayout {
                 // Wallpaper Source Segmented Track
                 PreferenceRow {
                     title: "Wallpaper Source"
-                    subtitle: "Select background image rendering mode"
 
                     Rectangle {
                         id: wpSourceSegmentTrack
@@ -577,7 +567,6 @@ ColumnLayout {
                 // Blur Passes Slider
                 PreferenceSlider {
                     title: "Blur Passes"
-                    subtitle: "Number of blur filter passes (0 disables blur)"
                     minVal: 0
                     maxVal: 5
                     unit: ""
@@ -593,7 +582,6 @@ ColumnLayout {
                 // Blur Size Slider
                 PreferenceSlider {
                     title: "Blur Radius"
-                    subtitle: "Sampling radius for gaussian blur filter"
                     minVal: 1
                     maxVal: 10
                     unit: ""
@@ -609,7 +597,6 @@ ColumnLayout {
                 // Brightness Slider
                 PreferenceSlider {
                     title: "Brightness"
-                    subtitle: "Background image exposure adjustment"
                     minVal: 0.1
                     maxVal: 2.0
                     decimalPlaces: 2
@@ -626,7 +613,6 @@ ColumnLayout {
                 // Contrast Slider
                 PreferenceSlider {
                     title: "Contrast"
-                    subtitle: "Background color contrast level"
                     minVal: 0.1
                     maxVal: 2.0
                     decimalPlaces: 2
@@ -643,7 +629,6 @@ ColumnLayout {
                 // Vibrancy Slider
                 PreferenceSlider {
                     title: "Vibrancy"
-                    subtitle: "Color saturation intensity multiplier"
                     minVal: 0.0
                     maxVal: 1.0
                     decimalPlaces: 2
