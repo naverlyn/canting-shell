@@ -97,16 +97,21 @@ SectionCard {
 
             Item { Layout.fillWidth: true }
 
-            SegmentedControl {
-                trackWidth: 310
-                currentId: self.iconMode
+            AppDropdown {
+                theme: root.theme
+                font: root.font
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                currentValue: self.iconMode
                 options: [
-                    { id: "preset", label: "Icon Preset" },
-                    { id: "glyph",  label: "Custom Glyph" },
-                    { id: "png",    label: "PNG Image" }
+                    { desktop: "preset", name: "Icon Preset",  desc: "" },
+                    { desktop: "glyph",  name: "Custom Glyph", desc: "" },
+                    { desktop: "png",    name: "PNG Image",    desc: "" }
                 ]
-                onOptionSelected: function(optionId) {
-                    self.switchMode(optionId);
+                onSelected: function(val) {
+                    self.switchMode(val);
                 }
             }
         }

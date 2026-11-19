@@ -70,9 +70,9 @@ SectionCard {
             AppDropdown {
                 theme: root.theme
                 font: root.font
-                width: 200
-                implicitWidth: 200
-                menuWidth: 200
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 options: [
                     { desktop: "bars",   name: "Bars",   desc: "" },
@@ -120,9 +120,9 @@ SectionCard {
             AppDropdown {
                 theme: root.theme
                 font: root.font
-                width: 200
-                implicitWidth: 200
-                menuWidth: 200
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 options: [
                     { desktop: "compact", name: "Compact", desc: "" },
@@ -169,9 +169,9 @@ SectionCard {
             AppDropdown {
                 theme: root.theme
                 font: root.font
-                width: 200
-                implicitWidth: 200
-                menuWidth: 200
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 options: [
                     { desktop: "20", name: "20 FPS", desc: "" },

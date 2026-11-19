@@ -56,9 +56,10 @@ Item {
 
             Rectangle {
                 id: heightSegmentTrack
-                implicitWidth: 360
+                Layout.preferredWidth: 380
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                implicitWidth: 380
                 implicitHeight: 32
-                width: 360
                 height: 32
                 radius: 7
                 color: root.theme.bgBase

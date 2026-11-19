@@ -39,9 +39,9 @@ Item {
         AppDropdown {
             theme: root.theme
             font: root.font
-            width: 200
-            implicitWidth: 200
-            menuWidth: 200
+            Layout.preferredWidth: 380
+            implicitWidth: 380
+            menuWidth: 380
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             options: [
                 { desktop: "top",    name: "Top",    desc: "" },

@@ -685,12 +685,6 @@ Item {
                         font.bold: true
                         color: root.theme.textPrimary
                     }
-                    Text {
-                        text: "Configure modular building blocks, panel count, block colors, and bar appearance"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        color: root.theme.textSecondary
-                    }
                 }
 
                 Item { Layout.fillWidth: true }
@@ -948,7 +942,7 @@ Item {
                             || root.matchesOptionFilter("hardware cpu gpu memory disk temp alert")
                             || root.matchesOptionFilter("wifi bluetooth connectivity labels")
                             || root.matchesOptionFilter("brightness night light step")
-                            || root.matchesOptionFilter("custom script command interval")
+                            || root.matchesOptionFilter("custom script command interval png image")
 
                         AnimatedSection {
                             expanded: root.matchesOptionFilter("app grid launcher icon")
@@ -1029,7 +1023,7 @@ Item {
                         }
 
                         AnimatedSection {
-                            expanded: root.matchesOptionFilter("custom script command interval")
+                            expanded: root.matchesOptionFilter("custom script command interval png image")
                             CustomScriptOptionsCard { root: root }
                         }
 

@@ -42,9 +42,9 @@ SectionCard {
 
             RowLayout {
                 spacing: 8
-                Layout.preferredWidth: 200
-                Layout.minimumWidth: 200
-                Layout.maximumWidth: 200
+                Layout.preferredWidth: 380
+                Layout.minimumWidth: 380
+                Layout.maximumWidth: 380
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
                 Rectangle {
@@ -127,9 +127,9 @@ SectionCard {
             AppDropdown {
                 theme: root.theme
                 font: root.font
-                width: 200
-                implicitWidth: 200
-                menuWidth: 200
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 options: [
                     { desktop: "m", name: "Metric (°C)",   desc: "" },
@@ -176,9 +176,9 @@ SectionCard {
             AppDropdown {
                 theme: root.theme
                 font: root.font
-                width: 200
-                implicitWidth: 200
-                menuWidth: 200
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 options: [
                     { desktop: "compact", name: "Compact (1-Day)",  desc: "" },
@@ -224,9 +224,9 @@ SectionCard {
             AppDropdown {
                 theme: root.theme
                 font: root.font
-                width: 200
-                implicitWidth: 200
-                menuWidth: 200
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 options: [
                     { desktop: "15", name: "15 min", desc: "" },

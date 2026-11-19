@@ -209,26 +209,6 @@ SectionCard {
             }
 
             Item { Layout.fillWidth: true }
-
-            // Status Note
-            Text {
-                text: {
-                    if (!root.hasMultipleMonitors) {
-                        return "Single screen mode · Secondary bar disabled";
-                    }
-                    if (root.selectedMonitorFilter === "primary") {
-                        return "Editing " + root.getMonitorNameForTarget("primary") + " (Primary)";
-                    }
-                    if (root.selectedMonitorFilter === "secondary") {
-                        return "Editing " + root.getMonitorNameForTarget("secondary") + " (Secondary)";
-                    }
-                    return "Viewing bars across all connected screens";
-                }
-                font.family: root.font
-                font.pixelSize: 11
-                color: root.theme.textMuted
-                elide: Text.ElideRight
-            }
         }
     }
 

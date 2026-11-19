@@ -1,6 +1,8 @@
 import QtQuick
+import QtQuick.Layouts
 import "../../../bar"
 import "../Common"
+import ".."
 
 SectionCard {
     required property var root
@@ -12,17 +14,22 @@ SectionCard {
     PreferenceRow {
         title: "Popup Layout Style"
 
-        SegmentedControl {
-            trackWidth: 200
+        AppDropdown {
+            theme: self.root.theme
+            font: self.root.font
+            Layout.preferredWidth: 380
+            implicitWidth: 380
+            menuWidth: 380
+            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
             options: [
-                { id: "full",    label: "Full" },
-                { id: "compact", label: "Compact" }
+                { desktop: "full",    name: "Full",    desc: "" },
+                { desktop: "compact", name: "Compact", desc: "" }
             ]
-            currentId: BarConfig.mediaPopupStyle
-            onOptionSelected: (optionId, optionLabel) => {
-                BarConfig.mediaPopupStyle = optionId;
+            currentValue: BarConfig.mediaPopupStyle
+            onSelected: (val, opt) => {
+                BarConfig.mediaPopupStyle = val;
                 BarConfig.saveConfig();
-                self.root.showToast("Bar media popup: " + optionLabel);
+                self.root.showToast("Bar media popup: " + (opt ? opt.name : val));
             }
         }
     }

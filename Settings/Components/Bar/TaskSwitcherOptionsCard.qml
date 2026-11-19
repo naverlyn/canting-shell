@@ -43,9 +43,9 @@ SectionCard {
             AppDropdown {
                 theme: root.theme
                 font: root.font
-                width: 210
-                implicitWidth: 210
-                menuWidth: 210
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 options: [
                     { desktop: "icon",      name: "Icon Only",             desc: "" },
@@ -92,9 +92,9 @@ SectionCard {
             AppDropdown {
                 theme: root.theme
                 font: root.font
-                width: 210
-                implicitWidth: 210
-                menuWidth: 210
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 options: [
                     { desktop: "all",       name: "All Workspaces",    desc: "" },
@@ -143,9 +143,9 @@ SectionCard {
             AppDropdown {
                 theme: root.theme
                 font: root.font
-                width: 210
-                implicitWidth: 210
-                menuWidth: 210
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                 options: [
                     { desktop: "100", name: "Compact (100 px)", desc: "" },
