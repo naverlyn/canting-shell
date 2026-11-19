@@ -29,14 +29,7 @@ ColumnLayout {
             color: root.theme.textSecondary
         }
 
-        Text {
-            text: "· Warm blue-light filter to reduce eye strain"
-            font.family: root.font
-            font.pixelSize: 11
-            color: root.theme.textMuted
-            elide: Text.ElideRight
-            Layout.fillWidth: true
-        }
+        Item { Layout.fillWidth: true }
 
         Text {
             text: root.nightLightEnabled ? (root.nightLightTemp + " K · Active") : "Disabled"

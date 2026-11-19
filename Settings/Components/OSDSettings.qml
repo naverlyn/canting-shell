@@ -192,15 +192,6 @@ Item {
                     }
 
                     Text {
-                        text: "· Drag preview pill or click regions to reposition in X & Y"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textMuted
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
-
-                    Text {
                         text: "Active: " + OSDService.getPositionLabel(root.osdPos)
                         font.family: root.font
                         font.pixelSize: 11

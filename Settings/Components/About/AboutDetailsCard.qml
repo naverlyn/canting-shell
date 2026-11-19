@@ -98,36 +98,75 @@ ColumnLayout {
         }
     }
 
-    SectionCard {
-        title: "System & Session"
-        contentMargins: 8
-        contentSpacing: 0
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-        AboutInfoRow {
-            theme: detailsRoot.theme; font: detailsRoot.font
-            iconText: "󰣇"; label: "OS Name"; value: detailsRoot.osName
-            onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 8
+            Text {
+                text: "System & Session"
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                Layout.minimumWidth: implicitWidth
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            }
+            Item { Layout.fillWidth: true }
         }
-        AboutInfoRow {
-            theme: detailsRoot.theme; font: detailsRoot.font
-            iconText: "󰻠"; label: "Architecture"; value: detailsRoot.osTypeText
-            onCopied: (l, v) => detailsRoot.rowCopied(l, v)
-        }
-        AboutInfoRow {
-            theme: detailsRoot.theme; font: detailsRoot.font
-            iconText: "󰌽"; label: "Kernel Version"; value: detailsRoot.kernelVer
-            onCopied: (l, v) => detailsRoot.rowCopied(l, v)
-        }
-        AboutInfoRow {
-            theme: detailsRoot.theme; font: detailsRoot.font
-            iconText: "󰖲"; label: "Windowing System"; value: detailsRoot.windowingText
-            onCopied: (l, v) => detailsRoot.rowCopied(l, v)
-        }
-        AboutInfoRow {
-            theme: detailsRoot.theme; font: detailsRoot.font
-            iconText: "󰥔"; label: "Uptime"; value: detailsRoot.uptimeStr
-            showDivider: false
-            onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: innerCol.implicitHeight + 8 * 2
+            radius: 12
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
+            border.width: 1
+
+            ColumnLayout {
+                id: innerCol
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 8
+                }
+                spacing: 0
+                AboutInfoRow {
+                    theme: detailsRoot.theme; font: detailsRoot.font
+                    iconText: "󰣇"; label: "OS Name"; value: detailsRoot.osName
+                    onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+                }
+                AboutInfoRow {
+                    theme: detailsRoot.theme; font: detailsRoot.font
+                    iconText: "󰻠"; label: "Architecture"; value: detailsRoot.osTypeText
+                    onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+                }
+                AboutInfoRow {
+                    theme: detailsRoot.theme; font: detailsRoot.font
+                    iconText: "󰌽"; label: "Kernel Version"; value: detailsRoot.kernelVer
+                    onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+                }
+                AboutInfoRow {
+                    theme: detailsRoot.theme; font: detailsRoot.font
+                    iconText: "󰖲"; label: "Windowing System"; value: detailsRoot.windowingText
+                    onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+                }
+                AboutInfoRow {
+                    theme: detailsRoot.theme; font: detailsRoot.font
+                    iconText: "󰥔"; label: "Uptime"; value: detailsRoot.uptimeStr
+                    showDivider: false
+                    onCopied: (l, v) => detailsRoot.rowCopied(l, v)
+                }
+            }
         }
     }
 }

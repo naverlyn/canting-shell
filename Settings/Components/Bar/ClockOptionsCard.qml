@@ -8,44 +8,83 @@ import "../.."
 import "../Common"
 import ".."
 
-SectionCard {
+ColumnLayout {
     required property var root
     id: self
-    title: "Clock Options"
-    contentMargins: 8
-    contentSpacing: 0
+    Layout.fillWidth: true
+    spacing: 8
 
-    SettingToggleRow {
-        title: "Show Seconds in Clock"
-        checked: BarConfig.showSeconds
-        onToggled: (val) => {
-            BarConfig.showSeconds = val;
-            BarConfig.saveConfig();
-            root.showToast(val ? "Clock seconds visible" : "Clock seconds hidden");
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin: 4
+        Layout.rightMargin: 4
+        spacing: 8
+        Text {
+            text: "Clock Options"
+            font.family: Style.font
+            font.pixelSize: Style.px(13)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
+            color: Style.theme.textSecondary
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
         }
+        Item { Layout.fillWidth: true }
     }
 
-    RowDivider {}
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: innerCol.implicitHeight + 8 * 2
+        radius: 12
+        color: Style.theme.bgSurface
+        border.color: Style.theme.bgBorder
+        border.width: 1
 
-    SettingToggleRow {
-        title: "Show Date in Clock"
-        checked: BarConfig.showDate
-        onToggled: (val) => {
-            BarConfig.showDate = val;
-            BarConfig.saveConfig();
-            root.showToast(val ? "Clock date visible" : "Clock date hidden");
-        }
-    }
+        ColumnLayout {
+            id: innerCol
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                margins: 8
+            }
+            spacing: 0
+            SettingToggleRow {
+                title: "Show Seconds in Clock"
+                checked: BarConfig.showSeconds
+                onToggled: (val) => {
+                    BarConfig.showSeconds = val;
+                    BarConfig.saveConfig();
+                    root.showToast(val ? "Clock seconds visible" : "Clock seconds hidden");
+                }
+            }
 
-    RowDivider {}
+            RowDivider {}
 
-    SettingToggleRow {
-        title: "Show Year in Clock"
-        checked: BarConfig.showYear
-        onToggled: (val) => {
-            BarConfig.showYear = val;
-            BarConfig.saveConfig();
-            root.showToast(val ? "Clock year visible" : "Clock year hidden");
+            SettingToggleRow {
+                title: "Show Date in Clock"
+                checked: BarConfig.showDate
+                onToggled: (val) => {
+                    BarConfig.showDate = val;
+                    BarConfig.saveConfig();
+                    root.showToast(val ? "Clock date visible" : "Clock date hidden");
+                }
+            }
+
+            RowDivider {}
+
+            SettingToggleRow {
+                title: "Show Year in Clock"
+                checked: BarConfig.showYear
+                onToggled: (val) => {
+                    BarConfig.showYear = val;
+                    BarConfig.saveConfig();
+                    root.showToast(val ? "Clock year visible" : "Clock year hidden");
+                }
+            }
         }
     }
 }

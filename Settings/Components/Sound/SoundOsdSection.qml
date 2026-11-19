@@ -28,14 +28,7 @@ ColumnLayout {
             color: root.theme.textSecondary
         }
 
-        Text {
-            text: "· Volume overlay position and placement"
-            font.family: root.font
-            font.pixelSize: 11
-            color: root.theme.textMuted
-            elide: Text.ElideRight
-            Layout.fillWidth: true
-        }
+        Item { Layout.fillWidth: true }
 
         Text {
             text: "Active: " + OSDService.getPositionLabel(OSDService.position)

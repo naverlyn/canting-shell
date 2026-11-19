@@ -3,193 +3,261 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import "../Common"
 
-SectionCard {
+ColumnLayout {
     required property var root
-    title: "Live Specimen Preview"
-    subtitle: (root.hoveredBrowserFont !== "" ? ("Previewing: " + root.hoveredBrowserFont + "  •  ") : "")
-        + "Scale " + Math.round(root.theme.fontScale * 100) + "%  •  Weight: " + root.theme.fontWeight
-    subtitleColor: root.hoveredBrowserFont !== "" ? root.theme.accentPrimary : root.theme.textMuted
-    subtitleBold: root.hoveredBrowserFont !== ""
+    Layout.fillWidth: true
+    spacing: 8
 
-    // Specimen Mode Switcher + Custom Text Input
     RowLayout {
         Layout.fillWidth: true
+        Layout.leftMargin: 4
+        Layout.rightMargin: 4
         spacing: 8
-
-        Repeater {
-            model: [
-                { id: "ui",      label: "Shell & Bar Mockup" },
-                { id: "mono",    label: "Lock Screen & Code" },
-                { id: "charset", label: "Scale & Character Set" }
-            ]
-            delegate: Rectangle {
-                required property var modelData
-                readonly property bool active: root.specimenTab === modelData.id
-                height: 28
-                radius: 7
-                implicitWidth: specTabTxt.implicitWidth + 20
-                color: active ? root.theme.bgSelected : (specTabMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
-                border.color: active ? root.theme.accentPrimary : root.theme.bgBorder
-                border.width: 1
-
-                Behavior on color { ColorAnimation { duration: 130 } }
-                Behavior on border.color { ColorAnimation { duration: 130 } }
-                scale: specTabMouse.pressed ? 0.95 : (specTabMouse.containsMouse ? 1.02 : 1.0)
-                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
-
-                Text {
-                    id: specTabTxt
-                    anchors.centerIn: parent
-                    text: modelData.label
-                    font.family: Style.font
-                    font.pixelSize: Style.px(11)
-                    font.bold: active
-                    color: active ? root.theme.textPrimary : (specTabMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary)
-                    Behavior on color { ColorAnimation { duration: 130 } }
-                }
-
-                MouseArea {
-                    id: specTabMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (root.specimenTab !== modelData.id) {
-                            root.specimenTab = modelData.id;
-                            specimenSwitchAnim.restart();
-                        }
-                    }
-                }
-            }
+        Text {
+            text: "Live Specimen Preview"
+            font.family: Style.font
+            font.pixelSize: Style.px(13)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
+            color: Style.theme.textSecondary
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
         }
-
-        Item { Layout.fillWidth: true }
-
-        // Custom specimen text input
-        Rectangle {
-            Layout.preferredWidth: 280
-            height: 28
-            radius: 7
-            color: root.theme.bgBase
-            border.color: customSpecInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
-            border.width: customSpecInput.activeFocus ? 1.5 : 1
-            Behavior on border.color { ColorAnimation { duration: 140 } }
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
-                spacing: 6
-
-                Text {
-                    text: "󰏫"
-                    font.family: Style.font
-                    font.pixelSize: 11
-                    color: root.theme.textMuted
-                }
-
-                TextInput {
-                    id: customSpecInput
-                    Layout.fillWidth: true
-                    verticalAlignment: TextInput.AlignVCenter
-                    text: root.customSpecimenText
-                    font.family: Style.font
-                    font.pixelSize: 11
-                    color: root.theme.textPrimary
-                    selectByMouse: true
-                    clip: true
-                    Component.onCompleted: cursorPosition = 0
-                    onTextChanged: root.customSpecimenText = text
-                }
-            }
+        Text {
+            text: (root.hoveredBrowserFont !== "" ? ("Previewing: " + root.hoveredBrowserFont + "  •  ") : "")
+            font.family: Style.font
+            font.pixelSize: Style.px(11)
+            font.bold: root.hoveredBrowserFont !== ""
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
+            color: root.hoveredBrowserFont !== "" ? root.theme.accentPrimary : root.theme.textMuted
+            elide: Text.ElideRight
+            horizontalAlignment: Text.AlignRight
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
         }
     }
 
-    ParallelAnimation {
-        id: specimenSwitchAnim
-        NumberAnimation {
-            target: specimenStack
-            property: "opacity"
-            from: 0.35
-            to: 1.0
-            duration: 170
-            easing.type: Easing.OutCubic
-        }
-        NumberAnimation {
-            target: specimenTranslate
-            property: "y"
-            from: 6
-            to: 0
-            duration: 170
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    // Specimen Stage Canvas
     Rectangle {
         Layout.fillWidth: true
-        implicitHeight: specimenStack.implicitHeight + 24
-        radius: 10
-        color: root.theme.bgBase
-        border.color: root.theme.bgBorder
+        implicitHeight: innerCol.implicitHeight + 12 * 2
+        radius: 12
+        color: Style.theme.bgSurface
+        border.color: Style.theme.bgBorder
         border.width: 1
-        clip: true
-        Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
         ColumnLayout {
-            id: specimenStack
-            transform: Translate { id: specimenTranslate; y: 0 }
+            id: innerCol
             anchors {
                 left: parent.left
                 right: parent.right
                 top: parent.top
                 margins: 12
             }
-            spacing: 10
+            spacing: 12
+                + "Scale " + Math.round(root.theme.fontScale * 100) + "%  •  Weight: " + root.theme.fontWeight
 
-            // Mode 1: Shell & Bar Mockup
-            ColumnLayout {
-                visible: root.specimenTab === "ui"
+            // Specimen Mode Switcher + Custom Text Input
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: 8
 
-                // Simulated Bar strip
+                Repeater {
+                    model: [
+                        { id: "ui",      label: "Shell & Bar Mockup" },
+                        { id: "mono",    label: "Lock Screen & Code" },
+                        { id: "charset", label: "Scale & Character Set" }
+                    ]
+                    delegate: Rectangle {
+                        required property var modelData
+                        readonly property bool active: root.specimenTab === modelData.id
+                        height: 28
+                        radius: 7
+                        implicitWidth: specTabTxt.implicitWidth + 20
+                        color: active ? root.theme.bgSelected : (specTabMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
+                        border.color: active ? root.theme.accentPrimary : root.theme.bgBorder
+                        border.width: 1
+
+                        Behavior on color { ColorAnimation { duration: 130 } }
+                        Behavior on border.color { ColorAnimation { duration: 130 } }
+                        scale: specTabMouse.pressed ? 0.95 : (specTabMouse.containsMouse ? 1.02 : 1.0)
+                        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+
+                        Text {
+                            id: specTabTxt
+                            anchors.centerIn: parent
+                            text: modelData.label
+                            font.family: Style.font
+                            font.pixelSize: Style.px(11)
+                            font.bold: active
+                            color: active ? root.theme.textPrimary : (specTabMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary)
+                            Behavior on color { ColorAnimation { duration: 130 } }
+                        }
+
+                        MouseArea {
+                            id: specTabMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (root.specimenTab !== modelData.id) {
+                                    root.specimenTab = modelData.id;
+                                    specimenSwitchAnim.restart();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Item { Layout.fillWidth: true }
+
+                // Custom specimen text input
                 Rectangle {
-                    Layout.fillWidth: true
-                    height: 34
-                    radius: 8
-                    color: root.theme.bgSurface
-                    border.color: root.theme.bgBorder
-                    border.width: 1
+                    Layout.preferredWidth: 280
+                    height: 28
+                    radius: 7
+                    color: root.theme.bgBase
+                    border.color: customSpecInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
+                    border.width: customSpecInput.activeFocus ? 1.5 : 1
+                    Behavior on border.color { ColorAnimation { duration: 140 } }
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        spacing: 8
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
+                        spacing: 6
 
-                        // Left workspace pills
+                        Text {
+                            text: "󰏫"
+                            font.family: Style.font
+                            font.pixelSize: 11
+                            color: root.theme.textMuted
+                        }
+
+                        TextInput {
+                            id: customSpecInput
+                            Layout.fillWidth: true
+                            verticalAlignment: TextInput.AlignVCenter
+                            text: root.customSpecimenText
+                            font.family: Style.font
+                            font.pixelSize: 11
+                            color: root.theme.textPrimary
+                            selectByMouse: true
+                            clip: true
+                            Component.onCompleted: cursorPosition = 0
+                            onTextChanged: root.customSpecimenText = text
+                        }
+                    }
+                }
+            }
+
+            ParallelAnimation {
+                id: specimenSwitchAnim
+                NumberAnimation {
+                    target: specimenStack
+                    property: "opacity"
+                    from: 0.35
+                    to: 1.0
+                    duration: 170
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    target: specimenTranslate
+                    property: "y"
+                    from: 6
+                    to: 0
+                    duration: 170
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            // Specimen Stage Canvas
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: specimenStack.implicitHeight + 24
+                radius: 10
+                color: root.theme.bgBase
+                border.color: root.theme.bgBorder
+                border.width: 1
+                clip: true
+                Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                ColumnLayout {
+                    id: specimenStack
+                    transform: Translate { id: specimenTranslate; y: 0 }
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: parent.top
+                        margins: 12
+                    }
+                    spacing: 10
+
+                    // Mode 1: Shell & Bar Mockup
+                    ColumnLayout {
+                        visible: root.specimenTab === "ui"
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        // Simulated Bar strip
                         Rectangle {
-                            height: 22
-                            radius: 6
-                            implicitWidth: wsRow.implicitWidth + 14
-                            color: root.theme.bgSelected
+                            Layout.fillWidth: true
+                            height: 34
+                            radius: 8
+                            color: root.theme.bgSurface
+                            border.color: root.theme.bgBorder
+                            border.width: 1
 
-                            Row {
-                                id: wsRow
-                                anchors.centerIn: parent
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
                                 spacing: 8
-                                Text {
-                                    text: "󰣇"
-                                    font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
-                                    font.pixelSize: Style.px(13)
-                                    color: root.theme.accentPrimary
+
+                                // Left workspace pills
+                                Rectangle {
+                                    height: 22
+                                    radius: 6
+                                    implicitWidth: wsRow.implicitWidth + 14
+                                    color: root.theme.bgSelected
+
+                                    Row {
+                                        id: wsRow
+                                        anchors.centerIn: parent
+                                        spacing: 8
+                                        Text {
+                                            text: "󰣇"
+                                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
+                                            font.pixelSize: Style.px(13)
+                                            color: root.theme.accentPrimary
+                                        }
+                                        Text {
+                                            text: "1   2   3   •   Quickshell Settings"
+                                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
+                                            font.pixelSize: Style.px(11)
+                                            font.weight: Style.fontWeightEnum
+                                            font.bold: Style.boldHeadings
+                                            font.letterSpacing: Style.letterSpacing
+                                            font.hintingPreference: Style.fontHintingEnum
+                                            antialiasing: Style.fontAntialiasing
+                                            renderType: Style.fontRenderTypeEnum
+                                            color: root.theme.textPrimary
+                                        }
+                                    }
                                 }
+
+                                Item { Layout.fillWidth: true }
+
+                                // Center clock pill
                                 Text {
-                                    text: "1   2   3   •   Quickshell Settings"
+                                    text: "Thu 12 Nov   04:20"
                                     font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
-                                    font.pixelSize: Style.px(11)
-                                    font.weight: Style.fontWeightEnum
+                                    font.pixelSize: Style.px(12)
                                     font.bold: Style.boldHeadings
                                     font.letterSpacing: Style.letterSpacing
                                     font.hintingPreference: Style.fontHintingEnum
@@ -197,41 +265,86 @@ SectionCard {
                                     renderType: Style.fontRenderTypeEnum
                                     color: root.theme.textPrimary
                                 }
+
+                                Item { Layout.fillWidth: true }
+
+                                // Right status pill
+                                Rectangle {
+                                    height: 22
+                                    radius: 6
+                                    implicitWidth: sysRow.implicitWidth + 14
+                                    color: root.theme.bgHover
+
+                                    Row {
+                                        id: sysRow
+                                        anchors.centerIn: parent
+                                        spacing: 8
+                                        Text {
+                                            text: "󰖩  5G   󰕾  78%   󰁹  96%"
+                                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
+                                            font.pixelSize: Style.px(11)
+                                            font.weight: Style.fontWeightEnum
+                                            font.letterSpacing: Style.letterSpacing
+                                            font.hintingPreference: Style.fontHintingEnum
+                                            antialiasing: Style.fontAntialiasing
+                                            renderType: Style.fontRenderTypeEnum
+                                            color: root.theme.textSecondary
+                                        }
+                                    }
+                                }
                             }
                         }
 
-                        Item { Layout.fillWidth: true }
-
-                        // Center clock pill
-                        Text {
-                            text: "Thu 12 Nov   04:20"
-                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
-                            font.pixelSize: Style.px(12)
-                            font.bold: Style.boldHeadings
-                            font.letterSpacing: Style.letterSpacing
-                            font.hintingPreference: Style.fontHintingEnum
-                            antialiasing: Style.fontAntialiasing
-                            renderType: Style.fontRenderTypeEnum
-                            color: root.theme.textPrimary
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        // Right status pill
+                        // Simulated Notification / UI Typography Card
                         Rectangle {
-                            height: 22
-                            radius: 6
-                            implicitWidth: sysRow.implicitWidth + 14
-                            color: root.theme.bgHover
+                            Layout.fillWidth: true
+                            implicitHeight: notifSampleCol.implicitHeight + 20
+                            radius: 8
+                            color: root.theme.bgSurface
+                            border.color: Style.withAlpha(root.theme.accentPrimary, 0.3)
+                            border.width: 1
 
-                            Row {
-                                id: sysRow
-                                anchors.centerIn: parent
-                                spacing: 8
+                            ColumnLayout {
+                                id: notifSampleCol
+                                anchors {
+                                    left: parent.left
+                                    right: parent.right
+                                    top: parent.top
+                                    margins: 10
+                                }
+                                spacing: 4
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+                                    Text {
+                                        text: "󰂚  Typography Preview"
+                                        font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
+                                        font.pixelSize: Style.px(13)
+                                        font.bold: Style.boldHeadings
+                                        font.letterSpacing: Style.letterSpacing
+                                        font.hintingPreference: Style.fontHintingEnum
+                                        antialiasing: Style.fontAntialiasing
+                                        renderType: Style.fontRenderTypeEnum
+                                        color: root.theme.textPrimary
+                                    }
+                                    Item { Layout.fillWidth: true }
+                                    Text {
+                                        text: "just now"
+                                        font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
+                                        font.pixelSize: Style.px(10)
+                                        color: root.theme.textMuted
+                                    }
+                                }
+
                                 Text {
-                                    text: "󰖩  5G   󰕾  78%   󰁹  96%"
+                                    Layout.fillWidth: true
+                                    wrapMode: Text.WordWrap
+                                    text: root.customSpecimenText !== ""
+                                        ? root.customSpecimenText
+                                        : "The quick brown fox jumps over the lazy dog 0123456789"
                                     font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
-                                    font.pixelSize: Style.px(11)
+                                    font.pixelSize: Style.px(12)
                                     font.weight: Style.fontWeightEnum
                                     font.letterSpacing: Style.letterSpacing
                                     font.hintingPreference: Style.fontHintingEnum
@@ -242,209 +355,149 @@ SectionCard {
                             }
                         }
                     }
-                }
 
-                // Simulated Notification / UI Typography Card
-                Rectangle {
-                    Layout.fillWidth: true
-                    implicitHeight: notifSampleCol.implicitHeight + 20
-                    radius: 8
-                    color: root.theme.bgSurface
-                    border.color: Style.withAlpha(root.theme.accentPrimary, 0.3)
-                    border.width: 1
-
+                    // Mode 2: Lock Screen & Monospace Mockup
                     ColumnLayout {
-                        id: notifSampleCol
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            top: parent.top
-                            margins: 10
-                        }
-                        spacing: 4
+                        visible: root.specimenTab === "mono"
+                        Layout.fillWidth: true
+                        spacing: 8
 
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 8
-                            Text {
-                                text: "󰂚  Typography Preview"
-                                font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
-                                font.pixelSize: Style.px(13)
-                                font.bold: Style.boldHeadings
-                                font.letterSpacing: Style.letterSpacing
-                                font.hintingPreference: Style.fontHintingEnum
-                                antialiasing: Style.fontAntialiasing
-                                renderType: Style.fontRenderTypeEnum
-                                color: root.theme.textPrimary
+                            spacing: 16
+
+                            ColumnLayout {
+                                spacing: 2
+                                Text {
+                                    text: "04:20"
+                                    font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "lockscreen" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.lockscreenFont
+                                    font.pixelSize: Style.px(38)
+                                    font.bold: true
+                                    font.letterSpacing: Style.letterSpacing
+                                    font.hintingPreference: Style.fontHintingEnum
+                                    antialiasing: Style.fontAntialiasing
+                                    renderType: Style.fontRenderTypeEnum
+                                    color: root.theme.textPrimary
+                                }
+                                Text {
+                                    text: "Thursday, 12 November"
+                                    font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "lockscreen" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.lockscreenFont
+                                    font.pixelSize: Style.px(11)
+                                    font.letterSpacing: Style.letterSpacing
+                                    color: root.theme.accentCyan
+                                }
                             }
-                            Item { Layout.fillWidth: true }
-                            Text {
-                                text: "just now"
-                                font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
-                                font.pixelSize: Style.px(10)
-                                color: root.theme.textMuted
+
+                            Rectangle {
+                                width: 1
+                                Layout.fillHeight: true
+                                color: root.theme.bgBorder
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                    text: "󰍛 CPU 14%   •   󰘚 RAM 4.2 GiB   •   󰁹 BAT 96%"
+                                    font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont
+                                    font.pixelSize: Style.px(12)
+                                    font.bold: Style.boldHeadings
+                                    font.letterSpacing: Style.letterSpacing
+                                    color: root.theme.accentPrimary
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                    text: "const shell = Quickshell.lock({ font: \"" + (root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont) + "\" }); // !== => <= >="
+                                    font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont
+                                    font.pixelSize: Style.px(11)
+                                    font.weight: Style.fontWeightEnum
+                                    font.letterSpacing: Style.letterSpacing
+                                    color: root.theme.textSecondary
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                    text: "0123456789  Il1O0  [] {} () <>  !@#$%^&*+-=~"
+                                    font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont
+                                    font.pixelSize: Style.px(11)
+                                    color: root.theme.textMuted
+                                }
                             }
                         }
-
-                        Text {
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                            text: root.customSpecimenText !== ""
-                                ? root.customSpecimenText
-                                : "The quick brown fox jumps over the lazy dog 0123456789"
-                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "ui" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.fontFamily
-                            font.pixelSize: Style.px(12)
-                            font.weight: Style.fontWeightEnum
-                            font.letterSpacing: Style.letterSpacing
-                            font.hintingPreference: Style.fontHintingEnum
-                            antialiasing: Style.fontAntialiasing
-                            renderType: Style.fontRenderTypeEnum
-                            color: root.theme.textSecondary
-                        }
                     }
-                }
-            }
 
-            // Mode 2: Lock Screen & Monospace Mockup
-            ColumnLayout {
-                visible: root.specimenTab === "mono"
-                Layout.fillWidth: true
-                spacing: 8
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 16
-
+                    // Mode 3: Scale & Character Set Waterfall
                     ColumnLayout {
-                        spacing: 2
-                        Text {
-                            text: "04:20"
-                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "lockscreen" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.lockscreenFont
-                            font.pixelSize: Style.px(38)
-                            font.bold: true
-                            font.letterSpacing: Style.letterSpacing
-                            font.hintingPreference: Style.fontHintingEnum
-                            antialiasing: Style.fontAntialiasing
-                            renderType: Style.fontRenderTypeEnum
-                            color: root.theme.textPrimary
-                        }
-                        Text {
-                            text: "Thursday, 12 November"
-                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "lockscreen" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.lockscreenFont
-                            font.pixelSize: Style.px(11)
-                            font.letterSpacing: Style.letterSpacing
-                            color: root.theme.accentCyan
-                        }
-                    }
-
-                    Rectangle {
-                        width: 1
-                        Layout.fillHeight: true
-                        color: root.theme.bgBorder
-                    }
-
-                    ColumnLayout {
+                        visible: root.specimenTab === "charset"
                         Layout.fillWidth: true
-                        spacing: 4
+                        spacing: 6
 
-                        Text {
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
-                            text: "󰍛 CPU 14%   •   󰘚 RAM 4.2 GiB   •   󰁹 BAT 96%"
-                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont
-                            font.pixelSize: Style.px(12)
-                            font.bold: Style.boldHeadings
-                            font.letterSpacing: Style.letterSpacing
-                            color: root.theme.accentPrimary
+                        Repeater {
+                            model: [
+                                { size: 11, label: "11px" },
+                                { size: 14, label: "14px" },
+                                { size: 18, label: "18px" }
+                            ]
+                            delegate: RowLayout {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                spacing: 10
+
+                                Rectangle {
+                                    width: 48
+                                    height: 20
+                                    radius: 5
+                                    color: root.theme.bgSurface
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: Style.px(modelData.size) + "px"
+                                        font.family: root.theme.monoFont
+                                        font.pixelSize: 10
+                                        color: root.theme.accentPrimary
+                                    }
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    elide: Text.ElideRight
+                                    text: root.customSpecimenText !== "" ? root.customSpecimenText : "The quick brown fox jumps over the lazy dog 0123456789"
+                                    font.family: root.hoveredBrowserFont !== ""
+                                        ? root.hoveredBrowserFont
+                                        : (root.targetRole === "lockscreen" ? root.theme.lockscreenFont : (root.targetRole === "mono" ? root.theme.monoFont : root.theme.fontFamily))
+                                    font.pixelSize: Style.px(modelData.size)
+                                    font.weight: Style.fontWeightEnum
+                                    font.letterSpacing: Style.letterSpacing
+                                    font.hintingPreference: Style.fontHintingEnum
+                                    antialiasing: Style.fontAntialiasing
+                                    renderType: Style.fontRenderTypeEnum
+                                    color: root.theme.textPrimary
+                                }
+                            }
                         }
-
-                        Text {
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
-                            text: "const shell = Quickshell.lock({ font: \"" + (root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont) + "\" }); // !== => <= >="
-                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont
-                            font.pixelSize: Style.px(11)
-                            font.weight: Style.fontWeightEnum
-                            font.letterSpacing: Style.letterSpacing
-                            color: root.theme.textSecondary
-                        }
-
-                        Text {
-                            Layout.fillWidth: true
-                            elide: Text.ElideRight
-                            text: "0123456789  Il1O0  [] {} () <>  !@#$%^&*+-=~"
-                            font.family: root.hoveredBrowserFont !== "" && (root.targetRole === "mono" || root.targetRole === "both") ? root.hoveredBrowserFont : root.theme.monoFont
-                            font.pixelSize: Style.px(11)
-                            color: root.theme.textMuted
-                        }
-                    }
-                }
-            }
-
-            // Mode 3: Scale & Character Set Waterfall
-            ColumnLayout {
-                visible: root.specimenTab === "charset"
-                Layout.fillWidth: true
-                spacing: 6
-
-                Repeater {
-                    model: [
-                        { size: 11, label: "11px" },
-                        { size: 14, label: "14px" },
-                        { size: 18, label: "18px" }
-                    ]
-                    delegate: RowLayout {
-                        required property var modelData
-                        Layout.fillWidth: true
-                        spacing: 10
 
                         Rectangle {
-                            width: 48
-                            height: 20
-                            radius: 5
-                            color: root.theme.bgSurface
-                            Text {
-                                anchors.centerIn: parent
-                                text: Style.px(modelData.size) + "px"
-                                font.family: root.theme.monoFont
-                                font.pixelSize: 10
-                                color: root.theme.accentPrimary
-                            }
+                            Layout.fillWidth: true
+                            height: 1
+                            color: root.theme.bgBorder
                         }
 
                         Text {
                             Layout.fillWidth: true
                             elide: Text.ElideRight
-                            text: root.customSpecimenText !== "" ? root.customSpecimenText : "The quick brown fox jumps over the lazy dog 0123456789"
+                            text: "Nerd Icons:  󰣇  󰖩  󰂯  󰕾  󰂚  󰐥  󰍽  󰌌  󰍹  󰏘  󰮲  󰌾    󰸉  󰕮  󰁯  󰀻  󰅌"
                             font.family: root.hoveredBrowserFont !== ""
                                 ? root.hoveredBrowserFont
                                 : (root.targetRole === "lockscreen" ? root.theme.lockscreenFont : (root.targetRole === "mono" ? root.theme.monoFont : root.theme.fontFamily))
-                            font.pixelSize: Style.px(modelData.size)
-                            font.weight: Style.fontWeightEnum
-                            font.letterSpacing: Style.letterSpacing
-                            font.hintingPreference: Style.fontHintingEnum
-                            antialiasing: Style.fontAntialiasing
-                            renderType: Style.fontRenderTypeEnum
-                            color: root.theme.textPrimary
+                            font.pixelSize: Style.px(13)
+                            color: root.theme.accentCyan
                         }
                     }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: root.theme.bgBorder
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
-                    text: "Nerd Icons:  󰣇  󰖩  󰂯  󰕾  󰂚  󰐥  󰍽  󰌌  󰍹  󰏘  󰮲  󰌾    󰸉  󰕮  󰁯  󰀻  󰅌"
-                    font.family: root.hoveredBrowserFont !== ""
-                        ? root.hoveredBrowserFont
-                        : (root.targetRole === "lockscreen" ? root.theme.lockscreenFont : (root.targetRole === "mono" ? root.theme.monoFont : root.theme.fontFamily))
-                    font.pixelSize: Style.px(13)
-                    color: root.theme.accentCyan
                 }
             }
         }
