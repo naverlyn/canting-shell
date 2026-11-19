@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import "../../../Clipboard"
 import "../Common"
+import ".."
 
 ColumnLayout {
     required property var root
@@ -226,18 +227,23 @@ ColumnLayout {
 
                 Item { Layout.fillWidth: true }
 
-                SegmentedControl {
-                    trackWidth: 320
-                    currentId: ClipboardConfig.defaultCategory
+                AppDropdown {
+                    theme: root.theme
+                    font: root.font
+                    Layout.preferredWidth: 380
+                    implicitWidth: 380
+                    menuWidth: 380
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                    currentValue: ClipboardConfig.defaultCategory
                     options: [
-                        { id: "all",   label: "All" },
-                        { id: "text",  label: "Text" },
-                        { id: "image", label: "Images" },
-                        { id: "link",  label: "Links" },
-                        { id: "code",  label: "Code" },
-                        { id: "color", label: "Colors" }
+                        { desktop: "all",   name: "All",    desc: "" },
+                        { desktop: "text",  name: "Text",   desc: "" },
+                        { desktop: "image", name: "Images", desc: "" },
+                        { desktop: "link",  name: "Links",  desc: "" },
+                        { desktop: "code",  name: "Code",   desc: "" },
+                        { desktop: "color", name: "Colors", desc: "" }
                     ]
-                    onOptionSelected: (optionId) => ClipboardConfig.setDefaultCategory(optionId)
+                    onSelected: (val) => ClipboardConfig.setDefaultCategory(val)
                 }
             }
         }
