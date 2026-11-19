@@ -19,7 +19,7 @@ SectionCard {
     // Row 1: Flyout Layout Orientation (Vertical Stack vs Horizontal Grid)
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -30,7 +30,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Flyout Layout Orientation"
@@ -39,22 +38,15 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Arrange active sections in a single vertical stack or multi-column horizontal grid"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             Rectangle {
                 id: layoutSegTrack
-                implicitWidth: 220
+                Layout.preferredWidth: 380
+                implicitWidth: 380
                 implicitHeight: 32
-                width: 220
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
@@ -138,7 +130,6 @@ SectionCard {
     // Row 2: Panel Width (Standard SettingSliderRow with Presets + Custom slider)
     SettingSliderRow {
         title: "Panel Width"
-        desc: "Horizontal width of each Control Center column in pixels"
         value: ControlCenterConfig.panelWidth
         minVal: 280
         maxVal: 460
@@ -158,7 +149,6 @@ SectionCard {
     // Row 3: Header & Profile
     SettingToggleRow {
         title: "Show Header & Profile"
-        desc: "Display top bar with user avatar, uptime, battery status, and power actions"
         checked: ControlCenterConfig.showHeader
         onToggled: (val) => {
             ControlCenterConfig.setCardVisible("header", val);
@@ -171,7 +161,6 @@ SectionCard {
     // Row 4: 2x2 Connectivity Group
     SettingToggleRow {
         title: "2x2 Connectivity Group"
-        desc: "Group up to 4 primary quick tiles into a compact squircle card (iOS/Android style)"
         checked: ControlCenterConfig.groupTilesEnabled
         onToggled: (val) => {
             ControlCenterConfig.setGroupTilesEnabled(val);

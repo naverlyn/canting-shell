@@ -200,7 +200,6 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
 
         SettingSliderRow {
             title: "Quick Launch App Count"
-            desc: "Number of app shortcuts displayed in the Quick Launch module (3 to 15 max)"
             value: ControlCenterConfig.quickAppsMaxCount
             minVal: 3
             maxVal: 15

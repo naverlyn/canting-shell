@@ -125,33 +125,6 @@ Rectangle {
                             font.bold: true
                             color: hostRoot.theme.textPrimary
                         }
-
-                        Rectangle {
-                            anchors.verticalCenter: parent.verticalCenter
-                            implicitWidth: secTagTxt.implicitWidth + 8
-                            implicitHeight: 16
-                            radius: 8
-                            color: hostRoot.withAlpha(hostRoot.theme.accentPrimary, 0.14)
-
-                            Text {
-                                id: secTagTxt
-                                anchors.centerIn: parent
-                                text: "Module"
-                                font.family: hostRoot.font
-                                font.pixelSize: 9
-                                font.bold: true
-                                color: hostRoot.theme.accentPrimary
-                            }
-                        }
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "󰐕"
-                            font.family: hostRoot.font
-                            font.pixelSize: 10
-                            color: secPoolHover.hovered ? hostRoot.theme.accentPrimary : hostRoot.theme.textMuted
-                            opacity: secPoolHover.hovered ? 1.0 : 0.6
-                        }
                     }
 
                     MouseArea {
