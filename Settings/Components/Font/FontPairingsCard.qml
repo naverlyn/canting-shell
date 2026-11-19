@@ -36,9 +36,11 @@ SectionCard {
                     ? root.theme.accentPrimary
                     : (pairMouse.containsMouse ? Style.withAlpha(root.theme.accentPrimary, 0.45) : root.theme.bgBorder)
                 border.width: isCurrentPair ? 1.5 : 1
+                scale: pairMouse.pressed ? 0.98 : (pairMouse.containsMouse ? 1.01 : 1.0)
 
                 Behavior on color { ColorAnimation { duration: 140 } }
                 Behavior on border.color { ColorAnimation { duration: 140 } }
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                 ColumnLayout {
                     id: pairCardCol
@@ -48,7 +50,7 @@ SectionCard {
                         top: parent.top
                         margins: 10
                     }
-                    spacing: 4
+                    spacing: 6
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -82,15 +84,6 @@ SectionCard {
                                 color: pairCard.isCurrentPair ? root.theme.bgBase : root.theme.accentPrimary
                             }
                         }
-                    }
-
-                    Text {
-                        text: modelData.desc
-                        font.family: Style.font
-                        font.pixelSize: Style.px(10)
-                        color: root.theme.textSecondary
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
                     }
 
                     RowLayout {

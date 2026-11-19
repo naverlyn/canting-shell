@@ -8,72 +8,7 @@ SectionCard {
     title: "Installed Font Browser"
     subtitle: root.filteredFonts.length + " matching families"
 
-    // Top Row: Role Target Selector
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: 8
-
-        Text {
-            text: "Assign Clicked Font To:"
-            font.family: Style.font
-            font.pixelSize: Style.px(11)
-            font.bold: true
-            color: root.theme.textSecondary
-        }
-
-        Repeater {
-            model: [
-                { id: "ui",         label: "UI Font",     icon: "󰛖" },
-                { id: "lockscreen", label: "Lock Screen", icon: "󰌾" },
-                { id: "both",       label: "Both",        icon: "󰄬" }
-            ]
-            delegate: Rectangle {
-                required property var modelData
-                readonly property bool active: root.targetRole === modelData.id
-                height: 28
-                radius: 7
-                implicitWidth: roleBtnRow.implicitWidth + 16
-                color: active
-                    ? Style.withAlpha(root.theme.accentPrimary, 0.16)
-                    : (roleBtnMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
-                border.color: active ? root.theme.accentPrimary : root.theme.bgBorder
-                border.width: active ? 1.5 : 1
-
-                Row {
-                    id: roleBtnRow
-                    anchors.centerIn: parent
-                    spacing: 6
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.icon
-                        font.family: Style.font
-                        font.pixelSize: 12
-                        color: active ? root.theme.accentPrimary : root.theme.textSecondary
-                    }
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.label
-                        font.family: Style.font
-                        font.pixelSize: Style.px(11)
-                        font.bold: active
-                        color: active ? root.theme.textPrimary : root.theme.textSecondary
-                    }
-                }
-
-                MouseArea {
-                    id: roleBtnMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.targetRole = modelData.id
-                }
-            }
-        }
-
-        Item { Layout.fillWidth: true }
-    }
-
-    // Second Row: Search Input + Category Filter Pills
+    // Search Input + Category Filter Pills
     RowLayout {
         Layout.fillWidth: true
         spacing: 8
@@ -86,6 +21,7 @@ SectionCard {
             color: root.theme.bgBase
             border.color: fontSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
             border.width: fontSearchInput.activeFocus ? 1.5 : 1
+            Behavior on border.color { ColorAnimation { duration: 140 } }
 
             RowLayout {
                 anchors.fill: parent
@@ -166,12 +102,15 @@ SectionCard {
                 radius: 8
                 implicitWidth: catFilterTxt.implicitWidth + 20
                 color: active
-                    ? root.theme.accentPrimary
+                    ? root.theme.bgSelected
                     : (catFilterMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
                 border.color: active ? root.theme.accentPrimary : root.theme.bgBorder
-                border.width: 1
+                border.width: active ? 1.5 : 1
+                scale: catFilterMouse.pressed ? 0.95 : (catFilterMouse.containsMouse ? 1.02 : 1.0)
 
                 Behavior on color { ColorAnimation { duration: 130 } }
+                Behavior on border.color { ColorAnimation { duration: 130 } }
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                 Text {
                     id: catFilterTxt
@@ -180,7 +119,8 @@ SectionCard {
                     font.family: Style.font
                     font.pixelSize: Style.px(11)
                     font.bold: active
-                    color: active ? root.theme.bgBase : root.theme.textSecondary
+                    color: active ? root.theme.accentPrimary : (catFilterMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary)
+                    Behavior on color { ColorAnimation { duration: 130 } }
                 }
 
                 MouseArea {
@@ -244,6 +184,11 @@ SectionCard {
                     ? root.theme.accentPrimary
                     : (isLockActive ? root.theme.accentCyan : (rowMouse.containsMouse ? root.theme.bgBorder : "transparent"))
                 border.width: isSelected ? 1.5 : 1
+                scale: rowMouse.pressed ? 0.99 : 1.0
+
+                Behavior on color { ColorAnimation { duration: 130 } }
+                Behavior on border.color { ColorAnimation { duration: 130 } }
+                Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
 
                 MouseArea {
                     id: rowMouse
@@ -387,21 +332,31 @@ SectionCard {
                         Rectangle {
                             height: 26
                             radius: 6
-                            implicitWidth: setUiTxt.implicitWidth + 14
+                            implicitWidth: Math.max(66, setUiTxt.implicitWidth + 16)
                             color: fontRow.isUiActive
+                                ? root.theme.bgSelected
+                                : (setUiMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
+                            border.color: fontRow.isUiActive || setUiMouse.containsMouse
                                 ? root.theme.accentPrimary
-                                : (setUiMouse.containsMouse ? Style.withAlpha(root.theme.accentPrimary, 0.22) : root.theme.bgBase)
-                            border.color: root.theme.accentPrimary
-                            border.width: 1
+                                : root.theme.bgBorder
+                            border.width: fontRow.isUiActive ? 1.5 : 1
+                            scale: setUiMouse.pressed ? 0.94 : (setUiMouse.containsMouse ? 1.04 : 1.0)
+
+                            Behavior on color { ColorAnimation { duration: 140 } }
+                            Behavior on border.color { ColorAnimation { duration: 140 } }
+                            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                             Text {
                                 id: setUiTxt
                                 anchors.centerIn: parent
-                                text: fontRow.isUiActive ? "✓ UI" : "Set UI"
+                                text: fontRow.isUiActive ? "UI" : "Set UI"
                                 font.family: Style.font
                                 font.pixelSize: 10
                                 font.bold: true
-                                color: fontRow.isUiActive ? root.theme.bgBase : root.theme.accentPrimary
+                                color: fontRow.isUiActive || setUiMouse.containsMouse
+                                    ? root.theme.accentPrimary
+                                    : root.theme.textSecondary
+                                Behavior on color { ColorAnimation { duration: 140 } }
                             }
 
                             MouseArea {
@@ -416,21 +371,31 @@ SectionCard {
                         Rectangle {
                             height: 26
                             radius: 6
-                            implicitWidth: setLockTxt.implicitWidth + 14
+                            implicitWidth: Math.max(66, setLockTxt.implicitWidth + 16)
                             color: fontRow.isLockActive
+                                ? Style.withAlpha(root.theme.accentCyan, 0.16)
+                                : (setLockMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
+                            border.color: fontRow.isLockActive || setLockMouse.containsMouse
                                 ? root.theme.accentCyan
-                                : (setLockMouse.containsMouse ? Style.withAlpha(root.theme.accentCyan, 0.22) : root.theme.bgBase)
-                            border.color: root.theme.accentCyan
-                            border.width: 1
+                                : root.theme.bgBorder
+                            border.width: fontRow.isLockActive ? 1.5 : 1
+                            scale: setLockMouse.pressed ? 0.94 : (setLockMouse.containsMouse ? 1.04 : 1.0)
+
+                            Behavior on color { ColorAnimation { duration: 140 } }
+                            Behavior on border.color { ColorAnimation { duration: 140 } }
+                            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
                             Text {
                                 id: setLockTxt
                                 anchors.centerIn: parent
-                                text: fontRow.isLockActive ? "✓ Lock" : "Set Lock"
+                                text: fontRow.isLockActive ? "Lock" : "Set Lock"
                                 font.family: Style.font
                                 font.pixelSize: 10
                                 font.bold: true
-                                color: fontRow.isLockActive ? root.theme.bgBase : root.theme.accentCyan
+                                color: fontRow.isLockActive || setLockMouse.containsMouse
+                                    ? root.theme.accentCyan
+                                    : root.theme.textSecondary
+                                Behavior on color { ColorAnimation { duration: 140 } }
                             }
 
                             MouseArea {

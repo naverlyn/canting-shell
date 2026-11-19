@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import "../Common"
+import ".."
 
 ColumnLayout {
     required property var root
@@ -12,11 +13,10 @@ ColumnLayout {
         title: "Size, Scale & Spacing"
         subtitle: "Global typography proportions across Settings & Shell"
         contentMargins: 8
-        contentSpacing: 4
+        contentSpacing: 0
 
         SettingSliderRow {
             title: "Global Font Scale"
-            desc: "Proportional size multiplier applied to text across Quickshell (85% – 125%)"
             value: Math.round(root.theme.fontScale * 100)
             minVal: 85
             maxVal: 125
@@ -37,7 +37,6 @@ ColumnLayout {
 
         SettingSliderRow {
             title: "Letter Spacing (Tracking)"
-            desc: "Adjust horizontal character spacing in pixels (-0.5px to +2.0px)"
             value: root.theme.letterSpacing
             minVal: -0.5
             maxVal: 2.0
@@ -60,26 +59,30 @@ ColumnLayout {
         title: "Weight & Rendering Preferences"
         subtitle: "Control boldness, glyph hinting, and subpixel antialiasing"
         contentMargins: 8
-        contentSpacing: 4
+        contentSpacing: 0
 
-        // Base Font Weight Segmented Row
+        // Base Font Weight Dropdown Row
         PreferenceRow {
             title: "Base Font Weight"
-            subtitle: "Default stroke weight for body text, descriptions, and controls"
 
-            SegmentedControl {
-                trackWidth: 360
-                currentId: root.theme.fontWeight
+            AppDropdown {
+                theme: root.theme
+                font: Style.font
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                currentValue: root.theme.fontWeight
                 options: [
-                    { id: "light",    label: "Light" },
-                    { id: "normal",   label: "Normal" },
-                    { id: "medium",   label: "Medium" },
-                    { id: "demibold", label: "SemiBold" },
-                    { id: "bold",     label: "Bold" }
+                    { desktop: "light",    name: "Light",    desc: "" },
+                    { desktop: "normal",   name: "Normal",   desc: "" },
+                    { desktop: "medium",   name: "Medium",   desc: "" },
+                    { desktop: "demibold", name: "SemiBold", desc: "" },
+                    { desktop: "bold",     name: "Bold",     desc: "" }
                 ]
-                onOptionSelected: (optionId, optionLabel) => {
-                    root.theme.setFontWeight(optionId);
-                    root.showToast("Base font weight: " + optionLabel);
+                onSelected: (val, opt) => {
+                    root.theme.setFontWeight(val);
+                    root.showToast("Base font weight: " + (opt ? opt.name : val));
                 }
             }
         }
@@ -88,7 +91,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Bold Section Headings & Titles"
-            desc: "Emphasize page headers, card titles, and active navigation items with bold weight"
             checked: root.theme.boldHeadings
             announce: true
             onToggled: (val) => root.theme.setBoldHeadings(val)
@@ -96,23 +98,27 @@ ColumnLayout {
 
         RowDivider {}
 
-        // Font Hinting Segmented Row
+        // Font Hinting Dropdown Row
         PreferenceRow {
             title: "Glyph Hinting"
-            subtitle: "Grid-fitting alignment for sharper text stems on standard and HiDPI displays"
 
-            SegmentedControl {
-                trackWidth: 300
-                currentId: root.theme.fontHinting
+            AppDropdown {
+                theme: root.theme
+                font: Style.font
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                currentValue: root.theme.fontHinting
                 options: [
-                    { id: "default",  label: "Default" },
-                    { id: "none",     label: "None" },
-                    { id: "vertical", label: "Vertical" },
-                    { id: "full",     label: "Full" }
+                    { desktop: "default",  name: "Default",  desc: "" },
+                    { desktop: "none",     name: "None",     desc: "" },
+                    { desktop: "vertical", name: "Vertical", desc: "" },
+                    { desktop: "full",     name: "Full",     desc: "" }
                 ]
-                onOptionSelected: (optionId, optionLabel) => {
-                    root.theme.setFontHinting(optionId);
-                    root.showToast("Font hinting: " + optionLabel);
+                onSelected: (val, opt) => {
+                    root.theme.setFontHinting(val);
+                    root.showToast("Font hinting: " + (opt ? opt.name : val));
                 }
             }
         }
@@ -121,7 +127,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Smooth Font Antialiasing"
-            desc: "Enable smooth edge antialiasing across shell text surfaces"
             checked: root.theme.fontAntialiasing
             announce: true
             onToggled: (val) => root.theme.setFontAntialiasing(val)
@@ -129,21 +134,25 @@ ColumnLayout {
 
         RowDivider {}
 
-        // Text Rendering Engine Row
+        // Text Rendering Engine Dropdown Row
         PreferenceRow {
             title: "Text Rasterizer Engine"
-            subtitle: "Choose between Qt distance-field vector curves or native platform FreeType rasterization"
 
-            SegmentedControl {
-                trackWidth: 330
-                currentId: root.theme.fontRenderType
+            AppDropdown {
+                theme: root.theme
+                font: Style.font
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                currentValue: root.theme.fontRenderType
                 options: [
-                    { id: "qt",     label: "Qt Vector (Smooth)" },
-                    { id: "native", label: "Native FreeType (Crisp)" }
+                    { desktop: "qt",     name: "Qt Vector (Smooth)",      desc: "" },
+                    { desktop: "native", name: "Native FreeType (Crisp)", desc: "" }
                 ]
-                onOptionSelected: (optionId, optionLabel) => {
-                    root.theme.setFontRenderType(optionId);
-                    root.showToast("Text rasterizer: " + optionLabel);
+                onSelected: (val, opt) => {
+                    root.theme.setFontRenderType(val);
+                    root.showToast("Text rasterizer: " + (opt ? opt.name : val));
                 }
             }
         }

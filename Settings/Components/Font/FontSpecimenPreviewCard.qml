@@ -18,44 +18,34 @@ SectionCard {
 
         Repeater {
             model: [
-                { id: "ui",      label: "Shell & Bar Mockup", icon: "󰮲" },
-                { id: "mono",    label: "Lock Screen & Code", icon: "󰌾" },
-                { id: "charset", label: "Scale & Character Set", icon: "󰛖" }
+                { id: "ui",      label: "Shell & Bar Mockup" },
+                { id: "mono",    label: "Lock Screen & Code" },
+                { id: "charset", label: "Scale & Character Set" }
             ]
             delegate: Rectangle {
                 required property var modelData
                 readonly property bool active: root.specimenTab === modelData.id
                 height: 28
                 radius: 7
-                implicitWidth: specTabRow.implicitWidth + 18
+                implicitWidth: specTabTxt.implicitWidth + 20
                 color: active ? root.theme.bgSelected : (specTabMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
                 border.color: active ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 130 } }
                 Behavior on border.color { ColorAnimation { duration: 130 } }
+                scale: specTabMouse.pressed ? 0.95 : (specTabMouse.containsMouse ? 1.02 : 1.0)
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
-                Row {
-                    id: specTabRow
+                Text {
+                    id: specTabTxt
                     anchors.centerIn: parent
-                    spacing: 6
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.icon
-                        font.family: Style.font
-                        font.pixelSize: Style.px(12)
-                        color: active ? root.theme.accentPrimary : root.theme.textSecondary
-                    }
-
-                    Text {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: modelData.label
-                        font.family: Style.font
-                        font.pixelSize: Style.px(11)
-                        font.bold: active
-                        color: active ? root.theme.textPrimary : root.theme.textSecondary
-                    }
+                    text: modelData.label
+                    font.family: Style.font
+                    font.pixelSize: Style.px(11)
+                    font.bold: active
+                    color: active ? root.theme.textPrimary : (specTabMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary)
+                    Behavior on color { ColorAnimation { duration: 130 } }
                 }
 
                 MouseArea {
@@ -63,7 +53,12 @@ SectionCard {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.specimenTab = modelData.id
+                    onClicked: {
+                        if (root.specimenTab !== modelData.id) {
+                            root.specimenTab = modelData.id;
+                            specimenSwitchAnim.restart();
+                        }
+                    }
                 }
             }
         }
@@ -78,6 +73,7 @@ SectionCard {
             color: root.theme.bgBase
             border.color: customSpecInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
             border.width: customSpecInput.activeFocus ? 1.5 : 1
+            Behavior on border.color { ColorAnimation { duration: 140 } }
 
             RowLayout {
                 anchors.fill: parent
@@ -109,6 +105,26 @@ SectionCard {
         }
     }
 
+    ParallelAnimation {
+        id: specimenSwitchAnim
+        NumberAnimation {
+            target: specimenStack
+            property: "opacity"
+            from: 0.35
+            to: 1.0
+            duration: 170
+            easing.type: Easing.OutCubic
+        }
+        NumberAnimation {
+            target: specimenTranslate
+            property: "y"
+            from: 6
+            to: 0
+            duration: 170
+            easing.type: Easing.OutCubic
+        }
+    }
+
     // Specimen Stage Canvas
     Rectangle {
         Layout.fillWidth: true
@@ -117,9 +133,12 @@ SectionCard {
         color: root.theme.bgBase
         border.color: root.theme.bgBorder
         border.width: 1
+        clip: true
+        Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
         ColumnLayout {
             id: specimenStack
+            transform: Translate { id: specimenTranslate; y: 0 }
             anchors {
                 left: parent.left
                 right: parent.right
