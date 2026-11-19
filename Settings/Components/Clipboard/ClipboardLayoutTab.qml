@@ -167,7 +167,6 @@ ColumnLayout {
 
         SettingSliderRow {
             title: "Popup Width"
-            desc: "Width of the center clipboard history popup window"
             value: ClipboardConfig.windowWidth
             minVal: 640
             maxVal: 960
@@ -185,7 +184,6 @@ ColumnLayout {
 
         SettingSliderRow {
             title: "Popup Height"
-            desc: "Vertical height of the clipboard history window"
             value: ClipboardConfig.windowHeight
             minVal: 480
             maxVal: 760
@@ -224,14 +222,9 @@ ColumnLayout {
                         font.bold: true
                         color: root.theme.textPrimary
                     }
-
-                    Text {
-                        text: "Initial filter tab active when clipboard window opens"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                    }
                 }
+
+                Item { Layout.fillWidth: true }
 
                 SegmentedControl {
                     trackWidth: 320

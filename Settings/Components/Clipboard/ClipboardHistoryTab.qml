@@ -22,7 +22,6 @@ ColumnLayout {
 
         SettingSliderRow {
             title: "Max History Items"
-            desc: "Maximum number of past clips loaded into the Quickshell clipboard UI"
             value: ClipboardConfig.maxItems
             minVal: 25
             maxVal: 500
@@ -47,7 +46,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Close Popup on Copy"
-            desc: "Automatically close the clipboard window when an item is copied"
             checked: ClipboardConfig.closeOnCopy
             onToggled: (val) => ClipboardConfig.setCloseOnCopy(val)
         }
@@ -56,7 +54,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Clear Search Query on Close"
-            desc: "Reset the search bar and filter text whenever the clipboard modal is dismissed"
             checked: ClipboardConfig.clearSearchOnClose
             onToggled: (val) => ClipboardConfig.setClearSearchOnClose(val)
         }
@@ -71,7 +68,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Generate Image Preview Thumbnails"
-            desc: "Decode clipboard binary PNG/JPEG images into instant visual preview thumbnails"
             checked: ClipboardConfig.generateThumbnails
             onToggled: (val) => ClipboardConfig.setGenerateThumbnails(val)
         }
@@ -80,7 +76,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Detect Hex Color Codes"
-            desc: "Recognize color strings (e.g. #7aa2f7) and display live color swatch badges"
             checked: ClipboardConfig.detectColors
             onToggled: (val) => ClipboardConfig.setDetectColors(val)
         }
@@ -89,7 +84,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Detect Web Links & URLs"
-            desc: "Identify http/https URLs and show globe link indicators with open actions"
             checked: ClipboardConfig.detectLinks
             onToggled: (val) => ClipboardConfig.setDetectLinks(val)
         }
@@ -98,7 +92,6 @@ ColumnLayout {
 
         SettingToggleRow {
             title: "Detect Code Snippets"
-            desc: "Inspect snippet contents for syntax keywords (functions, imports, classes)"
             checked: ClipboardConfig.detectCode
             onToggled: (val) => ClipboardConfig.setDetectCode(val)
         }
