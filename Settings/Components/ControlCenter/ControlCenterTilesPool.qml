@@ -52,18 +52,6 @@ Rectangle {
             }
 
             Item { Layout.fillWidth: true }
-
-            Text {
-                text: tilesPool.isPoolDropTarget
-                    ? "Release here to remove tile"
-                    : (tilesPool.totalAvailCount > 0
-                        ? "Drag into Connectivity (2x2) or Quick Tiles above, or click to add"
-                        : "All 8 quick tiles are active (drag here or click ✕ to remove)")
-                font.family: hostRoot.font
-                font.pixelSize: 10
-                font.bold: tilesPool.isPoolDropTarget
-                color: tilesPool.isPoolDropTarget ? hostRoot.theme.accentRed : hostRoot.theme.textMuted
-            }
         }
 
         Flow {
@@ -115,15 +103,6 @@ Rectangle {
                             font.pixelSize: 11
                             font.bold: true
                             color: hostRoot.theme.textPrimary
-                        }
-
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "󰐕"
-                            font.family: hostRoot.font
-                            font.pixelSize: 10
-                            color: tilePoolHover.hovered ? hostRoot.theme.accentPrimary : hostRoot.theme.textMuted
-                            opacity: tilePoolHover.hovered ? 1.0 : 0.6
                         }
                     }
 

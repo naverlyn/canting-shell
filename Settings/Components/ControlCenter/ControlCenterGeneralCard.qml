@@ -8,163 +8,201 @@ import "../.."
 import "../Common"
 import ".."
 
-SectionCard {
+ColumnLayout {
     required property var root
     id: generalSection
-    title: "General Appearance & Dimensions"
-    subtitle: "Configure flyout layout orientation, width, and chrome elements"
-    contentMargins: 8
-    contentSpacing: 0
+    Layout.fillWidth: true
+    spacing: 8
 
-    // Row 1: Flyout Layout Orientation (Vertical Stack vs Horizontal Grid)
-    Item {
+    RowLayout {
         Layout.fillWidth: true
-        height: 44
+        Layout.leftMargin: 4
+        Layout.rightMargin: 4
+        spacing: 8
+        Text {
+            text: "General Appearance & Dimensions"
+            font.family: Style.font
+            font.pixelSize: Style.px(13)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
+            color: Style.theme.textSecondary
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+        }
+        Item { Layout.fillWidth: true }
+    }
 
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
-            spacing: 12
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: innerCol.implicitHeight + 8 * 2
+        radius: 12
+        color: Style.theme.bgSurface
+        border.color: Style.theme.bgBorder
+        border.width: 1
 
-            ColumnLayout {
-                spacing: 2
-                Layout.alignment: Qt.AlignVCenter
-
-                Text {
-                    text: "Flyout Layout Orientation"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
+        ColumnLayout {
+            id: innerCol
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                margins: 8
             }
-
-            Item { Layout.fillWidth: true }
-
-            Rectangle {
-                id: layoutSegTrack
-                Layout.preferredWidth: 380
-                implicitWidth: 380
-                implicitHeight: 32
-                height: 32
-                radius: 7
-                color: root.theme.bgBase
-                border.color: root.theme.bgBorder
-                border.width: 1
-                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-
-                readonly property int activeIdx: ControlCenterConfig.panelLayout === "horizontal" ? 1 : 0
-                readonly property real cellWidth: (width - 6 - 4) / 2
-
-                Rectangle {
-                    y: 3
-                    height: parent.height - 6
-                    width: layoutSegTrack.cellWidth
-                    x: 3 + layoutSegTrack.activeIdx * (layoutSegTrack.cellWidth + 4)
-                    radius: 5
-                    color: root.theme.bgSelected
-                    border.color: root.theme.accentPrimary
-                    border.width: 1
-
-                    Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                }
+            spacing: 0
+            // Row 1: Flyout Layout Orientation (Vertical Stack vs Horizontal Grid)
+            Item {
+                Layout.fillWidth: true
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 3
-                    spacing: 4
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    spacing: 12
 
-                    Repeater {
-                        model: [
-                            { label: "Vertical", value: "vertical" },
-                            { label: "Horizontal", value: "horizontal" }
-                        ]
+                    ColumnLayout {
+                        spacing: 2
+                        Layout.alignment: Qt.AlignVCenter
 
-                        delegate: Rectangle {
-                            id: layBtn
-                            required property var modelData
-                            readonly property bool isSel: ControlCenterConfig.panelLayout === modelData.value
+                        Text {
+                            text: "Flyout Layout Orientation"
+                            font.family: root.font
+                            font.pixelSize: 13
+                            font.bold: true
+                            color: root.theme.textPrimary
+                        }
+                    }
 
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
+                    Item { Layout.fillWidth: true }
+
+                    Rectangle {
+                        id: layoutSegTrack
+                        Layout.preferredWidth: 380
+                        implicitWidth: 380
+                        implicitHeight: 32
+                        height: 32
+                        radius: 7
+                        color: root.theme.bgBase
+                        border.color: root.theme.bgBorder
+                        border.width: 1
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+                        readonly property int activeIdx: ControlCenterConfig.panelLayout === "horizontal" ? 1 : 0
+                        readonly property real cellWidth: (width - 6 - 4) / 2
+
+                        Rectangle {
+                            y: 3
+                            height: parent.height - 6
+                            width: layoutSegTrack.cellWidth
+                            x: 3 + layoutSegTrack.activeIdx * (layoutSegTrack.cellWidth + 4)
                             radius: 5
-                            scale: layMouse.pressed ? 0.95 : 1.0
-                            color: !isSel && layHover.hovered ? root.theme.bgHover : "transparent"
+                            color: root.theme.bgSelected
+                            border.color: root.theme.accentPrimary
+                            border.width: 1
 
-                            Behavior on scale { NumberAnimation { duration: 100 } }
-                            Behavior on color { ColorAnimation { duration: 140 } }
+                            Behavior on x { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+                        }
 
-                            HoverHandler { id: layHover }
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.margins: 3
+                            spacing: 4
 
-                            Text {
-                                anchors.centerIn: parent
-                                text: layBtn.modelData.label
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: layBtn.isSel
-                                color: layBtn.isSel ? root.theme.accentPrimary : root.theme.textSecondary
-                                opacity: layBtn.isSel || layHover.hovered ? 1.0 : 0.75
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                Behavior on opacity { NumberAnimation { duration: 140 } }
-                            }
+                            Repeater {
+                                model: [
+                                    { label: "Vertical", value: "vertical" },
+                                    { label: "Horizontal", value: "horizontal" }
+                                ]
 
-                            MouseArea {
-                                id: layMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    ControlCenterConfig.setPanelLayout(layBtn.modelData.value);
-                                    root.showToast("Flyout layout set to " + (layBtn.modelData.value === "horizontal" ? "Horizontal" : "Vertical"));
+                                delegate: Rectangle {
+                                    id: layBtn
+                                    required property var modelData
+                                    readonly property bool isSel: ControlCenterConfig.panelLayout === modelData.value
+
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    radius: 5
+                                    scale: layMouse.pressed ? 0.95 : 1.0
+                                    color: !isSel && layHover.hovered ? root.theme.bgHover : "transparent"
+
+                                    Behavior on scale { NumberAnimation { duration: 100 } }
+                                    Behavior on color { ColorAnimation { duration: 140 } }
+
+                                    HoverHandler { id: layHover }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: layBtn.modelData.label
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        font.bold: layBtn.isSel
+                                        color: layBtn.isSel ? root.theme.accentPrimary : root.theme.textSecondary
+                                        opacity: layBtn.isSel || layHover.hovered ? 1.0 : 0.75
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                        Behavior on opacity { NumberAnimation { duration: 140 } }
+                                    }
+
+                                    MouseArea {
+                                        id: layMouse
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            ControlCenterConfig.setPanelLayout(layBtn.modelData.value);
+                                            root.showToast("Flyout layout set to " + (layBtn.modelData.value === "horizontal" ? "Horizontal" : "Vertical"));
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-    }
 
-    RowDivider {}
+            RowDivider {}
 
-    // Row 2: Panel Width (Standard SettingSliderRow with Presets + Custom slider)
-    SettingSliderRow {
-        title: "Panel Width"
-        value: ControlCenterConfig.panelWidth
-        minVal: 280
-        maxVal: 460
-        step: 4
-        unit: "px"
-        presets: [
-            { label: "300px", val: 300 },
-            { label: "320px", val: 320 },
-            { label: "360px", val: 360 },
-            { label: "400px", val: 400 }
-        ]
-        onValueModified: (val) => ControlCenterConfig.setPanelWidth(val)
-    }
+            // Row 2: Panel Width (Standard SettingSliderRow with Presets + Custom slider)
+            SettingSliderRow {
+                title: "Panel Width"
+                value: ControlCenterConfig.panelWidth
+                minVal: 280
+                maxVal: 460
+                step: 4
+                unit: "px"
+                presets: [
+                    { label: "300px", val: 300 },
+                    { label: "320px", val: 320 },
+                    { label: "360px", val: 360 },
+                    { label: "400px", val: 400 }
+                ]
+                onValueModified: (val) => ControlCenterConfig.setPanelWidth(val)
+            }
 
-    RowDivider {}
+            RowDivider {}
 
-    // Row 3: Header & Profile
-    SettingToggleRow {
-        title: "Show Header & Profile"
-        checked: ControlCenterConfig.showHeader
-        onToggled: (val) => {
-            ControlCenterConfig.setCardVisible("header", val);
-            root.showToast(val ? "Header & Profile enabled" : "Header & Profile hidden");
-        }
-    }
+            // Row 3: Header & Profile
+            SettingToggleRow {
+                title: "Show Header & Profile"
+                checked: ControlCenterConfig.showHeader
+                onToggled: (val) => {
+                    ControlCenterConfig.setCardVisible("header", val);
+                    root.showToast(val ? "Header & Profile enabled" : "Header & Profile hidden");
+                }
+            }
 
-    RowDivider {}
+            RowDivider {}
 
-    // Row 4: 2x2 Connectivity Group
-    SettingToggleRow {
-        title: "2x2 Connectivity Group"
-        checked: ControlCenterConfig.groupTilesEnabled
-        onToggled: (val) => {
-            ControlCenterConfig.setGroupTilesEnabled(val);
-            root.showToast(val ? "2x2 Connectivity Group enabled" : "2x2 Connectivity Group disabled");
+            // Row 4: 2x2 Connectivity Group
+            SettingToggleRow {
+                title: "2x2 Connectivity Group"
+                checked: ControlCenterConfig.groupTilesEnabled
+                onToggled: (val) => {
+                    ControlCenterConfig.setGroupTilesEnabled(val);
+                    root.showToast(val ? "2x2 Connectivity Group enabled" : "2x2 Connectivity Group disabled");
+                }
+            }
         }
     }
 }
