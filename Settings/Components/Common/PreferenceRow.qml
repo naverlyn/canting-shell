@@ -13,9 +13,9 @@ Item {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        spacing: 16
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
+        spacing: 12
 
         ColumnLayout {
             spacing: 2

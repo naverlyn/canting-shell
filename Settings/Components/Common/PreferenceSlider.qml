@@ -14,12 +14,12 @@ Item {
     signal valueChanged(real newVal)
 
     Layout.fillWidth: true
-    height: 52
+    height: 40
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
         spacing: 20
 
         // Left Label Column (Fixed width: guarantees 100% vertical alignment of seekbars)

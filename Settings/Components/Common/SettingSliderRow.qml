@@ -100,13 +100,19 @@ Item {
 
             Item { Layout.fillWidth: true }
 
-            /* Case A: Has Presets -> Segmented Track with Presets + Custom */
-            Rectangle {
-                id: segmentTrack
-                visible: sliderRow.presets.length > 0
+            Item {
                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                implicitWidth: Math.min(380, Math.max(260, (sliderRow.presets.length + 1) * 70))
-                height: 32
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                implicitHeight: 32
+
+                /* Case A: Has Presets -> Segmented Track with Presets + Custom */
+                Rectangle {
+                    id: segmentTrack
+                    anchors.fill: parent
+                    visible: sliderRow.presets.length > 0
+                    implicitWidth: 380
+                    height: 32
                 radius: 7
                 color: Style.theme.bgBase
                 border.color: Style.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
@@ -211,12 +217,13 @@ Item {
                 }
             }
 
-            /* Case B: No Presets -> Right-Aligned Slider directly in main row */
-            RowLayout {
-                visible: sliderRow.presets.length === 0
-                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                spacing: 12
-                implicitWidth: 260
+                /* Case B: No Presets -> Right-Aligned Slider directly in main row */
+                RowLayout {
+                    id: directSliderRow
+                    anchors.fill: parent
+                    visible: sliderRow.presets.length === 0
+                    spacing: 12
+                    implicitWidth: 380
 
                 Rectangle {
                     id: sTrackDirect
@@ -299,15 +306,16 @@ Item {
                     }
                 }
 
-                Text {
-                    text: (sliderRow.isFloat ? Math.round(sliderRow.value * 100) + "%" : sliderRow.value + sliderRow.unit)
-                    font.family: Style.font
-                    font.pixelSize: 12
-                    font.bold: true
-                    color: Style.theme.accentPrimary
-                    Layout.preferredWidth: 44
-                    horizontalAlignment: Text.AlignRight
-                    Layout.alignment: Qt.AlignVCenter
+                    Text {
+                        text: (sliderRow.isFloat ? Math.round(sliderRow.value * 100) + "%" : sliderRow.value + sliderRow.unit)
+                        font.family: Style.font
+                        font.pixelSize: 12
+                        font.bold: true
+                        color: Style.theme.accentPrimary
+                        Layout.preferredWidth: 44
+                        horizontalAlignment: Text.AlignRight
+                        Layout.alignment: Qt.AlignVCenter
+                    }
                 }
             }
         }
