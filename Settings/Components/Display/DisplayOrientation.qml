@@ -5,7 +5,7 @@ import ".."
 Item {
     required property var root
     Layout.fillWidth: true
-    implicitHeight: 52
+    implicitHeight: 44
     opacity: (root.selectedMonitor && root.selectedMonitor.disabled) ? 0.45 : 1.0
     enabled: !(root.selectedMonitor && root.selectedMonitor.disabled)
 
@@ -26,13 +26,6 @@ Item {
                 font.bold: true
                 color: root.theme.textPrimary
             }
-
-            Text {
-                text: "Rotate display output clockwise"
-                font.family: root.font
-                font.pixelSize: 11
-                color: root.theme.textSecondary
-            }
         }
 
         Item { Layout.fillWidth: true }
@@ -40,9 +33,9 @@ Item {
         AppDropdown {
             theme: root.theme
             font: root.font
-            width: 220
-            implicitWidth: 220
-            menuWidth: 220
+            Layout.preferredWidth: 380
+            implicitWidth: 380
+            menuWidth: 380
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             options: [
                 { desktop: "0", name: "0°",   desc: "" },

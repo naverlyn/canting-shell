@@ -18,7 +18,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -37,13 +37,6 @@ ColumnLayout {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Native pixel dimensions and aspect ratio"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             Item { Layout.fillWidth: true }
@@ -51,7 +44,7 @@ ColumnLayout {
             /* Resolution Dropdown Pill */
             Rectangle {
                 id: resDropdownBtn
-                Layout.preferredWidth: 220
+                Layout.preferredWidth: 380
                 Layout.preferredHeight: 32
                 Layout.alignment: Qt.AlignVCenter
                 radius: 7

@@ -44,7 +44,7 @@ ColumnLayout {
             /* Row 1: Variable Refresh Rate (VRR / Adaptive Sync) */
             Item {
                 Layout.fillWidth: true
-                height: 54
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -55,7 +55,6 @@ ColumnLayout {
                     ColumnLayout {
                         spacing: 2
                         Layout.alignment: Qt.AlignVCenter
-                        Layout.fillWidth: true
 
                         Text {
                             text: "Variable Refresh Rate (VRR)"
@@ -64,23 +63,16 @@ ColumnLayout {
                             font.bold: true
                             color: root.theme.textPrimary
                         }
-
-                        Text {
-                            text: "Synchronize display refresh rate with GPU frame output (Adaptive Sync)"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
                     }
+
+                    Item { Layout.fillWidth: true }
 
                     AppDropdown {
                         theme: root.theme
                         font: root.font
-                        width: 220
-                        implicitWidth: 220
-                        menuWidth: 220
+                        Layout.preferredWidth: 380
+                        implicitWidth: 380
+                        menuWidth: 380
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                         options: [
                             { desktop: "0", name: "Off",        desc: "" },
@@ -105,7 +97,7 @@ ColumnLayout {
             /* Row 2: Allow Screen Tearing */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 40
 
                 RowLayout {
                     anchors.fill: parent
@@ -116,7 +108,6 @@ ColumnLayout {
                     ColumnLayout {
                         spacing: 2
                         Layout.alignment: Qt.AlignVCenter
-                        Layout.fillWidth: true
 
                         Text {
                             text: "Allow Tearing"
@@ -125,16 +116,9 @@ ColumnLayout {
                             font.bold: true
                             color: root.theme.textPrimary
                         }
-
-                        Text {
-                            text: "Reduce input latency in fullscreen games that request immediate page flips"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
                     }
+
+                    Item { Layout.fillWidth: true }
 
                     Rectangle {
                         width: 44
