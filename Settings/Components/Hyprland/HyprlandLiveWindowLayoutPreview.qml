@@ -273,11 +273,12 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Window Spacing & Gaps"
         subtitle: "Inner gaps between windows & outer margins to monitor edges"
+        contentMargins: 8
+        contentSpacing: 0
 
         SettingSliderRow {
             announce: true
             title: "Inner Window Gaps"
-            desc: "Distance in pixels between adjacent tiled windows"
             value: root.generalGapsIn
             minVal: 0
             maxVal: 24
@@ -299,7 +300,6 @@ ColumnLayout {
         SettingSliderRow {
             announce: true
             title: "Outer Screen Gaps"
-            desc: "Distance in pixels between windows and monitor borders"
             value: root.generalGapsOut
             minVal: 0
             maxVal: 40
@@ -322,11 +322,12 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Window Borders & Sizing"
         subtitle: "Border thickness and edge interaction"
+        contentMargins: 8
+        contentSpacing: 0
 
         SettingSliderRow {
             announce: true
             title: "Border Thickness"
-            desc: "Width of window outline border"
             value: root.generalBorderSize
             minVal: 0
             maxVal: 6
@@ -348,7 +349,6 @@ ColumnLayout {
         SettingToggleRow {
             announce: true
             title: "Resize On Border"
-            desc: "Enable clicking and dragging directly on window borders to resize"
             checked: root.generalResizeOnBorder
             onToggled: (val) => {
                 root.generalResizeOnBorder = val;
@@ -361,7 +361,6 @@ ColumnLayout {
         SettingToggleRow {
             announce: true
             title: "Allow Screen Tearing"
-            desc: "Master switch to allow tearing for ultra-low latency gaming"
             checked: root.generalAllowTearing
             onToggled: (val) => {
                 root.generalAllowTearing = val;
@@ -375,11 +374,12 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Window Border Colors"
         subtitle: "Active gradient colors, angle, inactive border, and theme sync"
+        contentMargins: 8
+        contentSpacing: 0
 
         SettingToggleRow {
             announce: true
             title: "Sync Borders With Theme"
-            desc: "Automatically update active and inactive window borders when switching Quickshell themes"
             checked: root.borderThemeSync
             onToggled: (val) => {
                 root.borderThemeSync = val;
@@ -515,6 +515,8 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Tiling Engine & Snapping"
         subtitle: "Compositor layout algorithm and floating window snapping"
+        contentMargins: 8
+        contentSpacing: 0
 
         Item {
             Layout.fillWidth: true
@@ -580,7 +582,6 @@ ColumnLayout {
         SettingToggleRow {
             announce: true
             title: "Floating Window Snapping"
-            desc: "Snap floating windows to adjacent window edges and monitor borders"
             checked: root.generalSnapEnabled
             onToggled: (val) => {
                 root.generalSnapEnabled = val;

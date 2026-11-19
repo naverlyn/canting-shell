@@ -24,6 +24,8 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Special Window & Layer Behaviors"
         subtitle: "Quick toggles for Picture-in-Picture, floating dialogs, video blur, and shell layers"
+        contentMargins: 8
+        contentSpacing: 0
 
         Repeater {
             model: [
@@ -56,7 +58,6 @@ ColumnLayout {
                 SettingToggleRow {
                     announce: false
                     title: specToggleDelegate.modelData.title
-                    desc: specToggleDelegate.modelData.desc
                     checked: specToggleDelegate.isRuleEnabled
                     onToggled: (val) => {
                         root.toggleWindowRule(specToggleDelegate.modelData.ruleName, val);

@@ -18,11 +18,12 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Window Corner Rounding"
         subtitle: "Corner radius applied to all managed application windows"
+        contentMargins: 8
+        contentSpacing: 0
 
         SettingSliderRow {
             announce: true
             title: "Rounding Radius"
-            desc: "Window corner rounding radius in pixels"
             value: root.decorRounding
             minVal: 0
             maxVal: 24
@@ -45,11 +46,12 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Window Opacity & Focus Dimming"
         subtitle: "Active vs inactive window transparency and focus contrast"
+        contentMargins: 8
+        contentSpacing: 0
 
         SettingSliderRow {
             announce: true
             title: "Active Window Opacity"
-            desc: "Opacity of the currently focused application window"
             value: root.decorActiveOpacity
             minVal: 0.50
             maxVal: 1.00
@@ -71,7 +73,6 @@ ColumnLayout {
         SettingSliderRow {
             announce: true
             title: "Inactive Window Opacity"
-            desc: "Opacity of background, unfocused application windows"
             value: root.decorInactiveOpacity
             minVal: 0.50
             maxVal: 1.00
@@ -93,7 +94,6 @@ ColumnLayout {
         SettingToggleRow {
             announce: true
             title: "Dim Inactive Windows"
-            desc: "Slightly darken unfocused windows to bring attention to active window"
             checked: root.decorDimInactive
             onToggled: (val) => {
                 root.decorDimInactive = val;
@@ -107,7 +107,6 @@ ColumnLayout {
             announce: true
             visible: root.decorDimInactive
             title: "Dim Strength"
-            desc: "Darkening intensity applied to unfocused windows"
             value: root.decorDimStrength
             minVal: 0.05
             maxVal: 0.60
@@ -129,11 +128,12 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Window Background Blur"
         subtitle: "Dual-kawase blur behind transparent windows and popups"
+        contentMargins: 8
+        contentSpacing: 0
 
         SettingToggleRow {
             announce: true
             title: "Enable Window Blur"
-            desc: "Render background blur behind transparent windows and shell layers"
             checked: root.decorBlurEnabled
             onToggled: (val) => {
                 root.decorBlurEnabled = val;
@@ -147,7 +147,6 @@ ColumnLayout {
             announce: true
             visible: root.decorBlurEnabled
             title: "Blur Size"
-            desc: "Radius of the blur kernel (blur spread)"
             value: root.decorBlurSize
             minVal: 1
             maxVal: 12
@@ -169,7 +168,6 @@ ColumnLayout {
             announce: true
             visible: root.decorBlurEnabled
             title: "Blur Passes"
-            desc: "Number of rendering passes (higher = smoother, more GPU usage)"
             value: root.decorBlurPasses
             minVal: 1
             maxVal: 5
@@ -191,7 +189,6 @@ ColumnLayout {
             announce: true
             visible: root.decorBlurEnabled
             title: "Blur Popups & Menus"
-            desc: "Apply blur behind context menus, tooltips, and overlay popups"
             checked: root.decorBlurPopups
             onToggled: (val) => {
                 root.decorBlurPopups = val;
@@ -205,7 +202,6 @@ ColumnLayout {
             announce: true
             visible: root.decorBlurEnabled
             title: "X-Ray Mode"
-            desc: "Floating windows blur only the desktop wallpaper instead of underlying windows"
             checked: root.decorBlurXray
             onToggled: (val) => {
                 root.decorBlurXray = val;
@@ -219,11 +215,12 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Window Drop Shadows"
         subtitle: "Compositor drop shadows around windows"
+        contentMargins: 8
+        contentSpacing: 0
 
         SettingToggleRow {
             announce: true
             title: "Enable Window Shadows"
-            desc: "Render drop shadows around application windows"
             checked: root.decorShadowEnabled
             onToggled: (val) => {
                 root.decorShadowEnabled = val;
@@ -237,7 +234,6 @@ ColumnLayout {
             announce: true
             visible: root.decorShadowEnabled
             title: "Shadow Range"
-            desc: "Spread and size of the window shadow"
             value: root.decorShadowRange
             minVal: 1
             maxVal: 20

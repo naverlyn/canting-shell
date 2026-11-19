@@ -17,6 +17,8 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Display Sync & Refresh"
         subtitle: "Adaptive sync (VRR) and variable frame rate performance"
+        contentMargins: 8
+        contentSpacing: 0
 
         Item {
             Layout.fillWidth: true
@@ -81,7 +83,6 @@ ColumnLayout {
         SettingToggleRow {
             announce: true
             title: "Variable Frame Rate (VFR)"
-            desc: "Drop rendering rate when screen is static to significantly reduce GPU and battery usage"
             checked: root.miscVfr
             onToggled: (val) => {
                 root.miscVfr = val;
@@ -94,7 +95,6 @@ ColumnLayout {
         SettingToggleRow {
             announce: true
             title: "Mouse Movement Wakes Monitors"
-            desc: "Wake screens from DPMS / display standby sleep when mouse moves"
             checked: root.miscMouseMoveDpms
             onToggled: (val) => {
                 root.miscMouseMoveDpms = val;
@@ -107,11 +107,12 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Interaction & System Branding"
         subtitle: "Clipboard behavior and compositor boot elements"
+        contentMargins: 8
+        contentSpacing: 0
 
         SettingToggleRow {
             announce: true
             title: "Middle-Click Paste"
-            desc: "Paste primary selection buffer when clicking middle mouse button"
             checked: root.miscMiddleClickPaste
             onToggled: (val) => {
                 root.miscMiddleClickPaste = val;
@@ -124,7 +125,6 @@ ColumnLayout {
         SettingToggleRow {
             announce: true
             title: "Hide Hyprland Boot Logo"
-            desc: "Suppress default Hyprland anime mascot logo on compositor startup"
             checked: root.miscDisableLogo
             onToggled: (val) => {
                 root.miscDisableLogo = val;
@@ -137,7 +137,6 @@ ColumnLayout {
         SettingToggleRow {
             announce: true
             title: "Hide Splash Rendering"
-            desc: "Disable random witty splash text rendering on startup screen"
             checked: root.miscDisableSplash
             onToggled: (val) => {
                 root.miscDisableSplash = val;

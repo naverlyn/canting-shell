@@ -13,6 +13,8 @@ SectionCard {
     subtitleMaxRatio: 0.55
     title: "Application Category Opacity Rules"
     subtitle: "Tag-based active & inactive transparency from WindowWorkspaces.lua"
+    contentMargins: 8
+    contentSpacing: 0
 
     Repeater {
         model: [
@@ -31,7 +33,7 @@ SectionCard {
             required property var modelData
             required property int index
             Layout.fillWidth: true
-            spacing: 6
+            spacing: 0
 
             property bool customActive: false
             readonly property var ruleObj: root.findRuleByName(modelData.ruleName)
@@ -68,12 +70,11 @@ SectionCard {
                 Layout.fillWidth: true
                 Layout.leftMargin: 12
                 Layout.rightMargin: 12
-                Layout.preferredHeight: 52
+                Layout.preferredHeight: 42
                 spacing: 12
 
                 ColumnLayout {
                     spacing: 2
-                    Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
 
                     RowLayout {
@@ -109,16 +110,9 @@ SectionCard {
                             }
                         }
                     }
-
-                    Text {
-                        text: catOpDelegate.modelData.desc
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
                 }
+
+                Item { Layout.fillWidth: true }
 
                 /* Segmented Track with Sliding Selection Pill + Custom (Matching SettingSliderRow) */
                 Rectangle {
@@ -281,7 +275,8 @@ SectionCard {
                 Layout.fillWidth: true
                 Layout.leftMargin: 12
                 Layout.rightMargin: 12
-                Layout.bottomMargin: visible ? 6 : 0
+                Layout.topMargin: visible ? 4 : 0
+                Layout.bottomMargin: visible ? 8 : 0
                 spacing: 18
 
                 Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }

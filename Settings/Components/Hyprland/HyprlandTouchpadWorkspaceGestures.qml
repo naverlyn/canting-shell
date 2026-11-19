@@ -17,11 +17,12 @@ ColumnLayout {
         subtitleMaxRatio: 0.55
         title: "Touchpad Workspace Gestures"
         subtitle: "Fluid multi-finger swipe navigation between virtual desktops"
+        contentMargins: 8
+        contentSpacing: 0
 
         SettingToggleRow {
             announce: true
             title: "Workspace Swipe Gesture"
-            desc: "Swipe horizontally on touchpad to fluidly pan between workspaces"
             checked: root.gesturesWorkspaceSwipe
             onToggled: (val) => {
                 root.gesturesWorkspaceSwipe = val;
@@ -95,7 +96,6 @@ ColumnLayout {
             announce: true
             visible: root.gesturesWorkspaceSwipe
             title: "Invert Swipe Direction"
-            desc: "Natural swipe scrolling direction for workspace transitions"
             checked: root.gesturesWorkspaceSwipeInvert
             onToggled: (val) => {
                 root.gesturesWorkspaceSwipeInvert = val;
@@ -109,7 +109,6 @@ ColumnLayout {
             announce: true
             visible: root.gesturesWorkspaceSwipe
             title: "Seamless Workspace Looping"
-            desc: "Allow swiping past the highest workspace to cycle continuously"
             checked: root.gesturesWorkspaceSwipeForever
             onToggled: (val) => {
                 root.gesturesWorkspaceSwipeForever = val;
@@ -123,7 +122,6 @@ ColumnLayout {
             announce: true
             visible: root.gesturesWorkspaceSwipe
             title: "Swipe Distance"
-            desc: "Distance in px required to complete a full workspace transition"
             value: root.gesturesWorkspaceSwipeDistance
             minVal: 150
             maxVal: 600
