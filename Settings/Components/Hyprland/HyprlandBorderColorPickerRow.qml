@@ -1,7 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
+import "../Common"
 
-ColumnLayout {
+Item {
     id: pickerRow
 
     required property var root
@@ -13,158 +15,406 @@ ColumnLayout {
 
     signal colorSelected(string hex)
 
+    readonly property string normalizedColor: {
+        let v = String(colorValue || fallbackColor).trim().toLowerCase();
+        return /^#[0-9a-f]{6}$/.test(v) ? v : fallbackColor;
+    }
+
+    readonly property var activeSwatch: {
+        if (!swatches) return null;
+        let cur = normalizedColor;
+        for (let i = 0; i < swatches.length; i++) {
+            if (String(swatches[i].color).toLowerCase() === cur) return swatches[i];
+        }
+        return null;
+    }
+
+    readonly property bool isOpen: colorPopup.opened
+
     Layout.fillWidth: true
-    Layout.leftMargin: 12
-    Layout.rightMargin: 12
-    spacing: 8
+    implicitHeight: 56
 
     RowLayout {
-        Layout.fillWidth: true
-        spacing: 10
+        anchors.fill: parent
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
+        spacing: 12
 
         ColumnLayout {
             spacing: 2
             Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
+
             Text {
                 text: pickerRow.title
-                font.family: pickerRow.root.font
-                font.pixelSize: 13
-                font.bold: true
-                color: pickerRow.root.theme.textPrimary
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textPrimary
+                elide: Text.ElideRight
+                Layout.fillWidth: true
             }
+
             Text {
                 text: pickerRow.subtitle
-                font.family: pickerRow.root.font
-                font.pixelSize: 11
-                color: pickerRow.root.theme.textSecondary
+                font.family: Style.font
+                font.pixelSize: Style.px(11)
+                font.weight: Style.fontWeightEnum
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                elide: Text.ElideRight
+                Layout.fillWidth: true
             }
         }
 
-        Item { Layout.fillWidth: true }
-
+        /* Color Dropdown Trigger Pill */
         Rectangle {
-            width: 24
-            height: 24
-            radius: 12
-            color: pickerRow.colorValue || pickerRow.fallbackColor
-            border.color: Qt.rgba(1, 1, 1, 0.3)
-            border.width: 1
+            id: triggerBtn
+            Layout.preferredWidth: 380
+            Layout.preferredHeight: 32
             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-        }
+            radius: 7
+            color: {
+                if (pickerRow.isOpen) return Style.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12);
+                if (triggerHover.hovered) return Style.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08);
+                return Style.theme.bgBase;
+            }
+            border.color: {
+                if (pickerRow.isOpen) return Style.theme.accentPrimary;
+                if (triggerHover.hovered) return Style.withAlpha(Style.theme.accentPrimary, 0.45);
+                return Style.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1);
+            }
+            border.width: pickerRow.isOpen ? 1.5 : 1
 
-        Rectangle {
-            width: 105
-            height: 30
-            radius: 6
-            color: pickerRow.root.theme.bgBase
-            border.color: hexInput.activeFocus ? pickerRow.root.theme.accentPrimary : pickerRow.root.theme.bgBorder
-            border.width: hexInput.activeFocus ? 2 : 1
-            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on border.color { ColorAnimation { duration: 150 } }
 
-            TextInput {
-                id: hexInput
+            HoverHandler { id: triggerHover }
+
+            RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
-                verticalAlignment: TextInput.AlignVCenter
-                text: pickerRow.colorValue
-                font.family: pickerRow.root.font
-                font.pixelSize: 12
-                font.bold: true
-                color: pickerRow.root.theme.textPrimary
-                selectByMouse: true
-                onEditingFinished: {
-                    let v = text.trim();
-                    if (!v.startsWith("#") && v.length === 6) v = "#" + v;
-                    if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-                        pickerRow.colorSelected(v.toLowerCase());
+                anchors.leftMargin: 9
+                anchors.rightMargin: 10
+                spacing: 8
+
+                /* Active Color Swatch */
+                Rectangle {
+                    Layout.preferredWidth: 16
+                    Layout.preferredHeight: 16
+                    Layout.alignment: Qt.AlignVCenter
+                    radius: 5
+                    color: pickerRow.normalizedColor
+                    border.color: Qt.rgba(1, 1, 1, 0.25)
+                    border.width: 1
+
+                    Behavior on color { ColorAnimation { duration: 160 } }
+                }
+
+                /* Preset Name or Custom */
+                Text {
+                    text: pickerRow.activeSwatch ? pickerRow.activeSwatch.name : "Custom"
+                    font.family: Style.font
+                    font.pixelSize: Style.px(12)
+                    font.bold: true
+                    font.letterSpacing: Style.letterSpacing
+                    font.hintingPreference: Style.fontHintingEnum
+                    antialiasing: Style.fontAntialiasing
+                    renderType: Style.fontRenderTypeEnum
+                    color: Style.theme.textPrimary
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                /* Monospace Hex Badge */
+                Text {
+                    text: pickerRow.normalizedColor
+                    font.family: Style.monoFont
+                    font.pixelSize: Style.px(11)
+                    font.hintingPreference: Style.fontHintingEnum
+                    renderType: Style.fontRenderTypeEnum
+                    color: Style.theme.textSecondary
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                /* Rotating Chevron */
+                Text {
+                    text: "󰅀"
+                    font.family: Style.font
+                    font.pixelSize: Style.px(13)
+                    color: pickerRow.isOpen ? Style.theme.accentPrimary : Style.theme.textSecondary
+                    rotation: pickerRow.isOpen ? 180 : 0
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Behavior on rotation { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (colorPopup.opened) {
+                        colorPopup.close();
+                    } else {
+                        hexInput.text = pickerRow.normalizedColor;
+                        colorPopup.open();
                     }
                 }
             }
         }
     }
 
-    /* Segmented Color Swatch Track with Sliding Selection Pill */
-    Rectangle {
-        id: swTrack
-        Layout.fillWidth: true
-        height: 32
-        radius: 7
-        color: pickerRow.root.theme.bgBase
-        border.color: pickerRow.root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
-        border.width: 1
+    /* Floating Color Picker Dropdown Menu */
+    Popup {
+        id: colorPopup
+        parent: triggerBtn
+        x: triggerBtn.width - width
+        y: triggerBtn.height + 4
+        width: triggerBtn.width
+        padding: 6
+        margins: 8
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
 
-        readonly property int count: pickerRow.swatches.length
-        readonly property int activeIdx: {
-            let cur = String(pickerRow.colorValue).toLowerCase();
-            for (let i = 0; i < pickerRow.swatches.length; i++) {
-                if (String(pickerRow.swatches[i].color).toLowerCase() === cur) return i;
-            }
-            return -1;
+        enter: Transition {
+            NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+            NumberAnimation { property: "y"; from: triggerBtn.height; to: triggerBtn.height + 4; duration: 150; easing.type: Easing.OutCubic }
         }
-        readonly property real cellWidth: (width - 6 - Math.max(0, count - 1) * 3) / Math.max(1, count)
 
-        Rectangle {
-            visible: swTrack.activeIdx >= 0
-            y: 3
-            height: parent.height - 6
-            width: swTrack.cellWidth
-            x: 3 + Math.max(0, swTrack.activeIdx) * (swTrack.cellWidth + 3)
-            radius: 5
-            color: pickerRow.root.theme.bgSelected
-            border.color: pickerRow.root.theme.accentPrimary
+        exit: Transition {
+            NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 110; easing.type: Easing.InQuad }
+        }
+
+        background: Rectangle {
+            radius: 10
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
             border.width: 1
-
-            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         }
 
-        RowLayout {
-            anchors.fill: parent
-            anchors.margins: 3
-            spacing: 3
+        contentItem: ColumnLayout {
+            spacing: 4
 
-            Repeater {
-                model: pickerRow.swatches
-                delegate: Rectangle {
-                    required property var modelData
-                    required property int index
-                    readonly property bool isSel: swTrack.activeIdx === index
+            /* Preset Swatch Options */
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
 
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    radius: 5
-                    color: !isSel && swHover.hovered ? (pickerRow.root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
-                    scale: swMouse.pressed ? 0.96 : 1.0
-                    Behavior on color { ColorAnimation { duration: 140 } }
-                    Behavior on scale { NumberAnimation { duration: 110; easing.type: Easing.OutQuad } }
+                Repeater {
+                    model: pickerRow.swatches
+                    delegate: Rectangle {
+                        id: optDelegate
+                        required property var modelData
+                        required property int index
 
-                    HoverHandler { id: swHover }
+                        readonly property string swatchHex: String(modelData.color).toLowerCase()
+                        readonly property bool isSelected: pickerRow.normalizedColor === swatchHex
 
-                    RowLayout {
-                        anchors.centerIn: parent
-                        spacing: 5
-                        Rectangle {
-                            width: 10; height: 10; radius: 5
-                            color: modelData.color
-                            border.color: Qt.rgba(0, 0, 0, 0.3); border.width: 1
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 32
+                        radius: 6
+                        color: {
+                            if (isSelected) return Style.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.14);
+                            if (optHover.hovered) return Style.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.06);
+                            return "transparent";
                         }
-                        Text {
-                            text: modelData.name
-                            font.family: pickerRow.root.font
-                            font.pixelSize: 11
-                            font.bold: isSel
-                            color: isSel ? pickerRow.root.theme.accentPrimary : pickerRow.root.theme.textPrimary
-                            opacity: isSel || swHover.hovered ? 1.0 : 0.75
-                            Behavior on color { ColorAnimation { duration: 140 } }
-                            Behavior on opacity { NumberAnimation { duration: 140 } }
+
+                        Behavior on color { ColorAnimation { duration: 110 } }
+
+                        HoverHandler { id: optHover }
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 8
+                            anchors.rightMargin: 8
+                            spacing: 8
+
+                            Rectangle {
+                                Layout.preferredWidth: 12
+                                Layout.preferredHeight: 12
+                                Layout.alignment: Qt.AlignVCenter
+                                radius: 6
+                                color: optDelegate.swatchHex
+                                border.color: optDelegate.isSelected ? Qt.rgba(1, 1, 1, 0.45) : Qt.rgba(0, 0, 0, 0.35)
+                                border.width: 1
+                            }
+
+                            Text {
+                                text: optDelegate.modelData.name
+                                font.family: Style.font
+                                font.pixelSize: Style.px(12)
+                                font.bold: optDelegate.isSelected
+                                font.letterSpacing: Style.letterSpacing
+                                font.hintingPreference: Style.fontHintingEnum
+                                antialiasing: Style.fontAntialiasing
+                                renderType: Style.fontRenderTypeEnum
+                                color: optDelegate.isSelected ? Style.theme.accentPrimary : Style.theme.textPrimary
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Text {
+                                text: optDelegate.swatchHex
+                                font.family: Style.monoFont
+                                font.pixelSize: Style.px(10)
+                                font.hintingPreference: Style.fontHintingEnum
+                                renderType: Style.fontRenderTypeEnum
+                                color: optDelegate.isSelected ? Style.theme.accentPrimary : Style.theme.textMuted
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            Text {
+                                text: "󰄬"
+                                font.family: Style.font
+                                font.pixelSize: Style.px(12)
+                                color: Style.theme.accentPrimary
+                                visible: optDelegate.isSelected
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                pickerRow.colorSelected(optDelegate.swatchHex);
+                                colorPopup.close();
+                            }
+                        }
+                    }
+                }
+            }
+
+            /* Divider before Custom Hex */
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.topMargin: 2
+                Layout.bottomMargin: 2
+                height: 1
+                color: Style.withAlpha(Style.theme.bgBorder, 0.6)
+            }
+
+            /* Inline Custom Hex Input */
+            Rectangle {
+                id: customHexBox
+                Layout.fillWidth: true
+                Layout.preferredHeight: 32
+                radius: 6
+                color: Style.theme.bgBase
+                border.color: hexInput.activeFocus
+                              ? Style.theme.accentPrimary
+                              : Style.theme.bgBorder
+                border.width: hexInput.activeFocus ? 1.5 : 1
+
+                Behavior on border.color { ColorAnimation { duration: 140 } }
+
+                readonly property string previewHex: {
+                    let v = hexInput.text.trim();
+                    if (!v.startsWith("#") && v.length === 6) v = "#" + v;
+                    return /^#[0-9a-fA-F]{6}$/.test(v) ? v.toLowerCase() : pickerRow.normalizedColor;
+                }
+
+                readonly property bool isValidInput: {
+                    let v = hexInput.text.trim();
+                    if (!v.startsWith("#") && v.length === 6) v = "#" + v;
+                    return /^#[0-9a-fA-F]{6}$/.test(v);
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 6
+                    spacing: 8
+
+                    Rectangle {
+                        Layout.preferredWidth: 14
+                        Layout.preferredHeight: 14
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: 4
+                        color: customHexBox.previewHex
+                        border.color: Qt.rgba(1, 1, 1, 0.25)
+                        border.width: 1
+
+                        Behavior on color { ColorAnimation { duration: 120 } }
+                    }
+
+                    TextInput {
+                        id: hexInput
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        verticalAlignment: TextInput.AlignVCenter
+                        text: pickerRow.normalizedColor
+                        font.family: Style.monoFont
+                        font.pixelSize: Style.px(12)
+                        font.bold: true
+                        font.hintingPreference: Style.fontHintingEnum
+                        renderType: Style.fontRenderTypeEnum
+                        color: Style.theme.textPrimary
+                        selectionColor: Style.withAlpha(Style.theme.accentPrimary, 0.35)
+                        selectedTextColor: Style.theme.textPrimary
+                        selectByMouse: true
+                        maximumLength: 7
+                        clip: true
+
+                        function commitHex() {
+                            let v = text.trim();
+                            if (!v.startsWith("#") && v.length === 6) v = "#" + v;
+                            if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+                                let lower = v.toLowerCase();
+                                text = lower;
+                                pickerRow.colorSelected(lower);
+                                colorPopup.close();
+                            } else {
+                                text = pickerRow.normalizedColor;
+                            }
+                        }
+
+                        Keys.onReturnPressed: commitHex()
+                        Keys.onEnterPressed: commitHex()
+                        Keys.onEscapePressed: {
+                            text = pickerRow.normalizedColor;
+                            colorPopup.close();
                         }
                     }
 
-                    MouseArea {
-                        id: swMouse
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: pickerRow.colorSelected(String(modelData.color).toLowerCase())
+                    /* Apply Custom Hex Button */
+                    Rectangle {
+                        Layout.preferredWidth: 22
+                        Layout.preferredHeight: 22
+                        Layout.alignment: Qt.AlignVCenter
+                        radius: 5
+                        color: applyHover.hovered && customHexBox.isValidInput
+                               ? Style.withAlpha(Style.theme.accentPrimary, 0.2)
+                               : "transparent"
+                        opacity: customHexBox.isValidInput ? 1.0 : 0.35
+
+                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                        HoverHandler { id: applyHover }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰄬"
+                            font.family: Style.font
+                            font.pixelSize: Style.px(12)
+                            color: Style.theme.accentPrimary
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            enabled: customHexBox.isValidInput
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: hexInput.commitHex()
+                        }
                     }
                 }
             }
