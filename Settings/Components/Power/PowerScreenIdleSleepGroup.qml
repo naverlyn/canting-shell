@@ -45,7 +45,7 @@ ColumnLayout {
             /* Row 1: Keep Awake Toggle */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 40
 
                 RowLayout {
                     anchors.fill: parent
@@ -63,13 +63,6 @@ ColumnLayout {
                             font.pixelSize: 13
                             font.bold: true
                             color: root.theme.textPrimary
-                        }
-
-                        Text {
-                            text: "Inhibit idle sleep and keep monitors from turning off"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
                         }
                     }
 
@@ -158,13 +151,6 @@ ColumnLayout {
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
-
-                            Text {
-                                text: "Lock session after inactivity via hypridle"
-                                font.family: root.font
-                                font.pixelSize: 11
-                                color: root.theme.textSecondary
-                            }
                         }
 
                         Item { Layout.fillWidth: true }
@@ -172,9 +158,9 @@ ColumnLayout {
                         AppDropdown {
                             theme: root.theme
                             font: root.font
-                            width: 220
-                            implicitWidth: 220
-                            menuWidth: 220
+                            Layout.preferredWidth: 380
+                            implicitWidth: 380
+                            menuWidth: 380
                             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                             options: [
                                 { desktop: "5",      name: "5m",  desc: "" },
@@ -330,7 +316,7 @@ ColumnLayout {
             /* Row 3: Turn Off Displays Now */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -348,13 +334,6 @@ ColumnLayout {
                             font.pixelSize: 13
                             font.bold: true
                             color: root.theme.textPrimary
-                        }
-
-                        Text {
-                            text: "Put monitors into power-saving standby immediately"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
                         }
                     }
 
