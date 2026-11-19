@@ -17,7 +17,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Do Not Disturb"
-        desc: "Pause banner popups and alert notifications"
         checked: root.isDnd
         onToggled: (val) => {
             NotificationService.doNotDisturb = val;
@@ -29,7 +28,6 @@ SectionCard {
 
     SettingToggleRow {
         title: "Pause Timeout on Hover"
-        desc: "Keep notification toast open while hovering with the mouse cursor"
         checked: NotificationService.pauseOnHover
         onToggled: (val) => NotificationService.setPauseOnHover(val)
     }
@@ -38,7 +36,6 @@ SectionCard {
 
     SettingSliderRow {
         title: "Auto-Dismiss Timeout"
-        desc: "Default duration before notification popups automatically close"
         value: NotificationService.defaultTimeout
         minVal: 2000
         maxVal: 15000
@@ -57,7 +54,6 @@ SectionCard {
 
     SettingSliderRow {
         title: "Max Visible Toasts"
-        desc: "Maximum number of concurrent notification popups stacked on screen"
         value: NotificationService.maxVisibleToasts
         minVal: 1
         maxVal: 10
@@ -76,7 +72,6 @@ SectionCard {
 
     SettingSliderRow {
         title: "Toast Card Width"
-        desc: "Horizontal width of desktop notification popups in pixels"
         value: NotificationService.toastWidth
         minVal: 280
         maxVal: 500
@@ -95,7 +90,6 @@ SectionCard {
 
     SettingSliderRow {
         title: "Stack Spacing"
-        desc: "Vertical gap between multiple active notification toasts"
         value: NotificationService.cardSpacing
         minVal: 4
         maxVal: 24

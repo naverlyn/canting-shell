@@ -256,12 +256,6 @@ Item {
                         font.bold: true
                         color: root.theme.textPrimary
                     }
-                    Text {
-                        text: "Customize how toast notifications look, where they appear, and how they behave"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        color: root.theme.textSecondary
-                    }
                 }
 
                 Item { Layout.fillWidth: true }

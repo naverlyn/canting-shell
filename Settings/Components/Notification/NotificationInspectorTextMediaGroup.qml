@@ -23,7 +23,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Title Notification Block"
-        desc: "Display primary notification summary headline (e.g. 'Screenshot:')"
         checked: NotificationService.isBlockVisible("title")
         onToggled: (val) => NotificationService.setBlockVisible("title", val)
     }
@@ -32,7 +31,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Title Font Size"
-        desc: "Pixel size of the notification summary headline"
         value: NotificationService.titleFontSize
         minVal: 11
         maxVal: 22
@@ -51,7 +49,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Bold Title Typography"
-        desc: "Render the notification title in bold weight for visual hierarchy"
         checked: NotificationService.titleBold
         onToggled: (val) => NotificationService.setTitleBold(val)
     }
@@ -60,7 +57,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Maximum Title Lines"
-        desc: "Number of lines before truncating long titles with an ellipsis"
         value: NotificationService.titleMaxLines
         minVal: 1
         maxVal: 4
@@ -127,7 +123,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Body Message Block"
-        desc: "Display detailed notification body text (e.g. 'Captured by Swappy')"
         checked: NotificationService.isBlockVisible("body")
         onToggled: (val) => NotificationService.setBlockVisible("body", val)
     }
@@ -136,7 +131,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Body Font Size"
-        desc: "Typography size for the notification body message"
         value: NotificationService.bodyFontSize
         minVal: 10
         maxVal: 18
@@ -155,7 +149,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Maximum Body Lines"
-        desc: "Maximum wrapped lines shown before truncating long messages"
         value: NotificationService.bodyMaxLines
         minVal: 1
         maxVal: 8
@@ -222,7 +215,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Preview Image Block"
-        desc: "Display screenshot thumbnail, album art, or media preview image"
         checked: NotificationService.isBlockVisible("image")
         onToggled: (val) => NotificationService.setBlockVisible("image", val)
     }
@@ -274,7 +266,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Thumbnail / Banner Size"
-        desc: "Size of the thumbnail square (or height when in Full Banner mode)"
         value: NotificationService.imageSize
         minVal: 28
         maxVal: 110
@@ -293,7 +284,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Image Corner Radius"
-        desc: "Rounding applied to the preview thumbnail corners"
         value: NotificationService.imageRadius
         minVal: 0
         maxVal: 48
@@ -312,7 +302,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Image Background"
-        desc: "Display a soft tinted fill inside the image container"
         checked: NotificationService.imageShowBg
         onToggled: (val) => NotificationService.setImageShowBg(val)
     }
