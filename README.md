@@ -37,7 +37,7 @@ The name comes from the **canting**, the small copper pen used to draw wax patte
 | **Keybinds Cheat Sheet** | searchable overlay listing your active Hyprland keybindings |
 | **Screenshot HUD** | interactive screenshot capture HUD for region, window, and screen captures |
 | **Lock Screen** | native Quickshell lock screen with PAM authentication, blur/visual filters, and modular building blocks (clock, auth box, weather, media player, CPU / memory / disk / battery / system info, keyboard layout, uptime, custom text/commands) |
-| **Settings** | Appearance, Bar, App Launcher, Clipboard, Control Center, Wallpaper, Lock Screen (with interactive stage editor), Sound, Display, Wi-Fi, Bluetooth, Power, Keyboard, Mouse & Touchpad, Notifications, OSD, Animations, Hyprland, Autostart, Default Apps, Backup & Restore, and About |
+| **Settings** | Appearance, Bar, App Launcher, Clipboard, Control Center, Wallpaper, Lock Screen (with interactive stage editor), Sound, Display, Wi-Fi (shared `WifiService`, band badges, IP/MAC/gateway/DNS details, and saved-network manager with forget / forget all), Bluetooth (segmented connected, paired, and available devices with paired-device manager), Power, Keyboard, Mouse & Touchpad, Notifications, OSD, Animations, Hyprland, Autostart, Default Apps, Backup & Restore, and About |
 | **Theme Switcher** | 200+ curated themes, or a harmonized palette generated from your wallpaper with `matugen` or `wallust` (with dark/light mode toggle) |
 | **Wallpaper Manager** | wallpaper picker with folder browser and preview, per-display wallpapers, resize modes (fill, fit, stretch, center), scaling filters, and ImageMagick visual effects; supports `awww`, `swww`, and `hyprpaper` |
 | **Monitor Manager** | visual front-end for arranging displays, resolution, refresh rate, scale, rotation, and mirroring |
@@ -129,16 +129,23 @@ Run `qs ipc show` to list every available target and function.
 ```bash
 git clone https://github.com/naverlyn/canting-shell
 cd canting-shell
-./install.sh
+./install.sh --install
 quickshell
 ```
 
-`install.sh` checks core and optional dependencies (offering to install missing packages for your distribution), and lets you choose a preset (`laptop`, `pc`, `gaming`, or `minimal`) for the Bar, Notification Toasts, Control Center, and Lock Screen:
+`install.sh` checks core and optional dependencies (Arch Linux and Fedora, including COPRs and Nerd Fonts), copies the shell to `~/.config/quickshell/`, and configures Hyprland autostart for the first-run Setup Wizard.
 
-```bash
-./install.sh --preset laptop   # or pc, gaming, minimal
-./install.sh --list            # list available presets
-```
+| Flag | What it does |
+|------|-------------|
+| `--install` | install to `~/.config/quickshell/` and configure Hyprland autostart for the Setup Wizard |
+| `-p, --preset <name>` | apply a preset (`laptop`, `pc`, `gaming`, or `minimal`) for Bar, Notifications, Control Center, and Lock Screen |
+| `--CLI` | configure a preset interactively in the terminal (without Hyprland/Wayland) |
+| `-l, --list` | list available presets and exit |
+| `--with-hypr-lua` / `--skip-hypr-lua` | generate (or skip) minimal `~/.config/hypr/hyprland.lua` when missing |
+| `--with-keybinds` / `--skip-keybinds` | add (or skip) minimal Hyprland keybinds without prompting |
+| `--skip-deps` | skip missing dependency installation prompts |
+| `--no-backup` | do not back up existing config files |
+| `--dry-run` | preview actions without modifying any files |
 
 Quickshell reads from `~/.config/quickshell/` by default, and all shell configuration files are stored in `configs/`.
 
