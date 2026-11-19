@@ -143,9 +143,9 @@ Rectangle {
           Text {
             visible: netDelegate.autoConnect
             anchors.centerIn: parent
-            text: "✓"
+            text: "󰄬"
             font.family: netDelegate.font
-            font.pixelSize: 10
+            font.pixelSize: 12
             font.bold: true
             color: netDelegate.theme.bgBase
           }

@@ -12,16 +12,16 @@ Rectangle {
   id: wifiPill
 
   property bool isPinned: false
-  property bool wifiEnabled: true
-  property string currentSsid: ""
-  property int currentSignal: 0
+  readonly property bool wifiEnabled: WifiService.wifiEnabled
+  readonly property string currentSsid: WifiService.currentSsid
+  readonly property int currentSignal: WifiService.currentSignal
   property string expandedSsid: ""
   property bool autoConnect: true
   property string passwordInput: ""
-  property bool isConnecting: false
-  property string connectingSsid: ""
-  property var networkList: []
-  property var savedConnections: ({})
+  readonly property bool isConnecting: WifiService.isConnecting || WifiService.isDisconnecting
+  readonly property string connectingSsid: WifiService.connectingSsid
+  readonly property var networkList: WifiService.networkList
+  readonly property var savedConnections: WifiService.savedConnections
 
   readonly property string wifiIcon: {
     if (!wifiEnabled) return "󰖪";
@@ -51,108 +51,14 @@ Rectangle {
   HoverHandler { id: wifiHover }
 
   function netSignalIcon(sig, secured) {
-    if (sig >= 75) return secured ? "󰤪" : "󰤨";
-    if (sig >= 50) return secured ? "󰤧" : "󰤥";
-    if (sig >= 25) return secured ? "󰤤" : "󰤢";
-    return secured ? "󰤡" : "󰤟";
+    return WifiService.signalIcon(sig, secured);
   }
 
-  // Fast status poll for the bar icon
-  Process {
-    id: statusProc
-    command: [
-      "sh", "-c",
-      "w_rad=$(nmcli radio wifi 2>/dev/null || echo 'enabled'); " +
-      "w_line=$(nmcli -t -f active,ssid,signal dev wifi list --rescan no 2>/dev/null | grep '^yes:' | head -n1); " +
-      "w_ssid=$(echo \"$w_line\" | cut -d: -f2); " +
-      "w_sig=$(echo \"$w_line\" | cut -d: -f3); " +
-      "printf '%s\\n%s\\n%s\\n' \"$w_rad\" \"$w_ssid\" \"${w_sig:-0}\""
-    ]
-    running: true
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const lines = text.trim().split("\n");
-        if (lines.length >= 1) wifiPill.wifiEnabled = (lines[0].trim() !== "disabled");
-        if (lines.length >= 2) wifiPill.currentSsid = lines[1].trim();
-        if (lines.length >= 3) wifiPill.currentSignal = parseInt(lines[2].trim()) || 0;
-      }
-    }
-  }
-
-  // Full network scan when popup is opened
-  Process {
-    id: scanProc
-    command: [
-      "sh", "-c",
-      "nmcli -t -f NAME,TYPE connection show 2>/dev/null | awk -F: '$2==\"802-11-wireless\"{print \"SAVED:\"$1}'; " +
-      "nmcli -t -f ACTIVE,SSID,SIGNAL,SECURITY dev wifi list --rescan auto 2>/dev/null"
-    ]
-    running: false
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const lines = text.trim().split("\n");
-        const nets = [];
-        const seen = {};
-        const saved = {};
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i].trim();
-          if (!line) continue;
-          if (line.startsWith("SAVED:")) {
-            saved[line.substring(6)] = true;
-            continue;
-          }
-          const p = line.split(":");
-          if (p.length >= 4) {
-            const active = (p[0] === "yes");
-            const ssid = p[1];
-            const sig = parseInt(p[2]) || 0;
-            const sec = p.slice(3).join(":").trim();
-            if (!ssid || seen[ssid]) continue;
-            seen[ssid] = true;
-            if (active) {
-              wifiPill.currentSsid = ssid;
-              wifiPill.currentSignal = sig;
-            }
-            nets.push({
-              ssid: ssid,
-              active: active,
-              signal: sig,
-              secured: sec !== "" && sec !== "--",
-              securityText: sec
-            });
-          }
-        }
-        wifiPill.savedConnections = saved;
-        nets.sort((a, b) => {
-          if (a.active !== b.active) return a.active ? -1 : 1;
-          return b.signal - a.signal;
-        });
-        wifiPill.networkList = nets;
-        if (!wifiPill.expandedSsid && wifiPill.currentSsid) {
-          wifiPill.expandedSsid = wifiPill.currentSsid;
-        }
-      }
-    }
-  }
-
-  Process {
-    id: radioProc
-    running: false
-    onExited: {
-      statusProc.running = true;
-      if (wifiPill.wifiEnabled) scanProc.running = true;
-    }
-  }
-
-  Process {
-    id: connectProc
-    running: false
-    onExited: {
-      wifiPill.isConnecting = false;
-      wifiPill.connectingSsid = "";
+  Connections {
+    target: WifiService
+    function onNetworkConnected(ssid) {
       wifiPill.passwordInput = "";
-      statusProc.running = true;
-      scanProc.running = true;
+      wifiPill.expandedSsid = ssid;
     }
   }
 
@@ -162,48 +68,15 @@ Rectangle {
   }
 
   function toggleWifiRadio() {
-    const next = !wifiPill.wifiEnabled;
-    wifiPill.wifiEnabled = next;
-    if (!next) {
-      wifiPill.currentSsid = "";
-      wifiPill.networkList = [];
-    }
-    radioProc.command = ["nmcli", "radio", "wifi", next ? "on" : "off"];
-    radioProc.running = true;
+    WifiService.toggleWifi();
   }
 
   function connectNetwork(ssid, secured, pwd) {
-    wifiPill.isConnecting = true;
-    wifiPill.connectingSsid = ssid;
-    const isSaved = Boolean(wifiPill.savedConnections[ssid]);
-    const autoVal = wifiPill.autoConnect ? "yes" : "no";
-    if (!secured || isSaved || !pwd) {
-      connectProc.command = [
-        "sh", "-c",
-        "nmcli dev wifi connect \"$1\" && nmcli connection modify \"$1\" connection.autoconnect \"$2\" 2>/dev/null || true",
-        "--", ssid, autoVal
-      ];
-    } else {
-      connectProc.command = [
-        "sh", "-c",
-        "nmcli dev wifi connect \"$1\" password \"$2\" && nmcli connection modify \"$1\" connection.autoconnect \"$3\" 2>/dev/null || true",
-        "--", ssid, pwd, autoVal
-      ];
-    }
-    connectProc.running = true;
+    WifiService.connect(ssid, secured, pwd, wifiPill.autoConnect);
   }
 
   function disconnectNetwork(ssid) {
-    wifiPill.isConnecting = true;
-    wifiPill.connectingSsid = ssid;
-    connectProc.command = [
-      "sh", "-c",
-      "IFACE=$(nmcli -t -f DEVICE,TYPE,STATE dev 2>/dev/null | grep ':wifi:connected' | head -n1 | cut -d: -f1); " +
-      "[ -n \"$IFACE\" ] && nmcli dev disconnect \"$IFACE\" 2>/dev/null; " +
-      "[ -n \"$1\" ] && nmcli con down id \"$1\" 2>/dev/null || true",
-      "--", ssid
-    ];
-    connectProc.running = true;
+    WifiService.disconnect(ssid);
   }
 
   function openMoreWifiSettings() {
@@ -213,10 +86,10 @@ Rectangle {
   }
 
   Timer {
-    interval: wifiProvider.isDetailsActive ? 5000 : 12000
-    running: true
+    interval: 5000
+    running: wifiProvider.isDetailsActive
     repeat: true
-    onTriggered: if (!statusProc.running) statusProc.running = true
+    onTriggered: WifiService.refreshStatus()
   }
 
   Item {
@@ -236,7 +109,7 @@ Rectangle {
     property string font: hostRoot.font
     property string title: "Wi-Fi"
     property string icon: "󰖩"
-    property color accent: hostContainer.wAccent("wifi", hostRoot.theme.accentCyan)
+    property color accent: hostContainer.wAccent("wifi", hostRoot.theme.accentPrimary)
     property bool hideHeader: true
     property int preferredWidth: 304
     property int preferredHeight: 0
@@ -259,8 +132,8 @@ Rectangle {
         wifiCloseTimer.stop();
         effectiveHovered = true;
         hostContainer.activeInfoProvider = wifiProvider;
-        if (!statusProc.running) statusProc.running = true;
-        if (wifiPill.wifiEnabled && !scanProc.running) scanProc.running = true;
+        WifiService.refreshStatus();
+        if (wifiPill.wifiEnabled) WifiService.scan(false);
       } else if (!isSharedCardHovered) {
         wifiCloseTimer.restart();
       }
@@ -274,7 +147,8 @@ Rectangle {
         const o = hostContainer.activeInfoProvider;
         if (o && o !== wifiProvider && o.target && o.target.isPinned !== undefined) o.target.isPinned = false;
         hostContainer.activeInfoProvider = wifiProvider;
-        if (wifiPill.wifiEnabled && !scanProc.running) scanProc.running = true;
+        WifiService.refreshStatus();
+        if (wifiPill.wifiEnabled) WifiService.scan(false);
       } else if (!hovered && !isSharedCardHovered && hostContainer.activeInfoProvider === wifiProvider) {
         hostContainer.activeInfoProvider = null;
       }
@@ -318,17 +192,17 @@ Rectangle {
               text: "󰑐"
               font.family: wifiProvider.font
               font.pixelSize: 13
-              color: scanProc.running ? wifiProvider.accent : (refHov.hovered ? th.textPrimary : th.textSecondary)
+              color: WifiService.isScanning ? wifiProvider.accent : (refHov.hovered ? th.textPrimary : th.textSecondary)
               RotationAnimator on rotation {
                 from: 0; to: 360; duration: 900
                 loops: Animation.Infinite
-                running: scanProc.running
+                running: WifiService.isScanning
               }
             }
             MouseArea {
               anchors.fill: parent
               cursorShape: Qt.PointingHandCursor
-              onClicked: if (!scanProc.running) scanProc.running = true
+              onClicked: WifiService.scan(true)
             }
           }
 
@@ -367,6 +241,43 @@ Rectangle {
           Layout.fillWidth: true
           height: 1
           color: Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.08)
+        }
+
+        // Inline error banner when connection fails
+        Rectangle {
+          visible: WifiService.lastError !== ""
+          Layout.fillWidth: true
+          implicitHeight: errText.implicitHeight + 12
+          radius: 7
+          color: Qt.rgba(th.accentRed.r, th.accentRed.g, th.accentRed.b, 0.14)
+          border.color: Qt.rgba(th.accentRed.r, th.accentRed.g, th.accentRed.b, 0.35)
+          border.width: 1
+
+          RowLayout {
+            anchors.fill: parent
+            anchors.margins: 6
+            spacing: 6
+            Text {
+              id: errText
+              Layout.fillWidth: true
+              text: WifiService.lastError
+              font.family: wifiProvider.font
+              font.pixelSize: 10
+              color: th.accentRed
+              wrapMode: Text.WordWrap
+            }
+            Text {
+              text: "✕"
+              font.family: wifiProvider.font
+              font.pixelSize: 10
+              color: th.accentRed
+              MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: WifiService.clearError()
+              }
+            }
+          }
         }
 
         // Disabled state card
@@ -515,7 +426,7 @@ Rectangle {
     hostContainer: wifiPill.hostContainer
     active: wifiMouse.pressed || wifiPill.isPinned
     hovered: wifiHover.hovered || wifiMouse.containsMouse
-    accentColor: hostContainer.wAccent("wifi", hostRoot.theme.accentCyan)
+    accentColor: hostContainer.wAccent("wifi", hostRoot.theme.accentPrimary)
   }
 
   Row {
@@ -528,7 +439,7 @@ Rectangle {
       anchors.verticalCenter: parent.verticalCenter
       text: wifiPill.wifiIcon
       color: wifiPill.wifiEnabled
-        ? hostContainer.wAccent("wifi", hostRoot.theme.accentCyan)
+        ? hostContainer.wAccent("wifi", hostRoot.theme.accentPrimary)
         : hostRoot.theme.textMuted
       font.pixelSize: hostContainer.scaled(14)
       font.family: hostRoot.font
@@ -554,7 +465,7 @@ Rectangle {
       anchors.horizontalCenter: parent.horizontalCenter
       text: wifiPill.wifiIcon
       color: wifiPill.wifiEnabled
-        ? hostContainer.wAccent("wifi", hostRoot.theme.accentCyan)
+        ? hostContainer.wAccent("wifi", hostRoot.theme.accentPrimary)
         : hostRoot.theme.textMuted
       font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
