@@ -23,7 +23,7 @@ SectionCard {
 
                 readonly property string resolvedUi: root.resolveAvailableFont(modelData.uiCandidates, modelData.uiFallback)
                 readonly property string resolvedMono: root.resolveAvailableFont(modelData.monoCandidates, modelData.monoFallback)
-                readonly property bool isCurrentPair: root.theme.savedFontFamily === resolvedUi && root.theme.savedMonoFont === resolvedMono
+                readonly property bool isCurrentPair: root.theme.savedFontFamily === resolvedUi && root.theme.savedMonoFont === resolvedMono && root.theme.savedLockscreenFont === resolvedMono
 
                 Layout.fillWidth: true
                 Layout.preferredWidth: 1
