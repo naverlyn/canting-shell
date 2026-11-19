@@ -44,7 +44,7 @@ ColumnLayout {
             /* Row 1: Alert Sound Selector */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -64,13 +64,6 @@ ColumnLayout {
                             font.bold: true
                             color: root.theme.textPrimary
                         }
-
-                        Text {
-                            text: "Theme event sound"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
-                        }
                     }
 
                     Item { Layout.fillWidth: true }
@@ -78,9 +71,9 @@ ColumnLayout {
                     AppDropdown {
                         theme: root.theme
                         font: root.font
-                        width: 220
-                        implicitWidth: 220
-                        menuWidth: 220
+                        Layout.preferredWidth: 380
+                        implicitWidth: 380
+                        menuWidth: 380
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                         options: [
                             { desktop: "bell",               name: "Bell",        desc: "" },

@@ -67,7 +67,7 @@ ColumnLayout {
             /* Row 1: Position Selection */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -87,13 +87,6 @@ ColumnLayout {
                             font.bold: true
                             color: root.theme.textPrimary
                         }
-
-                        Text {
-                            text: "Overlay screen placement"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
-                        }
                     }
 
                     Item { Layout.fillWidth: true }
@@ -101,9 +94,9 @@ ColumnLayout {
                     AppDropdown {
                         theme: root.theme
                         font: root.font
-                        width: 220
-                        implicitWidth: 220
-                        menuWidth: 220
+                        Layout.preferredWidth: 380
+                        implicitWidth: 380
+                        menuWidth: 380
                         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                         options: (OSDService.positionOptions || []).map(p => ({
                             desktop: p.id,
@@ -131,7 +124,7 @@ ColumnLayout {
             /* Row 2: Test OSD */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -150,13 +143,6 @@ ColumnLayout {
                             font.pixelSize: 13
                             font.bold: true
                             color: root.theme.textPrimary
-                        }
-
-                        Text {
-                            text: "Display active volume OSD"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
                         }
                     }
 

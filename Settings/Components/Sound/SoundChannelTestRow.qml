@@ -12,8 +12,8 @@ import ".."
 Item {
     required property var root
     Layout.fillWidth: true
-    implicitHeight: 52
-    height: 52
+    implicitHeight: 44
+    height: 44
 
     RowLayout {
         anchors.fill: parent
@@ -23,7 +23,6 @@ Item {
 
         ColumnLayout {
             spacing: 2
-            Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
 
             Text {
@@ -32,18 +31,10 @@ Item {
                 font.pixelSize: 13
                 font.bold: true
                 color: root.theme.textPrimary
-                Layout.fillWidth: true
-            }
-
-            Text {
-                text: "Verify stereo speaker channel positioning"
-                font.family: root.font
-                font.pixelSize: 11
-                color: root.theme.textSecondary
-                elide: Text.ElideRight
-                Layout.fillWidth: true
             }
         }
+
+        Item { Layout.fillWidth: true }
 
         Item { Layout.fillWidth: true }
 
