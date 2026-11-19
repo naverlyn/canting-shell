@@ -30,14 +30,7 @@ ColumnLayout {
             color: root.theme.textSecondary
         }
 
-        Text {
-            text: "·  Click any region or drag the toast card to move"
-            font.family: root.font
-            font.pixelSize: 11
-            color: root.theme.textMuted
-            elide: Text.ElideRight
-            Layout.fillWidth: true
-        }
+        Item { Layout.fillWidth: true }
 
         Text {
             text: monitorPreview.draggingToast
@@ -526,13 +519,7 @@ ColumnLayout {
                 Layout.leftMargin: 4
                 Layout.rightMargin: 4
 
-                Text {
-                    text: "Automatically respects active desktop bar clearance on all edges"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textMuted
-                    Layout.fillWidth: true
-                }
+                Item { Layout.fillWidth: true }
 
                 Rectangle {
                     id: resetPosBtn

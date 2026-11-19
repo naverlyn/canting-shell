@@ -44,7 +44,7 @@ ColumnLayout {
             /* Suspend Row */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -62,13 +62,6 @@ ColumnLayout {
                             font.pixelSize: 13
                             font.bold: true
                             color: root.theme.textPrimary
-                        }
-
-                        Text {
-                            text: "Put computer into low-power sleep state"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
                         }
                     }
 
@@ -119,7 +112,7 @@ ColumnLayout {
             /* Restart Row */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -137,13 +130,6 @@ ColumnLayout {
                             font.pixelSize: 13
                             font.bold: true
                             color: root.theme.textPrimary
-                        }
-
-                        Text {
-                            text: "Reboot the operating system"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
                         }
                     }
 
@@ -194,7 +180,7 @@ ColumnLayout {
             /* Shut Down Row */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -212,13 +198,6 @@ ColumnLayout {
                             font.pixelSize: 13
                             font.bold: true
                             color: root.theme.textPrimary
-                        }
-
-                        Text {
-                            text: "Completely turn off the computer"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
                         }
                     }
 

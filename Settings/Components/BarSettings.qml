@@ -23,7 +23,7 @@ Item {
             root.dragHoverItemIndex = -1;
         }
     }
-    property string selectedColorTargetType: "block"
+    property string selectedColorTargetType: "bar"
     property string selectedColorWidgetId: "launcher"
     property int selectedColorPanelIndex: 0
     property string themeSearchQuery: ""
@@ -685,12 +685,6 @@ Item {
                         font.bold: true
                         color: root.theme.textPrimary
                     }
-                    Text {
-                        text: "Configure modular building blocks, panel count, block colors, and bar appearance"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        color: root.theme.textSecondary
-                    }
                 }
 
                 Item { Layout.fillWidth: true }
@@ -832,73 +826,221 @@ Item {
                         root: root
                     }
 
-                    AppGridOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("app grid launcher icon")
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 4
+                        Layout.rightMargin: 4
+                        Layout.topMargin: 4
+                        spacing: 12
+
+                        Text {
+                            text: "Widget Settings"
+                            font.family: Style.font
+                            font.pixelSize: Style.px(13)
+                            font.bold: Style.boldHeadings
+                            font.letterSpacing: Style.letterSpacing
+                            font.hintingPreference: Style.fontHintingEnum
+                            antialiasing: Style.fontAntialiasing
+                            renderType: Style.fontRenderTypeEnum
+                            color: Style.theme.textSecondary
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        Rectangle {
+                            width: 260
+                            height: 32
+                            radius: 7
+                            color: root.theme.bgSurface
+                            border.color: optionSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
+                            border.width: 1
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 8
+                                spacing: 6
+
+                                Text {
+                                    text: "󰍉"
+                                    font.family: root.font
+                                    font.pixelSize: 13
+                                    color: optionSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.textMuted
+                                    Layout.alignment: Qt.AlignVCenter
+                                }
+
+                                TextInput {
+                                    id: optionSearchInput
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    color: root.theme.textPrimary
+                                    selectByMouse: true
+                                    clip: true
+                                    text: root.optionSearchQuery
+                                    onTextChanged: root.optionSearchQuery = text
+
+                                    Text {
+                                        visible: parent.text === ""
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: "Search widget settings..."
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        color: root.theme.textMuted
+                                    }
+                                }
+
+                                Rectangle {
+                                    visible: optionSearchInput.text !== ""
+                                    width: 18
+                                    height: 18
+                                    radius: 9
+                                    color: clearOptionSearchHover.hovered ? root.theme.bgHover : "transparent"
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    HoverHandler { id: clearOptionSearchHover }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "✕"
+                                        font.family: root.font
+                                        font.pixelSize: 10
+                                        color: clearOptionSearchHover.hovered ? root.theme.textPrimary : root.theme.textMuted
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            optionSearchInput.text = "";
+                                            root.optionSearchQuery = "";
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    NetworkSpeedOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("network speed down up compact")
-                    }
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
 
-                    ClockOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("clock time date seconds year calendar")
-                    }
+                        readonly property bool hasAnyMatch:
+                            root.matchesOptionFilter("app grid launcher icon")
+                            || root.matchesOptionFilter("network speed down up compact")
+                            || root.matchesOptionFilter("clock time date seconds year calendar")
+                            || root.matchesOptionFilter("workspaces index scroll hyprland")
+                            || root.matchesOptionFilter("task switcher window scope label width")
+                            || root.matchesOptionFilter("global menu appmenu")
+                            || root.matchesOptionFilter("weather location unit forecast")
+                            || root.matchesOptionFilter("battery percentage low threshold")
+                            || root.matchesOptionFilter("cava audio visualizer bars stereo")
+                            || root.matchesOptionFilter("media player mpris album art seekbar popup")
+                            || root.matchesOptionFilter("hardware cpu gpu memory disk temp alert")
+                            || root.matchesOptionFilter("wifi bluetooth connectivity labels")
+                            || root.matchesOptionFilter("brightness night light step")
+                            || root.matchesOptionFilter("custom script command interval png image")
 
-                    WorkspacesOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("workspaces index scroll hyprland")
-                    }
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("app grid launcher icon")
+                            AppGridOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
 
-                    TaskSwitcherOptionsCard {
-                        root: root
-                    }
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("network speed down up compact")
+                            NetworkSpeedOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
 
-                    GlobalMenuOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("global menu appmenu")
-                    }
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("clock time date seconds year calendar")
+                            ClockOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
 
-                    WeatherOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("weather location unit forecast")
-                    }
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("workspaces index scroll hyprland")
+                            WorkspacesOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
 
-                    BatteryOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("battery percentage low threshold")
-                    }
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("task switcher window scope label width")
+                            TaskSwitcherOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
 
-                    CavaOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("cava audio visualizer bars stereo")
-                    }
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("global menu appmenu")
+                            GlobalMenuOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
 
-                    MediaOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("media player mpris album art seekbar popup")
-                    }
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("weather location unit forecast")
+                            WeatherOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
 
-                    HardwareMonitorOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("hardware cpu gpu memory disk temp alert")
-                    }
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("battery percentage low threshold")
+                            BatteryOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
 
-                    WifiBluetoothOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("wifi bluetooth connectivity labels")
-                    }
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("cava audio visualizer bars stereo")
+                            CavaOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
 
-                    BrightnessOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("brightness night light step")
-                    }
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("media player mpris album art seekbar popup")
+                            MediaOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
 
-                    CustomScriptOptionsCard {
-                        root: root
-                        visible: root.matchesOptionFilter("custom script command interval")
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("hardware cpu gpu memory disk temp alert")
+                            HardwareMonitorOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
+
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("wifi bluetooth connectivity labels")
+                            WifiBluetoothOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
+
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("brightness night light step")
+                            BrightnessOptionsCard { root: root }
+                            Item { Layout.fillWidth: true; height: 20 }
+                        }
+
+                        AnimatedSection {
+                            expanded: root.matchesOptionFilter("custom script command interval png image")
+                            CustomScriptOptionsCard { root: root }
+                        }
+
+                        AnimatedSection {
+                            expanded: !parent.hasAnyMatch && root.optionSearchQuery.trim() !== ""
+                            Item {
+                                Layout.fillWidth: true
+                                height: 64
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "No widget settings matching \"" + root.optionSearchQuery.trim() + "\""
+                                    font.family: root.font
+                                    font.pixelSize: 12
+                                    color: root.theme.textMuted
+                                }
+                            }
+                        }
                     }
                 }
             }

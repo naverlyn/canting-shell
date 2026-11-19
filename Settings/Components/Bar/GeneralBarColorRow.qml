@@ -12,7 +12,7 @@ Item {
     required property var root
     id: barColorSettingRow
     Layout.fillWidth: true
-    height: 52
+    height: 40
 
     readonly property string barSpec: root.generalTab.curBarColor
     readonly property color resolvedColor: root.resolveThemeSpec(barSpec, root.theme.bgBase)
@@ -34,13 +34,6 @@ Item {
                 font.pixelSize: 13
                 font.bold: true
                 color: root.theme.textPrimary
-            }
-
-            Text {
-                text: "Custom color for desktop bar and matching inner corners"
-                font.family: root.font
-                font.pixelSize: 11
-                color: root.theme.textSecondary
             }
         }
 

@@ -276,10 +276,8 @@ Item {
               Layout.alignment: Qt.AlignTop
               radius: NotificationService.imageRadius
               color: NotificationService.imageShowBg ? Qt.alpha(previewBlocks.urgencyColor, 0.15) : "transparent"
-              border.color: root.selectedInspectorBlock === "image"
-                  ? root.theme.accentPrimary
-                  : Qt.alpha(previewBlocks.urgencyColor, 0.35)
-              border.width: root.selectedInspectorBlock === "image" ? 1.5 : 1
+              border.color: NotificationService.imageShowRing ? Qt.alpha(previewBlocks.urgencyColor, 0.35) : "transparent"
+              border.width: NotificationService.imageShowRing ? 1 : 0
               clip: true
               visible: NotificationService.composerShowImage
 
@@ -308,10 +306,8 @@ Item {
           height: implicitHeight
           radius: NotificationService.imageRadius
           color: NotificationService.imageShowBg ? Qt.alpha(previewBlocks.urgencyColor, 0.15) : "transparent"
-          border.color: root.selectedInspectorBlock === "image"
-              ? root.theme.accentPrimary
-              : Qt.alpha(previewBlocks.urgencyColor, 0.35)
-          border.width: root.selectedInspectorBlock === "image" ? 1.5 : 1
+          border.color: NotificationService.imageShowRing ? Qt.alpha(previewBlocks.urgencyColor, 0.35) : "transparent"
+          border.width: NotificationService.imageShowRing ? 1 : 0
           clip: true
           visible: NotificationService.composerShowImage
 

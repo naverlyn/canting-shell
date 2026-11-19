@@ -19,10 +19,10 @@ Rectangle {
     signal expandedToggled(bool expanded)
 
     Layout.fillWidth: true
-    implicitHeight: mainLayout.implicitHeight + 24
-    radius: 10
+    implicitHeight: mainLayout.implicitHeight + 16
+    radius: 12
     clip: true
-    color: cardHover.hovered ? cardRoot.theme.bgHover : cardRoot.theme.bgSurface
+    color: (!isExpanded && cardHover.hovered) ? cardRoot.theme.bgHover : cardRoot.theme.bgSurface
     border.color: isExpanded
         ? cardRoot.theme.accentPrimary
         : (cardHover.hovered ? Qt.rgba(cardRoot.theme.accentPrimary.r, cardRoot.theme.accentPrimary.g, cardRoot.theme.accentPrimary.b, 0.4) : cardRoot.theme.bgBorder)
@@ -138,37 +138,25 @@ Rectangle {
             left: parent.left
             right: parent.right
             top: parent.top
-            margins: 12
+            margins: 8
         }
-        spacing: 12
+        spacing: 0
 
-        // Header Row: Text-only (Name & Description) on Left, Edit Button Only on Right
+        // Header Row: Name on Left, Edit/Close Button on Right
         RowLayout {
             Layout.fillWidth: true
+            Layout.leftMargin: 12
+            Layout.rightMargin: 12
+            Layout.preferredHeight: 40
             spacing: 12
 
-            // Title & Description (No glyphs, no type tags)
-            ColumnLayout {
-                spacing: 3
-                Layout.fillWidth: true
+            Text {
+                text: cardRoot.editName
+                font.family: cardRoot.font
+                font.pixelSize: 13
+                font.bold: true
+                color: cardRoot.editEnabled ? cardRoot.theme.textPrimary : cardRoot.theme.textMuted
                 Layout.alignment: Qt.AlignVCenter
-
-                Text {
-                    text: cardRoot.editName
-                    font.family: cardRoot.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: cardRoot.editEnabled ? cardRoot.theme.textPrimary : cardRoot.theme.textMuted
-                }
-
-                Text {
-                    text: cardRoot.modDef.desc || (cardRoot.editHalign + ", " + cardRoot.editValign + " (" + cardRoot.editPosX + ", " + cardRoot.editPosY + ")")
-                    font.family: cardRoot.font
-                    font.pixelSize: 11
-                    color: cardRoot.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
 
             Item { Layout.fillWidth: true }
@@ -221,23 +209,17 @@ Rectangle {
         ColumnLayout {
             visible: cardRoot.isExpanded
             Layout.fillWidth: true
-            spacing: 12
-            Layout.topMargin: 8
+            spacing: 0
 
-            Rectangle {
-                Layout.fillWidth: true
-                height: 1
-                color: cardRoot.theme.bgBorder
-            }
+            RowDivider {}
 
             // Horizontal Alignment
             PreferenceRow {
                 title: "Horizontal Alignment"
-                subtitle: "Anchor module to screen left, center, or right"
 
                 Rectangle {
                     id: hAlignSegmentTrack
-                    width: 240
+                    width: 280
                     height: 32
                     radius: 7
                     color: cardRoot.theme.bgBase
@@ -316,14 +298,15 @@ Rectangle {
                 }
             }
 
+            RowDivider {}
+
             // Vertical Alignment
             PreferenceRow {
                 title: "Vertical Alignment"
-                subtitle: "Anchor module to screen top, center, or bottom"
 
                 Rectangle {
                     id: vAlignSegmentTrack
-                    width: 240
+                    width: 280
                     height: 32
                     radius: 7
                     color: cardRoot.theme.bgBase
@@ -402,10 +385,11 @@ Rectangle {
                 }
             }
 
+            RowDivider {}
+
             // Offset X Slider
             PreferenceSlider {
                 title: "Horizontal Offset (X)"
-                subtitle: "Pixel offset from anchor edge or screen center"
                 minVal: -600
                 maxVal: 600
                 unit: "px"
@@ -416,10 +400,11 @@ Rectangle {
                 }
             }
 
+            RowDivider {}
+
             // Offset Y Slider
             PreferenceSlider {
                 title: "Vertical Offset (Y)"
-                subtitle: "Pixel offset from anchor edge or screen center"
                 minVal: -400
                 maxVal: 400
                 unit: "px"
@@ -430,11 +415,12 @@ Rectangle {
                 }
             }
 
+            RowDivider { visible: cardRoot.modType !== "auth" }
+
             // Card Background Toggle (available for all visual modules)
             PreferenceRow {
                 visible: cardRoot.modType !== "auth"
                 title: "Show Card Background"
-                subtitle: "Wrap module in a frosted surface card with border"
                 SwitchToggle {
                     checked: cardRoot.editShowCard
                     onToggled: (st) => {
@@ -444,14 +430,21 @@ Rectangle {
                 }
             }
 
+            RowDivider {}
+
             LockscreenModuleTypeOptions {
                 hostCard: cardRoot
             }
 
+            RowDivider {}
 
             // Bottom Actions: Delete
             RowLayout {
                 Layout.fillWidth: true
+                Layout.leftMargin: 12
+                Layout.rightMargin: 12
+                Layout.topMargin: 8
+                Layout.bottomMargin: 4
                 Item { Layout.fillWidth: true }
 
                 Rectangle {

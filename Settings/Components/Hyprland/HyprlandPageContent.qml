@@ -26,12 +26,6 @@ ColumnLayout {
                 font.bold: true
                 color: root.theme.textPrimary
             }
-            Text {
-                text: "Window management, decorations, touchpad gestures, and compositor variables"
-                font.family: root.font
-                font.pixelSize: 12
-                color: root.theme.textSecondary
-            }
         }
 
         Item { Layout.fillWidth: true }

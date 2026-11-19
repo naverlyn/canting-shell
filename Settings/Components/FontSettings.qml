@@ -25,6 +25,7 @@ Item {
     property string font: Style.font
 
     // Browser & Preview state
+    property int currentSubTab: 0
     property string targetRole: "ui" // "ui" | "mono" | "lockscreen" | "both"
     property string searchQuery: ""
     property string activeCategory: "all" // "all" | "nerd" | "mono" | "sans"
@@ -346,16 +347,9 @@ Item {
                             }
                         }
                     }
-
-                    Text {
-                        text: "Configure global primary UI font, monospace lock screen font, scaling, and rendering"
-                        font.family: Style.font
-                        font.pixelSize: Style.px(11)
-                        color: root.theme.textSecondary
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
                 }
+
+                Item { Layout.fillWidth: true }
 
                 ActionButton {
                     iconText: "󰑐"
@@ -386,10 +380,57 @@ Item {
                 }
             }
 
-            FontSpecimenPreviewCard { root: root }
-            FontPairingsCard { root: root }
-            FontBrowserCard { root: root }
-            FontScaleRenderingCard { root: root }
+            // 2. Sub-Tab Selector (Preview & Pairings / Font Browser / Scale & Rendering)
+            FontSubTabSelector {
+                root: root
+                onTabSwitched: fontSubTabContentAnim.restart()
+            }
+
+            ParallelAnimation {
+                id: fontSubTabContentAnim
+                NumberAnimation {
+                    target: fontSubTabContainer
+                    property: "opacity"
+                    from: 0.35
+                    to: 1.0
+                    duration: 180
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    target: fontSubTabTranslate
+                    property: "y"
+                    from: 8
+                    to: 0
+                    duration: 180
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            ColumnLayout {
+                id: fontSubTabContainer
+                Layout.fillWidth: true
+                spacing: 16
+                transform: Translate { id: fontSubTabTranslate; y: 0 }
+
+                ColumnLayout {
+                    visible: root.currentSubTab === 0
+                    Layout.fillWidth: true
+                    spacing: 16
+
+                    FontSpecimenPreviewCard { root: root }
+                    FontPairingsCard { root: root }
+                }
+
+                FontBrowserCard {
+                    visible: root.currentSubTab === 1
+                    root: root
+                }
+
+                FontScaleRenderingCard {
+                    visible: root.currentSubTab === 2
+                    root: root
+                }
+            }
         }
     }
 

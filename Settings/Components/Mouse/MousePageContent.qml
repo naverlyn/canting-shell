@@ -58,7 +58,7 @@ ColumnLayout {
                 /* Primary Button Toggle Row */
                 Item {
                     Layout.fillWidth: true
-                    height: 52
+                    height: 40
 
                     RowLayout {
                         anchors.fill: parent
@@ -71,18 +71,11 @@ ColumnLayout {
                             Layout.alignment: Qt.AlignVCenter
 
                             Text {
-                                text: "Primary Button"
+                                text: "Left-Handed Mode"
                                 font.family: root.font
                                 font.pixelSize: 13
                                 font.bold: true
                                 color: root.theme.textPrimary
-                            }
-
-                            Text {
-                                text: root.leftHanded ? "Right button is primary (Left-handed)" : "Left button is primary (Default)"
-                                font.family: root.font
-                                font.pixelSize: 11
-                                color: root.theme.textSecondary
                             }
                         }
 
@@ -134,7 +127,7 @@ ColumnLayout {
                 /* Mouse Speed Row */
                 Item {
                     Layout.fillWidth: true
-                    height: 52
+                    height: 40
 
                     RowLayout {
                         anchors.fill: parent
@@ -262,7 +255,7 @@ ColumnLayout {
                 /* Natural Scrolling Row */
                 Item {
                     Layout.fillWidth: true
-                    height: 52
+                    height: 40
 
                     RowLayout {
                         anchors.fill: parent
@@ -280,13 +273,6 @@ ColumnLayout {
                                 font.pixelSize: 13
                                 font.bold: true
                                 color: root.theme.textPrimary
-                            }
-
-                            Text {
-                                text: "Scrolling moves content in the opposite direction"
-                                font.family: root.font
-                                font.pixelSize: 11
-                                color: root.theme.textSecondary
                             }
                         }
 
@@ -363,7 +349,7 @@ ColumnLayout {
                 /* Row 1: Touchpad Master Enable/Disable */
                 Item {
                     Layout.fillWidth: true
-                    height: 52
+                    height: 40
 
                     RowLayout {
                         anchors.fill: parent
@@ -381,13 +367,6 @@ ColumnLayout {
                                 font.pixelSize: 13
                                 font.bold: true
                                 color: root.theme.textPrimary
-                            }
-
-                            Text {
-                                text: "Enable or disable touchpad gestures and input"
-                                font.family: root.font
-                                font.pixelSize: 11
-                                color: root.theme.textSecondary
                             }
                         }
 
@@ -436,7 +415,7 @@ ColumnLayout {
                 /* Row 2: Touchpad Natural Scrolling */
                 Item {
                     Layout.fillWidth: true
-                    height: 52
+                    height: 40
                     opacity: root.touchpadEnabled ? 1.0 : 0.4
                     enabled: root.touchpadEnabled
                     Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -457,13 +436,6 @@ ColumnLayout {
                                 font.pixelSize: 13
                                 font.bold: true
                                 color: root.theme.textPrimary
-                            }
-
-                            Text {
-                                text: "Two-finger scroll moves content naturally"
-                                font.family: root.font
-                                font.pixelSize: 11
-                                color: root.theme.textSecondary
                             }
                         }
 
@@ -514,7 +486,7 @@ ColumnLayout {
                 /* Row 3: Tap to Click */
                 Item {
                     Layout.fillWidth: true
-                    height: 52
+                    height: 40
                     opacity: root.touchpadEnabled ? 1.0 : 0.4
                     enabled: root.touchpadEnabled
                     Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -535,13 +507,6 @@ ColumnLayout {
                                 font.pixelSize: 13
                                 font.bold: true
                                 color: root.theme.textPrimary
-                            }
-
-                            Text {
-                                text: "Tap touchpad to click instead of pressing down"
-                                font.family: root.font
-                                font.pixelSize: 11
-                                color: root.theme.textSecondary
                             }
                         }
 
@@ -592,7 +557,7 @@ ColumnLayout {
                 /* Row 4: Disable while typing */
                 Item {
                     Layout.fillWidth: true
-                    height: 52
+                    height: 40
                     opacity: root.touchpadEnabled ? 1.0 : 0.4
                     enabled: root.touchpadEnabled
                     Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -613,13 +578,6 @@ ColumnLayout {
                                 font.pixelSize: 13
                                 font.bold: true
                                 color: root.theme.textPrimary
-                            }
-
-                            Text {
-                                text: "Prevent accidental palm taps when using the keyboard"
-                                font.family: root.font
-                                font.pixelSize: 11
-                                color: root.theme.textSecondary
                             }
                         }
 

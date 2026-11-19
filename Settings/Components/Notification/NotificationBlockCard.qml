@@ -114,40 +114,6 @@ Rectangle {
             Layout.alignment: Qt.AlignVCenter
         }
 
-        Rectangle {
-            id: badgeRect
-            z: 2
-            visible: blockCard.blockBadge !== "" && (blockCard.badgeClickable || !cardHover.hovered)
-            implicitWidth: badgeTxt.implicitWidth + 10
-            implicitHeight: 18
-            radius: 9
-            color: blockCard.badgeClickable && badgeMouse.containsMouse
-                ? root.withAlpha(root.theme.accentPrimary, 0.25)
-                : root.withAlpha(root.theme.accentPrimary, 0.12)
-            border.color: blockCard.badgeClickable ? root.withAlpha(root.theme.accentPrimary, 0.45) : "transparent"
-            border.width: blockCard.badgeClickable ? 1 : 0
-            Layout.alignment: Qt.AlignVCenter
-
-            Text {
-                id: badgeTxt
-                anchors.centerIn: parent
-                text: blockCard.blockBadge
-                font.family: root.font
-                font.pixelSize: 9
-                font.bold: true
-                color: root.theme.accentPrimary
-            }
-
-            MouseArea {
-                id: badgeMouse
-                anchors.fill: parent
-                enabled: blockCard.badgeClickable
-                hoverEnabled: blockCard.badgeClickable
-                cursorShape: blockCard.badgeClickable ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: blockCard.badgeClicked()
-            }
-        }
-
         RowLayout {
             id: cardBtnRow
             z: 2
@@ -155,33 +121,12 @@ Rectangle {
             Layout.alignment: Qt.AlignVCenter
 
             MiniIconButton {
-                visible: cardHover.hovered && blockCard.canMoveUp
-                iconText: "󰅃"
-                onClicked: blockCard.moveUpClicked()
-            }
-
-            MiniIconButton {
-                visible: cardHover.hovered && blockCard.canMoveDown
-                iconText: "󰅀"
-                onClicked: blockCard.moveDownClicked()
-            }
-
-            MiniIconButton {
-                visible: cardHover.hovered && blockCard.canMoveLeft
-                iconText: "󰅁"
-                onClicked: blockCard.moveLeftClicked()
-            }
-
-            MiniIconButton {
-                visible: cardHover.hovered && blockCard.canMoveRight
-                iconText: "󰅂"
-                onClicked: blockCard.moveRightClicked()
-            }
-
-            MiniIconButton {
-                visible: cardHover.hovered || blockCard.isSelectedInInspector
+                opacity: (cardHover.hovered || blockCard.isSelectedInInspector) ? 1.0 : 0.0
+                visible: opacity > 0.01
                 iconText: "󰒓"
                 onClicked: blockCard.configClicked()
+
+                Behavior on opacity { NumberAnimation { duration: 120 } }
             }
 
             MiniIconButton {

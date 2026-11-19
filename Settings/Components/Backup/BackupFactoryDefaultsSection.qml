@@ -3,55 +3,92 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import "../Common"
 
-SectionCard {
+ColumnLayout {
     required property var root
-    title: "Factory Defaults"
-    subtitle: "Reset components to clean defaults (saves a safety backup first)"
-    contentMargins: 4
-    contentSpacing: 0
+    Layout.fillWidth: true
+    spacing: 8
 
-    Repeater {
-        model: root.resetDefs
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin: 4
+        Layout.rightMargin: 4
+        spacing: 8
+        Text {
+            text: "Factory Defaults"
+            font.family: Style.font
+            font.pixelSize: Style.px(13)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
+            color: Style.theme.textSecondary
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+        }
+        Item { Layout.fillWidth: true }
+    }
 
-        delegate: ColumnLayout {
-            required property var modelData
-            required property int index
-            readonly property bool isConfirming: root.confirmResetModule === modelData.id
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: innerCol.implicitHeight + 4 * 2
+        radius: 12
+        color: Style.theme.bgSurface
+        border.color: Style.theme.bgBorder
+        border.width: 1
 
-            Layout.fillWidth: true
+        ColumnLayout {
+            id: innerCol
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                margins: 4
+            }
             spacing: 0
+            Repeater {
+                model: root.resetDefs
 
-            RowDivider { visible: index > 0 }
+                delegate: ColumnLayout {
+                    required property var modelData
+                    required property int index
+                    readonly property bool isConfirming: root.confirmResetModule === modelData.id
 
-            PreferenceRow {
-                title: modelData.title
-                subtitle: modelData.subtitle
+                    Layout.fillWidth: true
+                    spacing: 0
 
-                ActionButton {
-                    visible: !isConfirming
-                    iconText: "󰑓"
-                    label: modelData.btnLabel
-                    minWidth: 104
-                    danger: true
-                    onClicked: root.confirmResetModule = modelData.id
-                }
+                    RowDivider { visible: index > 0 }
 
-                RowLayout {
-                    visible: isConfirming
-                    spacing: 6
+                    PreferenceRow {
+                        title: modelData.title
 
-                    ActionButton {
-                        label: "Cancel"
-                        btnHeight: 28
-                        onClicked: root.confirmResetModule = ""
-                    }
+                        ActionButton {
+                            visible: !isConfirming
+                            iconText: "󰑓"
+                            label: modelData.btnLabel
+                            minWidth: 104
+                            danger: true
+                            onClicked: root.confirmResetModule = modelData.id
+                        }
 
-                    ActionButton {
-                        iconText: "󰑓"
-                        label: "Confirm Reset"
-                        danger: true
-                        btnHeight: 28
-                        onClicked: root.resetFactoryDefaults(modelData.id)
+                        RowLayout {
+                            visible: isConfirming
+                            spacing: 6
+
+                            ActionButton {
+                                label: "Cancel"
+                                btnHeight: 28
+                                onClicked: root.confirmResetModule = ""
+                            }
+
+                            ActionButton {
+                                iconText: "󰑓"
+                                label: "Confirm Reset"
+                                danger: true
+                                btnHeight: 28
+                                onClicked: root.resetFactoryDefaults(modelData.id)
+                            }
+                        }
                     }
                 }
             }

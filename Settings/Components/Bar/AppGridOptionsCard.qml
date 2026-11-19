@@ -8,12 +8,11 @@ import "../.."
 import "../Common"
 import ".."
 
-SectionCard {
+ColumnLayout {
     required property var root
     id: self
-    title: "Applications (AppGrid) Button Options"
-    contentMargins: 8
-    contentSpacing: 0
+    Layout.fillWidth: true
+    spacing: 8
 
     readonly property var iconPresets: [
         { icon: "󰀻", label: "Grid" },
@@ -71,10 +70,49 @@ SectionCard {
         }
     }
 
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin: 4
+        Layout.rightMargin: 4
+        spacing: 8
+        Text {
+            text: "Applications (AppGrid) Button Options"
+            font.family: Style.font
+            font.pixelSize: Style.px(13)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
+            color: Style.theme.textSecondary
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+        }
+        Item { Layout.fillWidth: true }
+    }
+
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: innerCol.implicitHeight + 8 * 2
+        radius: 12
+        color: Style.theme.bgSurface
+        border.color: Style.theme.bgBorder
+        border.width: 1
+
+        ColumnLayout {
+            id: innerCol
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                margins: 8
+            }
+            spacing: 0
+
     // 1. Mode Switcher Row
     Item {
         Layout.fillWidth: true
-        height: 60
+        height: 40
 
         RowLayout {
             anchors.fill: parent
@@ -85,7 +123,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Icon Source"
@@ -94,27 +131,25 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Choose between a built-in preset, custom glyph, or PNG image"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
 
-            SegmentedControl {
-                trackWidth: 310
-                currentId: self.iconMode
+            Item { Layout.fillWidth: true }
+
+            AppDropdown {
+                theme: root.theme
+                font: root.font
+                Layout.preferredWidth: 380
+                implicitWidth: 380
+                menuWidth: 380
+                Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                currentValue: self.iconMode
                 options: [
-                    { id: "preset", label: "Icon Preset" },
-                    { id: "glyph",  label: "Custom Glyph" },
-                    { id: "png",    label: "PNG Image" }
+                    { desktop: "preset", name: "Icon Preset",  desc: "" },
+                    { desktop: "glyph",  name: "Custom Glyph", desc: "" },
+                    { desktop: "png",    name: "PNG Image",    desc: "" }
                 ]
-                onOptionSelected: function(optionId) {
-                    self.switchMode(optionId);
+                onSelected: function(val) {
+                    self.switchMode(val);
                 }
             }
         }
@@ -127,7 +162,7 @@ SectionCard {
         id: presetRow
         visible: self.iconMode === "preset"
         Layout.fillWidth: true
-        height: 60
+        height: 40
         opacity: self.rowAnimProgress
         transform: Translate { y: (1.0 - self.rowAnimProgress) * 6 }
 
@@ -142,7 +177,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Icon Preset"
@@ -151,16 +185,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Select a launcher, distro, or grid icon for the bar AppGrid button"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             RowLayout {
                 spacing: 8
@@ -347,7 +374,7 @@ SectionCard {
     Item {
         visible: self.iconMode === "glyph"
         Layout.fillWidth: true
-        height: 60
+        height: 40
         opacity: self.rowAnimProgress
         transform: Translate { y: (1.0 - self.rowAnimProgress) * 6 }
 
@@ -360,7 +387,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Custom Glyph or Label"
@@ -369,16 +395,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Enter any Nerd Font glyph, symbol, or short text for the Applications button"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             RowLayout {
                 spacing: 8
@@ -494,7 +513,7 @@ SectionCard {
         id: pngRow
         visible: self.iconMode === "png"
         Layout.fillWidth: true
-        height: 60
+        height: 40
         opacity: self.rowAnimProgress
         transform: Translate { y: (1.0 - self.rowAnimProgress) * 6 }
 
@@ -510,7 +529,6 @@ SectionCard {
             ColumnLayout {
                 spacing: 2
                 Layout.alignment: Qt.AlignVCenter
-                Layout.fillWidth: true
 
                 Text {
                     text: "Custom PNG Image"
@@ -519,18 +537,9 @@ SectionCard {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: pngRow.isImageActive
-                        ? "Active PNG image overrides the glyph icon on the bar"
-                        : "Choose a .png image file for the Applications button"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
             }
+
+            Item { Layout.fillWidth: true }
 
             RowLayout {
                 spacing: 8
@@ -615,6 +624,8 @@ SectionCard {
             appGridIconInput.text = "";
             BarConfig.saveConfig();
             root.showToast("AppGrid icon set to PNG: " + path.split("/").pop());
+        }
+    }
         }
     }
 }

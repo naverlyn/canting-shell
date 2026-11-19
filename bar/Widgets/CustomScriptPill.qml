@@ -16,6 +16,7 @@ Rectangle {
   property string outputIcon: ""
 
   readonly property string resolvedIcon: outputIcon !== "" ? outputIcon : BarConfig.customScriptIcon
+  readonly property bool isImageIcon: BarConfig.isAppGridImage(resolvedIcon)
   readonly property string truncatedText: {
     const maxLen = Math.max(4, BarConfig.customScriptMaxLength || 28);
     if (!outputText) return "";
@@ -234,12 +235,23 @@ Rectangle {
     spacing: 6
 
     Text {
-      visible: csPill.resolvedIcon !== ""
+      visible: csPill.resolvedIcon !== "" && !csPill.isImageIcon
       anchors.verticalCenter: parent.verticalCenter
       text: csPill.resolvedIcon
       color: hostContainer.wAccent("customScript", hostRoot.theme.accentCyan)
       font.pixelSize: hostContainer.scaled(14)
       font.family: hostRoot.font
+    }
+
+    Image {
+      visible: csPill.isImageIcon
+      anchors.verticalCenter: parent.verticalCenter
+      width: hostContainer.scaled(16)
+      height: hostContainer.scaled(16)
+      source: csPill.isImageIcon ? BarConfig.appGridImageSource(csPill.resolvedIcon) : ""
+      fillMode: Image.PreserveAspectFit
+      smooth: true
+      mipmap: true
     }
 
     Text {
@@ -259,12 +271,23 @@ Rectangle {
     spacing: 2
 
     Text {
-      visible: csPill.resolvedIcon !== ""
+      visible: csPill.resolvedIcon !== "" && !csPill.isImageIcon
       anchors.horizontalCenter: parent.horizontalCenter
       text: csPill.resolvedIcon
       color: hostContainer.wAccent("customScript", hostRoot.theme.accentCyan)
       font.pixelSize: hostContainer.scaled(13)
       font.family: hostRoot.font
+    }
+
+    Image {
+      visible: csPill.isImageIcon
+      anchors.horizontalCenter: parent.horizontalCenter
+      width: hostContainer.scaled(14)
+      height: hostContainer.scaled(14)
+      source: csPill.isImageIcon ? BarConfig.appGridImageSource(csPill.resolvedIcon) : ""
+      fillMode: Image.PreserveAspectFit
+      smooth: true
+      mipmap: true
     }
 
     Text {

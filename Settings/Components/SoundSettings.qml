@@ -273,13 +273,6 @@ Item {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Manage audio routing, stereo balance, channel tests, and application volume levels"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    color: root.theme.textSecondary
-                }
             }
 
             // 1. OUTPUT GROUP

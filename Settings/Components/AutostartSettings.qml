@@ -246,13 +246,6 @@ Item {
                     font.bold: true
                     color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                 }
-
-                Text {
-                    text: "Manage desktop applications, background daemons, and Hyprland launch processes"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
-                }
             }
 
             /* Sub-Tab Switch Transition Animation (Matching HyprlandSettings) */

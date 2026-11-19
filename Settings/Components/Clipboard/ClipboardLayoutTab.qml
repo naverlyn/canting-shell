@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import "../../../Clipboard"
 import "../Common"
+import ".."
 
 ColumnLayout {
     required property var root
@@ -159,92 +160,128 @@ ColumnLayout {
     }
 
     // Window Dimensions Section
-    SectionCard {
-        title: "Clipboard Window Dimensions (Center Popup)"
-        subtitle: "Adjust the popup box size when opened via Super+V or global menu"
-        contentMargins: 8
-        contentSpacing: 0
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-        SettingSliderRow {
-            title: "Popup Width"
-            desc: "Width of the center clipboard history popup window"
-            value: ClipboardConfig.windowWidth
-            minVal: 640
-            maxVal: 960
-            step: 20
-            unit: "px"
-            presets: [
-                { label: "680px", val: 680 },
-                { label: "840px (Default)", val: 840 },
-                { label: "960px", val: 960 }
-            ]
-            onValueModified: (val) => ClipboardConfig.setWindowWidth(val)
-        }
-
-        RowDivider {}
-
-        SettingSliderRow {
-            title: "Popup Height"
-            desc: "Vertical height of the clipboard history window"
-            value: ClipboardConfig.windowHeight
-            minVal: 480
-            maxVal: 760
-            step: 20
-            unit: "px"
-            presets: [
-                { label: "520px", val: 520 },
-                { label: "640px (Default)", val: 640 },
-                { label: "740px", val: 740 }
-            ]
-            onValueModified: (val) => ClipboardConfig.setWindowHeight(val)
-        }
-
-        RowDivider {}
-
-        // Default Category Segmented Row
-        Item {
+        RowLayout {
             Layout.fillWidth: true
-            height: 52
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 8
+            Text {
+                text: "Clipboard Window Dimensions (Center Popup)"
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                Layout.minimumWidth: implicitWidth
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            }
+            Item { Layout.fillWidth: true }
+        }
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                spacing: 12
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: innerCol.implicitHeight + 8 * 2
+            radius: 12
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
+            border.width: 1
 
-                ColumnLayout {
-                    spacing: 2
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-
-                    Text {
-                        text: "Default Opening Category"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: root.theme.textPrimary
-                    }
-
-                    Text {
-                        text: "Initial filter tab active when clipboard window opens"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                    }
+            ColumnLayout {
+                id: innerCol
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 8
+                }
+                spacing: 0
+                SettingSliderRow {
+                    title: "Popup Width"
+                    value: ClipboardConfig.windowWidth
+                    minVal: 640
+                    maxVal: 960
+                    step: 20
+                    unit: "px"
+                    presets: [
+                        { label: "680px", val: 680 },
+                        { label: "840px (Default)", val: 840 },
+                        { label: "960px", val: 960 }
+                    ]
+                    onValueModified: (val) => ClipboardConfig.setWindowWidth(val)
                 }
 
-                SegmentedControl {
-                    trackWidth: 320
-                    currentId: ClipboardConfig.defaultCategory
-                    options: [
-                        { id: "all",   label: "All" },
-                        { id: "text",  label: "Text" },
-                        { id: "image", label: "Images" },
-                        { id: "link",  label: "Links" },
-                        { id: "code",  label: "Code" },
-                        { id: "color", label: "Colors" }
+                RowDivider {}
+
+                SettingSliderRow {
+                    title: "Popup Height"
+                    value: ClipboardConfig.windowHeight
+                    minVal: 480
+                    maxVal: 760
+                    step: 20
+                    unit: "px"
+                    presets: [
+                        { label: "520px", val: 520 },
+                        { label: "640px (Default)", val: 640 },
+                        { label: "740px", val: 740 }
                     ]
-                    onOptionSelected: (optionId) => ClipboardConfig.setDefaultCategory(optionId)
+                    onValueModified: (val) => ClipboardConfig.setWindowHeight(val)
+                }
+
+                RowDivider {}
+
+                // Default Category Segmented Row
+                Item {
+                    Layout.fillWidth: true
+                    height: 52
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 12
+
+                        ColumnLayout {
+                            spacing: 2
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+
+                            Text {
+                                text: "Default Opening Category"
+                                font.family: root.font
+                                font.pixelSize: 13
+                                font.bold: true
+                                color: root.theme.textPrimary
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        AppDropdown {
+                            theme: root.theme
+                            font: root.font
+                            Layout.preferredWidth: 380
+                            implicitWidth: 380
+                            menuWidth: 380
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                            currentValue: ClipboardConfig.defaultCategory
+                            options: [
+                                { desktop: "all",   name: "All",    desc: "" },
+                                { desktop: "text",  name: "Text",   desc: "" },
+                                { desktop: "image", name: "Images", desc: "" },
+                                { desktop: "link",  name: "Links",  desc: "" },
+                                { desktop: "code",  name: "Code",   desc: "" },
+                                { desktop: "color", name: "Colors", desc: "" }
+                            ]
+                            onSelected: (val) => ClipboardConfig.setDefaultCategory(val)
+                        }
+                    }
                 }
             }
         }

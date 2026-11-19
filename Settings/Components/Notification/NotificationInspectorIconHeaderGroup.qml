@@ -23,7 +23,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show App Icon Block"
-        desc: "Display application icon badge or glyph on notification cards"
         checked: NotificationService.isBlockVisible("icon")
         onToggled: (val) => NotificationService.setBlockVisible("icon", val)
     }
@@ -33,7 +32,7 @@ ColumnLayout {
     // Icon Layout Mode (Auto / Inline Header / Left Avatar)
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -41,22 +40,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Icon Placement Mode"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Icon Placement Mode"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Render compact in Header row or as a prominent Left Avatar column"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -76,7 +66,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Icon Badge Size"
-        desc: "Outer dimensions of the app icon container in pixels"
         value: NotificationService.iconSize
         minVal: 16
         maxVal: 48
@@ -95,7 +84,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Icon Corner Radius"
-        desc: "Rounding of the icon badge background (0 = square, 20 = circle)"
         value: NotificationService.iconRadius
         minVal: 0
         maxVal: 24
@@ -114,7 +102,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Tinted Icon Badge Background"
-        desc: "Show a subtle urgency/accent-tinted container behind the icon"
         checked: NotificationService.iconShowBg
         onToggled: (val) => NotificationService.setIconShowBg(val)
     }
@@ -128,7 +115,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show App Name Block"
-        desc: "Display source application name (e.g. notify-send, Spotify)"
         checked: NotificationService.isBlockVisible("appName")
         onToggled: (val) => NotificationService.setBlockVisible("appName", val)
     }
@@ -137,7 +123,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "App Name Font Size"
-        desc: "Typography size for application title and header metadata"
         value: NotificationService.appNameFontSize
         minVal: 9
         maxVal: 16
@@ -156,7 +141,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Timestamp Block"
-        desc: "Display notification arrival time in the header row"
         checked: NotificationService.isBlockVisible("timestamp")
         onToggled: (val) => NotificationService.setBlockVisible("timestamp", val)
     }
@@ -165,7 +149,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -173,22 +157,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Timestamp Format"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Timestamp Format"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Choose between relative label ('Now') or 24-hour clock ('HH:mm')"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -207,7 +182,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Dismiss (✕) Button Block"
-        desc: "Display quick close button on the notification card"
         checked: NotificationService.isBlockVisible("closeBtn")
         onToggled: (val) => NotificationService.setBlockVisible("closeBtn", val)
     }

@@ -29,14 +29,7 @@ ColumnLayout {
             color: root.theme.textSecondary
         }
 
-        Text {
-            text: "· Warm blue-light filter to reduce eye strain"
-            font.family: root.font
-            font.pixelSize: 11
-            color: root.theme.textMuted
-            elide: Text.ElideRight
-            Layout.fillWidth: true
-        }
+        Item { Layout.fillWidth: true }
 
         Text {
             text: root.nightLightEnabled ? (root.nightLightTemp + " K · Active") : "Disabled"
@@ -68,7 +61,7 @@ ColumnLayout {
             /* Row 1: Enable Night Light Switch */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 40
 
                 RowLayout {
                     anchors.fill: parent
@@ -78,7 +71,6 @@ ColumnLayout {
 
                     ColumnLayout {
                         spacing: 2
-                        Layout.fillWidth: true
                         Layout.alignment: Qt.AlignVCenter
 
                         Text {
@@ -88,16 +80,9 @@ ColumnLayout {
                             font.bold: true
                             color: root.theme.textPrimary
                         }
-
-                        Text {
-                            text: "Apply warm color temperature filter to all connected displays"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
                     }
+
+                    Item { Layout.fillWidth: true }
 
                     /* Libadwaita Toggle Switch */
                     Rectangle {

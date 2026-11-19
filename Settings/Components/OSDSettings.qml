@@ -149,13 +149,6 @@ Item {
                         font.bold: true
                         color: root.theme.textPrimary
                     }
-
-                    Text {
-                        text: "Customize volume and brightness overlay positioning, adaptive orientation, live X/Y placement, and timing"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        color: root.theme.textSecondary
-                    }
                 }
 
                 Item { Layout.fillWidth: true }
@@ -196,15 +189,6 @@ Item {
                         font.pixelSize: 13
                         font.bold: true
                         color: root.theme.textSecondary
-                    }
-
-                    Text {
-                        text: "· Drag preview pill or click regions to reposition in X & Y"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textMuted
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
                     }
 
                     Text {

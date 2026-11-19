@@ -13,8 +13,8 @@ Item {
     id: pillRadiusItem
     Layout.fillWidth: true
     visible: !root.generalTab.curHidePill
-    height: visible ? 64 : 0
-    implicitHeight: visible ? 64 : 0
+    height: visible ? 56 : 0
+    implicitHeight: visible ? 56 : 0
     readonly property int activeRadius: root.generalTab.curPillRadius
     opacity: root.generalTab.curHidePill ? 0.45 : 1.0
     enabled: !root.generalTab.curHidePill
@@ -39,15 +39,6 @@ Item {
                 font.pixelSize: 13
                 font.bold: true
                 color: root.theme.textPrimary
-                Layout.fillWidth: true
-                elide: Text.ElideRight
-            }
-
-            Text {
-                text: "Widget pill rounded corners"
-                font.family: root.font
-                font.pixelSize: 11
-                color: root.theme.textSecondary
                 Layout.fillWidth: true
                 elide: Text.ElideRight
             }

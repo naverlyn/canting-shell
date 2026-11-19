@@ -160,13 +160,6 @@ Item {
                     font.bold: true
                     color: root.theme.textPrimary
                 }
-
-                Text {
-                    text: "Configure clipboard history capacity, content detection, window dimensions, and daemon status"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    color: root.theme.textSecondary
-                }
             }
 
             /* Sub-Tab Switch Transition Animation (Matching HyprlandSettings) */

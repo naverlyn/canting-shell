@@ -27,14 +27,7 @@ ColumnLayout {
             color: root.theme.textSecondary
         }
 
-        Text {
-            text: "· Adaptive: vertical on edges, horizontal in center"
-            font.family: root.font
-            font.pixelSize: 11
-            color: root.theme.textMuted
-            elide: Text.ElideRight
-            Layout.fillWidth: true
-        }
+        Item { Layout.fillWidth: true }
 
         Text {
             text: OSDService.isHorizontal ? "Current: Horizontal" : "Current: Vertical"
@@ -83,9 +76,9 @@ ColumnLayout {
                 AppDropdown {
                     theme: root.theme
                     font: root.font
-                    width: 220
-                    implicitWidth: 220
-                    menuWidth: 220
+                    Layout.preferredWidth: 380
+                    implicitWidth: 380
+                    menuWidth: 380
                     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                     options: (OSDService.orientationOptions || []).map(o => ({
                         desktop: o.id,

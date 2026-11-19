@@ -12,7 +12,7 @@ import ".."
 Item {
     required property var root
     Layout.fillWidth: true
-    height: 48
+    height: 44
 
     RowLayout {
         anchors.fill: parent
@@ -33,9 +33,9 @@ Item {
 
         Rectangle {
             id: brightPresetTrack
-            implicitWidth: 280
+            Layout.preferredWidth: 380
+            implicitWidth: 380
             implicitHeight: 32
-            width: 280
             height: 32
             radius: 7
             color: root.theme.bgBase

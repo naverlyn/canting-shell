@@ -6,7 +6,6 @@ SettingSliderRow {
     required property var root
 
     title: "Pill Background Opacity"
-    desc: "Transparency of widget cards"
     value: root.generalTab.curPillOpacity
     minVal: 0.0
     maxVal: 1.0

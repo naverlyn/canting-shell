@@ -20,46 +20,84 @@ ColumnLayout {
     }
 
     // 2. QUICK SPECIAL & FLOATING BEHAVIORS CARD
-    SectionCard {
-        subtitleMaxRatio: 0.55
-        title: "Special Window & Layer Behaviors"
-        subtitle: "Quick toggles for Picture-in-Picture, floating dialogs, video blur, and shell layers"
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-        Repeater {
-            model: [
-                { ruleName: "Picture-in-Picture",        title: "Picture-in-Picture Floating Pin",    desc: "Float, pin, keep aspect ratio, and position PiP video in top-right corner" },
-                { ruleName: "override-multimedia-video", title: "Solid Video Playback (mpv / VLC)",   desc: "Disable background blur and force 100% opacity on video players" },
-                { ruleName: "override-games",            title: "Gaming Performance Override",        desc: "Disable blur and optimize fullscreen state for Steam & Gamescope" },
-                { ruleName: "idle-inhibit-fullscreen",   title: "Fullscreen Idle Inhibitor",          desc: "Prevent screen sleep / hypridle while any window is fullscreen" },
-                { ruleName: "float-settings-tag",        title: "Float Settings & Utility Windows",   desc: "Automatically float and center tagged settings apps (70%x70%)" },
-                { ruleName: "float-viewer-tag",          title: "Float System & Document Viewers",    desc: "Automatically float and center system monitor, Evince, and image viewers" },
-                { ruleName: "xwayland-video-bridge-fixes", title: "XWayland Video Bridge Hide Fix",   desc: "Hide and suppress focus/blur on xwaylandvideobridge helper window" },
-                { ruleName: "layer-qs-overview",         title: "Quickshell Overview Layer Blur",     desc: "Apply background blur and ignore_alpha 0.5 to quickshell:overview" }
-            ]
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 8
+            Text {
+                text: "Special Window & Layer Behaviors"
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                Layout.minimumWidth: implicitWidth
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            }
+            Item { Layout.fillWidth: true }
+        }
 
-            delegate: ColumnLayout {
-                id: specToggleDelegate
-                required property var modelData
-                required property int index
-                Layout.fillWidth: true
-                spacing: 0
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: innerCol.implicitHeight + 8 * 2
+            radius: 12
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
+            border.width: 1
 
-                readonly property var ruleObj: root.findRuleByName(modelData.ruleName)
-                readonly property bool isRuleEnabled: ruleObj ? ruleObj.enabled : true
-
-                RowDivider {
-                    visible: specToggleDelegate.index > 0
-                    sideMargin: 0
-                    alpha: 1.0
+            ColumnLayout {
+                id: innerCol
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 8
                 }
+                spacing: 0
+                Repeater {
+                    model: [
+                        { ruleName: "Picture-in-Picture",        title: "Picture-in-Picture Floating Pin",    desc: "Float, pin, keep aspect ratio, and position PiP video in top-right corner" },
+                        { ruleName: "override-multimedia-video", title: "Solid Video Playback (mpv / VLC)",   desc: "Disable background blur and force 100% opacity on video players" },
+                        { ruleName: "override-games",            title: "Gaming Performance Override",        desc: "Disable blur and optimize fullscreen state for Steam & Gamescope" },
+                        { ruleName: "idle-inhibit-fullscreen",   title: "Fullscreen Idle Inhibitor",          desc: "Prevent screen sleep / hypridle while any window is fullscreen" },
+                        { ruleName: "float-settings-tag",        title: "Float Settings & Utility Windows",   desc: "Automatically float and center tagged settings apps (70%x70%)" },
+                        { ruleName: "float-viewer-tag",          title: "Float System & Document Viewers",    desc: "Automatically float and center system monitor, Evince, and image viewers" },
+                        { ruleName: "xwayland-video-bridge-fixes", title: "XWayland Video Bridge Hide Fix",   desc: "Hide and suppress focus/blur on xwaylandvideobridge helper window" },
+                        { ruleName: "layer-qs-overview",         title: "Quickshell Overview Layer Blur",     desc: "Apply background blur and ignore_alpha 0.5 to quickshell:overview" }
+                    ]
 
-                SettingToggleRow {
-                    announce: false
-                    title: specToggleDelegate.modelData.title
-                    desc: specToggleDelegate.modelData.desc
-                    checked: specToggleDelegate.isRuleEnabled
-                    onToggled: (val) => {
-                        root.toggleWindowRule(specToggleDelegate.modelData.ruleName, val);
+                    delegate: ColumnLayout {
+                        id: specToggleDelegate
+                        required property var modelData
+                        required property int index
+                        Layout.fillWidth: true
+                        spacing: 0
+
+                        readonly property var ruleObj: root.findRuleByName(modelData.ruleName)
+                        readonly property bool isRuleEnabled: ruleObj ? ruleObj.enabled : true
+
+                        RowDivider {
+                            visible: specToggleDelegate.index > 0
+                            sideMargin: 0
+                            alpha: 1.0
+                        }
+
+                        SettingToggleRow {
+                            announce: false
+                            title: specToggleDelegate.modelData.title
+                            checked: specToggleDelegate.isRuleEnabled
+                            onToggled: (val) => {
+                                root.toggleWindowRule(specToggleDelegate.modelData.ruleName, val);
+                            }
+                        }
                     }
                 }
             }

@@ -3,156 +3,189 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import "../Common"
 
-SectionCard {
+ColumnLayout {
     required property var root
-    title: "Curated Typography Pairings"
-    subtitle: "Applies both UI & Lock Screen fonts together"
+    Layout.fillWidth: true
+    spacing: 8
 
-    GridLayout {
+    RowLayout {
         Layout.fillWidth: true
-        columns: 2
-        rowSpacing: 8
-        columnSpacing: 8
+        Layout.leftMargin: 4
+        Layout.rightMargin: 4
+        spacing: 8
+        Text {
+            text: "Curated Typography Pairings"
+            font.family: Style.font
+            font.pixelSize: Style.px(13)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
+            color: Style.theme.textSecondary
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+        }
+        Item { Layout.fillWidth: true }
+    }
 
-        Repeater {
-            model: root.curatedPairings
-            delegate: Rectangle {
-                id: pairCard
-                required property var modelData
-                required property int index
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: innerCol.implicitHeight + 12 * 2
+        radius: 12
+        color: Style.theme.bgSurface
+        border.color: Style.theme.bgBorder
+        border.width: 1
 
-                readonly property string resolvedUi: root.resolveAvailableFont(modelData.uiCandidates, modelData.uiFallback)
-                readonly property string resolvedMono: root.resolveAvailableFont(modelData.monoCandidates, modelData.monoFallback)
-                readonly property bool isCurrentPair: root.theme.savedFontFamily === resolvedUi && root.theme.savedMonoFont === resolvedMono
-
+        ColumnLayout {
+            id: innerCol
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                margins: 12
+            }
+            spacing: 12
+            GridLayout {
                 Layout.fillWidth: true
-                Layout.preferredWidth: 1
-                implicitHeight: pairCardCol.implicitHeight + 20
-                radius: 10
-                color: isCurrentPair
-                    ? Style.withAlpha(root.theme.accentPrimary, 0.13)
-                    : (pairMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
-                border.color: isCurrentPair
-                    ? root.theme.accentPrimary
-                    : (pairMouse.containsMouse ? Style.withAlpha(root.theme.accentPrimary, 0.45) : root.theme.bgBorder)
-                border.width: isCurrentPair ? 1.5 : 1
+                columns: 2
+                rowSpacing: 8
+                columnSpacing: 8
 
-                Behavior on color { ColorAnimation { duration: 140 } }
-                Behavior on border.color { ColorAnimation { duration: 140 } }
+                Repeater {
+                    model: root.curatedPairings
+                    delegate: Rectangle {
+                        id: pairCard
+                        required property var modelData
+                        required property int index
 
-                ColumnLayout {
-                    id: pairCardCol
-                    anchors {
-                        left: parent.left
-                        right: parent.right
-                        top: parent.top
-                        margins: 10
-                    }
-                    spacing: 4
+                        readonly property string resolvedUi: root.resolveAvailableFont(modelData.uiCandidates, modelData.uiFallback)
+                        readonly property string resolvedMono: root.resolveAvailableFont(modelData.monoCandidates, modelData.monoFallback)
+                        readonly property bool isCurrentPair: root.theme.savedFontFamily === resolvedUi && root.theme.savedMonoFont === resolvedMono && root.theme.savedLockscreenFont === resolvedMono
 
-                    RowLayout {
                         Layout.fillWidth: true
-                        spacing: 6
+                        Layout.preferredWidth: 1
+                        implicitHeight: pairCardCol.implicitHeight + 20
+                        radius: 10
+                        color: isCurrentPair
+                            ? Style.withAlpha(root.theme.accentPrimary, 0.13)
+                            : (pairMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
+                        border.color: isCurrentPair
+                            ? root.theme.accentPrimary
+                            : (pairMouse.containsMouse ? Style.withAlpha(root.theme.accentPrimary, 0.45) : root.theme.bgBorder)
+                        border.width: isCurrentPair ? 1.5 : 1
+                        scale: pairMouse.pressed ? 0.98 : (pairMouse.containsMouse ? 1.01 : 1.0)
 
-                        Text {
-                            text: modelData.name
-                            font.family: pairCard.resolvedUi
-                            font.pixelSize: Style.px(13)
-                            font.bold: true
-                            color: root.theme.textPrimary
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                        Behavior on border.color { ColorAnimation { duration: 140 } }
+                        Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
-                        Rectangle {
-                            height: 16
-                            radius: 4
-                            implicitWidth: pairBadgeTxt.implicitWidth + 10
-                            color: pairCard.isCurrentPair
-                                ? root.theme.accentPrimary
-                                : Style.withAlpha(root.theme.accentPrimary, 0.14)
+                        ColumnLayout {
+                            id: pairCardCol
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                top: parent.top
+                                margins: 10
+                            }
+                            spacing: 6
 
-                            Text {
-                                id: pairBadgeTxt
-                                anchors.centerIn: parent
-                                text: pairCard.isCurrentPair ? "ACTIVE" : modelData.badge
-                                font.family: Style.font
-                                font.pixelSize: 9
-                                font.bold: true
-                                color: pairCard.isCurrentPair ? root.theme.bgBase : root.theme.accentPrimary
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Text {
+                                    text: modelData.name
+                                    font.family: pairCard.resolvedUi
+                                    font.pixelSize: Style.px(13)
+                                    font.bold: true
+                                    color: root.theme.textPrimary
+                                    elide: Text.ElideRight
+                                    Layout.fillWidth: true
+                                }
+
+                                Rectangle {
+                                    height: 16
+                                    radius: 4
+                                    implicitWidth: pairBadgeTxt.implicitWidth + 10
+                                    color: pairCard.isCurrentPair
+                                        ? root.theme.accentPrimary
+                                        : Style.withAlpha(root.theme.accentPrimary, 0.14)
+
+                                    Text {
+                                        id: pairBadgeTxt
+                                        anchors.centerIn: parent
+                                        text: pairCard.isCurrentPair ? "ACTIVE" : modelData.badge
+                                        font.family: Style.font
+                                        font.pixelSize: 9
+                                        font.bold: true
+                                        color: pairCard.isCurrentPair ? root.theme.bgBase : root.theme.accentPrimary
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 1
+                                    height: 20
+                                    radius: 5
+                                    color: root.theme.bgSurface
+                                    border.color: root.theme.bgBorder
+                                    border.width: 1
+
+                                    Text {
+                                        id: uiChipTxt
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 6
+                                        anchors.rightMargin: 6
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                        text: "UI: " + pairCard.resolvedUi
+                                        font.family: pairCard.resolvedUi
+                                        font.pixelSize: 10
+                                        color: root.theme.textPrimary
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredWidth: 1
+                                    height: 20
+                                    radius: 5
+                                    color: root.theme.bgSurface
+                                    border.color: root.theme.bgBorder
+                                    border.width: 1
+
+                                    Text {
+                                        id: monoChipTxt
+                                        anchors.fill: parent
+                                        anchors.leftMargin: 6
+                                        anchors.rightMargin: 6
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                        text: "Mono: " + pairCard.resolvedMono
+                                        font.family: pairCard.resolvedMono
+                                        font.pixelSize: 10
+                                        color: root.theme.accentCyan
+                                    }
+                                }
                             }
                         }
-                    }
 
-                    Text {
-                        text: modelData.desc
-                        font.family: Style.font
-                        font.pixelSize: Style.px(10)
-                        color: root.theme.textSecondary
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: 1
-                            height: 20
-                            radius: 5
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-
-                            Text {
-                                id: uiChipTxt
-                                anchors.fill: parent
-                                anchors.leftMargin: 6
-                                anchors.rightMargin: 6
-                                verticalAlignment: Text.AlignVCenter
-                                elide: Text.ElideRight
-                                text: "UI: " + pairCard.resolvedUi
-                                font.family: pairCard.resolvedUi
-                                font.pixelSize: 10
-                                color: root.theme.textPrimary
+                        MouseArea {
+                            id: pairMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                root.theme.setFontPairing(pairCard.resolvedUi, pairCard.resolvedMono);
+                                root.showToast("Applied '" + modelData.name + "' font pairing");
                             }
                         }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.preferredWidth: 1
-                            height: 20
-                            radius: 5
-                            color: root.theme.bgSurface
-                            border.color: root.theme.bgBorder
-                            border.width: 1
-
-                            Text {
-                                id: monoChipTxt
-                                anchors.fill: parent
-                                anchors.leftMargin: 6
-                                anchors.rightMargin: 6
-                                verticalAlignment: Text.AlignVCenter
-                                elide: Text.ElideRight
-                                text: "Mono: " + pairCard.resolvedMono
-                                font.family: pairCard.resolvedMono
-                                font.pixelSize: 10
-                                color: root.theme.accentCyan
-                            }
-                        }
-                    }
-                }
-
-                MouseArea {
-                    id: pairMouse
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.theme.setFontPairing(pairCard.resolvedUi, pairCard.resolvedMono);
-                        root.showToast("Applied '" + modelData.name + "' font pairing");
                     }
                 }
             }

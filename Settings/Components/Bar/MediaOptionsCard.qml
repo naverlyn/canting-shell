@@ -1,56 +1,99 @@
 import QtQuick
+import QtQuick.Layouts
 import "../../../bar"
 import "../Common"
+import ".."
 
-SectionCard {
+ColumnLayout {
     required property var root
     id: self
-    title: "Media Player Options"
-    contentMargins: 8
-    contentSpacing: 0
+    Layout.fillWidth: true
+    spacing: 8
 
-    PreferenceRow {
-        title: "Popup Layout Style"
-        subtitle: "Choose between full controls or compact inline bar popup"
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin: 4
+        Layout.rightMargin: 4
+        spacing: 8
+        Text {
+            text: "Media Player Options"
+            font.family: Style.font
+            font.pixelSize: Style.px(13)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
+            color: Style.theme.textSecondary
+            Layout.minimumWidth: implicitWidth
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+        }
+        Item { Layout.fillWidth: true }
+    }
 
-        SegmentedControl {
-            trackWidth: 200
-            options: [
-                { id: "full",    label: "Full" },
-                { id: "compact", label: "Compact" }
-            ]
-            currentId: BarConfig.mediaPopupStyle
-            onOptionSelected: (optionId, optionLabel) => {
-                BarConfig.mediaPopupStyle = optionId;
-                BarConfig.saveConfig();
-                self.root.showToast("Bar media popup: " + optionLabel);
+    Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: innerCol.implicitHeight + 8 * 2
+        radius: 12
+        color: Style.theme.bgSurface
+        border.color: Style.theme.bgBorder
+        border.width: 1
+
+        ColumnLayout {
+            id: innerCol
+            anchors {
+                left: parent.left
+                right: parent.right
+                top: parent.top
+                margins: 8
             }
-        }
-    }
+            spacing: 0
+            PreferenceRow {
+                title: "Popup Layout Style"
 
-    RowDivider {}
+                AppDropdown {
+                    theme: self.root.theme
+                    font: self.root.font
+                    Layout.preferredWidth: 380
+                    implicitWidth: 380
+                    menuWidth: 380
+                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                    options: [
+                        { desktop: "full",    name: "Full",    desc: "" },
+                        { desktop: "compact", name: "Compact", desc: "" }
+                    ]
+                    currentValue: BarConfig.mediaPopupStyle
+                    onSelected: (val, opt) => {
+                        BarConfig.mediaPopupStyle = val;
+                        BarConfig.saveConfig();
+                        self.root.showToast("Bar media popup: " + (opt ? opt.name : val));
+                    }
+                }
+            }
 
-    SettingToggleRow {
-        title: "Show Album Art"
-        desc: "Display cover artwork inside the bar media popup"
-        checked: BarConfig.mediaShowAlbumArt
-        onToggled: (val) => {
-            BarConfig.mediaShowAlbumArt = val;
-            BarConfig.saveConfig();
-            self.root.showToast(val ? "Media album art visible" : "Media album art hidden");
-        }
-    }
+            RowDivider {}
 
-    RowDivider {}
+            SettingToggleRow {
+                title: "Show Album Art"
+                checked: BarConfig.mediaShowAlbumArt
+                onToggled: (val) => {
+                    BarConfig.mediaShowAlbumArt = val;
+                    BarConfig.saveConfig();
+                    self.root.showToast(val ? "Media album art visible" : "Media album art hidden");
+                }
+            }
 
-    SettingToggleRow {
-        title: "Show Seekbar"
-        desc: "Display interactive track progress and timestamps"
-        checked: BarConfig.mediaShowSeekbar
-        onToggled: (val) => {
-            BarConfig.mediaShowSeekbar = val;
-            BarConfig.saveConfig();
-            self.root.showToast(val ? "Media seekbar visible" : "Media seekbar hidden");
+            RowDivider {}
+
+            SettingToggleRow {
+                title: "Show Seekbar"
+                checked: BarConfig.mediaShowSeekbar
+                onToggled: (val) => {
+                    BarConfig.mediaShowSeekbar = val;
+                    BarConfig.saveConfig();
+                    self.root.showToast(val ? "Media seekbar visible" : "Media seekbar hidden");
+                }
+            }
         }
     }
 }

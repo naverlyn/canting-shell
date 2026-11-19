@@ -30,6 +30,8 @@ ColumnLayout {
         border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
         border.width: 1
 
+        Behavior on implicitHeight { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+
         ColumnLayout {
             id: historyCol
             anchors {
@@ -88,6 +90,7 @@ ColumnLayout {
 
                         Behavior on color { ColorAnimation { duration: 140 } }
                         Behavior on border.color { ColorAnimation { duration: 140 } }
+                        Behavior on opacity { NumberAnimation { duration: 140 } }
 
                         HoverHandler { id: clearHover }
 

@@ -34,9 +34,4 @@ ColumnLayout {
     AnimationPresetsPanel {
         root: mainCol.root
     }
-
-    // 4. Active Compositor Curves & Rules Summary
-    AnimationActiveCurvesSummary {
-        root: mainCol.root
-    }
 }

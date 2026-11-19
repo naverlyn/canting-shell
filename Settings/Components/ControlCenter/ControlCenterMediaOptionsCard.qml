@@ -18,90 +18,118 @@ ColumnLayout {
     spacing: 20
 
     // Card 1: Media Player & Visualizer Options
-    SectionCard {
-        title: "Media Player & Visualizer Options"
-        subtitle: "Configure MPRIS playback card style, auto-hide behavior, and Cava spectrum"
-        contentMargins: 8
-        contentSpacing: 0
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-        // Row 1: MPRIS Player Style (Compact vs Full Banner)
-        Item {
+        RowLayout {
             Layout.fillWidth: true
-            height: 52
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 8
+            Text {
+                text: "Media Player & Visualizer Options"
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                Layout.minimumWidth: implicitWidth
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            }
+            Item { Layout.fillWidth: true }
+        }
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                spacing: 12
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: innerCol.implicitHeight + 8 * 2
+            radius: 12
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
+            border.width: 1
 
-                ColumnLayout {
-                    spacing: 2
-                    Layout.alignment: Qt.AlignVCenter
+            ColumnLayout {
+                id: innerCol
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 8
+                }
+                spacing: 0
+                // Row 1: MPRIS Player Style (Compact vs Full Banner)
+                Item {
                     Layout.fillWidth: true
+                    height: 44
 
-                    Text {
-                        text: "MPRIS Player Style"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: root.theme.textPrimary
-                    }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 12
 
-                    Text {
-                        text: "Auto switches to Compact when stacked with other modules in a panel, or Big when alone"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
+                        ColumnLayout {
+                            spacing: 2
+                            Layout.alignment: Qt.AlignVCenter
+
+                            Text {
+                                text: "MPRIS Player Style"
+                                font.family: root.font
+                                font.pixelSize: 13
+                                font.bold: true
+                                color: root.theme.textPrimary
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        AppDropdown {
+                            theme: root.theme
+                            font: root.font
+                            Layout.preferredWidth: 380
+                            implicitWidth: 380
+                            menuWidth: 380
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                            options: [
+                                { desktop: "auto",    name: "Auto",       desc: "" },
+                                { desktop: "compact", name: "Compact",    desc: "" },
+                                { desktop: "full",    name: "Big Banner", desc: "" }
+                            ]
+                            currentValue: ControlCenterConfig.mediaWidgetStyle || "auto"
+                            onSelected: (val, opt) => {
+                                ControlCenterConfig.setMediaWidgetStyle(val);
+                                root.showToast("MPRIS style set to " + (opt ? opt.name : val));
+                            }
+                        }
                     }
                 }
 
-                AppDropdown {
-                    theme: root.theme
-                    font: root.font
-                    width: 220
-                    implicitWidth: 220
-                    menuWidth: 220
-                    Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                    options: [
-                        { desktop: "auto",    name: "Auto",       desc: "" },
-                        { desktop: "compact", name: "Compact",    desc: "" },
-                        { desktop: "full",    name: "Big Banner", desc: "" }
-                    ]
-                    currentValue: ControlCenterConfig.mediaWidgetStyle || "auto"
-                    onSelected: (val, opt) => {
-                        ControlCenterConfig.setMediaWidgetStyle(val);
-                        root.showToast("MPRIS style set to " + (opt ? opt.name : val));
+                RowDivider {}
+
+                // Row 2: Auto-Hide Media Player
+                SettingToggleRow {
+                    title: "Auto-Hide Media Player"
+                    checked: ControlCenterConfig.mediaAutoHide
+                    onToggled: (val) => {
+                        ControlCenterConfig.setCardVisible("mediaAutoHide", val);
+                        root.showToast(val ? "Media auto-hide enabled" : "Media auto-hide disabled");
                     }
                 }
-            }
-        }
 
-        RowDivider {}
+                RowDivider {}
 
-        // Row 2: Auto-Hide Media Player
-        SettingToggleRow {
-            title: "Auto-Hide Media Player"
-            desc: "Automatically hide the media card when no MPRIS audio player is active"
-            checked: ControlCenterConfig.mediaAutoHide
-            onToggled: (val) => {
-                ControlCenterConfig.setCardVisible("mediaAutoHide", val);
-                root.showToast(val ? "Media auto-hide enabled" : "Media auto-hide disabled");
-            }
-        }
-
-        RowDivider {}
-
-        // Row 3: Show Cava Equalizer in Media Player
-        SettingToggleRow {
-            title: "Show Cava Equalizer in Media Player"
-            desc: "Display live audio spectrum visualizer inside the media player card"
-            checked: ControlCenterConfig.mediaShowCava
-            onToggled: (val) => {
-                ControlCenterConfig.setMediaShowCava(val);
-                root.showToast(val ? "Media Cava equalizer enabled" : "Media Cava equalizer disabled");
+                // Row 3: Show Cava Equalizer in Media Player
+                SettingToggleRow {
+                    title: "Show Cava Equalizer in Media Player"
+                    checked: ControlCenterConfig.mediaShowCava
+                    onToggled: (val) => {
+                        ControlCenterConfig.setMediaShowCava(val);
+                        root.showToast(val ? "Media Cava equalizer enabled" : "Media Cava equalizer disabled");
+                    }
+                }
             }
         }
     }
@@ -110,38 +138,6 @@ ColumnLayout {
     // Card 2: Polished Quick Launch & App Grid Configuration
     ControlCenterQuickLaunchCard {
         root: optionsCol.root
-    }
-
-    // Card 3: Visible Flyout Sections
-    SectionCard {
-        title: "Active Flyout Sections"
-        subtitle: "Quickly toggle visibility for each modular Control Center section"
-        contentMargins: 8
-        contentSpacing: 0
-
-        Repeater {
-            model: ControlCenterConfig.allCardDefs
-            delegate: ColumnLayout {
-                required property var modelData
-                required property int index
-                Layout.fillWidth: true
-                spacing: 0
-
-                RowDivider {
-                    visible: index > 0
-                }
-
-                SettingToggleRow {
-                    title: modelData.label
-                    desc: modelData.desc
-                    checked: ControlCenterConfig.isCardVisible(modelData.id)
-                    onToggled: (val) => {
-                        ControlCenterConfig.setCardVisible(modelData.id, val);
-                        root.showToast((val ? "Enabled " : "Hidden ") + modelData.label);
-                    }
-                }
-            }
-        }
     }
 }
 

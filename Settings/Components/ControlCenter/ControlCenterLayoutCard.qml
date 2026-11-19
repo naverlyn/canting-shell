@@ -34,194 +34,253 @@ ColumnLayout {
     visible: root.currentSubTab === 0
 
     // CARD 1: 3-PANEL MODULAR BUILDING BLOCKS
-    SectionCard {
-        title: "Control Center Panels & Building Blocks"
-        subtitle: "Stack any combination of modules into Panel 1, Panel 2, and Panel 3 · MPRIS automatically switches to Compact when stacked with other modules"
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-        // Top Controls Bar (matches BarLayoutCard.qml)
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 8
+            Text {
+                text: "Control Center Panels & Building Blocks"
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                Layout.minimumWidth: implicitWidth
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            }
+            Item { Layout.fillWidth: true }
+        }
+
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: 44
-            radius: 9
-            color: root.theme.bgBase
-            border.color: root.theme.bgBorder
+            implicitHeight: innerCol1.implicitHeight + 12 * 2
+            radius: 12
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
             border.width: 1
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                spacing: 10
-
-                Text {
-                    text: "Active Panels:"
-                    font.family: root.font
-                    font.pixelSize: 12
-                    font.bold: true
-                    color: root.theme.textPrimary
+            ColumnLayout {
+                id: innerCol1
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 12
                 }
+                spacing: 12
+                // Top Controls Bar (matches BarLayoutCard.qml)
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 44
+                    radius: 9
+                    color: root.theme.bgBase
+                    border.color: root.theme.bgBorder
+                    border.width: 1
 
-                RowLayout {
-                    spacing: 8
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 10
 
-                    Repeater {
-                        model: [1, 2, 3]
-                        delegate: Rectangle {
-                            id: pCountBtn
-                            required property int modelData
-                            readonly property bool isCurrent: ControlCenterConfig.panelCount === modelData
-                            implicitWidth: pCountTxt.implicitWidth + 18
-                            implicitHeight: 30
-                            width: implicitWidth
-                            height: implicitHeight
-                            color: "transparent"
-                            border.width: 0
-                            scale: pCountMouse.pressed ? 0.94 : (pCountHover.hovered ? 1.04 : 1.0)
-                            Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
+                        Text {
+                            text: "Active Panels:"
+                            font.family: root.font
+                            font.pixelSize: 12
+                            font.bold: true
+                            color: root.theme.textPrimary
+                        }
 
-                            HoverHandler { id: pCountHover }
+                        RowLayout {
+                            spacing: 8
 
-                            Rectangle {
-                                anchors.bottom: parent.bottom
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                height: 2
-                                radius: 1
-                                width: pCountBtn.isCurrent ? parent.width - 6 : (pCountHover.hovered ? parent.width * 0.5 : 0)
-                                opacity: pCountBtn.isCurrent ? 1.0 : (pCountHover.hovered ? 0.5 : 0.0)
-                                color: pCountBtn.isCurrent ? root.theme.accentPrimary : root.theme.textSecondary
+                            Repeater {
+                                model: [1, 2, 3]
+                                delegate: Rectangle {
+                                    id: pCountBtn
+                                    required property int modelData
+                                    readonly property bool isCurrent: ControlCenterConfig.panelCount === modelData
+                                    implicitWidth: pCountTxt.implicitWidth + 18
+                                    implicitHeight: 30
+                                    width: implicitWidth
+                                    height: implicitHeight
+                                    color: "transparent"
+                                    border.width: 0
+                                    scale: pCountMouse.pressed ? 0.94 : (pCountHover.hovered ? 1.04 : 1.0)
+                                    Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
 
-                                Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
-                                Behavior on opacity { NumberAnimation { duration: 140 } }
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                            }
+                                    HoverHandler { id: pCountHover }
 
-                            Text {
-                                id: pCountTxt
-                                anchors.centerIn: parent
-                                text: pCountBtn.modelData + (pCountBtn.modelData === 1 ? " Panel" : " Panels")
-                                font.family: root.font
-                                font.pixelSize: 11
-                                font.bold: pCountBtn.isCurrent
-                                color: pCountBtn.isCurrent
-                                    ? root.theme.accentPrimary
-                                    : (pCountHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                            }
+                                    Rectangle {
+                                        anchors.bottom: parent.bottom
+                                        anchors.horizontalCenter: parent.horizontalCenter
+                                        height: 2
+                                        radius: 1
+                                        width: pCountBtn.isCurrent ? parent.width - 6 : (pCountHover.hovered ? parent.width * 0.5 : 0)
+                                        opacity: pCountBtn.isCurrent ? 1.0 : (pCountHover.hovered ? 0.5 : 0.0)
+                                        color: pCountBtn.isCurrent ? root.theme.accentPrimary : root.theme.textSecondary
 
-                            MouseArea {
-                                id: pCountMouse
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    ControlCenterConfig.setPanelCount(pCountBtn.modelData);
-                                    root.showToast("Control Center set to " + pCountBtn.modelData + (pCountBtn.modelData === 1 ? " Panel" : " Panels"));
+                                        Behavior on width { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                                        Behavior on opacity { NumberAnimation { duration: 140 } }
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                    }
+
+                                    Text {
+                                        id: pCountTxt
+                                        anchors.centerIn: parent
+                                        text: pCountBtn.modelData + (pCountBtn.modelData === 1 ? " Panel" : " Panels")
+                                        font.family: root.font
+                                        font.pixelSize: 11
+                                        font.bold: pCountBtn.isCurrent
+                                        color: pCountBtn.isCurrent
+                                            ? root.theme.accentPrimary
+                                            : (pCountHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+                                    }
+
+                                    MouseArea {
+                                        id: pCountMouse
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            ControlCenterConfig.setPanelCount(pCountBtn.modelData);
+                                            root.showToast("Control Center set to " + pCountBtn.modelData + (pCountBtn.modelData === 1 ? " Panel" : " Panels"));
+                                        }
+                                    }
                                 }
                             }
                         }
+
+                        Item { Layout.fillWidth: true }
                     }
                 }
 
-                Item { Layout.fillWidth: true }
+                // 3-Column Modular Panels Grid (Panel 1, Panel 2, Panel 3)
+                GridLayout {
+                    id: blockBuilderLayout
+                    columns: 3
+                    columnSpacing: 12
+                    rowSpacing: 12
+                    Layout.fillWidth: true
 
-                ActionButton {
-                    iconText: "󰎁"
-                    label: "MPRIS: " + ControlCenterConfig.mediaEffectiveBadge
-                    btnHeight: 28
-                    onClicked: {
-                        ControlCenterConfig.cycleMediaWidgetStyle();
-                        root.showToast("Media Player mode: " + ControlCenterConfig.mediaEffectiveBadge);
+                    ControlCenterModulePanel {
+                        id: p1Card
+                        hostRoot: self.root
+                        panelIndex: 0
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                    }
+
+                    ControlCenterModulePanel {
+                        id: p2Card
+                        hostRoot: self.root
+                        panelIndex: 1
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                    }
+
+                    ControlCenterModulePanel {
+                        id: p3Card
+                        hostRoot: self.root
+                        panelIndex: 2
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
                     }
                 }
 
-                ActionButton {
-                    iconText: ControlCenterConfig.panelLayout === "horizontal" ? "󰝙" : "󰝘"
-                    label: ControlCenterConfig.panelLayout === "horizontal" ? "Horizontal" : "Vertical"
-                    btnHeight: 28
-                    onClicked: {
-                        const nextLayout = ControlCenterConfig.panelLayout === "horizontal" ? "vertical" : "horizontal";
-                        ControlCenterConfig.setPanelLayout(nextLayout);
-                        root.showToast("Flyout layout set to " + (nextLayout === "horizontal" ? "Horizontal" : "Vertical"));
-                    }
+                // Available Building-Block Modules Pool Card
+                ControlCenterModulesPool {
+                    id: availPoolCard
+                    hostRoot: self.root
                 }
             }
-        }
-
-        // 3-Column Modular Panels Grid (Panel 1, Panel 2, Panel 3)
-        GridLayout {
-            id: blockBuilderLayout
-            columns: 3
-            columnSpacing: 12
-            rowSpacing: 12
-            Layout.fillWidth: true
-
-            ControlCenterModulePanel {
-                id: p1Card
-                hostRoot: self.root
-                panelIndex: 0
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-            }
-
-            ControlCenterModulePanel {
-                id: p2Card
-                hostRoot: self.root
-                panelIndex: 1
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-            }
-
-            ControlCenterModulePanel {
-                id: p3Card
-                hostRoot: self.root
-                panelIndex: 2
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-            }
-        }
-
-        // Available Building-Block Modules Pool Card
-        ControlCenterModulesPool {
-            id: availPoolCard
-            hostRoot: self.root
         }
     }
 
     // CARD 2: QUICK SETTINGS & 2x2 CONNECTIVITY TILES
-    SectionCard {
-        title: "Quick Settings & Connectivity Tiles"
-        subtitle: "Configure which toggles appear in Connectivity (2x2), Quick Tiles, and Quick Tiles 2"
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-        GridLayout {
-            columns: 3
-            columnSpacing: 12
-            rowSpacing: 12
+        RowLayout {
             Layout.fillWidth: true
-            ControlCenterConnectivityPanel {
-                id: groupPanelCard
-                hostRoot: self.root
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 8
+            Text {
+                text: "Quick Settings & Connectivity Tiles"
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                Layout.minimumWidth: implicitWidth
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
             }
-
-            ControlCenterQuickTilesPanel {
-                id: standalonePanelCard
-                hostRoot: self.root
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-            }
-
-            ControlCenterQuickTiles2Panel {
-                id: secondaryPanelCard
-                hostRoot: self.root
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-            }
+            Item { Layout.fillWidth: true }
         }
 
-        // Available Quick Tiles Pool Card
-        ControlCenterTilesPool {
-            id: availTilesPoolCard
-            hostRoot: self.root
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: innerCol2.implicitHeight + 12 * 2
+            radius: 12
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
+            border.width: 1
+
+            ColumnLayout {
+                id: innerCol2
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 12
+                }
+                spacing: 12
+                GridLayout {
+                    columns: 3
+                    columnSpacing: 12
+                    rowSpacing: 12
+                    Layout.fillWidth: true
+                    ControlCenterConnectivityPanel {
+                        id: groupPanelCard
+                        hostRoot: self.root
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                    }
+
+                    ControlCenterQuickTilesPanel {
+                        id: standalonePanelCard
+                        hostRoot: self.root
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                    }
+
+                    ControlCenterQuickTiles2Panel {
+                        id: secondaryPanelCard
+                        hostRoot: self.root
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                    }
+                }
+
+                // Available Quick Tiles Pool Card
+                ControlCenterTilesPool {
+                    id: availTilesPoolCard
+                    hostRoot: self.root
+                }
+            }
         }
     }
 }

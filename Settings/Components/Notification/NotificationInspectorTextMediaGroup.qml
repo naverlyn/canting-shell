@@ -23,7 +23,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Title Notification Block"
-        desc: "Display primary notification summary headline (e.g. 'Screenshot:')"
         checked: NotificationService.isBlockVisible("title")
         onToggled: (val) => NotificationService.setBlockVisible("title", val)
     }
@@ -32,7 +31,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Title Font Size"
-        desc: "Pixel size of the notification summary headline"
         value: NotificationService.titleFontSize
         minVal: 11
         maxVal: 22
@@ -51,7 +49,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Bold Title Typography"
-        desc: "Render the notification title in bold weight for visual hierarchy"
         checked: NotificationService.titleBold
         onToggled: (val) => NotificationService.setTitleBold(val)
     }
@@ -60,7 +57,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Maximum Title Lines"
-        desc: "Number of lines before truncating long titles with an ellipsis"
         value: NotificationService.titleMaxLines
         minVal: 1
         maxVal: 4
@@ -79,7 +75,7 @@ ColumnLayout {
     // Title Alignment
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -87,22 +83,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Title Text Alignment"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Title Text Alignment"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Horizontal alignment of the notification summary text"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -127,7 +114,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Body Message Block"
-        desc: "Display detailed notification body text (e.g. 'Captured by Swappy')"
         checked: NotificationService.isBlockVisible("body")
         onToggled: (val) => NotificationService.setBlockVisible("body", val)
     }
@@ -136,7 +122,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Body Font Size"
-        desc: "Typography size for the notification body message"
         value: NotificationService.bodyFontSize
         minVal: 10
         maxVal: 18
@@ -155,7 +140,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Maximum Body Lines"
-        desc: "Maximum wrapped lines shown before truncating long messages"
         value: NotificationService.bodyMaxLines
         minVal: 1
         maxVal: 8
@@ -174,7 +158,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -182,22 +166,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Body Text Alignment"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Body Text Alignment"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Horizontal alignment of the notification body paragraph"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -222,7 +197,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Preview Image Block"
-        desc: "Display screenshot thumbnail, album art, or media preview image"
         checked: NotificationService.isBlockVisible("image")
         onToggled: (val) => NotificationService.setBlockVisible("image", val)
     }
@@ -231,7 +205,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -239,22 +213,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Preview Image Position"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Preview Image Position"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Place thumbnail beside the body text or expand as a full-width banner"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -274,7 +239,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Thumbnail / Banner Size"
-        desc: "Size of the thumbnail square (or height when in Full Banner mode)"
         value: NotificationService.imageSize
         minVal: 28
         maxVal: 110
@@ -292,8 +256,7 @@ ColumnLayout {
     RowDivider {}
 
     SettingSliderRow {
-        title: "Image Corner Radius"
-        desc: "Rounding applied to the preview thumbnail corners"
+        title: "Border Radius"
         value: NotificationService.imageRadius
         minVal: 0
         maxVal: 48
@@ -312,9 +275,16 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Image Background"
-        desc: "Display a soft tinted fill inside the image container"
         checked: NotificationService.imageShowBg
         onToggled: (val) => NotificationService.setImageShowBg(val)
+    }
+
+    RowDivider {}
+
+    SettingToggleRow {
+        title: "Show Image Border"
+        checked: NotificationService.imageShowRing
+        onToggled: (val) => NotificationService.setImageShowRing(val)
     }
 }
 

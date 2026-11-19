@@ -43,7 +43,7 @@ ColumnLayout {
             /* Row 1: Test OSD */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -54,7 +54,6 @@ ColumnLayout {
                     ColumnLayout {
                         spacing: 2
                         Layout.alignment: Qt.AlignVCenter
-                        Layout.fillWidth: true
 
                         Text {
                             text: "Test Overlay"
@@ -63,16 +62,9 @@ ColumnLayout {
                             font.bold: true
                             color: root.theme.textPrimary
                         }
-
-                        Text {
-                            text: "Trigger on-screen display overlay to verify placement, shape, and appearance"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
                     }
+
+                    Item { Layout.fillWidth: true }
 
                     Rectangle {
                         id: testBtn
@@ -119,7 +111,7 @@ ColumnLayout {
             /* Row 2: Reset Defaults */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -130,7 +122,6 @@ ColumnLayout {
                     ColumnLayout {
                         spacing: 2
                         Layout.alignment: Qt.AlignVCenter
-                        Layout.fillWidth: true
 
                         Text {
                             text: "Reset to Defaults"
@@ -139,16 +130,9 @@ ColumnLayout {
                             font.bold: true
                             color: root.theme.textPrimary
                         }
-
-                        Text {
-                            text: "Restore right edge placement, adaptive orientation, default margins, and 1.5s timeout"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
                     }
+
+                    Item { Layout.fillWidth: true }
 
                     Rectangle {
                         id: resetBtn

@@ -83,6 +83,7 @@ Singleton {
     property int imageSize: 44
     property int imageRadius: 10
     property bool imageShowBg: true
+    property bool imageShowRing: true
 
     // Action Buttons Block ("buttons")
     property string buttonStyle: "pill" // "pill" | "fill" | "ghost"
@@ -387,6 +388,7 @@ Singleton {
     function setImageSize(val) { ConfigUtils.setIntProp(root, "imageSize", val); }
     function setImageRadius(val) { ConfigUtils.setIntProp(root, "imageRadius", val); }
     function setImageShowBg(val) { ConfigUtils.setBoolProp(root, "imageShowBg", val, false); }
+    function setImageShowRing(val) { ConfigUtils.setBoolProp(root, "imageShowRing", val, false); }
 
     function setButtonStyle(style) { ConfigUtils.setEnumProp(root, "buttonStyle", style); }
     function setButtonHeight(val) { ConfigUtils.setIntProp(root, "buttonHeight", val); }

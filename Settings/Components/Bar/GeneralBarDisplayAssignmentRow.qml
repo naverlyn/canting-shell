@@ -13,7 +13,7 @@ Item {
     id: rowSelf
     visible: root.hasMultipleMonitors
     Layout.fillWidth: true
-    height: 52
+    height: 40
 
     RowLayout {
         anchors.fill: parent
@@ -32,13 +32,6 @@ Item {
                 font.bold: true
                 color: root.theme.textPrimary
             }
-
-            Text {
-                text: "Show on all connected monitors, or only primary / secondary display"
-                font.family: root.font
-                font.pixelSize: 11
-                color: root.theme.textSecondary
-            }
         }
 
         Item { Layout.fillWidth: true }
@@ -46,9 +39,9 @@ Item {
         AppDropdown {
             theme: root.theme
             font: root.font
-            width: 200
-            implicitWidth: 200
-            menuWidth: 200
+            Layout.preferredWidth: 380
+            implicitWidth: 380
+            menuWidth: 380
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             options: root.hasMultipleMonitors
                 ? [

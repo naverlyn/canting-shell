@@ -14,191 +14,336 @@ ColumnLayout {
     visible: root.currentSubTab === 1
 
     // History Capacity Card
-    SectionCard {
-        title: "History Capacity & Retention"
-        subtitle: "Control how many clipboard items are stored in memory and displayed"
-        contentMargins: 8
-        contentSpacing: 0
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-        SettingSliderRow {
-            title: "Max History Items"
-            desc: "Maximum number of past clips loaded into the Quickshell clipboard UI"
-            value: ClipboardConfig.maxItems
-            minVal: 25
-            maxVal: 500
-            step: 25
-            unit: " items"
-            presets: [
-                { label: "50", val: 50 },
-                { label: "100 (Default)", val: 100 },
-                { label: "250", val: 250 },
-                { label: "500", val: 500 }
-            ]
-            onValueModified: (val) => ClipboardConfig.setMaxItems(val)
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 8
+            Text {
+                text: "History Capacity & Retention"
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                Layout.minimumWidth: implicitWidth
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            }
+            Item { Layout.fillWidth: true }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: innerCol1.implicitHeight + 8 * 2
+            radius: 12
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
+            border.width: 1
+
+            ColumnLayout {
+                id: innerCol1
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 8
+                }
+                spacing: 0
+                SettingSliderRow {
+                    title: "Max History Items"
+                    value: ClipboardConfig.maxItems
+                    minVal: 25
+                    maxVal: 500
+                    step: 25
+                    unit: " items"
+                    presets: [
+                        { label: "50", val: 50 },
+                        { label: "100 (Default)", val: 100 },
+                        { label: "250", val: 250 },
+                        { label: "500", val: 500 }
+                    ]
+                    onValueModified: (val) => ClipboardConfig.setMaxItems(val)
+                }
+            }
         }
     }
 
     // Window & Selection Behavior Card
-    SectionCard {
-        title: "Window & Copying Behavior"
-        subtitle: "Preferences for modal dismissal and search state retention"
-        contentMargins: 8
-        contentSpacing: 0
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-        SettingToggleRow {
-            title: "Close Popup on Copy"
-            desc: "Automatically close the clipboard window when an item is copied"
-            checked: ClipboardConfig.closeOnCopy
-            onToggled: (val) => ClipboardConfig.setCloseOnCopy(val)
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 8
+            Text {
+                text: "Window & Copying Behavior"
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                Layout.minimumWidth: implicitWidth
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            }
+            Item { Layout.fillWidth: true }
         }
 
-        RowDivider {}
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: innerCol2.implicitHeight + 8 * 2
+            radius: 12
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
+            border.width: 1
 
-        SettingToggleRow {
-            title: "Clear Search Query on Close"
-            desc: "Reset the search bar and filter text whenever the clipboard modal is dismissed"
-            checked: ClipboardConfig.clearSearchOnClose
-            onToggled: (val) => ClipboardConfig.setClearSearchOnClose(val)
+            ColumnLayout {
+                id: innerCol2
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 8
+                }
+                spacing: 0
+                SettingToggleRow {
+                    title: "Close Popup on Copy"
+                    checked: ClipboardConfig.closeOnCopy
+                    onToggled: (val) => ClipboardConfig.setCloseOnCopy(val)
+                }
+
+                RowDivider {}
+
+                SettingToggleRow {
+                    title: "Clear Search Query on Close"
+                    checked: ClipboardConfig.clearSearchOnClose
+                    onToggled: (val) => ClipboardConfig.setClearSearchOnClose(val)
+                }
+            }
         }
     }
 
     // Content Recognition & Badges Card
-    SectionCard {
-        title: "Content Detection & Visual Thumbnails"
-        subtitle: "Automatic categorization for media, code, web links, and hex color values"
-        contentMargins: 8
-        contentSpacing: 0
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-        SettingToggleRow {
-            title: "Generate Image Preview Thumbnails"
-            desc: "Decode clipboard binary PNG/JPEG images into instant visual preview thumbnails"
-            checked: ClipboardConfig.generateThumbnails
-            onToggled: (val) => ClipboardConfig.setGenerateThumbnails(val)
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 8
+            Text {
+                text: "Content Detection & Visual Thumbnails"
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                Layout.minimumWidth: implicitWidth
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+            }
+            Item { Layout.fillWidth: true }
         }
 
-        RowDivider {}
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: innerCol3.implicitHeight + 8 * 2
+            radius: 12
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
+            border.width: 1
 
-        SettingToggleRow {
-            title: "Detect Hex Color Codes"
-            desc: "Recognize color strings (e.g. #7aa2f7) and display live color swatch badges"
-            checked: ClipboardConfig.detectColors
-            onToggled: (val) => ClipboardConfig.setDetectColors(val)
-        }
+            ColumnLayout {
+                id: innerCol3
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 8
+                }
+                spacing: 0
+                SettingToggleRow {
+                    title: "Generate Image Preview Thumbnails"
+                    checked: ClipboardConfig.generateThumbnails
+                    onToggled: (val) => ClipboardConfig.setGenerateThumbnails(val)
+                }
 
-        RowDivider {}
+                RowDivider {}
 
-        SettingToggleRow {
-            title: "Detect Web Links & URLs"
-            desc: "Identify http/https URLs and show globe link indicators with open actions"
-            checked: ClipboardConfig.detectLinks
-            onToggled: (val) => ClipboardConfig.setDetectLinks(val)
-        }
+                SettingToggleRow {
+                    title: "Detect Hex Color Codes"
+                    checked: ClipboardConfig.detectColors
+                    onToggled: (val) => ClipboardConfig.setDetectColors(val)
+                }
 
-        RowDivider {}
+                RowDivider {}
 
-        SettingToggleRow {
-            title: "Detect Code Snippets"
-            desc: "Inspect snippet contents for syntax keywords (functions, imports, classes)"
-            checked: ClipboardConfig.detectCode
-            onToggled: (val) => ClipboardConfig.setDetectCode(val)
+                SettingToggleRow {
+                    title: "Detect Web Links & URLs"
+                    checked: ClipboardConfig.detectLinks
+                    onToggled: (val) => ClipboardConfig.setDetectLinks(val)
+                }
+
+                RowDivider {}
+
+                SettingToggleRow {
+                    title: "Detect Code Snippets"
+                    checked: ClipboardConfig.detectCode
+                    onToggled: (val) => ClipboardConfig.setDetectCode(val)
+                }
+            }
         }
     }
 
     // Cache & Danger Actions Card
-    SectionCard {
-        title: "Actions & Cache Management"
-        subtitle: "Wipe recorded clipboard items or restore default preferences"
-        contentMargins: 8
-        contentSpacing: 0
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: 8
 
-        Item {
+        RowLayout {
             Layout.fillWidth: true
-            height: 52
-
-            Column {
-                anchors.left: parent.left
-                anchors.leftMargin: 12
-                anchors.right: wipeBtn.left
-                anchors.rightMargin: 16
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
-
-                Text {
-                    width: parent.width
-                    text: "Wipe Clipboard History"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.accentRed
-                    elide: Text.ElideRight
-                }
-
-                Text {
-                    width: parent.width
-                    text: "Permanently delete all stored clips in ~/.cache/cliphist/db and thumbnail cache"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textMuted
-                    elide: Text.ElideRight
-                }
+            Layout.leftMargin: 4
+            Layout.rightMargin: 4
+            spacing: 8
+            Text {
+                text: "Actions & Cache Management"
+                font.family: Style.font
+                font.pixelSize: Style.px(13)
+                font.bold: Style.boldHeadings
+                font.letterSpacing: Style.letterSpacing
+                font.hintingPreference: Style.fontHintingEnum
+                antialiasing: Style.fontAntialiasing
+                renderType: Style.fontRenderTypeEnum
+                color: Style.theme.textSecondary
+                Layout.minimumWidth: implicitWidth
+                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
             }
-
-            ActionButton {
-                id: wipeBtn
-                anchors.right: parent.right
-                anchors.rightMargin: 12
-                anchors.verticalCenter: parent.verticalCenter
-                label: "Wipe History"
-                danger: true
-                btnHeight: 30
-                onClicked: root.wipeHistory()
-            }
+            Item { Layout.fillWidth: true }
         }
 
-        RowDivider {}
-
-        Item {
+        Rectangle {
             Layout.fillWidth: true
-            height: 52
+            implicitHeight: innerCol4.implicitHeight + 8 * 2
+            radius: 12
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
+            border.width: 1
 
-            Column {
-                anchors.left: parent.left
-                anchors.leftMargin: 12
-                anchors.right: resetDefaultsBtn.left
-                anchors.rightMargin: 16
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
+            ColumnLayout {
+                id: innerCol4
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 8
+                }
+                spacing: 0
+                Item {
+                    Layout.fillWidth: true
+                    height: 52
 
-                Text {
-                    width: parent.width
-                    text: "Reset All Clipboard Settings"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                    elide: Text.ElideRight
+                    Column {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 12
+                        anchors.right: wipeBtn.left
+                        anchors.rightMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+
+                        Text {
+                            width: parent.width
+                            text: "Wipe Clipboard History"
+                            font.family: root.font
+                            font.pixelSize: 13
+                            font.bold: true
+                            color: root.theme.accentRed
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            width: parent.width
+                            text: "Permanently delete all stored clips in ~/.cache/cliphist/db and thumbnail cache"
+                            font.family: root.font
+                            font.pixelSize: 11
+                            color: root.theme.textMuted
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    ActionButton {
+                        id: wipeBtn
+                        anchors.right: parent.right
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        label: "Wipe History"
+                        danger: true
+                        btnHeight: 30
+                        onClicked: root.wipeHistory()
+                    }
                 }
 
-                Text {
-                    width: parent.width
-                    text: "Revert dimensions, category filters, and detection toggles to default values"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textMuted
-                    elide: Text.ElideRight
-                }
-            }
+                RowDivider {}
 
-            ActionButton {
-                id: resetDefaultsBtn
-                anchors.right: parent.right
-                anchors.rightMargin: 12
-                anchors.verticalCenter: parent.verticalCenter
-                label: "Reset Defaults"
-                btnHeight: 30
-                onClicked: {
-                    ClipboardConfig.resetDefaults();
-                    root.showToast("Clipboard preferences reset to defaults");
+                Item {
+                    Layout.fillWidth: true
+                    height: 52
+
+                    Column {
+                        anchors.left: parent.left
+                        anchors.leftMargin: 12
+                        anchors.right: resetDefaultsBtn.left
+                        anchors.rightMargin: 16
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 2
+
+                        Text {
+                            width: parent.width
+                            text: "Reset All Clipboard Settings"
+                            font.family: root.font
+                            font.pixelSize: 13
+                            font.bold: true
+                            color: root.theme.textPrimary
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            width: parent.width
+                            text: "Revert dimensions, category filters, and detection toggles to default values"
+                            font.family: root.font
+                            font.pixelSize: 11
+                            color: root.theme.textMuted
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    ActionButton {
+                        id: resetDefaultsBtn
+                        anchors.right: parent.right
+                        anchors.rightMargin: 12
+                        anchors.verticalCenter: parent.verticalCenter
+                        label: "Reset Defaults"
+                        btnHeight: 30
+                        onClicked: {
+                            ClipboardConfig.resetDefaults();
+                            root.showToast("Clipboard preferences reset to defaults");
+                        }
+                    }
                 }
             }
         }

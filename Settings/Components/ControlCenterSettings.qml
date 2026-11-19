@@ -254,12 +254,6 @@ Item {
                         font.bold: true
                         color: root.theme.textPrimary
                     }
-                    Text {
-                        text: "Configure modular flyout sections, quick setting tiles, and appearance"
-                        font.family: root.font
-                        font.pixelSize: 12
-                        color: root.theme.textSecondary
-                    }
                 }
 
                 Item { Layout.fillWidth: true }

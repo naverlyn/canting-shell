@@ -44,7 +44,7 @@ ColumnLayout {
             /* Repeat Delay Row */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 40
 
                 RowLayout {
                     anchors.fill: parent
@@ -165,7 +165,7 @@ ColumnLayout {
             /* Repeat Speed / Rate Row */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 40
 
                 RowLayout {
                     anchors.fill: parent

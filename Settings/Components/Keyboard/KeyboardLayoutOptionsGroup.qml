@@ -42,7 +42,7 @@ ColumnLayout {
             /* Current Keyboard Layout Row */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 40
 
                 RowLayout {
                     anchors.fill: parent
@@ -60,13 +60,6 @@ ColumnLayout {
                             font.pixelSize: 13
                             font.bold: true
                             color: root.theme.textPrimary
-                        }
-
-                        Text {
-                            text: "Active Hyprland compositor layout"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
                         }
                     }
 
@@ -106,7 +99,7 @@ ColumnLayout {
             /* NumLock by Default Row */
             Item {
                 Layout.fillWidth: true
-                height: 52
+                height: 40
 
                 RowLayout {
                     anchors.fill: parent
@@ -124,13 +117,6 @@ ColumnLayout {
                             font.pixelSize: 13
                             font.bold: true
                             color: root.theme.textPrimary
-                        }
-
-                        Text {
-                            text: "Enable numeric keypad lock on login"
-                            font.family: root.font
-                            font.pixelSize: 11
-                            color: root.theme.textSecondary
                         }
                     }
 

@@ -46,7 +46,7 @@ ColumnLayout {
             /* Row 1: Brightness Slider (Text-only, full-width slider track) */
             Item {
                 Layout.fillWidth: true
-                height: 56
+                height: (root.hasBacklightDevice && root.brightnessDevice !== "") ? 52 : 44
 
                 RowLayout {
                     anchors.fill: parent
@@ -68,9 +68,8 @@ ColumnLayout {
                         }
 
                         Text {
-                            text: root.hasBacklightDevice && root.brightnessDevice !== ""
-                                ? ("Backlight · " + root.brightnessDevice)
-                                : "Display backlight level"
+                            visible: root.hasBacklightDevice && root.brightnessDevice !== ""
+                            text: "Backlight · " + root.brightnessDevice
                             font.family: root.font
                             font.pixelSize: 11
                             color: root.theme.textSecondary

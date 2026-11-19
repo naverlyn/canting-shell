@@ -23,7 +23,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Action Buttons Block"
-        desc: "Display interactive action buttons (e.g. Open, Delete, Reply)"
         checked: NotificationService.isBlockVisible("buttons")
         onToggled: (val) => NotificationService.setBlockVisible("buttons", val)
     }
@@ -32,7 +31,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -40,22 +39,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Button Visual Style"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Button Visual Style"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Choose between compact pills, equal full-width buttons, or minimal ghost buttons"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -75,7 +65,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Button Height"
-        desc: "Vertical height of each notification action button"
         value: NotificationService.buttonHeight
         minVal: 22
         maxVal: 40
@@ -94,7 +83,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Button Corner Radius"
-        desc: "Rounding of action buttons (14px = capsule pill)"
         value: NotificationService.buttonRadius
         minVal: 0
         maxVal: 20
@@ -113,7 +101,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -121,22 +109,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Button Row Alignment"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Button Row Alignment"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Horizontal alignment of compact pill and ghost buttons"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -162,7 +141,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Show Timeout Progress Bar Block"
-        desc: "Display animated auto-dismiss countdown bar on notification toasts"
         checked: NotificationService.isBlockVisible("progressBar")
         onToggled: (val) => NotificationService.setBlockVisible("progressBar", val)
     }
@@ -171,7 +149,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Auto-Dismiss Duration"
-        desc: "Default time before notification toasts automatically dismiss"
         value: NotificationService.defaultTimeout
         minVal: 2000
         maxVal: 15000
@@ -190,7 +167,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Progress Bar Thickness"
-        desc: "Height of the countdown progress track in pixels"
         value: NotificationService.progressHeight
         minVal: 2
         maxVal: 8
@@ -209,7 +185,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Pause Countdown on Hover"
-        desc: "Freeze auto-dismiss timer while mouse cursor hovers over the toast"
         checked: NotificationService.pauseOnHover
         onToggled: (val) => NotificationService.setPauseOnHover(val)
     }
@@ -218,7 +193,6 @@ ColumnLayout {
 
     SettingToggleRow {
         title: "Auto-Dismiss Critical Notifications"
-        desc: "Show countdown bar and auto-dismiss Critical urgency alerts"
         checked: NotificationService.progressShowCritical
         onToggled: (val) => NotificationService.setProgressShowCritical(val)
     }
@@ -232,7 +206,7 @@ ColumnLayout {
 
     Item {
         Layout.fillWidth: true
-        height: 52
+        height: 44
 
         RowLayout {
             anchors.fill: parent
@@ -240,22 +214,13 @@ ColumnLayout {
             anchors.rightMargin: 12
             spacing: 12
 
-            ColumnLayout {
-                spacing: 2
+            Text {
+                text: "Urgency Accent Strip"
+                font.family: root.font
+                font.pixelSize: 13
+                font.bold: true
+                color: root.theme.textPrimary
                 Layout.fillWidth: true
-                Text {
-                    text: "Urgency Accent Strip"
-                    font.family: root.font
-                    font.pixelSize: 13
-                    font.bold: true
-                    color: root.theme.textPrimary
-                }
-                Text {
-                    text: "Position of the colored urgency indicator strip along the card edge"
-                    font.family: root.font
-                    font.pixelSize: 11
-                    color: root.theme.textSecondary
-                }
             }
 
             SegmentedControl {
@@ -276,7 +241,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Accent Strip Thickness"
-        desc: "Width of the urgency indicator bar in pixels"
         value: NotificationService.accentStripWidth
         minVal: 2
         maxVal: 8
@@ -295,7 +259,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Toast Card Width"
-        desc: "Horizontal width of desktop notification popups in pixels"
         value: NotificationService.toastWidth
         minVal: 280
         maxVal: 500
@@ -314,7 +277,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Card Corner Radius"
-        desc: "Outer rounding of the notification toast popup card"
         value: NotificationService.cardRadius
         minVal: 0
         maxVal: 28
@@ -333,7 +295,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Card Inner Padding"
-        desc: "Internal padding around notification building blocks"
         value: NotificationService.cardPadding
         minVal: 8
         maxVal: 24
@@ -352,7 +313,6 @@ ColumnLayout {
 
     SettingSliderRow {
         title: "Card Opacity"
-        desc: "Background opacity of notification toast cards"
         value: Math.round(NotificationService.cardOpacity * 100)
         minVal: 50
         maxVal: 100

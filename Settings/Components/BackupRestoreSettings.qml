@@ -295,16 +295,9 @@ Item {
                         font.bold: true
                         color: root.theme.textPrimary
                     }
-
-                    Text {
-                        text: "Save snapshots of your setup, restore previous states, or reset individual components."
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textMuted
-                        Layout.fillWidth: true
-                        wrapMode: Text.WordWrap
-                    }
                 }
+
+                Item { Layout.fillWidth: true }
 
                 RowLayout {
                     spacing: 8

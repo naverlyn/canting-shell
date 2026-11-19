@@ -12,7 +12,7 @@ import ".."
 Item {
     required property var root
     Layout.fillWidth: true
-    height: 48
+    height: 44
     opacity: root.nightLightEnabled ? 1.0 : 0.45
     Behavior on opacity { NumberAnimation { duration: 150 } }
 
@@ -35,9 +35,9 @@ Item {
 
         Rectangle {
             id: nlPresetTrack
-            implicitWidth: 320
+            Layout.preferredWidth: 380
+            implicitWidth: 380
             implicitHeight: 32
-            width: 320
             height: 32
             radius: 7
             color: root.theme.bgBase

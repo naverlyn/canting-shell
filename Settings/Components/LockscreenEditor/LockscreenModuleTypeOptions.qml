@@ -10,21 +10,20 @@ ColumnLayout {
     id: optionsRoot
     required property var hostCard
     Layout.fillWidth: true
-    spacing: 8
+    spacing: 0
 
 // Weather specific options
 ColumnLayout {
     visible: optionsRoot.hostCard.modType === "weather"
     Layout.fillWidth: true
-    spacing: 8
+    spacing: 0
 
     PreferenceRow {
         title: "Weather Layout Style"
-        subtitle: "Choose between single-line compact badge or detailed multi-line view"
 
         Rectangle {
             id: weatherLayoutSegmentTrack
-            width: 200
+            width: 280
             height: 32
             radius: 7
             color: optionsRoot.hostCard.theme.bgBase
@@ -104,16 +103,15 @@ ColumnLayout {
 ColumnLayout {
     visible: optionsRoot.hostCard.modType === "clock"
     Layout.fillWidth: true
-    spacing: 8
+    spacing: 0
 
     // Time Format (12-Hour / 24-Hour)
     PreferenceRow {
         title: "Time Format"
-        subtitle: "12-Hour AM/PM or 24-Hour standard format"
 
         Rectangle {
             id: timeFormatSegmentTrack
-            width: 200
+            width: 280
             height: 32
             radius: 7
             color: optionsRoot.hostCard.theme.bgBase
@@ -190,9 +188,10 @@ ColumnLayout {
         }
     }
 
+    RowDivider {}
+
     PreferenceSlider {
         title: "Clock Font Size"
-        subtitle: "Pixel size of the main digital clock text"
         minVal: 40
         maxVal: 140
         unit: "px"
@@ -203,9 +202,10 @@ ColumnLayout {
         }
     }
 
+    RowDivider {}
+
     PreferenceRow {
         title: "Show Date"
-        subtitle: "Display full date under the clock"
         SwitchToggle {
             checked: optionsRoot.hostCard.editShowDate
             onToggled: (st) => {
@@ -215,9 +215,10 @@ ColumnLayout {
         }
     }
 
+    RowDivider {}
+
     PreferenceRow {
         title: "Show Seconds"
-        subtitle: "Include live seconds in the digital clock"
         SwitchToggle {
             checked: optionsRoot.hostCard.editShowSeconds
             onToggled: (st) => {
@@ -232,15 +233,14 @@ ColumnLayout {
 ColumnLayout {
     visible: optionsRoot.hostCard.modType === "media"
     Layout.fillWidth: true
-    spacing: 8
+    spacing: 0
 
     PreferenceRow {
         title: "Player Layout Style"
-        subtitle: "Choose between compact horizontal pill or full detailed card"
 
         Rectangle {
             id: mediaLayoutSegmentTrack
-            width: 200
+            width: 280
             height: 32
             radius: 7
             color: optionsRoot.hostCard.theme.bgBase
@@ -322,15 +322,14 @@ ColumnLayout {
 ColumnLayout {
     visible: optionsRoot.hostCard.modType === "notifications" || optionsRoot.hostCard.modType === "notification"
     Layout.fillWidth: true
-    spacing: 8
+    spacing: 0
 
     PreferenceRow {
         title: "Notification Layout Style"
-        subtitle: "Choose between compact single-line pill or stacked notification list"
 
         Rectangle {
             id: notifLayoutSegmentTrack
-            width: 200
+            width: 280
             height: 32
             radius: 7
             color: optionsRoot.hostCard.theme.bgBase
@@ -405,10 +404,11 @@ ColumnLayout {
         }
     }
 
+    RowDivider { visible: optionsRoot.hostCard.editDisplayMode !== "compact" }
+
     PreferenceSlider {
         visible: optionsRoot.hostCard.editDisplayMode !== "compact"
         title: "Max Visible Notifications"
-        subtitle: "Maximum number of notification cards shown in the stack"
         minVal: 1
         maxVal: 6
         unit: ""
@@ -419,9 +419,10 @@ ColumnLayout {
         }
     }
 
+    RowDivider {}
+
     PreferenceRow {
         title: "Show Message Content"
-        subtitle: "Display notification title and body text (disable to redact content while locked)"
         SwitchToggle {
             checked: optionsRoot.hostCard.editShowContent
             onToggled: (st) => {
@@ -431,9 +432,10 @@ ColumnLayout {
         }
     }
 
+    RowDivider {}
+
     PreferenceRow {
         title: "Hide When Empty"
-        subtitle: "Hide notification card on lock screen when there are no active notifications"
         SwitchToggle {
             checked: optionsRoot.hostCard.editHideWhenEmpty
             onToggled: (st) => {
@@ -448,13 +450,12 @@ ColumnLayout {
 ColumnLayout {
     visible: optionsRoot.hostCard.modType === "customText"
     Layout.fillWidth: true
-    spacing: 8
+    spacing: 0
 
     PreferenceRow {
         title: "Custom Text Label"
-        subtitle: "Static text rendered if shell command is empty"
         Rectangle {
-            width: 240
+            width: 280
             height: 30
             radius: 6
             color: optionsRoot.hostCard.theme.bgBase
@@ -476,11 +477,12 @@ ColumnLayout {
         }
     }
 
+    RowDivider {}
+
     PreferenceRow {
         title: "Shell Command"
-        subtitle: "Script executed periodically (e.g. date +%A, uptime -p, echo 'Hello')"
         Rectangle {
-            width: 240
+            width: 280
             height: 30
             radius: 6
             color: optionsRoot.hostCard.theme.bgBase
@@ -502,9 +504,10 @@ ColumnLayout {
         }
     }
 
+    RowDivider {}
+
     PreferenceSlider {
         title: "Update Interval"
-        subtitle: "How often to execute the shell command"
         minVal: 1
         maxVal: 60
         unit: "s"
@@ -515,9 +518,10 @@ ColumnLayout {
         }
     }
 
+    RowDivider {}
+
     PreferenceSlider {
         title: "Font Size"
-        subtitle: "Pixel size of custom text readout"
         minVal: 9
         maxVal: 48
         unit: "px"
