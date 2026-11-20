@@ -10,7 +10,7 @@ Item {
     required property string title
     required property string subtitle
     required property string colorValue
-    property string fallbackColor: "#7aa2f7"
+    property string fallbackColor: String(Style.theme.accentPrimary)
     property var swatches: root.borderColorSwatches
 
     signal colorSelected(string hex)
