@@ -43,11 +43,28 @@ Item {
     readonly property var defaultSink: Pipewire.defaultAudioSink
     readonly property var defaultSource: Pipewire.defaultAudioSource
 
+    /* Track all audio streams before filtering, so PwObjectTracker doesn't unbind nodes while their properties update */
+    readonly property var trackedStreams: {
+        if (!Pipewire.ready) return [];
+        return Pipewire.nodes.values.filter(node => node && node.isStream && node.audio !== null);
+    }
+
+    PwObjectTracker {
+        id: audioTracker
+        objects: {
+            let list = [root.defaultSink, root.defaultSource].filter(Boolean);
+            if (root.trackedStreams && root.trackedStreams.length > 0) {
+                list = list.concat(root.trackedStreams);
+            }
+            return list;
+        }
+    }
+
     /* Active application audio streams (apps outputting sound) */
     readonly property var appStreams: {
         if (!Pipewire.ready) return [];
-        return Pipewire.nodes.values.filter(node => {
-            if (!node || !node.isStream || !node.audio) return false;
+        return root.trackedStreams.filter(node => {
+            if (!node || !node.ready || !node.audio) return false;
             const name = (node.name || "").toLowerCase();
             const desc = (node.description || "").toLowerCase();
             if (name.includes("monitor") || desc.includes("monitor")) return false;
@@ -67,17 +84,6 @@ Item {
 
             return true;
         });
-    }
-
-    PwObjectTracker {
-        id: audioTracker
-        objects: {
-            let list = [root.defaultSink, root.defaultSource].filter(Boolean);
-            if (root.appStreams && root.appStreams.length > 0) {
-                list = list.concat(root.appStreams);
-            }
-            return list;
-        }
     }
 
     readonly property var audioSinks: {
