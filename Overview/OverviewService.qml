@@ -60,16 +60,48 @@ Scope {
         return true;
     }
 
-    readonly property var sortedToplevels: {
-        if (!root.panelVisible) return [];
+    property var sortedToplevels: []
+
+    function rebuildSortedToplevels() {
+        if (!root.panelVisible) {
+            if (root.sortedToplevels.length > 0) root.sortedToplevels = [];
+            return;
+        }
         const list = [...Hyprland.toplevels.values].filter(t => root.isValidToplevel(t));
-        return list.sort((a, b) => {
+        list.sort((a, b) => {
             const wsA = a.workspace ? a.workspace.id : 999;
             const wsB = b.workspace ? b.workspace.id : 999;
             if (wsA !== wsB) return wsA - wsB;
-            if (a.activated !== b.activated) return a.activated ? -1 : 1;
-            return (a.title || "").localeCompare(b.title || "");
+            return String(a.address).localeCompare(String(b.address));
         });
+
+        // Only replace the array when window membership/workspace order actually changes
+        // so focus or title changes update cards in-place without flickering ScreencopyView.
+        const prev = root.sortedToplevels;
+        if (prev.length === list.length) {
+            let same = true;
+            for (let i = 0; i < list.length; i++) {
+                const pa = prev[i];
+                const pb = list[i];
+                const wa = pa && pa.workspace ? pa.workspace.id : -1;
+                const wb = pb && pb.workspace ? pb.workspace.id : -1;
+                if (pa !== pb || wa !== wb) {
+                    same = false;
+                    break;
+                }
+            }
+            if (same) return;
+        }
+        root.sortedToplevels = list;
+    }
+
+    onPanelVisibleChanged: rebuildSortedToplevels()
+
+    Connections {
+        target: Hyprland.toplevels
+        function onValuesChanged() {
+            root.rebuildSortedToplevels();
+        }
     }
 
     function openWithMode(targetMode) {
