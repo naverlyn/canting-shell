@@ -528,6 +528,7 @@ ColumnLayout {
                 SettingToggleRow {
                     announce: true
                     title: "Sync Borders With Theme"
+                    desc: "Automatically match active and inactive borders to the current theme"
                     checked: root.borderThemeSync
                     onToggled: (val) => {
                         root.borderThemeSync = val;
@@ -545,8 +546,14 @@ ColumnLayout {
 
                 /* Live Gradient & Inactive Preview Strip */
                 Item {
+                    id: borderPreviewStrip
                     Layout.fillWidth: true
-                    height: 44
+                    implicitHeight: 54
+
+                    readonly property string activeCol1Hex: (root.borderThemeSync ? String(root.theme.accentPrimary) : (root.activeBorderCol1 || "#7aa2f7")).toLowerCase()
+                    readonly property string activeCol2Hex: (root.borderThemeSync ? String(root.theme.accentCyan) : (root.activeBorderCol2 || "#7dcfff")).toLowerCase()
+                    readonly property string inactiveColHex: (root.borderThemeSync ? String(root.theme.bgBorder) : (root.inactiveBorderCol || "#32364a")).toLowerCase()
+                    readonly property bool isSolidActive: activeCol1Hex === activeCol2Hex
 
                     RowLayout {
                         anchors.fill: parent
@@ -555,105 +562,193 @@ ColumnLayout {
                         spacing: 12
 
                         Text {
-                            text: "Active Gradient Preview"
-                            font.family: root.font
-                            font.pixelSize: 12
-                            font.bold: true
-                            color: root.theme.textSecondary
+                            text: "Border Preview"
+                            font.family: Style.font
+                            font.pixelSize: Style.px(12)
+                            font.bold: Style.boldHeadings
+                            font.letterSpacing: Style.letterSpacing
+                            font.hintingPreference: Style.fontHintingEnum
+                            antialiasing: Style.fontAntialiasing
+                            renderType: Style.fontRenderTypeEnum
+                            color: Style.theme.textSecondary
+                            Layout.alignment: Qt.AlignVCenter
                         }
 
+                        /* Active Gradient Bar */
                         Rectangle {
                             Layout.fillWidth: true
-                            height: 22
-                            radius: 6
-                            border.color: root.theme.bgBorder
+                            Layout.preferredHeight: 30
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: 8
+                            border.color: Qt.rgba(1, 1, 1, 0.14)
                             border.width: 1
+
                             gradient: Gradient {
                                 orientation: Gradient.Horizontal
-                                GradientStop { position: 0.0; color: root.borderThemeSync ? root.theme.accentPrimary : (root.activeBorderCol1 || "#7aa2f7") }
-                                GradientStop { position: 1.0; color: root.borderThemeSync ? root.theme.accentCyan : (root.activeBorderCol2 || "#7dcfff") }
+                                GradientStop {
+                                    position: 0.0
+                                    color: borderPreviewStrip.activeCol1Hex
+                                    Behavior on color { ColorAnimation { duration: 180 } }
+                                }
+                                GradientStop {
+                                    position: 1.0
+                                    color: borderPreviewStrip.activeCol2Hex
+                                    Behavior on color { ColorAnimation { duration: 180 } }
+                                }
                             }
 
-                            Text {
+                            Rectangle {
                                 anchors.centerIn: parent
-                                text: (root.borderThemeSync ? String(root.theme.accentPrimary) : root.activeBorderCol1) +
-                                      "  →  " +
-                                      (root.borderThemeSync ? String(root.theme.accentCyan) : root.activeBorderCol2) +
-                                      "  (" + root.activeBorderAngle + "°)"
-                                font.family: root.font
-                                font.pixelSize: 10
-                                font.bold: true
-                                color: "#ffffff"
-                                style: Text.Outline
-                                styleColor: "#80000000"
+                                width: Math.min(gradientBadgeText.implicitWidth + 18, parent.width - 12)
+                                height: 20
+                                radius: 5
+                                color: Qt.rgba(0, 0, 0, 0.48)
+                                border.color: Qt.rgba(1, 1, 1, 0.14)
+                                border.width: 1
+
+                                Text {
+                                    id: gradientBadgeText
+                                    anchors.centerIn: parent
+                                    width: Math.min(implicitWidth, parent.width - 10)
+                                    horizontalAlignment: Text.AlignHCenter
+                                    elide: Text.ElideRight
+                                    text: borderPreviewStrip.isSolidActive
+                                          ? (borderPreviewStrip.activeCol1Hex + "  ·  Solid")
+                                          : (borderPreviewStrip.activeCol1Hex + " → " + borderPreviewStrip.activeCol2Hex + "  ·  " + root.activeBorderAngle + "°")
+                                    font.family: Style.monoFont
+                                    font.pixelSize: Style.px(10)
+                                    font.bold: true
+                                    font.hintingPreference: Style.fontHintingEnum
+                                    renderType: Style.fontRenderTypeEnum
+                                    color: "#ffffff"
+                                }
                             }
                         }
 
+                        /* Inactive Border Preview Chip */
                         Rectangle {
-                            width: 110
-                            height: 22
-                            radius: 6
-                            color: root.borderThemeSync ? root.theme.bgBorder : (root.inactiveBorderCol || "#32364a")
-                            border.color: Qt.rgba(1, 1, 1, 0.2)
-                            border.width: 1
+                            Layout.preferredWidth: Math.max(132, inactiveChipRow.implicitWidth + 20)
+                            Layout.preferredHeight: 30
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: 8
+                            color: Style.theme.bgBase
+                            border.color: borderPreviewStrip.inactiveColHex
+                            border.width: 2
 
-                            Text {
+                            Behavior on border.color { ColorAnimation { duration: 180 } }
+
+                            RowLayout {
+                                id: inactiveChipRow
                                 anchors.centerIn: parent
-                                text: "Inactive"
-                                font.family: root.font
-                                font.pixelSize: 10
-                                font.bold: true
-                                color: root.theme.textPrimary
+                                spacing: 6
+
+                                Rectangle {
+                                    Layout.preferredWidth: 10
+                                    Layout.preferredHeight: 10
+                                    Layout.alignment: Qt.AlignVCenter
+                                    radius: 5
+                                    color: borderPreviewStrip.inactiveColHex
+                                    border.color: Qt.rgba(1, 1, 1, 0.25)
+                                    border.width: 1
+
+                                    Behavior on color { ColorAnimation { duration: 180 } }
+                                }
+
+                                Text {
+                                    text: "Inactive"
+                                    font.family: Style.font
+                                    font.pixelSize: Style.px(11)
+                                    font.bold: Style.boldHeadings
+                                    font.letterSpacing: Style.letterSpacing
+                                    font.hintingPreference: Style.fontHintingEnum
+                                    antialiasing: Style.fontAntialiasing
+                                    renderType: Style.fontRenderTypeEnum
+                                    color: Style.theme.textPrimary
+                                }
+
+                                Text {
+                                    text: borderPreviewStrip.inactiveColHex
+                                    font.family: Style.monoFont
+                                    font.pixelSize: Style.px(10)
+                                    font.hintingPreference: Style.fontHintingEnum
+                                    renderType: Style.fontRenderTypeEnum
+                                    color: Style.theme.textSecondary
+                                }
                             }
                         }
                     }
                 }
 
-                RowDivider { sideMargin: 0; alpha: 1.0; visible: !root.borderThemeSync }
+                AnimatedSection {
+                    expanded: !root.borderThemeSync
 
-                /* Active Primary Color Row */
-                HyprlandBorderColorPickerRow {
-                    visible: !root.borderThemeSync
-                    root: layoutPreviewRoot.root
-                    title: "Active Border Primary Color"
-                    subtitle: "Start color of the focused window border gradient"
-                    colorValue: root.activeBorderCol1
-                    fallbackColor: "#7aa2f7"
-                    onColorSelected: hex => {
-                        root.activeBorderCol1 = hex;
-                        root.applyBorderColors();
+                    RowDivider { sideMargin: 0; alpha: 1.0 }
+
+                    /* Active Primary Color Row */
+                    HyprlandBorderColorPickerRow {
+                        root: layoutPreviewRoot.root
+                        title: "Active Border Primary Color"
+                        subtitle: "Start color of the focused window border gradient"
+                        colorValue: root.activeBorderCol1
+                        fallbackColor: "#7aa2f7"
+                        onColorSelected: hex => {
+                            root.activeBorderCol1 = hex;
+                            root.applyBorderColors();
+                        }
                     }
-                }
 
-                RowDivider { sideMargin: 0; alpha: 1.0; visible: !root.borderThemeSync }
+                    RowDivider { sideMargin: 0; alpha: 1.0 }
 
-                /* Active Secondary Color Row */
-                HyprlandBorderColorPickerRow {
-                    visible: !root.borderThemeSync
-                    root: layoutPreviewRoot.root
-                    title: "Active Border Secondary Color"
-                    subtitle: "End color of the focused window border gradient (set same as primary for solid border)"
-                    colorValue: root.activeBorderCol2
-                    fallbackColor: "#bb9af7"
-                    onColorSelected: hex => {
-                        root.activeBorderCol2 = hex;
-                        root.applyBorderColors();
+                    /* Active Secondary Color Row */
+                    HyprlandBorderColorPickerRow {
+                        root: layoutPreviewRoot.root
+                        title: "Active Border Secondary Color"
+                        subtitle: "End color of the focused window border gradient (match primary for solid)"
+                        colorValue: root.activeBorderCol2
+                        fallbackColor: "#bb9af7"
+                        onColorSelected: hex => {
+                            root.activeBorderCol2 = hex;
+                            root.applyBorderColors();
+                        }
                     }
-                }
 
-                RowDivider { sideMargin: 0; alpha: 1.0; visible: !root.borderThemeSync }
+                    RowDivider { sideMargin: 0; alpha: 1.0 }
 
-                /* Inactive Border Color Row */
-                HyprlandBorderColorPickerRow {
-                    visible: !root.borderThemeSync
-                    root: layoutPreviewRoot.root
-                    title: "Inactive Window Border Color"
-                    subtitle: "Outline color for unfocused background windows"
-                    colorValue: root.inactiveBorderCol
-                    fallbackColor: "#414868"
-                    onColorSelected: hex => {
-                        root.inactiveBorderCol = hex;
-                        root.applyBorderColors();
+                    /* Gradient Angle Row */
+                    SettingSliderRow {
+                        announce: true
+                        title: "Gradient Angle"
+                        desc: "Direction of the active window border color gradient"
+                        value: root.activeBorderAngle
+                        minVal: 0
+                        maxVal: 360
+                        unit: "°"
+                        presets: [
+                            { label: "0°", val: 0 },
+                            { label: "45°", val: 45 },
+                            { label: "90°", val: 90 },
+                            { label: "135°", val: 135 }
+                        ]
+                        onValueModified: (v) => {
+                            root.activeBorderAngle = Math.round(v);
+                            root.applyBorderColors();
+                        }
+                    }
+
+                    RowDivider { sideMargin: 0; alpha: 1.0 }
+
+                    /* Inactive Border Color Row */
+                    HyprlandBorderColorPickerRow {
+                        root: layoutPreviewRoot.root
+                        title: "Inactive Window Border Color"
+                        subtitle: "Outline color for unfocused background windows"
+                        colorValue: root.inactiveBorderCol
+                        fallbackColor: "#414868"
+                        swatches: root.inactiveColorSwatches
+                        onColorSelected: hex => {
+                            root.inactiveBorderCol = hex;
+                            root.applyBorderColors();
+                        }
                     }
                 }
             }
