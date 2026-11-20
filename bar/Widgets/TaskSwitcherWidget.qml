@@ -106,21 +106,95 @@ Item {
     return list;
   }
 
-  onTaskListChanged: {
-    if (hoveredToplevel && !taskList.includes(hoveredToplevel)) {
+  readonly property var groupedTaskList: {
+    const list = taskContainer.taskList;
+    const groups = [];
+    const byKey = {};
+    for (let i = 0; i < list.length; i++) {
+      const t = list[i];
+      const ipc = t.lastIpcObject;
+      const appClass = (ipc && (ipc.class || ipc.initialClass)) ? String(ipc.class || ipc.initialClass).trim() : "";
+      const key = appClass !== "" ? appClass.toLowerCase() : ("addr:" + String(t.address));
+      let grp = byKey[key];
+      if (!grp) {
+        grp = {
+          key: key,
+          appClass: appClass,
+          windows: [],
+          primaryToplevel: t,
+          isFocused: false,
+          count: 0
+        };
+        byKey[key] = grp;
+        groups.push(grp);
+      }
+      grp.windows.push(t);
+      grp.count = grp.windows.length;
+      if (Boolean(t.activated)) {
+        grp.isFocused = true;
+        grp.primaryToplevel = t;
+      }
+    }
+    return groups;
+  }
+
+  function syncHoveredFromGroup(group, pill, updatePill) {
+    if (!group) {
       hoveredPill = null;
+      hoveredGroup = null;
       hoveredToplevel = null;
+      return;
+    }
+    if (updatePill) hoveredPill = pill;
+    hoveredGroup = group;
+    if (!hoveredToplevel || !group.windows.includes(hoveredToplevel)) {
+      hoveredToplevel = group.primaryToplevel;
+    }
+    const primary = group.primaryToplevel;
+    const cls = group.appClass || "";
+    const entry = cls !== "" ? DesktopEntries.heuristicLookup(cls) : null;
+    const appName = (entry && entry.name && entry.name.trim() !== "")
+      ? entry.name
+      : (cls !== "" ? cls : "Window");
+    const winTitle = (group.count === 1 && primary && primary.title && primary.title.trim() !== "")
+      ? primary.title
+      : appName;
+    hoveredTitle = winTitle;
+    hoveredIconSource = (entry && entry.icon) ? Quickshell.iconPath(entry.icon, true) : "";
+    hoveredWsId = (primary && primary.workspace) ? primary.workspace.id : -1;
+    const subCls = cls !== "" ? cls : "Window";
+    if (group.count > 1) {
+      hoveredSubtitle = subCls + " • " + group.count + " windows";
+    } else {
+      hoveredSubtitle = hoveredWsId > 0 ? (subCls + " • Workspace " + hoveredWsId) : subCls;
+    }
+  }
+
+  onGroupedTaskListChanged: {
+    if (!hoveredGroup) return;
+    const wasPillHovered = hoveredPill !== null;
+    if (!wasPillHovered && !taskInfoPopup.isDetailsActive) {
+      syncHoveredFromGroup(null, null, true);
+      return;
+    }
+    const idx = groupedTaskList.findIndex(g => g.key === hoveredGroup.key);
+    if (idx < 0) {
+      syncHoveredFromGroup(null, null, true);
+    } else {
+      const newPill = wasPillHovered ? taskRepeater.itemAt(idx) : null;
+      syncHoveredFromGroup(groupedTaskList[idx], newPill, wasPillHovered);
     }
   }
 
   // Adaptive per-item label cap so many open windows don't crowd adjacent bar sections
   readonly property int adaptiveLabelWidth: {
-    const count = Math.max(1, taskList.length);
+    const count = Math.max(1, groupedTaskList.length);
     if (count <= 3) return maxLabelWidth;
     return Math.max(64, Math.min(maxLabelWidth, Math.floor(420 / count)));
   }
 
   property var hoveredPill: null
+  property var hoveredGroup: null
   property var hoveredToplevel: null
   property string hoveredTitle: ""
   property string hoveredSubtitle: ""
@@ -130,15 +204,15 @@ Item {
   readonly property int iconSize: hostContainer.scaled(15)
   readonly property int horizPillHeight: hostContainer.horizPillHeight
 
-  implicitWidth: taskList.length > 0 ? taskGrid.implicitWidth : 0
-  implicitHeight: taskList.length > 0
+  implicitWidth: groupedTaskList.length > 0 ? taskGrid.implicitWidth : 0
+  implicitHeight: groupedTaskList.length > 0
     ? (hostContainer.isVert ? taskGrid.implicitHeight : (hostContainer.hidePill ? hostContainer.height : horizPillHeight))
     : 0
   Behavior on implicitWidth { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
   Behavior on implicitHeight { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
   width: implicitWidth
-  height: hostContainer.isVert ? implicitHeight : (taskList.length > 0 ? hostContainer.height : 0)
-  visible: width > 0 || taskList.length > 0
+  height: hostContainer.isVert ? implicitHeight : (groupedTaskList.length > 0 ? hostContainer.height : 0)
+  visible: width > 0 || groupedTaskList.length > 0
   clip: true
 
   function normalizeAddr(address) {
@@ -164,6 +238,17 @@ Item {
         Hyprland.dispatch("focuswindow address:" + addr);
       }
     }
+  }
+
+  function focusGroup(group) {
+    if (!group || !group.windows || group.windows.length === 0) return;
+    if (group.windows.length === 1) {
+      focusTask(group.windows[0]);
+      return;
+    }
+    const curIdx = group.windows.findIndex(t => Boolean(t.activated));
+    const nextIdx = curIdx >= 0 ? (curIdx + 1) % group.windows.length : 0;
+    focusTask(group.windows[nextIdx]);
   }
 
   function closeTask(toplevel) {
@@ -205,35 +290,47 @@ Item {
 
     Repeater {
       id: taskRepeater
-      model: taskContainer.taskList
+      model: taskContainer.groupedTaskList
 
       Rectangle {
         id: taskPill
         required property var modelData
 
-        readonly property string appClass: (modelData && modelData.lastIpcObject && (modelData.lastIpcObject.class || modelData.lastIpcObject.initialClass)) || ""
-        readonly property string windowTitle: (modelData && modelData.title && modelData.title.trim() !== "")
-          ? modelData.title
-          : (appClass !== "" ? appClass : "Window")
-        readonly property int wsId: (modelData && modelData.workspace) ? modelData.workspace.id : -1
-        readonly property bool isFocused: Boolean(modelData && modelData.activated)
+        readonly property var groupWindows: (modelData && modelData.windows) ? modelData.windows : []
+        readonly property int windowCount: (modelData && modelData.count) ? modelData.count : 0
+        readonly property var primaryToplevel: (modelData && modelData.primaryToplevel) ? modelData.primaryToplevel : null
+        readonly property string appClass: (modelData && modelData.appClass) ? modelData.appClass : ""
         readonly property var desktopEntry: appClass !== "" ? DesktopEntries.heuristicLookup(appClass) : null
+        readonly property string appDisplayName: (desktopEntry && desktopEntry.name && desktopEntry.name.trim() !== "")
+          ? desktopEntry.name
+          : (appClass !== "" ? appClass : "Window")
+        readonly property string windowTitle: {
+          if (windowCount > 1) return appDisplayName;
+          if (primaryToplevel && primaryToplevel.title && primaryToplevel.title.trim() !== "") {
+            return primaryToplevel.title;
+          }
+          return appDisplayName;
+        }
+        readonly property int wsId: (primaryToplevel && primaryToplevel.workspace) ? primaryToplevel.workspace.id : -1
+        readonly property bool isFocused: Boolean(modelData && modelData.isFocused)
         readonly property string iconSource: (desktopEntry && desktopEntry.icon) ? Quickshell.iconPath(desktopEntry.icon, true) : ""
 
         readonly property bool showIcon: taskContainer.effectiveMode === "icon" || taskContainer.effectiveMode === "icon_desc"
         readonly property bool showDesc: taskContainer.effectiveMode === "icon_desc" || taskContainer.effectiveMode === "desc"
 
+        readonly property int badgeExtraWidth: (showDesc && windowCount > 1) ? (countBadgePill.implicitWidth + 6) : 0
+
         readonly property int contentWidth: {
           if (taskContainer.effectiveMode === "icon") return Math.max(hostContainer.scaled(28), taskContainer.iconSize + hostContainer.scaled(12));
           const textW = Math.min(titleMeasure.implicitWidth, taskContainer.adaptiveLabelWidth);
           if (taskContainer.effectiveMode === "icon_desc") {
-            return Math.max(hostContainer.scaled(44), taskContainer.iconSize + 6 + textW + 16);
+            return Math.max(hostContainer.scaled(44), taskContainer.iconSize + 6 + textW + badgeExtraWidth + 16);
           }
-          return Math.max(hostContainer.scaled(36), textW + 16);
+          return Math.max(hostContainer.scaled(36), textW + badgeExtraWidth + 16);
         }
 
         Accessible.role: Accessible.Button
-        Accessible.name: windowTitle + (isFocused ? ", focused" : "")
+        Accessible.name: windowTitle + (windowCount > 1 ? (" (" + windowCount + " windows)") : "") + (isFocused ? ", focused" : "")
 
         width: hostContainer.isVert ? hostContainer.vertPillWidth : contentWidth
         implicitWidth: width
@@ -322,6 +419,35 @@ Item {
                     ? hostContainer.wAccent("taskSwitcher", hostRoot.theme.textPrimary)
                     : hostRoot.theme.textPrimary)
             }
+
+            // Compact count dot badge in icon-only mode when multiple windows are grouped
+            Rectangle {
+              visible: !taskPill.showDesc && taskPill.windowCount > 1
+              anchors.right: parent.right
+              anchors.bottom: parent.bottom
+              anchors.rightMargin: -4
+              anchors.bottomMargin: -3
+              implicitWidth: Math.max(13, iconCountTxt.implicitWidth + 5)
+              height: 13
+              radius: 6.5
+              color: taskPill.isFocused && hostContainer.activeStyle === "pill"
+                ? hostRoot.theme.bgBase
+                : hostContainer.wAccent("taskSwitcher", hostRoot.theme.accentPrimary)
+              border.width: 1
+              border.color: hostRoot.theme.bgSurface
+
+              Text {
+                id: iconCountTxt
+                anchors.centerIn: parent
+                text: taskPill.windowCount > 9 ? "9+" : String(taskPill.windowCount)
+                font.family: hostRoot ? hostRoot.font : "Lato Nerd Font"
+                font.pixelSize: 8
+                font.bold: true
+                color: taskPill.isFocused && hostContainer.activeStyle === "pill"
+                  ? hostContainer.wAccent("taskSwitcher", hostRoot.theme.accentPrimary)
+                  : hostRoot.theme.bgBase
+              }
+            }
           }
 
           Text {
@@ -345,6 +471,37 @@ Item {
                       : hostRoot.theme.textSecondary))
             Behavior on color { ColorAnimation { duration: 120 } }
           }
+
+          // Window count pill badge when multiple windows of the same app are merged
+          Rectangle {
+            id: countBadgePill
+            visible: taskPill.showDesc && taskPill.windowCount > 1
+            Layout.alignment: Qt.AlignVCenter
+            implicitWidth: Math.max(16, countBadgeTxt.implicitWidth + 8)
+            height: 16
+            radius: 8
+            color: taskPill.isFocused && hostContainer.activeStyle === "pill"
+              ? Qt.rgba(hostRoot.theme.bgBase.r, hostRoot.theme.bgBase.g, hostRoot.theme.bgBase.b, 0.22)
+              : Qt.rgba(hostRoot.theme.textPrimary.r, hostRoot.theme.textPrimary.g, hostRoot.theme.textPrimary.b, 0.12)
+            border.width: 1
+            border.color: taskPill.isFocused && hostContainer.activeStyle === "pill"
+              ? Qt.rgba(hostRoot.theme.bgBase.r, hostRoot.theme.bgBase.g, hostRoot.theme.bgBase.b, 0.28)
+              : Qt.rgba(hostRoot.theme.textPrimary.r, hostRoot.theme.textPrimary.g, hostRoot.theme.textPrimary.b, 0.14)
+
+            Text {
+              id: countBadgeTxt
+              anchors.centerIn: parent
+              text: taskPill.windowCount > 9 ? "9+" : String(taskPill.windowCount)
+              font.family: hostRoot ? hostRoot.font : "Lato Nerd Font"
+              font.pixelSize: 9
+              font.bold: true
+              color: taskPill.isFocused && hostContainer.activeStyle === "pill"
+                ? hostRoot.theme.bgBase
+                : (taskPill.isFocused
+                    ? hostContainer.wAccent("taskSwitcher", hostRoot.theme.accentPrimary)
+                    : hostRoot.theme.textSecondary)
+            }
+          }
         }
 
         MouseArea {
@@ -354,15 +511,8 @@ Item {
           acceptedButtons: Qt.LeftButton | Qt.MiddleButton
           cursorShape: Qt.PointingHandCursor
           onEntered: {
-            taskContainer.hoveredPill = taskPill;
-            taskContainer.hoveredToplevel = taskPill.modelData;
-            taskContainer.hoveredTitle = taskPill.windowTitle;
-            taskContainer.hoveredIconSource = taskPill.iconSource;
-            taskContainer.hoveredWsId = taskPill.wsId;
-            const cls = taskPill.appClass !== "" ? taskPill.appClass : "Window";
-            taskContainer.hoveredSubtitle = taskPill.wsId > 0
-              ? (cls + " • Workspace " + taskPill.wsId)
-              : cls;
+            taskContainer.hoveredToplevel = taskPill.primaryToplevel;
+            taskContainer.syncHoveredFromGroup(taskPill.modelData, taskPill, true);
           }
           onExited: {
             if (taskContainer.hoveredPill === taskPill) {
@@ -371,9 +521,9 @@ Item {
           }
           onClicked: mouse => {
             if (mouse.button === Qt.MiddleButton) {
-              taskContainer.closeTask(taskPill.modelData);
+              taskContainer.closeTask(taskPill.primaryToplevel);
             } else {
-              taskContainer.focusTask(taskPill.modelData);
+              taskContainer.focusGroup(taskPill.modelData);
             }
           }
           onWheel: wheel => {
@@ -394,18 +544,36 @@ Item {
     title: taskContainer.hoveredTitle
     icon: "󰖯"
     summaryText: taskContainer.hoveredSubtitle
-    preferredWidth: 256
+    readonly property int hoveredGroupCount: (taskContainer.hoveredGroup && taskContainer.hoveredGroup.count > 1)
+      ? taskContainer.hoveredGroup.count
+      : 1
+    readonly property int previewCols: Math.min(4, hoveredGroupCount)
+    readonly property int previewTileW: 206
+    readonly property int previewTileGap: 8
+
+    preferredWidth: hoveredGroupCount > 1
+      ? (previewCols * previewTileW + (previewCols - 1) * previewTileGap)
+      : 256
     accent: taskContainer.hostContainer && taskContainer.hostRoot
       ? taskContainer.hostContainer.wAccent("taskSwitcher", taskContainer.hostRoot.theme.accentPrimary)
       : "#89b4fa"
     barPosition: taskContainer.hostContainer ? taskContainer.hostContainer.barPos : "top"
 
+    onIsDetailsActiveChanged: {
+      if (!isDetailsActive && taskContainer.hoveredPill === null) {
+        taskContainer.hoveredGroup = null;
+        taskContainer.hoveredToplevel = null;
+      }
+    }
+
     contentComponent: Component {
       ColumnLayout {
         spacing: 8
         readonly property var th: taskInfoPopup.theme
+        readonly property bool isGrouped: Boolean(taskContainer.hoveredGroup && taskContainer.hoveredGroup.count > 1)
+        readonly property var groupWindows: isGrouped ? taskContainer.hoveredGroup.windows : []
 
-        // Window Header: App Icon + Title + Workspace Badge
+        // Window / App Header: App Icon + Title + Workspace or Count Badge
         RowLayout {
           Layout.fillWidth: true
           spacing: 7
@@ -443,7 +611,7 @@ Item {
           }
 
           Rectangle {
-            visible: taskContainer.hoveredWsId > 0
+            visible: isGrouped || taskContainer.hoveredWsId > 0
             Layout.alignment: Qt.AlignVCenter
             implicitWidth: wsBadgeTxt.implicitWidth + 10
             implicitHeight: 18
@@ -453,17 +621,250 @@ Item {
             Text {
               id: wsBadgeTxt
               anchors.centerIn: parent
-              text: "WS " + taskContainer.hoveredWsId
+              text: isGrouped
+                ? (groupWindows.length + " windows")
+                : ("WS " + taskContainer.hoveredWsId)
               font.family: taskInfoPopup.font
               font.pixelSize: 10
               font.bold: true
               color: th.textSecondary
             }
           }
+
+          // Close Button for Single-Window Popup
+          Rectangle {
+            id: singleCloseBtn
+            visible: !isGrouped && taskContainer.hoveredToplevel !== null
+            Layout.preferredWidth: 20
+            Layout.preferredHeight: 20
+            Layout.alignment: Qt.AlignVCenter
+            radius: 5
+            color: singleCloseHover.hovered
+              ? Qt.rgba(th.accentRed.r, th.accentRed.g, th.accentRed.b, 0.22)
+              : Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.06)
+            scale: singleCloseMouse.pressed ? 0.84 : (singleCloseHover.hovered ? 1.10 : 1.0)
+            opacity: singleCloseHover.hovered ? 1.0 : 0.78
+
+            Behavior on color { ColorAnimation { duration: 140 } }
+            Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+            Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+
+            HoverHandler { id: singleCloseHover }
+
+            Text {
+              anchors.centerIn: parent
+              text: "󰅖"
+              font.family: taskInfoPopup.font
+              font.pixelSize: 11
+              color: singleCloseHover.hovered ? th.accentRed : th.textSecondary
+              Behavior on color { ColorAnimation { duration: 140 } }
+            }
+
+            MouseArea {
+              id: singleCloseMouse
+              anchors.fill: parent
+              cursorShape: Qt.PointingHandCursor
+              onClicked: {
+                if (taskContainer.hoveredToplevel) {
+                  taskContainer.closeTask(taskContainer.hoveredToplevel);
+                }
+              }
+            }
+          }
         }
 
-        // Live Window Thumbnail Preview
+        // Side-by-Side Live Window Preview Cards (shown when multiple windows are merged)
+        Flickable {
+          visible: isGrouped
+          Layout.fillWidth: true
+          implicitHeight: visible ? Math.min(340, groupGrid.implicitHeight) : 0
+          contentHeight: groupGrid.implicitHeight
+          clip: true
+          boundsBehavior: Flickable.StopAtBounds
+
+          GridLayout {
+            id: groupGrid
+            width: parent.width
+            columns: taskInfoPopup.previewCols
+            rowSpacing: taskInfoPopup.previewTileGap
+            columnSpacing: taskInfoPopup.previewTileGap
+
+            Repeater {
+              model: groupWindows
+
+              delegate: Rectangle {
+                id: winCard
+                required property var modelData
+                readonly property bool isWinFocused: Boolean(modelData && modelData.activated)
+                readonly property int winWsId: (modelData && modelData.workspace) ? modelData.workspace.id : -1
+                readonly property string winTitle: (modelData && modelData.title && modelData.title.trim() !== "")
+                  ? modelData.title
+                  : taskContainer.hoveredTitle
+
+                Layout.fillWidth: true
+                Layout.preferredWidth: taskInfoPopup.previewTileW
+                implicitHeight: winCardCol.implicitHeight + 12
+                radius: 8
+                color: winCardHover.hovered
+                  ? Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.08)
+                  : (isWinFocused ? Qt.rgba(taskInfoPopup.accent.r, taskInfoPopup.accent.g, taskInfoPopup.accent.b, 0.10) : th.bgBase)
+                border.width: 1
+                border.color: (winCardHover.hovered || isWinFocused)
+                  ? taskInfoPopup.accent
+                  : Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.12)
+
+                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on border.color { ColorAnimation { duration: 120 } }
+                HoverHandler { id: winCardHover }
+
+                MouseArea {
+                  anchors.fill: parent
+                  acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: mouse => {
+                    if (mouse.button === Qt.MiddleButton) {
+                      taskContainer.closeTask(winCard.modelData);
+                    } else {
+                      taskContainer.focusTask(winCard.modelData);
+                    }
+                  }
+                }
+
+                ColumnLayout {
+                  id: winCardCol
+                  anchors {
+                    left: parent.left
+                    right: parent.right
+                    top: parent.top
+                    margins: 6
+                  }
+                  spacing: 6
+
+                  // Card Header: Focus Dot + Title + WS Badge + Close
+                  RowLayout {
+                    Layout.fillWidth: true
+                    spacing: 5
+
+                    Rectangle {
+                      width: 6
+                      height: 6
+                      radius: 3
+                      Layout.alignment: Qt.AlignVCenter
+                      color: winCard.isWinFocused ? taskInfoPopup.accent : th.textMuted
+                      opacity: winCard.isWinFocused ? 1.0 : 0.45
+                    }
+
+                    Text {
+                      Layout.fillWidth: true
+                      Layout.alignment: Qt.AlignVCenter
+                      text: winCard.winTitle
+                      elide: Text.ElideRight
+                      font.family: taskInfoPopup.font
+                      font.pixelSize: 11
+                      font.bold: winCard.isWinFocused
+                      color: winCard.isWinFocused ? taskInfoPopup.accent : th.textPrimary
+                    }
+
+                    Text {
+                      visible: winCard.winWsId > 0
+                      Layout.alignment: Qt.AlignVCenter
+                      text: "WS " + winCard.winWsId
+                      font.family: taskInfoPopup.font
+                      font.pixelSize: 9
+                      font.bold: true
+                      color: th.textMuted
+                    }
+
+                    Rectangle {
+                      id: winCloseBtn
+                      Layout.preferredWidth: 18
+                      Layout.preferredHeight: 18
+                      Layout.alignment: Qt.AlignVCenter
+                      radius: 5
+                      color: closeHover.hovered
+                        ? Qt.rgba(th.accentRed.r, th.accentRed.g, th.accentRed.b, 0.24)
+                        : Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, winCardHover.hovered ? 0.08 : 0.0)
+                      scale: closeMouse.pressed ? 0.84 : (closeHover.hovered ? 1.12 : 1.0)
+                      opacity: (winCardHover.hovered || closeHover.hovered) ? 1.0 : 0.55
+
+                      Behavior on color { ColorAnimation { duration: 140 } }
+                      Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+                      Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+
+                      HoverHandler { id: closeHover }
+
+                      Text {
+                        anchors.centerIn: parent
+                        text: "󰅖"
+                        font.family: taskInfoPopup.font
+                        font.pixelSize: 10
+                        color: closeHover.hovered ? th.accentRed : th.textSecondary
+                        Behavior on color { ColorAnimation { duration: 140 } }
+                      }
+
+                      MouseArea {
+                        id: closeMouse
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: taskContainer.closeTask(winCard.modelData)
+                      }
+                    }
+                  }
+
+                  // Live Thumbnail
+                  Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: 118
+                    radius: 6
+                    color: th.bgSurface
+                    border.width: 1
+                    border.color: Qt.rgba(th.textPrimary.r, th.textPrimary.g, th.textPrimary.b, 0.08)
+                    clip: true
+
+                    ScreencopyView {
+                      id: cardPreview
+                      anchors.fill: parent
+                      captureSource: (taskInfoPopup.isDetailsActive && winCard.modelData && winCard.modelData.wayland)
+                        ? winCard.modelData.wayland
+                        : null
+                      live: true
+                      paintCursor: false
+                      constraintSize: Qt.size(Math.max(1, width), Math.max(1, height))
+                      visible: hasContent
+                    }
+
+                    Item {
+                      anchors.fill: parent
+                      visible: !cardPreview.hasContent
+
+                      IconImage {
+                        anchors.centerIn: parent
+                        width: 28
+                        height: 28
+                        source: taskContainer.hoveredIconSource
+                        visible: taskContainer.hoveredIconSource !== ""
+                        opacity: 0.75
+                      }
+
+                      Text {
+                        anchors.centerIn: parent
+                        visible: taskContainer.hoveredIconSource === ""
+                        text: "󰖯"
+                        font.family: taskInfoPopup.font
+                        font.pixelSize: 22
+                        color: th.textMuted
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        // Single-Window Live Thumbnail Preview
         Rectangle {
+          visible: !isGrouped
           Layout.fillWidth: true
           implicitHeight: 146
           radius: 8
