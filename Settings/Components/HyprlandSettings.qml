@@ -45,27 +45,27 @@ Item {
 
     /* ---- Border Colors State ---- */
     property bool borderThemeSync: true
-    property string activeBorderCol1: "#7aa2f7"
-    property string activeBorderCol2: "#7dcfff"
+    property string activeBorderCol1: root.theme ? String(root.theme.accentPrimary) : ""
+    property string activeBorderCol2: root.theme ? String(root.theme.accentCyan) : ""
     property int activeBorderAngle: 45
-    property string inactiveBorderCol: "#32364a"
+    property string inactiveBorderCol: root.theme ? String(root.theme.bgBorder) : ""
 
-    readonly property var borderColorSwatches: [
-        { name: "Theme Primary", color: root.theme ? String(root.theme.accentPrimary) : "#7aa2f7" },
-        { name: "Theme Cyan",    color: root.theme ? String(root.theme.accentCyan)    : "#7dcfff" },
-        { name: "Theme Green",   color: root.theme ? String(root.theme.accentGreen)   : "#9ece6a" },
-        { name: "Theme Orange",  color: root.theme ? String(root.theme.accentOrange)  : "#ff9e64" },
-        { name: "Theme Red",     color: root.theme ? String(root.theme.accentRed)     : "#f7768e" },
-        { name: "White",         color: "#ffffff" }
-    ]
+    readonly property var borderColorSwatches: root.theme ? [
+        { name: "Primary", color: String(root.theme.accentPrimary) },
+        { name: "Cyan",    color: String(root.theme.accentCyan) },
+        { name: "Green",   color: String(root.theme.accentGreen) },
+        { name: "Orange",  color: String(root.theme.accentOrange) },
+        { name: "Red",     color: String(root.theme.accentRed) },
+        { name: "Text",    color: String(root.theme.textPrimary) }
+    ] : []
 
-    readonly property var inactiveColorSwatches: [
-        { name: "Theme Border",  color: root.theme ? String(root.theme.bgBorder)      : "#32364a" },
-        { name: "Theme Surface", color: root.theme ? String(root.theme.bgSurface)     : "#24283b" },
-        { name: "Slate Muted",   color: "#595959" },
-        { name: "Charcoal",      color: "#322f2f" },
-        { name: "Deep Dark",     color: "#1a1b26" }
-    ]
+    readonly property var inactiveColorSwatches: root.theme ? [
+        { name: "Border",   color: String(root.theme.bgBorder) },
+        { name: "Selected", color: String(root.theme.bgSelected) },
+        { name: "Muted",    color: String(root.theme.textMuted) },
+        { name: "Surface",  color: String(root.theme.bgSurface) },
+        { name: "Base",     color: String(root.theme.bgBase) }
+    ] : []
 
     function applyBorderColors() {
         if (root.isLoading) return;

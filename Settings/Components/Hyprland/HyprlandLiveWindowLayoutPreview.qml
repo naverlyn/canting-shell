@@ -550,9 +550,9 @@ ColumnLayout {
                     Layout.fillWidth: true
                     implicitHeight: 54
 
-                    readonly property string activeCol1Hex: (root.borderThemeSync ? String(root.theme.accentPrimary) : (root.activeBorderCol1 || "#7aa2f7")).toLowerCase()
-                    readonly property string activeCol2Hex: (root.borderThemeSync ? String(root.theme.accentCyan) : (root.activeBorderCol2 || "#7dcfff")).toLowerCase()
-                    readonly property string inactiveColHex: (root.borderThemeSync ? String(root.theme.bgBorder) : (root.inactiveBorderCol || "#32364a")).toLowerCase()
+                    readonly property string activeCol1Hex: (root.borderThemeSync ? String(root.theme.accentPrimary) : (root.activeBorderCol1 || String(root.theme.accentPrimary))).toLowerCase()
+                    readonly property string activeCol2Hex: (root.borderThemeSync ? String(root.theme.accentCyan) : (root.activeBorderCol2 || String(root.theme.accentCyan))).toLowerCase()
+                    readonly property string inactiveColHex: (root.borderThemeSync ? String(root.theme.bgBorder) : (root.inactiveBorderCol || String(root.theme.bgBorder))).toLowerCase()
                     readonly property bool isSolidActive: activeCol1Hex === activeCol2Hex
 
                     RowLayout {
@@ -690,7 +690,7 @@ ColumnLayout {
                         title: "Active Border Primary Color"
                         subtitle: "Start color of the focused window border gradient"
                         colorValue: root.activeBorderCol1
-                        fallbackColor: "#7aa2f7"
+                        fallbackColor: String(root.theme.accentPrimary)
                         onColorSelected: hex => {
                             root.activeBorderCol1 = hex;
                             root.applyBorderColors();
@@ -705,7 +705,7 @@ ColumnLayout {
                         title: "Active Border Secondary Color"
                         subtitle: "End color of the focused window border gradient (match primary for solid)"
                         colorValue: root.activeBorderCol2
-                        fallbackColor: "#bb9af7"
+                        fallbackColor: String(root.theme.accentCyan)
                         onColorSelected: hex => {
                             root.activeBorderCol2 = hex;
                             root.applyBorderColors();
@@ -743,7 +743,7 @@ ColumnLayout {
                         title: "Inactive Window Border Color"
                         subtitle: "Outline color for unfocused background windows"
                         colorValue: root.inactiveBorderCol
-                        fallbackColor: "#414868"
+                        fallbackColor: String(root.theme.bgBorder)
                         swatches: root.inactiveColorSwatches
                         onColorSelected: hex => {
                             root.inactiveBorderCol = hex;

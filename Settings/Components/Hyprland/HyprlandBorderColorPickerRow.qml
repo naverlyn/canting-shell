@@ -10,7 +10,7 @@ Item {
     required property string title
     required property string subtitle
     required property string colorValue
-    property string fallbackColor: "#7aa2f7"
+    property string fallbackColor: String(Style.theme.accentPrimary)
     property var swatches: root.borderColorSwatches
 
     signal colorSelected(string hex)
@@ -165,7 +165,6 @@ Item {
                     if (colorPopup.opened) {
                         colorPopup.close();
                     } else {
-                        hexInput.text = pickerRow.normalizedColor;
                         colorPopup.open();
                     }
                 }
@@ -201,219 +200,79 @@ Item {
         }
 
         contentItem: ColumnLayout {
-            spacing: 4
+            spacing: 2
 
-            /* Preset Swatch Options */
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 2
+            Repeater {
+                model: pickerRow.swatches
+                delegate: Rectangle {
+                    id: optDelegate
+                    required property var modelData
+                    required property int index
 
-                Repeater {
-                    model: pickerRow.swatches
-                    delegate: Rectangle {
-                        id: optDelegate
-                        required property var modelData
-                        required property int index
+                    readonly property string swatchHex: String(modelData.color).toLowerCase()
+                    readonly property bool isSelected: pickerRow.normalizedColor === swatchHex
 
-                        readonly property string swatchHex: String(modelData.color).toLowerCase()
-                        readonly property bool isSelected: pickerRow.normalizedColor === swatchHex
-
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 32
-                        radius: 6
-                        color: {
-                            if (isSelected) return Style.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.14);
-                            if (optHover.hovered) return Style.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.06);
-                            return "transparent";
-                        }
-
-                        Behavior on color { ColorAnimation { duration: 110 } }
-
-                        HoverHandler { id: optHover }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
-                            spacing: 8
-
-                            Rectangle {
-                                Layout.preferredWidth: 12
-                                Layout.preferredHeight: 12
-                                Layout.alignment: Qt.AlignVCenter
-                                radius: 6
-                                color: optDelegate.swatchHex
-                                border.color: optDelegate.isSelected ? Qt.rgba(1, 1, 1, 0.45) : Qt.rgba(0, 0, 0, 0.35)
-                                border.width: 1
-                            }
-
-                            Text {
-                                text: optDelegate.modelData.name
-                                font.family: Style.font
-                                font.pixelSize: Style.px(12)
-                                font.bold: optDelegate.isSelected
-                                font.letterSpacing: Style.letterSpacing
-                                font.hintingPreference: Style.fontHintingEnum
-                                antialiasing: Style.fontAntialiasing
-                                renderType: Style.fontRenderTypeEnum
-                                color: optDelegate.isSelected ? Style.theme.accentPrimary : Style.theme.textPrimary
-                                elide: Text.ElideRight
-                                Layout.fillWidth: true
-                                Layout.alignment: Qt.AlignVCenter
-                            }
-
-                            Text {
-                                text: optDelegate.swatchHex
-                                font.family: Style.monoFont
-                                font.pixelSize: Style.px(10)
-                                font.hintingPreference: Style.fontHintingEnum
-                                renderType: Style.fontRenderTypeEnum
-                                color: optDelegate.isSelected ? Style.theme.accentPrimary : Style.theme.textMuted
-                                Layout.alignment: Qt.AlignVCenter
-                            }
-
-                            Text {
-                                text: "󰄬"
-                                font.family: Style.font
-                                font.pixelSize: Style.px(12)
-                                color: Style.theme.accentPrimary
-                                visible: optDelegate.isSelected
-                                Layout.alignment: Qt.AlignVCenter
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                pickerRow.colorSelected(optDelegate.swatchHex);
-                                colorPopup.close();
-                            }
-                        }
-                    }
-                }
-            }
-
-            /* Divider before Custom Hex */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.topMargin: 2
-                Layout.bottomMargin: 2
-                height: 1
-                color: Style.withAlpha(Style.theme.bgBorder, 0.6)
-            }
-
-            /* Inline Custom Hex Input */
-            Rectangle {
-                id: customHexBox
-                Layout.fillWidth: true
-                Layout.preferredHeight: 32
-                radius: 6
-                color: Style.theme.bgBase
-                border.color: hexInput.activeFocus
-                              ? Style.theme.accentPrimary
-                              : Style.theme.bgBorder
-                border.width: hexInput.activeFocus ? 1.5 : 1
-
-                Behavior on border.color { ColorAnimation { duration: 140 } }
-
-                readonly property string previewHex: {
-                    let v = hexInput.text.trim();
-                    if (!v.startsWith("#") && v.length === 6) v = "#" + v;
-                    return /^#[0-9a-fA-F]{6}$/.test(v) ? v.toLowerCase() : pickerRow.normalizedColor;
-                }
-
-                readonly property bool isValidInput: {
-                    let v = hexInput.text.trim();
-                    if (!v.startsWith("#") && v.length === 6) v = "#" + v;
-                    return /^#[0-9a-fA-F]{6}$/.test(v);
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 6
-                    spacing: 8
-
-                    Rectangle {
-                        Layout.preferredWidth: 14
-                        Layout.preferredHeight: 14
-                        Layout.alignment: Qt.AlignVCenter
-                        radius: 4
-                        color: customHexBox.previewHex
-                        border.color: Qt.rgba(1, 1, 1, 0.25)
-                        border.width: 1
-
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 32
+                    radius: 6
+                    color: {
+                        if (isSelected) return Style.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.14);
+                        if (optHover.hovered) return Style.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.06);
+                        return "transparent";
                     }
 
-                    TextInput {
-                        id: hexInput
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        verticalAlignment: TextInput.AlignVCenter
-                        text: pickerRow.normalizedColor
-                        font.family: Style.monoFont
-                        font.pixelSize: Style.px(12)
-                        font.bold: true
-                        font.hintingPreference: Style.fontHintingEnum
-                        renderType: Style.fontRenderTypeEnum
-                        color: Style.theme.textPrimary
-                        selectionColor: Style.withAlpha(Style.theme.accentPrimary, 0.35)
-                        selectedTextColor: Style.theme.textPrimary
-                        selectByMouse: true
-                        maximumLength: 7
-                        clip: true
+                    Behavior on color { ColorAnimation { duration: 110 } }
 
-                        function commitHex() {
-                            let v = text.trim();
-                            if (!v.startsWith("#") && v.length === 6) v = "#" + v;
-                            if (/^#[0-9a-fA-F]{6}$/.test(v)) {
-                                let lower = v.toLowerCase();
-                                text = lower;
-                                pickerRow.colorSelected(lower);
-                                colorPopup.close();
-                            } else {
-                                text = pickerRow.normalizedColor;
-                            }
+                    HoverHandler { id: optHover }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
+                        spacing: 8
+
+                        Rectangle {
+                            Layout.preferredWidth: 12
+                            Layout.preferredHeight: 12
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: 6
+                            color: optDelegate.swatchHex
+                            border.color: optDelegate.isSelected ? Qt.rgba(1, 1, 1, 0.45) : Qt.rgba(0, 0, 0, 0.35)
+                            border.width: 1
                         }
-
-                        Keys.onReturnPressed: commitHex()
-                        Keys.onEnterPressed: commitHex()
-                        Keys.onEscapePressed: {
-                            text = pickerRow.normalizedColor;
-                            colorPopup.close();
-                        }
-                    }
-
-                    /* Apply Custom Hex Button */
-                    Rectangle {
-                        Layout.preferredWidth: 22
-                        Layout.preferredHeight: 22
-                        Layout.alignment: Qt.AlignVCenter
-                        radius: 5
-                        color: applyHover.hovered && customHexBox.isValidInput
-                               ? Style.withAlpha(Style.theme.accentPrimary, 0.2)
-                               : "transparent"
-                        opacity: customHexBox.isValidInput ? 1.0 : 0.35
-
-                        Behavior on color { ColorAnimation { duration: 120 } }
-
-                        HoverHandler { id: applyHover }
 
                         Text {
-                            anchors.centerIn: parent
-                            text: "󰄬"
+                            text: optDelegate.modelData.name
                             font.family: Style.font
                             font.pixelSize: Style.px(12)
-                            color: Style.theme.accentPrimary
+                            font.bold: optDelegate.isSelected
+                            font.letterSpacing: Style.letterSpacing
+                            font.hintingPreference: Style.fontHintingEnum
+                            antialiasing: Style.fontAntialiasing
+                            renderType: Style.fontRenderTypeEnum
+                            color: optDelegate.isSelected ? Style.theme.accentPrimary : Style.theme.textPrimary
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
                         }
 
-                        MouseArea {
-                            anchors.fill: parent
-                            enabled: customHexBox.isValidInput
-                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                            onClicked: hexInput.commitHex()
+                        Text {
+                            text: optDelegate.swatchHex
+                            font.family: Style.monoFont
+                            font.pixelSize: Style.px(10)
+                            font.hintingPreference: Style.fontHintingEnum
+                            renderType: Style.fontRenderTypeEnum
+                            color: optDelegate.isSelected ? Style.theme.accentPrimary : Style.theme.textMuted
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            pickerRow.colorSelected(optDelegate.swatchHex);
+                            colorPopup.close();
                         }
                     }
                 }

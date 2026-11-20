@@ -111,38 +111,12 @@ ColumnLayout {
                             spacing: 2
                             Layout.alignment: Qt.AlignVCenter
 
-                            RowLayout {
-                                spacing: 8
-                                Text {
-                                    text: catOpDelegate.modelData.title
-                                    font.family: root.font
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                    color: root.theme.textPrimary
-                                }
-
-                                Rectangle {
-                                    visible: catOpDelegate.isRuleEnabled
-                                    opacity: catOpDelegate.isRuleEnabled ? 1.0 : 0.0
-                                    implicitWidth: opBadgeTxt.implicitWidth + 12
-                                    height: 18
-                                    radius: 9
-                                    color: root.theme.bgSelected
-                                    border.color: root.theme.accentPrimary
-                                    border.width: 1
-
-                                    Behavior on opacity { NumberAnimation { duration: 180 } }
-
-                                    Text {
-                                        id: opBadgeTxt
-                                        anchors.centerIn: parent
-                                        text: Math.round(catOpDelegate.actVal * 100) + "% / " + Math.round(catOpDelegate.inactVal * 100) + "%"
-                                        font.family: root.font
-                                        font.pixelSize: 10
-                                        font.bold: true
-                                        color: root.theme.accentPrimary
-                                    }
-                                }
+                            Text {
+                                text: catOpDelegate.modelData.title
+                                font.family: root.font
+                                font.pixelSize: 13
+                                font.bold: true
+                                color: root.theme.textPrimary
                             }
                         }
 
