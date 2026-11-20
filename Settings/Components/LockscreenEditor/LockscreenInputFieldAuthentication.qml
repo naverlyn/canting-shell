@@ -358,339 +358,67 @@ ColumnLayout {
             RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
 
             // Password Input Outer Border Color
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                Layout.topMargin: 8
-                Layout.bottomMargin: 8
-                spacing: 8
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    Text {
-                        text: "Password Box Border Color"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: root.theme.textPrimary
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    Rectangle {
-                        width: 24
-                        height: 24
-                        radius: 12
-                        color: authCol.resolveAuthColor(root.inputOuterColor)
-                        border.color: Qt.rgba(1, 1, 1, 0.3)
-                        border.width: 1
-                        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-                    }
-
-                    Rectangle {
-                        width: 115
-                        height: 30
-                        radius: 6
-                        color: root.theme.bgBase
-                        border.color: outerColInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
-                        border.width: outerColInput.activeFocus ? 2 : 1
-                        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-
-                        TextInput {
-                            id: outerColInput
-                            anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
-                            verticalAlignment: TextInput.AlignVCenter
-                            text: root.inputOuterColor
-                            font.family: root.font
-                            font.pixelSize: 11
-                            font.bold: true
-                            color: root.theme.textPrimary
-                            selectByMouse: true
-                            onEditingFinished: {
-                                if (text.trim().length > 0) {
-                                    root.inputOuterColor = text.trim();
-                                    root.scheduleSave();
-                                }
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    id: outerSwTrack
-                    Layout.fillWidth: true
-                    height: 32
-                    radius: 7
-                    color: root.theme.bgBase
-                    border.color: root.theme.bgBorder
-                    border.width: 1
-
-                    readonly property var swatches: [
-                        { name: "Accent", val: "$accent", color: root.theme.accentPrimary },
-                        { name: "Blue / Cyan", val: "$blue", color: root.theme.accentCyan },
-                        { name: "Green", val: "$green", color: root.theme.accentGreen },
-                        { name: "Orange", val: "$peach", color: root.theme.accentOrange },
-                        { name: "Red", val: "$red", color: root.theme.accentRed },
-                        { name: "Text", val: "$text", color: root.theme.textPrimary },
-                        { name: "Muted", val: "$color8", color: root.theme.textMuted }
-                    ]
-                    readonly property int count: swatches.length
-                    readonly property int activeIdx: {
-                        for (let i = 0; i < swatches.length; i++) {
-                            if (swatches[i].val === root.inputOuterColor) return i;
-                        }
-                        return -1;
-                    }
-                    readonly property real cellWidth: (width - 6 - Math.max(0, count - 1) * 3) / Math.max(1, count)
-
-                    Rectangle {
-                        visible: outerSwTrack.activeIdx >= 0
-                        y: 3
-                        height: parent.height - 6
-                        width: outerSwTrack.cellWidth
-                        x: 3 + Math.max(0, outerSwTrack.activeIdx) * (outerSwTrack.cellWidth + 3)
-                        radius: 5
-                        color: root.theme.bgSelected
-                        border.color: root.theme.accentPrimary
-                        border.width: 1
-                        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        spacing: 3
-
-                        Repeater {
-                            model: outerSwTrack.swatches
-                            delegate: Rectangle {
-                                required property var modelData
-                                required property int index
-                                readonly property bool isSel: outerSwTrack.activeIdx === index
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: 5
-                                color: !isSel && oSwHover.hovered ? root.theme.bgHover : "transparent"
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                HoverHandler { id: oSwHover }
-
-                                RowLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-                                    Rectangle {
-                                        width: 9; height: 9; radius: 4.5
-                                        color: modelData.color
-                                        border.color: Qt.rgba(0, 0, 0, 0.3); border.width: 1
-                                    }
-                                    Text {
-                                        text: modelData.name
-                                        font.family: root.font
-                                        font.pixelSize: 10
-                                        font.bold: isSel
-                                        color: isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                        opacity: isSel || oSwHover.hovered ? 1.0 : 0.75
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.inputOuterColor = modelData.val;
-                                        root.scheduleSave();
-                                    }
-                                }
-                            }
-                        }
-                    }
+            LockscreenColorDropdownRow {
+                title: "Password Box Border Color"
+                currentValue: root.inputOuterColor
+                resolvedColor: authCol.resolveAuthColor(root.inputOuterColor)
+                swatches: [
+                    { name: "Accent", val: "$accent", color: Style.theme.accentPrimary },
+                    { name: "Cyan",   val: "$blue",   color: Style.theme.accentCyan },
+                    { name: "Green",  val: "$green",  color: Style.theme.accentGreen },
+                    { name: "Orange", val: "$peach",  color: Style.theme.accentOrange },
+                    { name: "Red",    val: "$red",    color: Style.theme.accentRed },
+                    { name: "Text",   val: "$text",   color: Style.theme.textPrimary },
+                    { name: "Muted",  val: "$color8", color: Style.theme.textMuted }
+                ]
+                onValueSelected: val => {
+                    root.inputOuterColor = val;
+                    root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 12; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
 
-            // Password Input Inner Background & Font Color
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                Layout.topMargin: 8
-                Layout.bottomMargin: 8
-                spacing: 8
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 10
-
-                    Text {
-                        text: "Password Box Fill & Dots Color"
-                        font.family: root.font
-                        font.pixelSize: 13
-                        font.bold: true
-                        color: root.theme.textPrimary
-                        Layout.alignment: Qt.AlignVCenter
+            // Password Input Inner Fill Color
+            LockscreenColorDropdownRow {
+                title: "Password Box Fill Color"
+                currentValue: root.inputInnerColor
+                resolvedColor: authCol.resolveAuthColor(root.inputInnerColor)
+                swatches: [
+                    { name: "Surface",  val: "$surface0", color: Style.theme.bgSurface },
+                    { name: "Hover",    val: "$surface1", color: Style.theme.bgHover },
+                    { name: "Selected", val: "$surface2", color: Style.theme.bgSelected },
+                    { name: "Base",     val: "$base",     color: Style.theme.bgBase }
+                ]
+                onValueSelected: val => {
+                    root.inputInnerColor = val;
+                    if (root.inputFontColor === val) {
+                        root.inputFontColor = "$text";
                     }
-
-                    Item { Layout.fillWidth: true }
-
-                    Text {
-                        text: "Fill:"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                    }
-                    Rectangle {
-                        width: 20; height: 20; radius: 10
-                        color: authCol.resolveAuthColor(root.inputInnerColor)
-                        border.color: Qt.rgba(1, 1, 1, 0.3); border.width: 1
-                    }
-                    Rectangle {
-                        width: 95; height: 28; radius: 6
-                        color: root.theme.bgBase
-                        border.color: innerColInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
-                        border.width: innerColInput.activeFocus ? 2 : 1
-                        TextInput {
-                            id: innerColInput
-                            anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
-                            verticalAlignment: TextInput.AlignVCenter
-                            text: root.inputInnerColor
-                            font.family: root.font; font.pixelSize: 11; font.bold: true
-                            color: root.theme.textPrimary; selectByMouse: true
-                            onEditingFinished: {
-                                if (text.trim().length > 0) {
-                                    root.inputInnerColor = text.trim();
-                                    root.scheduleSave();
-                                }
-                            }
-                        }
-                    }
-
-                    Text {
-                        text: "Dots:"
-                        font.family: root.font
-                        font.pixelSize: 11
-                        color: root.theme.textSecondary
-                    }
-                    Rectangle {
-                        width: 20; height: 20; radius: 10
-                        color: authCol.resolveAuthColor(root.inputFontColor)
-                        border.color: Qt.rgba(1, 1, 1, 0.3); border.width: 1
-                    }
-                    Rectangle {
-                        width: 95; height: 28; radius: 6
-                        color: root.theme.bgBase
-                        border.color: fontColInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
-                        border.width: fontColInput.activeFocus ? 2 : 1
-                        TextInput {
-                            id: fontColInput
-                            anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8
-                            verticalAlignment: TextInput.AlignVCenter
-                            text: root.inputFontColor
-                            font.family: root.font; font.pixelSize: 11; font.bold: true
-                            color: root.theme.textPrimary; selectByMouse: true
-                            onEditingFinished: {
-                                if (text.trim().length > 0) {
-                                    root.inputFontColor = text.trim();
-                                    root.scheduleSave();
-                                }
-                            }
-                        }
-                    }
+                    root.scheduleSave();
                 }
+            }
 
-                Rectangle {
-                    id: innerSwTrack
-                    Layout.fillWidth: true
-                    height: 32
-                    radius: 7
-                    color: root.theme.bgBase
-                    border.color: root.theme.bgBorder
-                    border.width: 1
+            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
 
-                    readonly property var swatches: [
-                        { name: "Surface 0", val: "$surface0", color: root.theme.bgSurface },
-                        { name: "Surface 1", val: "$surface1", color: root.theme.bgHover },
-                        { name: "Surface 2", val: "$surface2", color: root.theme.bgSelected },
-                        { name: "Base", val: "$base", color: root.theme.bgBase },
-                        { name: "Color 0", val: "$color0", color: root.theme.bgSurface }
-                    ]
-                    readonly property int count: swatches.length
-                    readonly property int activeIdx: {
-                        for (let i = 0; i < swatches.length; i++) {
-                            if (swatches[i].val === root.inputInnerColor) return i;
-                        }
-                        return -1;
-                    }
-                    readonly property real cellWidth: (width - 6 - Math.max(0, count - 1) * 3) / Math.max(1, count)
-
-                    Rectangle {
-                        visible: innerSwTrack.activeIdx >= 0
-                        y: 3
-                        height: parent.height - 6
-                        width: innerSwTrack.cellWidth
-                        x: 3 + Math.max(0, innerSwTrack.activeIdx) * (innerSwTrack.cellWidth + 3)
-                        radius: 5
-                        color: root.theme.bgSelected
-                        border.color: root.theme.accentPrimary
-                        border.width: 1
-                        Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                    }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        spacing: 3
-
-                        Repeater {
-                            model: innerSwTrack.swatches
-                            delegate: Rectangle {
-                                required property var modelData
-                                required property int index
-                                readonly property bool isSel: innerSwTrack.activeIdx === index
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                radius: 5
-                                color: !isSel && iSwHover.hovered ? root.theme.bgHover : "transparent"
-                                Behavior on color { ColorAnimation { duration: 140 } }
-                                HoverHandler { id: iSwHover }
-
-                                RowLayout {
-                                    anchors.centerIn: parent
-                                    spacing: 4
-                                    Rectangle {
-                                        width: 9; height: 9; radius: 4.5
-                                        color: modelData.color
-                                        border.color: Qt.rgba(1, 1, 1, 0.25); border.width: 1
-                                    }
-                                    Text {
-                                        text: modelData.name
-                                        font.family: root.font
-                                        font.pixelSize: 10
-                                        font.bold: isSel
-                                        color: isSel ? root.theme.accentPrimary : root.theme.textPrimary
-                                        opacity: isSel || iSwHover.hovered ? 1.0 : 0.75
-                                    }
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        root.inputInnerColor = modelData.val;
-                                        if (root.inputFontColor === modelData.val) {
-                                            root.inputFontColor = "$text";
-                                        }
-                                        root.scheduleSave();
-                                    }
-                                }
-                            }
-                        }
-                    }
+            // Password Input Dots / Font Color
+            LockscreenColorDropdownRow {
+                title: "Password Dots Color"
+                currentValue: root.inputFontColor
+                resolvedColor: authCol.resolveAuthColor(root.inputFontColor)
+                swatches: [
+                    { name: "Text",      val: "$text",     color: Style.theme.textPrimary },
+                    { name: "Secondary", val: "$subtext1", color: Style.theme.textSecondary },
+                    { name: "Muted",     val: "$subtext0", color: Style.theme.textMuted },
+                    { name: "Accent",    val: "$accent",   color: Style.theme.accentPrimary },
+                    { name: "Cyan",      val: "$blue",     color: Style.theme.accentCyan },
+                    { name: "Green",     val: "$green",    color: Style.theme.accentGreen },
+                    { name: "Orange",    val: "$peach",    color: Style.theme.accentOrange },
+                    { name: "Red",       val: "$red",      color: Style.theme.accentRed }
+                ]
+                onValueSelected: val => {
+                    root.inputFontColor = val;
+                    root.scheduleSave();
                 }
             }
         }

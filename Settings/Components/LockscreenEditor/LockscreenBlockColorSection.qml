@@ -1,130 +1,251 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
-import Quickshell
-import Quickshell.Io
-import ".."
+import "../Common"
 
-ColumnLayout {
+Item {
+    id: colorSection
     required property var hostCard
+
+    readonly property var swatches: [
+        { name: "Primary",   val: "$accent",  color: Style.theme.accentPrimary },
+        { name: "Cyan",      val: "$color12", color: Style.theme.accentCyan },
+        { name: "Green",     val: "$color14", color: Style.theme.accentGreen },
+        { name: "Orange",    val: "$color11", color: Style.theme.accentOrange },
+        { name: "Red",       val: "$color9",  color: Style.theme.accentRed },
+        { name: "Text",      val: "$text",    color: Style.theme.textPrimary },
+        { name: "Secondary", val: "$color10", color: Style.theme.textSecondary },
+        { name: "Muted",     val: "$color8",  color: Style.theme.textMuted }
+    ]
+
+    readonly property color resolvedColor: hostCard.resolveColor(hostCard.editColor)
+    readonly property string resolvedHex: String(resolvedColor).toLowerCase()
+
+    readonly property var activeSwatch: {
+        for (let i = 0; i < swatches.length; i++) {
+            if (swatches[i].val === hostCard.editColor) return swatches[i];
+        }
+        return null;
+    }
+
+    readonly property bool isOpen: colorPopup.opened
+
     Layout.fillWidth: true
-    spacing: 8
+    implicitHeight: 36
 
     RowLayout {
-        Layout.fillWidth: true
-        spacing: 8
+        anchors.fill: parent
+        spacing: 12
 
         Text {
             text: "Color"
-            font.family: hostCard.font
-            font.pixelSize: 11
-            font.bold: true
-            color: hostCard.theme.textSecondary
+            font.family: Style.font
+            font.pixelSize: Style.px(12)
+            font.bold: Style.boldHeadings
+            font.letterSpacing: Style.letterSpacing
+            font.hintingPreference: Style.fontHintingEnum
+            antialiasing: Style.fontAntialiasing
+            renderType: Style.fontRenderTypeEnum
+            color: Style.theme.textSecondary
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignVCenter
         }
 
-        // Live Color Preview Chip
         Rectangle {
-            width: 18
-            height: 18
-            radius: 9
-            color: hostCard.resolveColor(hostCard.editColor)
-            border.color: Qt.rgba(1, 1, 1, 0.25)
-            border.width: 1
-        }
+            id: triggerBtn
+            Layout.preferredWidth: 380
+            Layout.preferredHeight: 32
+            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+            radius: 7
+            color: {
+                if (colorSection.isOpen) return Style.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12);
+                if (triggerHover.hovered) return Style.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08);
+                return Style.theme.bgBase;
+            }
+            border.color: {
+                if (colorSection.isOpen) return Style.theme.accentPrimary;
+                if (triggerHover.hovered) return Style.withAlpha(Style.theme.accentPrimary, 0.45);
+                return Style.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1);
+            }
+            border.width: colorSection.isOpen ? 1.5 : 1
 
-        Text {
-            text: hostCard.editColor
-            font.family: hostCard.font
-            font.pixelSize: 11
-            font.bold: true
-            color: hostCard.resolveColor(hostCard.editColor)
-        }
+            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on border.color { ColorAnimation { duration: 150 } }
 
-        Item { Layout.fillWidth: true }
+            HoverHandler { id: triggerHover }
 
-        // Custom Color Input Field
-        Rectangle {
-            width: 140
-            height: 28
-            radius: 6
-            color: hostCard.theme.bgBase
-            border.color: hostCard.theme.bgBorder
-            border.width: 1
-
-            TextInput {
+            RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
-                verticalAlignment: TextInput.AlignVCenter
-                text: hostCard.editColor
-                font.family: hostCard.font
-                font.pixelSize: 11
-                color: hostCard.theme.textPrimary
-                selectByMouse: true
-                onTextChanged: {
-                    if (text.trim().length > 0 && hostCard.editColor !== text.trim()) {
-                        hostCard.editColor = text.trim();
+                anchors.leftMargin: 9
+                anchors.rightMargin: 10
+                spacing: 8
+
+                Rectangle {
+                    Layout.preferredWidth: 16
+                    Layout.preferredHeight: 16
+                    Layout.alignment: Qt.AlignVCenter
+                    radius: 5
+                    color: colorSection.resolvedColor
+                    border.color: Qt.rgba(1, 1, 1, 0.25)
+                    border.width: 1
+
+                    Behavior on color { ColorAnimation { duration: 160 } }
+                }
+
+                Text {
+                    text: colorSection.activeSwatch ? colorSection.activeSwatch.name : "Custom"
+                    font.family: Style.font
+                    font.pixelSize: Style.px(12)
+                    font.bold: true
+                    font.letterSpacing: Style.letterSpacing
+                    font.hintingPreference: Style.fontHintingEnum
+                    antialiasing: Style.fontAntialiasing
+                    renderType: Style.fontRenderTypeEnum
+                    color: Style.theme.textPrimary
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                Text {
+                    text: colorSection.resolvedHex
+                    font.family: Style.monoFont
+                    font.pixelSize: Style.px(11)
+                    font.hintingPreference: Style.fontHintingEnum
+                    renderType: Style.fontRenderTypeEnum
+                    color: Style.theme.textSecondary
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                Text {
+                    text: "󰅀"
+                    font.family: Style.font
+                    font.pixelSize: Style.px(13)
+                    color: colorSection.isOpen ? Style.theme.accentPrimary : Style.theme.textSecondary
+                    rotation: colorSection.isOpen ? 180 : 0
+                    Layout.alignment: Qt.AlignVCenter
+
+                    Behavior on rotation { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    if (colorPopup.opened) {
+                        colorPopup.close();
+                    } else {
+                        colorPopup.open();
                     }
                 }
             }
         }
     }
 
-    // Preset Palette Chips
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: 6
+    Popup {
+        id: colorPopup
+        parent: triggerBtn
+        x: triggerBtn.width - width
+        y: triggerBtn.height + 4
+        width: triggerBtn.width
+        padding: 6
+        margins: 8
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
 
-        Repeater {
-            model: [
-                { name: "Primary", val: "$accent", color: hostCard.theme.accentPrimary },
-                { name: "Blue / Cyan", val: "$color12", color: hostCard.theme.accentCyan },
-                { name: "Green", val: "$color14", color: hostCard.theme.accentGreen },
-                { name: "Orange", val: "$color11", color: hostCard.theme.accentOrange },
-                { name: "Red", val: "$color9", color: hostCard.theme.accentRed },
-                { name: "Text", val: "$text", color: hostCard.theme.textPrimary },
-                { name: "Secondary", val: "$color10", color: hostCard.theme.textSecondary },
-                { name: "Muted", val: "$color8", color: hostCard.theme.textMuted }
-            ]
+        enter: Transition {
+            NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
+            NumberAnimation { property: "y"; from: triggerBtn.height; to: triggerBtn.height + 4; duration: 150; easing.type: Easing.OutCubic }
+        }
 
-            Rectangle {
-                readonly property bool isSelected: hostCard.editColor === modelData.val
-                implicitWidth: chipRow.implicitWidth + 14
-                height: 24
-                radius: 12
-                color: isSelected ? Qt.rgba(hostCard.theme.accentPrimary.r, hostCard.theme.accentPrimary.g, hostCard.theme.accentPrimary.b, 0.2) : (chipHover.hovered ? hostCard.theme.bgHover : hostCard.theme.bgBase)
-                border.color: isSelected ? hostCard.theme.accentPrimary : hostCard.theme.bgBorder
-                border.width: isSelected ? 1.5 : 1
+        exit: Transition {
+            NumberAnimation { property: "opacity"; from: 1.0; to: 0.0; duration: 110; easing.type: Easing.InQuad }
+        }
 
-                HoverHandler { id: chipHover }
+        background: Rectangle {
+            radius: 10
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
+            border.width: 1
+        }
 
-                RowLayout {
-                    id: chipRow
-                    anchors.centerIn: parent
-                    spacing: 5
+        contentItem: ColumnLayout {
+            spacing: 2
 
-                    Rectangle {
-                        width: 10
-                        height: 10
-                        radius: 5
-                        color: modelData.color
-                        border.color: Qt.rgba(0, 0, 0, 0.3)
-                        border.width: 1
+            Repeater {
+                model: colorSection.swatches
+                delegate: Rectangle {
+                    id: optDelegate
+                    required property var modelData
+                    required property int index
+
+                    readonly property string swatchHex: String(modelData.color).toLowerCase()
+                    readonly property bool isSelected: colorSection.hostCard.editColor === modelData.val
+
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 32
+                    radius: 6
+                    color: {
+                        if (isSelected) return Style.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.14);
+                        if (optHover.hovered) return Style.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.06);
+                        return "transparent";
                     }
 
-                    Text {
-                        text: modelData.name
-                        font.family: hostCard.font
-                        font.pixelSize: 10
-                        font.bold: isSelected
-                        color: isSelected ? hostCard.theme.accentPrimary : hostCard.theme.textSecondary
-                    }
-                }
+                    Behavior on color { ColorAnimation { duration: 110 } }
 
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: hostCard.editColor = modelData.val
+                    HoverHandler { id: optHover }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 8
+                        anchors.rightMargin: 8
+                        spacing: 8
+
+                        Rectangle {
+                            Layout.preferredWidth: 12
+                            Layout.preferredHeight: 12
+                            Layout.alignment: Qt.AlignVCenter
+                            radius: 6
+                            color: optDelegate.modelData.color
+                            border.color: optDelegate.isSelected ? Qt.rgba(1, 1, 1, 0.45) : Qt.rgba(0, 0, 0, 0.35)
+                            border.width: 1
+                        }
+
+                        Text {
+                            text: optDelegate.modelData.name
+                            font.family: Style.font
+                            font.pixelSize: Style.px(12)
+                            font.bold: optDelegate.isSelected
+                            font.letterSpacing: Style.letterSpacing
+                            font.hintingPreference: Style.fontHintingEnum
+                            antialiasing: Style.fontAntialiasing
+                            renderType: Style.fontRenderTypeEnum
+                            color: optDelegate.isSelected ? Style.theme.accentPrimary : Style.theme.textPrimary
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+
+                        Text {
+                            text: optDelegate.swatchHex
+                            font.family: Style.monoFont
+                            font.pixelSize: Style.px(10)
+                            font.hintingPreference: Style.fontHintingEnum
+                            renderType: Style.fontRenderTypeEnum
+                            color: optDelegate.isSelected ? Style.theme.accentPrimary : Style.theme.textMuted
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            colorSection.hostCard.editColor = optDelegate.modelData.val;
+                            colorPopup.close();
+                        }
+                    }
                 }
             }
         }
