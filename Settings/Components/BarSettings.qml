@@ -767,6 +767,11 @@ Item {
                     root: root
                 }
 
+                DynamicIslandModulesCard {
+                    visible: root.currentSubTab === 0 && generalTabCol.curDynamicIsland
+                    root: root
+                }
+
                 ColumnLayout {
                     visible: root.currentSubTab === 1
                     Layout.fillWidth: true
@@ -802,6 +807,11 @@ Item {
                             ? Boolean(BarConfig.currentBar.secondaryDashed)
                             : Boolean(BarConfig.currentBar.dashed))
                         : BarConfig.dashed
+                    readonly property bool curDynamicIsland: BarConfig.currentBar
+                        ? (isEditingSecondary && BarConfig.currentBar.secondaryDynamicIsland !== undefined
+                            ? Boolean(BarConfig.currentBar.secondaryDynamicIsland)
+                            : Boolean(BarConfig.currentBar.dynamicIsland))
+                        : BarConfig.dynamicIsland
                     readonly property real curOpacity: BarConfig.currentBar ? Number(BarConfig.currentBar.barOpacity) : BarConfig.barOpacity
                     readonly property int curPillRadius: BarConfig.currentBar ? (BarConfig.currentBar.pillRadius !== undefined ? Number(BarConfig.currentBar.pillRadius) : 10) : BarConfig.pillRadius
                     readonly property real curPillOpacity: BarConfig.currentBar ? (BarConfig.currentBar.pillOpacity !== undefined ? Number(BarConfig.currentBar.pillOpacity) : 1.0) : BarConfig.pillOpacity
@@ -820,6 +830,13 @@ Item {
 
                     GeneralBarCard {
                         root: root
+                    }
+
+                    AnimatedSection {
+                        expanded: generalTabCol.curDynamicIsland
+                        DynamicIslandOptionsCard {
+                            root: root
+                        }
                     }
 
                     GlobalFrameCard {

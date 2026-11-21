@@ -14,6 +14,7 @@ Item {
 
     readonly property bool isEditingSecondary: root.generalTab.isEditingSecondary
     readonly property string currentStyle: {
+        if (root.generalTab.curDynamicIsland) return "dynamicIsland";
         if (root.generalTab.curDashed) return "dashed";
         if (root.generalTab.curFloating) return "floating";
         return "docked";
@@ -22,7 +23,16 @@ Item {
     function applyBarStyle(styleKey) {
         const floatProp = isEditingSecondary ? "secondaryFloating" : "floating";
         const dashProp = isEditingSecondary ? "secondaryDashed" : "dashed";
+        const diProp = isEditingSecondary ? "secondaryDynamicIsland" : "dynamicIsland";
 
+        if (styleKey === "dynamicIsland") {
+            BarConfig.updateBarProp(floatProp, false);
+            BarConfig.updateBarProp(dashProp, false);
+            BarConfig.updateBarProp(diProp, true);
+            return;
+        }
+
+        BarConfig.updateBarProp(diProp, false);
         if (styleKey === "dashed") {
             BarConfig.updateBarProp(floatProp, false);
             BarConfig.updateBarProp(dashProp, true);
@@ -84,6 +94,11 @@ Item {
                 {
                     desktop: "dashed",
                     name: "Dashed",
+                    desc: ""
+                },
+                {
+                    desktop: "dynamicIsland",
+                    name: "Dynamic Island (Experimental)",
                     desc: ""
                 }
             ]

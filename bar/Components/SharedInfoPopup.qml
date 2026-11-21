@@ -232,8 +232,9 @@ PopupWindow {
   }
   anchor.onAnchoring: {
     if (!barWindow) return;
+    const barH = (barWindow.visualBarThickness !== undefined && barWindow.visualBarThickness > 0) ? barWindow.visualBarThickness : barWindow.height;
     if (barPosition === "top" || barPosition === "bottom") {
-      anchor.rect = Qt.rect(0, 0, Math.max(1, implicitWidth), Math.max(1, barWindow.height));
+      anchor.rect = Qt.rect(0, 0, Math.max(1, implicitWidth), Math.max(1, barH));
     } else {
       anchor.rect = Qt.rect(0, 0, Math.max(1, barWindow.width), Math.max(1, implicitHeight));
     }

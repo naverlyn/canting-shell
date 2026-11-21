@@ -12,6 +12,7 @@ import Quickshell.Services.Notifications
 import QtQuick.Effects
 import "../ControlCenter"
 import "./Components"
+import "./DynamicIsland"
 import "./Widgets"
 import "../utils/ColorUtils.js" as ColorUtils
 
@@ -42,7 +43,8 @@ Scope {
     const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
     const effectiveFloating = (!isPrim && bTarget === "all" && b.secondaryFloating !== undefined) ? Boolean(b.secondaryFloating) : Boolean(b.floating);
     const effectiveDashed = (!isPrim && bTarget === "all" && b.secondaryDashed !== undefined) ? Boolean(b.secondaryDashed) : Boolean(b.dashed);
-    return { pos: effectivePos, floating: effectiveFloating || effectiveDashed, height: b.barHeight || 32 };
+    const effectiveDI = ((!isPrim && bTarget === "all" && b.secondaryDynamicIsland !== undefined) ? Boolean(b.secondaryDynamicIsland) : Boolean(b.dynamicIsland)) && effectivePos === "top";
+    return { pos: effectivePos, floating: effectiveFloating || effectiveDashed || effectiveDI, height: b.barHeight || 32 };
   }
 
   function isFloatingBarActive(pos, currentBarId, screenIdx) {
@@ -57,7 +59,7 @@ Scope {
         if (info && info.pos === pos && info.floating) return true;
         continue;
       }
-      if ((b.position || "top") === pos && (Boolean(b.floating) || Boolean(b.dashed))) return true;
+      if ((b.position || "top") === pos && (Boolean(b.floating) || Boolean(b.dashed) || (Boolean(b.dynamicIsland) && (b.position || "top") === "top"))) return true;
     }
     return false;
   }
@@ -76,7 +78,7 @@ Scope {
         }
         continue;
       }
-      if ((b.position || "top") === pos && !Boolean(b.floating) && !Boolean(b.dashed)) {
+      if ((b.position || "top") === pos && !Boolean(b.floating) && !Boolean(b.dashed) && !(Boolean(b.dynamicIsland) && (b.position || "top") === "top")) {
         return true;
       }
     }
@@ -211,6 +213,7 @@ Scope {
       readonly property int barThickness: barCfg.barHeight || 32
       readonly property bool isFloating: Boolean(barCfg.floating)
       readonly property bool isDashed: Boolean(barCfg.dashed)
+      readonly property bool isDynamicIsland: Boolean(barCfg.dynamicIsland) && barPos === "top"
       readonly property real barAlpha: (barCfg.barOpacity !== undefined && barCfg.barOpacity !== null) ? Number(barCfg.barOpacity) : BarConfig.barOpacity
       readonly property int pillRadius: (barCfg.pillRadius !== undefined) ? Number(barCfg.pillRadius) : BarConfig.pillRadius
       readonly property int barRadius: (barCfg.barRadius !== undefined) ? Number(barCfg.barRadius) : BarConfig.barRadius
@@ -347,12 +350,54 @@ Scope {
             ? barInstanceScope.barCfg.secondaryPosition
             : barInstanceScope.barPos
           readonly property bool windowIsVert: windowBarPos === "left" || windowBarPos === "right"
-          readonly property bool windowIsDashed: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryDashed !== undefined)
+          readonly property bool windowIsDynamicIsland: ((isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryDynamicIsland !== undefined)
+            ? Boolean(barInstanceScope.barCfg.secondaryDynamicIsland)
+            : barInstanceScope.isDynamicIsland) && windowBarPos === "top"
+          readonly property bool windowIsDashed: ((isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryDashed !== undefined)
             ? Boolean(barInstanceScope.barCfg.secondaryDashed)
-            : barInstanceScope.isDashed
+            : barInstanceScope.isDashed) || windowIsDynamicIsland
           readonly property bool windowIsFloating: ((isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryFloating !== undefined)
             ? Boolean(barInstanceScope.barCfg.secondaryFloating)
             : barInstanceScope.isFloating) || windowIsDashed
+          readonly property string islandPosition: (barInstanceScope.barCfg && barInstanceScope.barCfg.islandPosition)
+            ? String(barInstanceScope.barCfg.islandPosition)
+            : BarConfig.islandPosition
+          readonly property int islandPanelIndex: {
+            if (!windowIsDynamicIsland) return -1;
+            const n = effectivePanels ? effectivePanels.length : 0;
+            if (n <= 0) return -1;
+            if (islandPosition === "left") return 0;
+            if (islandPosition === "right") return n - 1;
+            return n >= 3 ? Math.floor(n / 2) : -1;
+          }
+          readonly property real dynamicIslandCompactWidth: (dynamicIslandLoader && dynamicIslandLoader.item) ? dynamicIslandLoader.item.compactWidthOut : 140
+          readonly property bool barDropShadowEnabled: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadow !== undefined)
+            ? Boolean(barInstanceScope.barCfg.barDropShadow)
+            : Boolean(windowIsDynamicIsland)
+          readonly property string barDropShadowTarget: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadowTarget)
+            ? String(barInstanceScope.barCfg.barDropShadowTarget)
+            : BarConfig.barDropShadowTarget
+          readonly property int barDropShadowBlur: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadowBlur !== undefined)
+            ? Math.max(4, Math.min(36, Number(barInstanceScope.barCfg.barDropShadowBlur)))
+            : BarConfig.barDropShadowBlur
+          readonly property real barDropShadowOpacity: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadowOpacity !== undefined)
+            ? Math.max(0.05, Math.min(0.85, Number(barInstanceScope.barCfg.barDropShadowOpacity)))
+            : BarConfig.barDropShadowOpacity
+          readonly property int barDropShadowOffsetY: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadowOffsetY !== undefined)
+            ? Math.max(0, Math.min(16, Number(barInstanceScope.barCfg.barDropShadowOffsetY)))
+            : BarConfig.barDropShadowOffsetY
+          readonly property string barDropShadowColorMode: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadowColorMode)
+            ? String(barInstanceScope.barCfg.barDropShadowColorMode)
+            : BarConfig.barDropShadowColorMode
+          readonly property bool sideBarShadowActive: barDropShadowEnabled && windowIsFloating && (!windowIsDynamicIsland || barDropShadowTarget === "all")
+          readonly property color resolvedBarShadowColor: {
+            const base = (barDropShadowColorMode === "accent") ? root.theme.accentPrimary : Qt.rgba(0, 0, 0, 1);
+            return Qt.rgba(base.r, base.g, base.b, barDropShadowOpacity);
+          }
+          readonly property int shadowPadBottom: (!windowIsVert && windowBarPos === "top" && sideBarShadowActive)
+            ? (barDropShadowBlur + barDropShadowOffsetY + 10)
+            : 0
+          readonly property int visualBarThickness: barInstanceScope.barThickness
           readonly property string windowBarColorSpec: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryBarColor !== undefined)
             ? String(barInstanceScope.barCfg.secondaryBarColor)
             : barInstanceScope.barColorSpec
@@ -431,9 +476,35 @@ Scope {
             }
           }
 
-          implicitHeight: barWindow.windowIsVert ? 0 : barInstanceScope.barThickness
+          implicitHeight: barWindow.windowIsVert ? 0 : (barInstanceScope.barThickness + barWindow.shadowPadBottom)
           implicitWidth: barWindow.windowIsVert ? barInstanceScope.barThickness : 0
           color: "transparent"
+
+          Item {
+            id: barInputMask
+            x: 0
+            y: 0
+            width: barWindow.width
+            height: barWindow.windowIsVert ? barWindow.height : barInstanceScope.barThickness
+          }
+
+          mask: Region {
+            item: barInputMask
+          }
+
+          Loader {
+            id: dynamicIslandLoader
+            active: barWindow.windowIsDynamicIsland && barWindow.visible && !barWindow.isBlankBar
+            sourceComponent: Component {
+              DynamicIslandWindow {
+                hostRoot: root
+                hostWindow: barWindow
+                hostContainer: barContentContainer
+                hostScope: barInstanceScope
+                screenModel: barWindow.modelData
+              }
+            }
+          }
 
           property string lastPos: barWindow.windowBarPos
           onLastPosChanged: barPosSwitchAnim.restart()
@@ -479,7 +550,11 @@ Scope {
 
           Rectangle {
             id: barBackground
-            anchors.fill: parent
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: barWindow.windowIsVert ? parent.bottom : undefined
+            height: barWindow.windowIsVert ? parent.height : barInstanceScope.barThickness
             anchors.topMargin: barWindow.windowIsFloating
               ? 0
               : (barWindow.windowIsVert
@@ -515,6 +590,16 @@ Scope {
             Behavior on anchors.rightMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             Behavior on color { ColorAnimation { duration: 200 } }
             Behavior on border.color { ColorAnimation { duration: 200 } }
+
+            layer.enabled: barWindow.sideBarShadowActive && !barWindow.windowIsDashed
+            layer.effect: MultiEffect {
+              shadowEnabled: true
+              shadowBlur: Math.max(0.08, Math.min(1.0, barWindow.barDropShadowBlur / 32.0))
+              shadowColor: barWindow.resolvedBarShadowColor
+              shadowVerticalOffset: barWindow.barDropShadowOffsetY
+              shadowHorizontalOffset: 0
+              autoPaddingEnabled: true
+            }
           }
 
           // Split Island backgrounds for Dashed bar style (morphs smoothly to/from Floating)
@@ -536,6 +621,7 @@ Scope {
               // itemAt() is not reactive: re-resolve whenever the panel Grids are rebuilt,
               // otherwise the island keeps a stale (destroyed) reference and disappears.
               readonly property var secGrid: { void barWindow.panelItemsRev; return panelsOuterRepeater.itemAt(index); }
+              readonly property bool isDynamicIslandSlot: barWindow.windowIsDynamicIsland && index === barWindow.islandPanelIndex
               readonly property bool hasContent: secGrid && secGrid.width > 0 && secGrid.height > 0
               readonly property real targetX: barWindow.windowIsDashed
                 ? (secGrid ? (barContentContainer.isVert ? barBackground.x : (barContentContainer.x + secGrid.x - 10)) : barBackground.x)
@@ -550,7 +636,7 @@ Scope {
                 ? (secGrid ? (barContentContainer.isVert ? (secGrid.height + 16) : barBackground.height) : 0)
                 : barBackground.height
 
-              visible: hasContent && !barWindow.isBlankBar && barInstanceScope.barThickness >= 18 && (barWindow.windowIsDashed || barWindow.dashMorphActive || opacity > 0.01)
+              visible: !isDynamicIslandSlot && hasContent && !barWindow.isBlankBar && barInstanceScope.barThickness >= 18 && (barWindow.windowIsDashed || barWindow.dashMorphActive || opacity > 0.01)
               x: targetX
               y: targetY
               width: targetW
@@ -575,6 +661,16 @@ Scope {
               // No opacity fade: islands start fully overlaying the docked bar and morph apart
               // (or together) while the bar background cross-fades, so there is no see-through dip.
               Behavior on color { ColorAnimation { duration: 180 } }
+
+              layer.enabled: barWindow.sideBarShadowActive && barWindow.windowIsDashed
+              layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowBlur: Math.max(0.08, Math.min(1.0, barWindow.barDropShadowBlur / 32.0))
+                shadowColor: barWindow.resolvedBarShadowColor
+                shadowVerticalOffset: barWindow.barDropShadowOffsetY
+                shadowHorizontalOffset: 0
+                autoPaddingEnabled: true
+              }
             }
           }
 
@@ -814,13 +910,15 @@ Scope {
                 onTargetXChanged: moveTo(xSlide, "x", targetX)
                 onTargetYChanged: moveTo(ySlide, "y", targetY)
                 readonly property int totalPanels: barWindow.effectivePanels.length
+                readonly property bool isDynamicIslandSlot: barWindow.windowIsDynamicIsland && index === barWindow.islandPanelIndex
+                visible: !isDynamicIslandSlot
                 columns: barContentContainer.isVert ? 1 : Math.max(1, sectionWidgetRepeater.count)
                 spacing: barContentContainer.isVert ? 6 : 8
                 horizontalItemAlignment: Grid.AlignHCenter
                 verticalItemAlignment: Grid.AlignVCenter
 
                 height: barContentContainer.isVert ? implicitHeight : barContentContainer.height
-                width: barContentContainer.isVert ? barContentContainer.width : implicitWidth
+                width: barContentContainer.isVert ? barContentContainer.width : (isDynamicIslandSlot ? barWindow.dynamicIslandCompactWidth : implicitWidth)
 
                 readonly property real targetX: {
                   if (barContentContainer.isVert) return 0;
@@ -885,7 +983,7 @@ Scope {
                     id: panelWidgetLoader
                     required property string modelData
                     readonly property string barId: (barInstanceScope.barCfg && barInstanceScope.barCfg.id) ? String(barInstanceScope.barCfg.id) : "bar_1"
-                    active: !barWindow.isBlankBar && BarConfig.isWidgetVisible(modelData, barId)
+                    active: !barWindow.isBlankBar && !panelSectionGrid.isDynamicIslandSlot && BarConfig.isWidgetVisible(modelData, barId)
                     sourceComponent: widgetRegistry.getWidgetComponent(modelData)
                     visible: active && sourceComponent !== null
                     width: visible ? (barContentContainer.isVert ? barContentContainer.width : (item ? (item.implicitWidth > 0 ? item.implicitWidth : item.width) : 0)) : 0

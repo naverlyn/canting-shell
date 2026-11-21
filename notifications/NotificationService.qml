@@ -552,6 +552,7 @@ Singleton {
     }
 
     Component.onCompleted: {
+        Quickshell.execDetached(["sh", "-c", "rm -rf /tmp/qs_notif_cache 2>/dev/null || true"]);
         if (!configFile.text()) {
             root._loaded = true;
         }
@@ -650,6 +651,36 @@ Singleton {
         }
     }
 
+    function _extractLocalImagePath(raw) {
+        const s = String(raw || "").trim();
+        if (s === "" || s === "__sample__" || s.indexOf("image://qsimage/") !== -1) return "";
+        if (s.startsWith("image://icon//")) return s.slice(13);
+        if (s.startsWith("file://")) return s.slice(7);
+        if (s.startsWith("/")) return s;
+        return "";
+    }
+
+    function _cacheNotifImage(rawImg, rawAppIcon, keyId) {
+        let localPath = root._extractLocalImagePath(rawImg);
+        if (!localPath) {
+            // Some browsers/apps pass contact avatars as a temporary /tmp/ path in appIcon
+            const iconPath = root._extractLocalImagePath(rawAppIcon);
+            if (iconPath && (iconPath.indexOf("/tmp/") !== -1 || iconPath.indexOf("scoped_dir") !== -1)) {
+                localPath = iconPath;
+            }
+        }
+        if (!localPath) return "";
+        const safeId = String(keyId || root._seqCounter).replace(/[^a-zA-Z0-9_-]/g, "_");
+        const uniqueName = "img_" + Date.now() + "_" + safeId + ".png";
+        const dstPath = "/tmp/qs_notif_cache/" + uniqueName;
+        Quickshell.execDetached([
+            "sh", "-c",
+            "mkdir -p /tmp/qs_notif_cache && [ -s \"$1\" ] && cp -f \"$1\" \"$2\" 2>/dev/null || true",
+            "sh", localPath, dstPath
+        ]);
+        return "file://" + dstPath;
+    }
+
     function recordToHistory(notifData) {
         if (!notifData) return;
         const nId = String(notifData.notifId || ("item_" + notifData.seqId));
@@ -661,6 +692,9 @@ Singleton {
         const displayAppName = String(notifData.displayAppName || SocialApps.formatAppName(appName, sApp) || appName || "Notification");
         const displayBody = String(notifData.displayBody || SocialApps.cleanBody(body, sApp) || body);
         const now = notifData.createdAt || new Date();
+        const rawImg = String(notifData.image || "");
+        const localImgPath = root._extractLocalImagePath(rawImg) || root._extractLocalImagePath(appIcon);
+        const cachedImg = root._cacheNotifImage(rawImg, appIcon, notifData.seqId || nId);
 
         const item = {
             notifId: nId,
@@ -672,7 +706,9 @@ Singleton {
             summary: summary,
             body: body,
             displayBody: displayBody,
-            image: String(notifData.image || ""),
+            image: rawImg,
+            imageFilePath: localImgPath,
+            cachedImage: cachedImg,
             urgency: notifData.urgency !== undefined ? notifData.urgency : NotificationUrgency.Normal,
             createdAt: now,
             timeStr: Qt.formatTime(now, "hh:mm"),
@@ -680,7 +716,11 @@ Singleton {
             actions: (notifData.actions || []).filter(function(a) {
                 return a && a.identifier !== "default" && (a.label || a.text);
             }).map(function(a) {
-                return { label: String(a.label || a.text || ""), identifier: String(a.identifier || "") };
+                return {
+                    label: String(a.label || a.text || ""),
+                    identifier: String(a.identifier || ""),
+                    customCmd: String(a.customCmd || "")
+                };
             })
         };
 
@@ -691,6 +731,7 @@ Singleton {
         root._pruneRetained();
     }
 
+    // Retained NotificationData instances whose toast timed out but whose D-Bus notification is still open.
     property var _retained: ({})
 
     function _retain(notifData) {
@@ -732,6 +773,15 @@ Singleton {
         }
     }
 
+    function openHistoryItem(notifId) {
+        const live = root._findLive(notifId);
+        if (live) {
+            live.activate();
+            return;
+        }
+        root.focusHistoryApp(notifId);
+    }
+
     function dismissHistoryItem(notifId) {
         if (!notifId) return;
         const targetId = String(notifId);
@@ -747,17 +797,84 @@ Singleton {
         if (!appName) return;
         const target = String(appName);
         root.history = (root.history || []).filter(function(h) {
-            const name = String((h && (h.displayAppName || h.appName)) || "");
+            const name = h ? SocialApps.formatAppName(h.displayAppName || h.appName || "", h.socialApp) : "";
             return name !== target;
         });
         root._pruneRetained();
     }
 
+    function focusHistoryApp(notifId) {
+        if (!notifId) return;
+        const targetId = String(notifId);
+        const entry = (root.history || []).find(function(h) {
+            return h && String(h.notifId) === targetId;
+        });
+        if (!entry) return;
+        if (entry.socialApp) {
+            const cmd = SocialApps.getFocusCommand(entry.socialApp);
+            if (cmd) {
+                Quickshell.execDetached(["sh", "-c", cmd]);
+                return;
+            }
+        }
+        const app = String(entry.appName || "").toLowerCase().trim();
+        if (app !== "" && app !== "notification" && app !== "notify-send") {
+            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:^(" + app + ")$"]);
+        }
+    }
+
     function invokeHistoryAction(notifId, identifier) {
         if (!notifId || !identifier) return;
-        const live = root._findLive(notifId);
+        const targetId = String(notifId);
+        const live = root._findLive(targetId);
+        const entry = (root.history || []).find(function(h) {
+            return h && String(h.notifId) === targetId;
+        });
+
+        // Screenshot notifications come from short-lived notify-send -A processes; handle Open/Delete
+        // directly on the exact attached file once the toast has expired or was already acted on.
+        if (entry && (!live || live.expired)) {
+            const appLower = String(entry.appName || "").toLowerCase();
+            const sumLower = String(entry.summary || "").toLowerCase();
+            const rawPath = String(entry.imageFilePath || "");
+            const exactFile = (rawPath !== "" && rawPath.indexOf("/icons/") === -1) ? rawPath : "";
+            if (exactFile !== "" && (appLower === "screenshot" || sumLower.indexOf("screenshot") !== -1)) {
+                let shotLabel = "";
+                const shotActs = entry.actions || [];
+                for (let s = 0; s < shotActs.length; s++) {
+                    if (shotActs[s] && shotActs[s].identifier === identifier) {
+                        shotLabel = String(shotActs[s].label || "").toLowerCase();
+                    }
+                }
+                const isSwappy = String(entry.body || "").toLowerCase().indexOf("swappy") !== -1;
+                if (identifier === "action1" || shotLabel === "open") {
+                    Quickshell.execDetached(isSwappy ? ["swappy", "-f", exactFile] : ["xdg-open", exactFile]);
+                    if (live) live.dismiss();
+                    return;
+                }
+                if (identifier === "action2" || shotLabel === "delete") {
+                    Quickshell.execDetached(["rm", "-f", exactFile]);
+                    root.dismissHistoryItem(targetId);
+                    return;
+                }
+            }
+        }
+
         if (live) {
             live.invokeAction(identifier);
+            return;
+        }
+        // Fallback when the app already closed the notification: run customCmd or focus the app
+        if (!entry) return;
+        const acts = entry.actions || [];
+        for (let j = 0; j < acts.length; j++) {
+            if (acts[j] && acts[j].identifier === identifier && acts[j].customCmd) {
+                Quickshell.execDetached(["sh", "-c", String(acts[j].customCmd)]);
+                return;
+            }
+        }
+        if (identifier === "reply" || identifier === "default" || identifier === "open") {
+            root.focusHistoryApp(targetId);
         }
     }
 
@@ -765,6 +882,7 @@ Singleton {
         root.history = [];
         root.dismissAll();
         root._pruneRetained();
+        Quickshell.execDetached(["sh", "-c", "rm -rf /tmp/qs_notif_cache 2>/dev/null || true"]);
     }
 
     function _remove(notifData) {

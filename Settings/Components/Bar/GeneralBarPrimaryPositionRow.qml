@@ -42,13 +42,16 @@ Item {
             implicitWidth: 380
             menuWidth: 380
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-            options: [
-                { desktop: "top",    name: "Top",    desc: "" },
-                { desktop: "bottom", name: "Bottom", desc: "" },
-                { desktop: "left",   name: "Left",   desc: "" },
-                { desktop: "right",  name: "Right",  desc: "" }
-            ]
-            currentValue: BarConfig.currentBar ? BarConfig.currentBar.position : BarConfig.position
+            readonly property bool isPrimaryDI: BarConfig.currentBar ? Boolean(BarConfig.currentBar.dynamicIsland) : Boolean(BarConfig.dynamicIsland)
+            options: isPrimaryDI
+                ? [{ desktop: "top", name: "Top (Dynamic Island Exclusive)", desc: "" }]
+                : [
+                    { desktop: "top",    name: "Top",    desc: "" },
+                    { desktop: "bottom", name: "Bottom", desc: "" },
+                    { desktop: "left",   name: "Left",   desc: "" },
+                    { desktop: "right",  name: "Right",  desc: "" }
+                ]
+            currentValue: isPrimaryDI ? "top" : (BarConfig.currentBar ? BarConfig.currentBar.position : BarConfig.position)
             onSelected: (val) => BarConfig.updateBarProp("position", val)
         }
     }

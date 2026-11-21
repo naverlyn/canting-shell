@@ -11,7 +11,10 @@ import ".."
 ColumnLayout {
     required property var root
     id: generalSection
-    readonly property bool isFloatingOrDashed: root.generalTab.curFloating || root.generalTab.curDashed
+    readonly property bool isFloatingOrDashed: root.generalTab.curFloating || root.generalTab.curDashed || root.generalTab.curDynamicIsland
+    readonly property bool curDropShadow: BarConfig.currentBar && BarConfig.currentBar.barDropShadow !== undefined
+        ? Boolean(BarConfig.currentBar.barDropShadow)
+        : Boolean(root.generalTab.curDynamicIsland || BarConfig.barDropShadow)
     Layout.fillWidth: true
     spacing: 8
 
@@ -131,40 +134,200 @@ ColumnLayout {
 
                 RowDivider {}
 
-                SettingSliderRow {
+                PreferenceRow {
                     title: "Bar Roundness"
-                    value: BarConfig.currentBar && BarConfig.currentBar.barRadius !== undefined ? Number(BarConfig.currentBar.barRadius) : BarConfig.barRadius
-                    minVal: 0
-                    maxVal: 20
-                    step: 1
-                    unit: "px"
-                    presets: [
-                        { label: "0px", val: 0 },
-                        { label: "6px", val: 6 },
-                        { label: "12px", val: 12 },
-                        { label: "16px", val: 16 },
-                        { label: "20px", val: 20 }
-                    ]
-                    onValueModified: (val) => BarConfig.updateBarProp("barRadius", Math.round(val))
+
+                    AppDropdown {
+                        theme: generalSection.root.theme
+                        font: generalSection.root.font
+                        Layout.preferredWidth: 380
+                        implicitWidth: 380
+                        menuWidth: 380
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                        readonly property int curVal: Math.round(BarConfig.currentBar && BarConfig.currentBar.barRadius !== undefined ? Number(BarConfig.currentBar.barRadius) : BarConfig.barRadius)
+                        currentValue: String(curVal)
+                        options: {
+                            const vals = [0, 4, 6, 8, 12, 16, 20];
+                            if (vals.indexOf(curVal) === -1) vals.push(curVal);
+                            vals.sort((a, b) => a - b);
+                            return vals.map(v => ({
+                                desktop: String(v),
+                                name: v === 0 ? "0px (Sharp)" : (v === 20 ? "20px (Pill)" : (v + "px")),
+                                desc: ""
+                            }));
+                        }
+                        onSelected: (val) => BarConfig.updateBarProp("barRadius", Math.round(Number(val)))
+                    }
                 }
 
                 RowDivider {}
 
-                SettingSliderRow {
+                PreferenceRow {
                     title: "Bar Edge Margin"
-                    value: BarConfig.currentBar && BarConfig.currentBar.barMargin !== undefined ? Number(BarConfig.currentBar.barMargin) : BarConfig.barMargin
-                    minVal: 0
-                    maxVal: 24
-                    step: 1
-                    unit: "px"
-                    presets: [
-                        { label: "0px", val: 0 },
-                        { label: "4px", val: 4 },
-                        { label: "6px", val: 6 },
-                        { label: "12px", val: 12 },
-                        { label: "16px", val: 16 }
-                    ]
-                    onValueModified: (val) => BarConfig.updateBarProp("barMargin", Math.round(val))
+
+                    AppDropdown {
+                        theme: generalSection.root.theme
+                        font: generalSection.root.font
+                        Layout.preferredWidth: 380
+                        implicitWidth: 380
+                        menuWidth: 380
+                        Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                        readonly property int curVal: Math.round(BarConfig.currentBar && BarConfig.currentBar.barMargin !== undefined ? Number(BarConfig.currentBar.barMargin) : BarConfig.barMargin)
+                        currentValue: String(curVal)
+                        options: {
+                            const vals = [0, 4, 6, 8, 12, 16, 20, 24];
+                            if (vals.indexOf(curVal) === -1) vals.push(curVal);
+                            vals.sort((a, b) => a - b);
+                            return vals.map(v => ({
+                                desktop: String(v),
+                                name: v + "px",
+                                desc: ""
+                            }));
+                        }
+                        onSelected: (val) => BarConfig.updateBarProp("barMargin", Math.round(Number(val)))
+                    }
+                }
+
+                RowDivider {}
+
+                SettingToggleRow {
+                    title: "Drop Shadow"
+                    checked: generalSection.curDropShadow
+                    onToggled: (val) => BarConfig.updateBarProp("barDropShadow", val)
+                }
+
+                AnimatedSection {
+                    expanded: generalSection.curDropShadow
+
+                    RowDivider {
+                        visible: generalSection.root.generalTab.curDynamicIsland
+                    }
+
+                    PreferenceRow {
+                        visible: generalSection.root.generalTab.curDynamicIsland
+                        title: "Drop Shadow Target"
+
+                        AppDropdown {
+                            theme: generalSection.root.theme
+                            font: generalSection.root.font
+                            Layout.preferredWidth: 380
+                            implicitWidth: 380
+                            menuWidth: 380
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                            currentValue: (BarConfig.currentBar && BarConfig.currentBar.barDropShadowTarget) ? String(BarConfig.currentBar.barDropShadowTarget) : BarConfig.barDropShadowTarget
+                            options: [
+                                { desktop: "all",    name: "Dynamic Island + Side Bars", desc: "" },
+                                { desktop: "island", name: "Dynamic Island Only",        desc: "" }
+                            ]
+                            onSelected: (val) => BarConfig.updateBarProp("barDropShadowTarget", val)
+                        }
+                    }
+
+                    RowDivider {}
+
+                    PreferenceRow {
+                        title: "Shadow Blur"
+
+                        AppDropdown {
+                            theme: generalSection.root.theme
+                            font: generalSection.root.font
+                            Layout.preferredWidth: 380
+                            implicitWidth: 380
+                            menuWidth: 380
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                            readonly property int curVal: Math.round(BarConfig.currentBar && BarConfig.currentBar.barDropShadowBlur !== undefined ? Number(BarConfig.currentBar.barDropShadowBlur) : BarConfig.barDropShadowBlur)
+                            currentValue: String(curVal)
+                            options: {
+                                const vals = [4, 8, 12, 16, 24, 32, 36];
+                                if (vals.indexOf(curVal) === -1) vals.push(curVal);
+                                vals.sort((a, b) => a - b);
+                                return vals.map(v => ({
+                                    desktop: String(v),
+                                    name: v === 4 ? "4px (Crisp)" : (v === 16 ? "16px (Default)" : (v === 32 ? "32px (Soft)" : (v + "px"))),
+                                    desc: ""
+                                }));
+                            }
+                            onSelected: (val) => BarConfig.updateBarProp("barDropShadowBlur", Math.round(Number(val)))
+                        }
+                    }
+
+                    RowDivider {}
+
+                    PreferenceRow {
+                        title: "Shadow Opacity"
+
+                        AppDropdown {
+                            theme: generalSection.root.theme
+                            font: generalSection.root.font
+                            Layout.preferredWidth: 380
+                            implicitWidth: 380
+                            menuWidth: 380
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                            readonly property int curPct: Math.round((BarConfig.currentBar && BarConfig.currentBar.barDropShadowOpacity !== undefined ? Number(BarConfig.currentBar.barDropShadowOpacity) : BarConfig.barDropShadowOpacity) * 100)
+                            currentValue: String(curPct)
+                            options: {
+                                const vals = [15, 25, 35, 45, 60, 75, 85];
+                                if (vals.indexOf(curPct) === -1) vals.push(curPct);
+                                vals.sort((a, b) => a - b);
+                                return vals.map(v => ({
+                                    desktop: String(v),
+                                    name: v === 45 ? "45% (Default)" : (v + "%"),
+                                    desc: ""
+                                }));
+                            }
+                            onSelected: (val) => BarConfig.updateBarProp("barDropShadowOpacity", Math.round(Number(val)) / 100.0)
+                        }
+                    }
+
+                    RowDivider {}
+
+                    PreferenceRow {
+                        title: "Shadow Vertical Offset"
+
+                        AppDropdown {
+                            theme: generalSection.root.theme
+                            font: generalSection.root.font
+                            Layout.preferredWidth: 380
+                            implicitWidth: 380
+                            menuWidth: 380
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                            readonly property int curVal: Math.round(BarConfig.currentBar && BarConfig.currentBar.barDropShadowOffsetY !== undefined ? Number(BarConfig.currentBar.barDropShadowOffsetY) : BarConfig.barDropShadowOffsetY)
+                            currentValue: String(curVal)
+                            options: {
+                                const vals = [0, 2, 4, 6, 8, 12, 16];
+                                if (vals.indexOf(curVal) === -1) vals.push(curVal);
+                                vals.sort((a, b) => a - b);
+                                return vals.map(v => ({
+                                    desktop: String(v),
+                                    name: v === 0 ? "0px (Centered)" : (v === 4 ? "4px (Default)" : (v + "px")),
+                                    desc: ""
+                                }));
+                            }
+                            onSelected: (val) => BarConfig.updateBarProp("barDropShadowOffsetY", Math.round(Number(val)))
+                        }
+                    }
+
+                    RowDivider {}
+
+                    PreferenceRow {
+                        title: "Shadow Color Mode"
+
+                        AppDropdown {
+                            theme: generalSection.root.theme
+                            font: generalSection.root.font
+                            Layout.preferredWidth: 380
+                            implicitWidth: 380
+                            menuWidth: 380
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                            currentValue: (BarConfig.currentBar && BarConfig.currentBar.barDropShadowColorMode) ? String(BarConfig.currentBar.barDropShadowColorMode) : BarConfig.barDropShadowColorMode
+                            options: [
+                                { desktop: "dark",     name: "Dark (Classic)",             desc: "" },
+                                { desktop: "accent",   name: "Theme Accent Glow",          desc: "" },
+                                { desktop: "adaptive", name: "Adaptive (Media & Alerts)",  desc: "" }
+                            ]
+                            onSelected: (val) => BarConfig.updateBarProp("barDropShadowColorMode", val)
+                        }
+                    }
                 }
             }
 

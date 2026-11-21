@@ -3,6 +3,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 import QtQuick
+import "../bar"
 import "Components"
 
 Scope {
@@ -209,7 +210,14 @@ Scope {
       required property var modelData
       screen: modelData
 
-      visible: root.anyActive || volumePill.visible || micPill.visible || brightnessPill.visible
+      readonly property bool suppressedByDynamicIsland: {
+        void BarConfig.panelsRevision;
+        void BarConfig.barVisible;
+        const scrName = (modelData && modelData.name) ? String(modelData.name) : "";
+        return BarConfig.shouldSuppressOsdOnScreen(scrName);
+      }
+
+      visible: !suppressedByDynamicIsland && (root.anyActive || volumePill.visible || micPill.visible || brightnessPill.visible)
       focusable: false
       color: "transparent"
 

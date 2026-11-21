@@ -16,12 +16,12 @@ Singleton {
   // Unicode block characters representing 8 increasing levels of audio
   readonly property var glyphLevels: [" ", " ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
 
-  // Active check: only run cava when it is enabled and placed in at least one bar
+  // Active check: run cava when placed in a bar OR when Dynamic Island media visualizer is active
   readonly property bool shouldRun: {
     void BarConfig.panelsRevision;
     void BarConfig.bars;
     void BarConfig.hasSecondaryScreen;
-    return Boolean(BarConfig.showCava) && BarConfig.isWidgetInAnyBar("cava");
+    return (Boolean(BarConfig.showCava) && BarConfig.isWidgetInAnyBar("cava")) || Boolean(BarConfig.hasDynamicIslandMediaActive);
   }
 
   onShouldRunChanged: {

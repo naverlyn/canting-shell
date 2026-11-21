@@ -17,6 +17,7 @@ Singleton {
   property int barHeight: 32
   property bool floating: false
   property bool dashed: false
+  property bool dynamicIsland: false
   property real barOpacity: 0.85
   property int pillRadius: 10
   property int barRadius: 12
@@ -29,6 +30,41 @@ Singleton {
   property string secondaryPosition: "bottom" // "top" | "bottom" | "left" | "right"
   property bool secondaryFloating: false
   property bool secondaryDashed: false
+  property bool secondaryDynamicIsland: false
+
+  // Dynamic Island (Experimental) Options
+  property string islandPosition: "center" // "left" | "center" | "right"
+  property string islandIdleMode: "widgets" // "widgets" | "minimal"
+  property bool islandLiveActivity: true
+  property string islandLayoutMode: "tabs" // "tabs" | "split"
+  property var islandModules: ["mpris", "calendar", "notifications", "weather", "quickControls", "systemStats"]
+  property string islandDefaultModule: "auto" // "auto" | module id
+  property var islandSplitModules: ["mpris", "calendar"]
+  property int islandHoverDelay: 120
+  property int islandCloseDelay: 220
+  property int islandExpandedWidth: 400
+  property string islandNotificationMode: "island" // "island" | "both" | "off"
+  property bool islandOsdEnabled: false
+  property var islandControlTiles: [] // [] = sync with Control Center, otherwise custom ordered tile IDs
+  property var islandAppShortcuts: [] // Ordered desktop entry IDs for App Shortcuts module
+
+  // Bar Drop Shadow Options (Dynamic Island, Dashed & Floating)
+  property bool barDropShadow: false
+  property string barDropShadowTarget: "all" // "all" | "island"
+  property int barDropShadowBlur: 16
+  property real barDropShadowOpacity: 0.45
+  property int barDropShadowOffsetY: 4
+  property string barDropShadowColorMode: "dark" // "dark" | "accent" | "adaptive"
+
+  readonly property var islandModuleDefinitions: [
+    { id: "mpris",         name: "MPRIS Media",    icon: "󰎆", desc: "Album art, live audio visualizer, seekbar & playback controls" },
+    { id: "calendar",      name: "Calendar",       icon: "󰃭", desc: "Interactive monthly calendar with clock & date header" },
+    { id: "notifications", name: "Notifications",  icon: "󰂚", desc: "Recent notification history, unread count & Do Not Disturb toggle" },
+    { id: "weather",       name: "Weather",        icon: "󰖐", desc: "Current temperature, conditions & location weather summary" },
+    { id: "quickControls", name: "Quick Controls", icon: "󰕰", desc: "Control Center quick toggle tiles (Wi-Fi, DND, Night Light, Screenshot, etc.)" },
+    { id: "appShortcuts",  name: "App Shortcuts",  icon: "󰀻", desc: "Pin favorite apps for instant launch from the Dynamic Island" },
+    { id: "systemStats",   name: "System Monitor", icon: "󰻠", desc: "Live CPU, RAM, GPU, temperature & network speed overview" }
+  ]
   property string secondaryMode: "custom" // "blank" | "custom" | "mirror"
   property bool blankOnSecondary: false
   readonly property var defaultSecondaryPanels: [
@@ -105,6 +141,7 @@ Singleton {
       barHeight: 32,
       floating: false,
       dashed: false,
+      dynamicIsland: false,
       barOpacity: 0.85,
       pillRadius: 10,
       barRadius: 12,
@@ -117,6 +154,27 @@ Singleton {
       secondaryPosition: "bottom",
       secondaryFloating: false,
       secondaryDashed: false,
+      secondaryDynamicIsland: false,
+      islandPosition: "center",
+      islandIdleMode: "widgets",
+      islandLiveActivity: true,
+      islandLayoutMode: "tabs",
+      islandModules: ["mpris", "calendar", "notifications", "weather", "quickControls", "systemStats"],
+      islandDefaultModule: "auto",
+      islandSplitModules: ["mpris", "calendar"],
+      islandHoverDelay: 120,
+      islandCloseDelay: 220,
+      islandExpandedWidth: 400,
+      islandNotificationMode: "island",
+      islandOsdEnabled: false,
+      islandControlTiles: [],
+      islandAppShortcuts: [],
+      barDropShadow: false,
+      barDropShadowTarget: "all",
+      barDropShadowBlur: 16,
+      barDropShadowOpacity: 0.45,
+      barDropShadowOffsetY: 4,
+      barDropShadowColorMode: "dark",
       secondaryMode: "custom",
       blankOnSecondary: false,
       secondaryPanels: [
@@ -374,15 +432,46 @@ Singleton {
         copy.secondaryPanels = b.secondaryPanels.map(p => (p || []).slice());
       }
       copy[propName] = propName === "barOpacity" ? Number(val) : val;
+      // Enforce Top-only exclusivity for Dynamic Island style
+      if (propName === "dynamicIsland" && Boolean(val)) {
+        copy.position = "top";
+        copy.floating = false;
+        copy.dashed = false;
+        if (b.barDropShadow === undefined || (!Boolean(b.dynamicIsland) && !Boolean(b.barDropShadow))) {
+          copy.barDropShadow = true;
+        }
+      } else if (propName === "secondaryDynamicIsland" && Boolean(val)) {
+        copy.secondaryPosition = "top";
+        copy.secondaryFloating = false;
+        copy.secondaryDashed = false;
+      } else if (propName === "position" && String(val) !== "top" && Boolean(copy.dynamicIsland)) {
+        copy.dynamicIsland = false;
+        copy.dashed = true;
+      } else if (propName === "secondaryPosition" && String(val) !== "top" && Boolean(copy.secondaryDynamicIsland)) {
+        copy.secondaryDynamicIsland = false;
+        copy.secondaryDashed = true;
+      }
       return copy;
     });
     root.bars = bList;
     if (idx === 0) {
       if (propName === "enabled") root.barVisible = Boolean(val);
-      else if (propName === "position") root.position = String(val);
+      else if (propName === "position") {
+        root.position = String(val);
+        if (String(val) !== "top" && root.dynamicIsland) { root.dynamicIsland = false; root.dashed = true; }
+      }
       else if (propName === "barHeight") root.barHeight = Number(val);
       else if (propName === "floating") root.floating = Boolean(val);
       else if (propName === "dashed") root.dashed = Boolean(val);
+      else if (propName === "dynamicIsland") {
+        root.dynamicIsland = Boolean(val);
+        if (Boolean(val)) {
+          root.position = "top";
+          root.floating = false;
+          root.dashed = false;
+          if (bList[0] && bList[0].barDropShadow !== undefined) root.barDropShadow = Boolean(bList[0].barDropShadow);
+        }
+      }
       else if (propName === "barOpacity") root.barOpacity = Number(val);
       else if (propName === "pillRadius") root.pillRadius = Number(val);
       else if (propName === "barRadius") root.barRadius = Number(val);
@@ -398,6 +487,7 @@ Singleton {
       }
       else if (propName === "secondaryPosition") {
         root.secondaryPosition = String(val);
+        if (String(val) !== "top" && root.secondaryDynamicIsland) { root.secondaryDynamicIsland = false; root.secondaryDashed = true; }
       }
       else if (propName === "secondaryFloating") {
         root.secondaryFloating = Boolean(val);
@@ -405,6 +495,33 @@ Singleton {
       else if (propName === "secondaryDashed") {
         root.secondaryDashed = Boolean(val);
       }
+      else if (propName === "secondaryDynamicIsland") {
+        root.secondaryDynamicIsland = Boolean(val);
+        if (Boolean(val)) {
+          root.secondaryPosition = "top";
+          root.secondaryFloating = false;
+          root.secondaryDashed = false;
+        }
+      }
+      else if (propName === "islandPosition") root.islandPosition = String(val);
+      else if (propName === "islandIdleMode") root.islandIdleMode = String(val);
+      else if (propName === "islandLiveActivity") root.islandLiveActivity = Boolean(val);
+      else if (propName === "islandLayoutMode") root.islandLayoutMode = String(val);
+      else if (propName === "islandModules") root.islandModules = Array.isArray(val) ? val.slice() : root.islandModules;
+      else if (propName === "islandDefaultModule") root.islandDefaultModule = String(val);
+      else if (propName === "islandSplitModules") root.islandSplitModules = Array.isArray(val) ? val.slice() : root.islandSplitModules;
+      else if (propName === "islandHoverDelay") root.islandHoverDelay = Math.max(0, Math.min(500, Math.round(Number(val))));
+      else if (propName === "islandCloseDelay") root.islandCloseDelay = Math.max(80, Math.min(800, Math.round(Number(val))));
+      else if (propName === "islandExpandedWidth") root.islandExpandedWidth = Math.max(320, Math.min(680, Math.round(Number(val))));
+      else if (propName === "islandNotificationMode") root.islandNotificationMode = String(val);
+      else if (propName === "islandOsdEnabled") root.islandOsdEnabled = Boolean(val);
+      else if (propName === "islandControlTiles") root.islandControlTiles = Array.isArray(val) ? val.slice() : [];
+      else if (propName === "barDropShadow") root.barDropShadow = Boolean(val);
+      else if (propName === "barDropShadowTarget") root.barDropShadowTarget = String(val);
+      else if (propName === "barDropShadowBlur") root.barDropShadowBlur = Math.max(4, Math.min(36, Math.round(Number(val))));
+      else if (propName === "barDropShadowOpacity") root.barDropShadowOpacity = Math.max(0.05, Math.min(0.85, Number(val)));
+      else if (propName === "barDropShadowOffsetY") root.barDropShadowOffsetY = Math.max(0, Math.min(16, Math.round(Number(val))));
+      else if (propName === "barDropShadowColorMode") root.barDropShadowColorMode = String(val);
       else if (propName === "secondaryMode") {
         root.secondaryMode = String(val);
         root.blankOnSecondary = (String(val) === "blank");
@@ -459,6 +576,7 @@ Singleton {
       barHeight: 32,
       floating: false,
       dashed: false,
+      dynamicIsland: false,
       barOpacity: root.barOpacity,
       pillRadius: root.pillRadius,
       barRadius: root.barRadius,
@@ -471,6 +589,27 @@ Singleton {
       secondaryPosition: nextPos,
       secondaryFloating: false,
       secondaryDashed: false,
+      secondaryDynamicIsland: false,
+      islandPosition: "center",
+      islandIdleMode: "widgets",
+      islandLiveActivity: true,
+      islandLayoutMode: "tabs",
+      islandModules: ["mpris", "calendar", "notifications", "weather", "quickControls", "systemStats"],
+      islandDefaultModule: "auto",
+      islandSplitModules: ["mpris", "calendar"],
+      islandHoverDelay: 120,
+      islandCloseDelay: 220,
+      islandExpandedWidth: 400,
+      islandNotificationMode: "island",
+      islandOsdEnabled: false,
+      islandControlTiles: [],
+      islandAppShortcuts: [],
+      barDropShadow: false,
+      barDropShadowTarget: "all",
+      barDropShadowBlur: 16,
+      barDropShadowOpacity: 0.45,
+      barDropShadowOffsetY: 4,
+      barDropShadowColorMode: "dark",
       secondaryMode: "custom",
       blankOnSecondary: false,
       secondaryPanels: root.defaultSecondaryPanels.map(p => p.slice()),
@@ -618,6 +757,68 @@ Singleton {
   function isWidgetVisible(widgetId, barId) { return PanelOps.isWidgetVisible(root, widgetId, barId); }
   function setWidgetVisible(widgetId, val, barId, skipSave) { return PanelOps.setWidgetVisible(root, widgetId, val, barId, skipSave); }
   function isWidgetInAnyBar(widgetId) { return PanelOps.isWidgetInAnyBar(root, widgetId); }
+
+  // Dynamic Island helper queries
+  function _getDynamicIslandBarForScreen(screenName, screenIndex) {
+    void root.panelsRevision;
+    const list = root.bars || [];
+    const screens = Quickshell.screens || [];
+    let sIdx = (screenIndex !== undefined && screenIndex >= 0) ? screenIndex : 0;
+    if (screenIndex === undefined && screenName) {
+      for (let s = 0; s < screens.length; s++) {
+        if (screens[s] && screens[s].name === screenName) { sIdx = s; break; }
+      }
+    }
+    const isPrim = (sIdx === 0);
+    const sName = screenName || ((screens[sIdx] && screens[sIdx].name) ? String(screens[sIdx].name) : ("screen_" + sIdx));
+    for (let i = 0; i < list.length; i++) {
+      const b = list[i];
+      if (!b || b.enabled === false) continue;
+      const tgt = b.displayTarget || (b.allMonitors ? "all" : "primary");
+      if (tgt === "primary" && !isPrim) continue;
+      if (tgt === "secondary" && isPrim) continue;
+      if (tgt !== "all" && tgt !== "primary" && tgt !== "secondary" && tgt !== sName) continue;
+      if (tgt === "all" && !isPrim && (b.secondaryMode === "none" || b.secondaryMode === "blank" || b.blankOnSecondary)) continue;
+      const effPos = (!isPrim && tgt === "all" && b.secondaryPosition) ? String(b.secondaryPosition) : String(b.position || "top");
+      const effDI = (!isPrim && tgt === "all" && b.secondaryDynamicIsland !== undefined) ? Boolean(b.secondaryDynamicIsland) : Boolean(b.dynamicIsland);
+      if (effDI && effPos === "top") return b;
+    }
+    return null;
+  }
+
+  function isDynamicIslandActiveOnScreen(screenName, screenIndex) {
+    return root._getDynamicIslandBarForScreen(screenName, screenIndex) !== null;
+  }
+
+  function shouldSuppressToastOnScreen(screenName, screenIndex) {
+    if (!root.barVisible) return false;
+    const b = root._getDynamicIslandBarForScreen(screenName, screenIndex);
+    if (!b) return false;
+    const mode = b.islandNotificationMode !== undefined ? String(b.islandNotificationMode) : "island";
+    return mode === "island";
+  }
+
+  function shouldSuppressOsdOnScreen(screenName, screenIndex) {
+    if (!root.barVisible) return false;
+    const b = root._getDynamicIslandBarForScreen(screenName, screenIndex);
+    if (!b) return false;
+    return Boolean(b.islandOsdEnabled);
+  }
+
+  readonly property bool hasDynamicIslandMediaActive: {
+    void root.panelsRevision;
+    const list = root.bars || [];
+    for (let i = 0; i < list.length; i++) {
+      const b = list[i];
+      if (!b || b.enabled === false) continue;
+      const primDI = Boolean(b.dynamicIsland) && String(b.position || "top") === "top";
+      const secDI = Boolean(b.secondaryDynamicIsland) && String(b.secondaryPosition || "top") === "top";
+      if (!primDI && !secDI) continue;
+      const mods = Array.isArray(b.islandModules) ? b.islandModules : ["mpris"];
+      if (b.islandLiveActivity !== false || mods.indexOf("mpris") !== -1) return true;
+    }
+    return false;
+  }
 
   // Counter to guarantee real-time reactivity when widget visibility changes
   property int widgetVisibilityChangeCounter: 0

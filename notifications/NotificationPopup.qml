@@ -6,6 +6,7 @@ import Quickshell.Services.Notifications
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import "../bar"
 import "Components"
 
 Scope {
@@ -44,7 +45,13 @@ Scope {
             id: notifWindow
             required property var modelData
             screen: modelData
-            visible: NotificationService.notifications.length > 0
+            readonly property bool suppressedByDynamicIsland: {
+                void BarConfig.panelsRevision;
+                void BarConfig.barVisible;
+                const scrName = (modelData && modelData.name) ? String(modelData.name) : "";
+                return BarConfig.shouldSuppressToastOnScreen(scrName);
+            }
+            visible: NotificationService.notifications.length > 0 && !suppressedByDynamicIsland
             focusable: false
             color: "transparent"
 
