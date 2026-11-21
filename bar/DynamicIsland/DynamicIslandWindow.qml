@@ -343,7 +343,7 @@ PanelWindow {
       id: islandHover
     }
 
-    // Click compact pill to pin open, right-click notification to dismiss
+    // Click compact pill to pin open, click/right-click notification body to hide pill (like swipe) while keeping actions alive in history
     MouseArea {
       anchors.fill: parent
       acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
@@ -351,10 +351,8 @@ PanelWindow {
       z: -1
       onClicked: (mouse) => {
         if (islandWindow.isNotifMode && islandWindow.currentNotif) {
-          if (mouse.button === Qt.RightButton) {
-            islandWindow.currentNotif.dismiss();
-          } else if (mouse.button === Qt.LeftButton) {
-            islandWindow.currentNotif.activate();
+          if (mouse.button === Qt.RightButton || mouse.button === Qt.LeftButton) {
+            islandWindow.currentNotif.expire();
           }
           return;
         }

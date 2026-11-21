@@ -214,7 +214,7 @@ QtObject {
             return;
         }
         focusAppWindow();
-        dismiss();
+        expire();
     }
 
     function invokeAction(identifier) {
