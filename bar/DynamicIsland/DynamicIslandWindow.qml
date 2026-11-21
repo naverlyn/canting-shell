@@ -23,7 +23,7 @@ PanelWindow {
   focusable: false
   color: "transparent"
 
-  WlrLayershell.layer: WlrLayer.Overlay
+  WlrLayershell.layer: (isNotifMode || isOsdMode || isExpandedHub) ? WlrLayer.Overlay : WlrLayer.Top
   WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
   WlrLayershell.namespace: "quickshell-dynamic-island"
   exclusionMode: ExclusionMode.Ignore
