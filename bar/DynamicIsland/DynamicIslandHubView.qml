@@ -157,10 +157,10 @@ Item {
     switch (modId) {
       case "mpris":         return { id: "mpris",         label: "Media",    icon: "󰎆" };
       case "calendar":      return { id: "calendar",      label: "Calendar", icon: "󰃭" };
-      case "notifications": return { id: "notifications", label: "Notifs",   icon: "󰂚" };
+      case "notifications": return { id: "notifications", label: "Notification",   icon: "󰂚" };
       case "weather":       return { id: "weather",       label: "Weather",  icon: "󰖐" };
       case "quickControls": return { id: "quickControls", label: "Controls", icon: "󰕰" };
-      case "appShortcuts":  return { id: "appShortcuts",  label: "Apps",     icon: "󰀻" };
+      case "appShortcuts":  return { id: "appShortcuts",  label: "Quick Launch",     icon: "󰀻" };
       case "systemStats":   return { id: "systemStats",   label: "System",   icon: "󰻠" };
       default:              return { id: modId,           label: modId,      icon: "󰄲" };
     }
