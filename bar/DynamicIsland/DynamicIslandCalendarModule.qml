@@ -131,13 +131,23 @@ Item {
         }
 
         Text {
-          text: Qt.formatDateTime(new Date(), "dddd, MMM d") + "  ·  " + Time.timeString
+          text: Qt.formatDateTime(new Date(), "dddd, MMM d")
           font.family: root.font
           font.pixelSize: 11
           color: root.theme.textSecondary
           elide: Text.ElideRight
           Layout.fillWidth: true
         }
+      }
+
+      // Live Clock in the middle next to Today / month nav
+      Text {
+        text: Time.timeString
+        font.family: root.font
+        font.pixelSize: 16
+        font.bold: true
+        color: root.theme.textPrimary
+        Layout.alignment: Qt.AlignVCenter
       }
 
       // "Today" quick-jump pill (only shown when browsing another month)
