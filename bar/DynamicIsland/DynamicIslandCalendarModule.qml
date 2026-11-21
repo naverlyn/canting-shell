@@ -104,51 +104,46 @@ Item {
     anchors.right: parent.right
     spacing: 10
 
-    // Clean, Simple Header: Month Year + Subtle Live Subtext on Left, Nav on Right
-    RowLayout {
+    // Clean, Simple Header: Month Year + Date on Left, Centered Live Clock, Nav on Right
+    Item {
       Layout.fillWidth: true
-      spacing: 8
+      Layout.preferredHeight: headerRow.implicitHeight
 
-      ColumnLayout {
-        Layout.fillWidth: true
-        spacing: 1
+      RowLayout {
+        id: headerRow
+        anchors.fill: parent
+        spacing: 8
 
-        Item {
+        ColumnLayout {
           Layout.fillWidth: true
-          Layout.preferredHeight: 20
-          clip: true
+          spacing: 1
+
+          Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 20
+            clip: true
+
+            Text {
+              id: monthTitleText
+              anchors.verticalCenter: parent.verticalCenter
+              text: Qt.formatDateTime(new Date(root.viewYear, root.viewMonth, 1), "MMMM yyyy")
+              font.family: root.font
+              font.pixelSize: 14
+              font.bold: true
+              color: root.theme.textPrimary
+              transform: Translate { id: monthTitleShift; x: 0 }
+            }
+          }
 
           Text {
-            id: monthTitleText
-            anchors.verticalCenter: parent.verticalCenter
-            text: Qt.formatDateTime(new Date(root.viewYear, root.viewMonth, 1), "MMMM yyyy")
+            text: Qt.formatDateTime(new Date(), "dddd, MMM d")
             font.family: root.font
-            font.pixelSize: 14
-            font.bold: true
-            color: root.theme.textPrimary
-            transform: Translate { id: monthTitleShift; x: 0 }
+            font.pixelSize: 11
+            color: root.theme.textSecondary
+            elide: Text.ElideRight
+            Layout.fillWidth: true
           }
         }
-
-        Text {
-          text: Qt.formatDateTime(new Date(), "dddd, MMM d")
-          font.family: root.font
-          font.pixelSize: 11
-          color: root.theme.textSecondary
-          elide: Text.ElideRight
-          Layout.fillWidth: true
-        }
-      }
-
-      // Live Clock in the middle next to Today / month nav
-      Text {
-        text: Time.timeString
-        font.family: root.font
-        font.pixelSize: 16
-        font.bold: true
-        color: root.theme.textPrimary
-        Layout.alignment: Qt.AlignVCenter
-      }
 
       // "Today" quick-jump pill (only shown when browsing another month)
       Rectangle {
@@ -239,13 +234,24 @@ Item {
             Behavior on color { ColorAnimation { duration: 120 } }
           }
 
-          MouseArea {
-            id: nextMouse
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.nextMonth()
+            MouseArea {
+              id: nextMouse
+              anchors.fill: parent
+              cursorShape: Qt.PointingHandCursor
+              onClicked: root.nextMonth()
+            }
           }
         }
+      }
+
+      // Centered Live Clock
+      Text {
+        anchors.centerIn: parent
+        text: Time.timeString
+        font.family: root.font
+        font.pixelSize: 16
+        font.bold: true
+        color: root.theme.textPrimary
       }
     }
 
