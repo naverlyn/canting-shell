@@ -129,7 +129,7 @@ Rectangle {
             duration: 160
             easing.type: Easing.OutCubic
         }
-        onFinished: notifCard.modelData.dismiss()
+        onFinished: notifCard.modelData.expire()
     }
 
     function dismissAnimated() {
