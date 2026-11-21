@@ -505,15 +505,15 @@ Item {
 
                 readonly property bool isCardVisible: !groupBlock.isCollapsedStack || index === 0
                 readonly property bool showPeek: groupBlock.isCollapsedStack && index === 0
-                Layout.fillWidth: true
-                Layout.topMargin: (index > 0 && isCardVisible) ? 6 : 0
-                Layout.preferredHeight: isCardVisible ? (histItem.height + (showPeek ? 6 : 0)) : 0
-                opacity: isCardVisible ? 1.0 : 0.0
-                clip: true
+                property bool dismissed: false
+                property real revealFrac: (isCardVisible && !dismissed) ? 1.0 : 0.0
+                Behavior on revealFrac { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
-                Behavior on Layout.topMargin { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
-                Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                Layout.fillWidth: true
+                Layout.topMargin: (index > 0 && isCardVisible && !dismissed) ? Math.round(6 * revealFrac) : 0
+                Layout.preferredHeight: Math.round((histItem.height + (showPeek ? 6 : 0)) * revealFrac)
+                opacity: revealFrac
+                clip: true
 
                 // Subtle stacked card peek strictly below histItem (never bleeds through translucent card)
                 Item {
@@ -560,26 +560,35 @@ Item {
                   border.width: 1
                   clip: true
 
-                  Behavior on color { ColorAnimation { duration: 120 } }
-                  Behavior on border.color { ColorAnimation { duration: 140 } }
-                  Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                  Behavior on color { ColorAnimation { duration: 130 } }
+                  Behavior on border.color { ColorAnimation { duration: 150 } }
+                  Behavior on height { NumberAnimation { duration: 210; easing.type: Easing.OutQuart } }
 
-                  transform: Translate { id: histSlide; x: 0; y: 6 }
+                  transform: [
+                    Translate { id: histSlide; x: 0; y: 10 },
+                    Scale { id: histScale; origin.x: histItem.width / 2; origin.y: histItem.height / 2; xScale: 0.97; yScale: 0.97 }
+                  ]
 
                   SequentialAnimation {
                     id: histEnterAnim
-                    PauseAnimation { duration: Math.min(160, cardSlot.index * 30) }
+                    PauseAnimation { duration: Math.min(140, cardSlot.index * 28) }
                     ParallelAnimation {
-                      NumberAnimation { target: histItem; property: "opacity"; from: 0.0; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
-                      NumberAnimation { target: histSlide; property: "y"; from: 6; to: 0; duration: 190; easing.type: Easing.OutCubic }
+                      NumberAnimation { target: histItem; property: "opacity"; from: 0.0; to: 1.0; duration: 190; easing.type: Easing.OutCubic }
+                      NumberAnimation { target: histSlide; property: "y"; from: 10; to: 0; duration: 230; easing.type: Easing.OutQuart }
+                      NumberAnimation { target: histScale; property: "xScale"; from: 0.97; to: 1.0; duration: 230; easing.type: Easing.OutQuart }
+                      NumberAnimation { target: histScale; property: "yScale"; from: 0.97; to: 1.0; duration: 230; easing.type: Easing.OutQuart }
                     }
                   }
                   Component.onCompleted: histEnterAnim.start()
 
-                  ParallelAnimation {
+                  SequentialAnimation {
                     id: histDismissAnim
-                    NumberAnimation { target: histSlide; property: "x"; to: histItem.width + 28; duration: 160; easing.type: Easing.OutCubic }
-                    NumberAnimation { target: histItem; property: "opacity"; to: 0.0; duration: 150; easing.type: Easing.OutCubic }
+                    ParallelAnimation {
+                      NumberAnimation { target: histSlide; property: "x"; to: histItem.width + 28; duration: 170; easing.type: Easing.InCubic }
+                      NumberAnimation { target: histItem; property: "opacity"; to: 0.0; duration: 150; easing.type: Easing.OutCubic }
+                    }
+                    ScriptAction { script: cardSlot.dismissed = true }
+                    PauseAnimation { duration: 150 }
                     onFinished: NotificationService.dismissHistoryItem(histItem.nid)
                   }
 
@@ -889,8 +898,8 @@ Item {
                       opacity: histItem.isExpanded ? 1.0 : 0.0
                       clip: true
 
-                      Behavior on Layout.preferredHeight { NumberAnimation { duration: 190; easing.type: Easing.OutCubic } }
-                      Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                      Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutQuart } }
+                      Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
                       RowLayout {
                         anchors.left: parent.left
@@ -898,6 +907,10 @@ Item {
                         anchors.bottom: parent.bottom
                         height: 28
                         spacing: 6
+                        transform: Translate {
+                          y: histItem.isExpanded ? 0 : -6
+                          Behavior on y { NumberAnimation { duration: 220; easing.type: Easing.OutQuart } }
+                        }
 
                         Repeater {
                           model: histItem.buttons

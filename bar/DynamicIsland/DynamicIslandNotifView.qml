@@ -520,14 +520,18 @@ Item {
         visible: root.cachedActions.length > 0
         clip: true
 
-        Behavior on Layout.preferredHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-        Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
+        Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutQuart } }
+        Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
         RowLayout {
           anchors.left: parent.left
           anchors.right: parent.right
           anchors.verticalCenter: parent.verticalCenter
           spacing: 6
+          transform: Translate {
+            y: actionsWrap.showActions ? 0 : -5
+            Behavior on y { NumberAnimation { duration: 220; easing.type: Easing.OutQuart } }
+          }
 
           Repeater {
             model: root.cachedActions.slice(0, 3)
