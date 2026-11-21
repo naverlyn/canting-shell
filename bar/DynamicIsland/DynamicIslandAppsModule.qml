@@ -85,6 +85,8 @@ Item {
       visible: root.resolvedEntries.length > 0
       Layout.alignment: Qt.AlignHCenter
       Layout.maximumWidth: parent.width
+      Layout.topMargin: 4
+      Layout.bottomMargin: 4
       spacing: 12
 
       Repeater {
