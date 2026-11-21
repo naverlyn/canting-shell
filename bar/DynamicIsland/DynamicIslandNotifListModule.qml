@@ -197,10 +197,6 @@ Item {
       });
     }
     if (out.length === 0) {
-      const app = String(item.appName || "").toLowerCase().trim();
-      if (item.socialApp || (app !== "" && app !== "notify-send" && app !== "notification")) {
-        out.push({ kind: "focus", label: "Open", identifier: "open", customCmd: "", danger: false });
-      }
       out.push({ kind: "dismiss", label: "Dismiss", identifier: "dismiss", customCmd: "", danger: true });
     }
     return out;
