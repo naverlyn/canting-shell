@@ -884,10 +884,14 @@ Scope {
                 }
                 Component.onCompleted: {
                   panelSectionGrid.x = targetX; panelSectionGrid.y = targetY;
-                  Qt.callLater(() => { panelSectionGrid.posReady = true; });
+                  Qt.callLater(() => { if (panelSectionGrid) panelSectionGrid.posReady = true; });
                   if (index >= barWindow.knownPanelCount && barWindow.knownPanelCount > 0)
                     panelEnterAnim.start();
-                  Qt.callLater(() => { barWindow.knownPanelCount = barWindow.effectivePanels.length; });
+                  Qt.callLater(() => {
+                    if (barWindow && barWindow.effectivePanels) {
+                      barWindow.knownPanelCount = barWindow.effectivePanels.length;
+                    }
+                  });
                 }
 
                 // Slide to new position only on big jumps (module moved / panel added);

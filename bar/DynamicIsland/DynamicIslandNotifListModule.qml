@@ -701,13 +701,15 @@ Item {
                             Image {
                               id: avatarLiveImg
                               anchors.fill: parent
-                              source: (avatarCachedImg.status !== Image.Ready) ? histIconSlot.liveImg : ""
+                              source: (histIconSlot.cachedImg === "" || avatarCachedImg.status === Image.Error)
+                                ? ((histIconSlot.liveImg.indexOf("/tmp/") !== -1 && histIconSlot.liveImg.indexOf("scoped_dir") !== -1) ? "" : histIconSlot.liveImg)
+                                : ""
                               sourceSize.width: 72
                               sourceSize.height: 72
                               fillMode: Image.PreserveAspectCrop
                               asynchronous: true
                               cache: false
-                              visible: histIconSlot.liveImg !== "" && status === Image.Ready && avatarCachedImg.status !== Image.Ready
+                              visible: source !== "" && status === Image.Ready && avatarCachedImg.status !== Image.Ready
                             }
                           }
 
