@@ -24,6 +24,7 @@ QtObject {
     property date   createdAt: new Date()
 
     property bool hovered: false
+    property bool expired: false
 
     readonly property int defaultTimeout: NotificationService.defaultTimeout > 0 ? NotificationService.defaultTimeout : 5000
 
@@ -55,6 +56,7 @@ QtObject {
             if (notificationData.closed) return;
             notificationData.closed = true;
             NotificationService._remove(notificationData);
+            NotificationService._release(notificationData);
             notificationData.destroy();
         }
 
@@ -100,12 +102,25 @@ QtObject {
 
     readonly property Timer _timer: Timer {
         running: !notificationData.closed
+                 && !notificationData.expired
                  && !(NotificationService.pauseOnHover && notificationData.hovered)
                  && (notificationData.urgency !== NotificationUrgency.Critical || NotificationService.progressShowCritical)
         interval: notificationData.expireTimeout > 0 ? notificationData.expireTimeout : notificationData.defaultTimeout
         onTriggered: {
-            notificationData.dismiss()
+            notificationData.expire()
         }
+    }
+
+    function expire() {
+        if (closed || expired) return;
+        if (!notification) {
+            dismiss();
+            return;
+        }
+        expired = true;
+        hovered = false;
+        NotificationService._remove(notificationData);
+        NotificationService._retain(notificationData);
     }
 
     function _parseActions(notif) {
@@ -174,6 +189,7 @@ QtObject {
         if (closed) return;
         closed = true;
         NotificationService._remove(notificationData);
+        NotificationService._release(notificationData);
         if (notification) try { notification.dismiss(); } catch(e) {}
         destroy();
     }
@@ -201,6 +217,7 @@ QtObject {
         if (!identifier || closed) return;
         closed = true;
         NotificationService._remove(notificationData);
+        NotificationService._release(notificationData);
 
         // Check custom actions first (for synthetic/composer notifications)
         if (actions && actions.length > 0) {

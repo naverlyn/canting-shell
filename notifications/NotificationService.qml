@@ -487,7 +487,7 @@ Singleton {
         root.notifications = [data, ...root.notifications];
         root.recordToHistory(data);
         while (root.notifications.length > root.maxVisibleToasts) {
-            root.notifications[root.notifications.length - 1].dismiss();
+            root.notifications[root.notifications.length - 1].expire();
         }
     }
 
@@ -628,6 +628,12 @@ Singleton {
                     });
                     existing.destroy();
                 }
+                const stale = root._retained[idStr];
+                if (stale && stale.notification !== notification) {
+                    delete root._retained[idStr];
+                    stale.closed = true;
+                    stale.destroy();
+                }
             }
 
             const data = notifDataComp.createObject(root, {
@@ -639,7 +645,7 @@ Singleton {
             root.recordToHistory(data);
 
             while (root.notifications.length > root.maxVisibleToasts) {
-                root.notifications[root.notifications.length - 1].dismiss();
+                root.notifications[root.notifications.length - 1].expire();
             }
         }
     }
@@ -682,6 +688,48 @@ Singleton {
             return h && h.notifId !== nId;
         });
         root.history = [item, ...filtered].slice(0, 50);
+        root._pruneRetained();
+    }
+
+    property var _retained: ({})
+
+    function _retain(notifData) {
+        if (!notifData || notifData.closed) return;
+        const key = String(notifData.notifId || "");
+        if (key === "") return;
+        root._retained[key] = notifData;
+    }
+
+    function _release(notifData) {
+        if (!notifData) return;
+        const key = String(notifData.notifId || "");
+        if (key !== "" && root._retained[key] === notifData) delete root._retained[key];
+    }
+
+    function _findLive(notifId) {
+        if (!notifId) return null;
+        const targetId = String(notifId);
+        for (let i = 0; i < root.notifications.length; i++) {
+            const n = root.notifications[i];
+            if (n && !n.closed && String(n.notifId) === targetId) return n;
+        }
+        const r = root._retained[targetId];
+        return (r && !r.closed) ? r : null;
+    }
+
+    function _pruneRetained() {
+        const keep = {};
+        const hist = root.history || [];
+        for (let i = 0; i < hist.length; i++) {
+            if (hist[i]) keep[String(hist[i].notifId)] = true;
+        }
+        const keys = Object.keys(root._retained);
+        for (let k = 0; k < keys.length; k++) {
+            if (keep[keys[k]]) continue;
+            const d = root._retained[keys[k]];
+            delete root._retained[keys[k]];
+            if (d && !d.closed) d.dismiss();
+        }
     }
 
     function dismissHistoryItem(notifId) {
@@ -690,13 +738,9 @@ Singleton {
         root.history = (root.history || []).filter(function(h) {
             return h && String(h.notifId) !== targetId;
         });
-        for (let i = 0; i < root.notifications.length; i++) {
-            const n = root.notifications[i];
-            if (n && String(n.notifId) === targetId) {
-                n.dismiss();
-                break;
-            }
-        }
+        const live = root._findLive(targetId);
+        if (live) live.dismiss();
+        root._pruneRetained();
     }
 
     function dismissHistoryByApp(appName) {
@@ -706,23 +750,21 @@ Singleton {
             const name = String((h && (h.displayAppName || h.appName)) || "");
             return name !== target;
         });
+        root._pruneRetained();
     }
 
     function invokeHistoryAction(notifId, identifier) {
         if (!notifId || !identifier) return;
-        const targetId = String(notifId);
-        for (let i = 0; i < root.notifications.length; i++) {
-            const n = root.notifications[i];
-            if (n && String(n.notifId) === targetId) {
-                n.invokeAction(identifier);
-                return;
-            }
+        const live = root._findLive(notifId);
+        if (live) {
+            live.invokeAction(identifier);
         }
     }
 
     function clearHistory() {
         root.history = [];
         root.dismissAll();
+        root._pruneRetained();
     }
 
     function _remove(notifData) {
@@ -733,6 +775,10 @@ Singleton {
 
     function _bump(notifData) {
         if (!notifData || notifData.closed) return;
+        if (notifData.expired) {
+            notifData.expired = false;
+            root._release(notifData);
+        }
         notifData.seqId = String(root._seqCounter++);
         const rest = root.notifications.filter(function(n) {
             return n !== notifData;
