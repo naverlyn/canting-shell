@@ -636,9 +636,29 @@ ColumnLayout {
 
                                     RowLayout {
                                         anchors.fill: parent
-                                        anchors.leftMargin: 10
+                                        anchors.leftMargin: 8
                                         anchors.rightMargin: 8
                                         spacing: 6
+
+                                        Text {
+                                            text: "󰍜"
+                                            font.family: self.root.font
+                                            font.pixelSize: 11
+                                            color: actCardHover.hovered ? self.root.theme.textSecondary : self.root.theme.textMuted
+                                            opacity: actCardHover.hovered ? 0.85 : 0.35
+                                            Layout.preferredWidth: 12
+                                            Layout.alignment: Qt.AlignVCenter
+                                        }
+
+                                        Text {
+                                            text: activeModCard.modelData.icon || "󰄲"
+                                            font.family: self.root.font
+                                            font.pixelSize: 13
+                                            color: self.root.theme.accentPrimary
+                                            horizontalAlignment: Text.AlignHCenter
+                                            Layout.preferredWidth: 18
+                                            Layout.alignment: Qt.AlignVCenter
+                                        }
 
                                         Text {
                                             text: activeModCard.modelData.name
@@ -651,25 +671,28 @@ ColumnLayout {
                                             Layout.alignment: Qt.AlignVCenter
                                         }
 
-                                        Rectangle {
-                                            visible: (actCardHover.hovered || rmHov.hovered) && (self.curModules || []).length > 1
+                                        RowLayout {
+                                            id: modBtnRow
                                             z: 2
-                                            width: rmTxt.implicitWidth + 12
-                                            height: 22
-                                            radius: 6
-                                            color: rmHov.hovered ? self.root.withAlpha(self.root.theme.accentRed, 0.16) : "transparent"
-                                            HoverHandler { id: rmHov }
-                                            Text {
-                                                id: rmTxt
-                                                anchors.centerIn: parent
-                                                text: "Remove"
-                                                font.family: self.root.font
-                                                font.pixelSize: 10
-                                                color: rmHov.hovered ? self.root.theme.accentRed : self.root.theme.textSecondary
+                                            spacing: 3
+                                            Layout.alignment: Qt.AlignVCenter
+
+                                            MiniIconButton {
+                                                visible: actCardHover.hovered && activeModCard.index > 0
+                                                iconText: "󰅃"
+                                                onClicked: self.reorderModule(activeModCard.modelData.id, activeModCard.index - 1)
                                             }
-                                            MouseArea {
-                                                anchors.fill: parent
-                                                cursorShape: Qt.PointingHandCursor
+
+                                            MiniIconButton {
+                                                visible: actCardHover.hovered && activeModCard.index < activeModRepeater.count - 1
+                                                iconText: "󰅀"
+                                                onClicked: self.reorderModule(activeModCard.modelData.id, activeModCard.index + 1)
+                                            }
+
+                                            MiniIconButton {
+                                                visible: (self.curModules || []).length > 1
+                                                iconText: "󰅖"
+                                                dangerHover: true
                                                 onClicked: self.removeModule(activeModCard.modelData.id)
                                             }
                                         }
@@ -677,7 +700,7 @@ ColumnLayout {
 
                                     MouseArea {
                                         anchors.fill: parent
-                                        anchors.rightMargin: (self.curModules || []).length > 1 ? 58 : 0
+                                        anchors.rightMargin: modBtnRow.width + 10
                                         preventStealing: true
                                         cursorShape: self.dragModId !== "" ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
@@ -809,9 +832,19 @@ ColumnLayout {
 
                                     RowLayout {
                                         anchors.fill: parent
-                                        anchors.leftMargin: 10
-                                        anchors.rightMargin: 10
+                                        anchors.leftMargin: 8
+                                        anchors.rightMargin: 8
                                         spacing: 6
+
+                                        Text {
+                                            text: availModCard.modelData.icon || "󰄲"
+                                            font.family: self.root.font
+                                            font.pixelSize: 13
+                                            color: avHover.hovered ? self.root.theme.accentPrimary : self.root.theme.textMuted
+                                            horizontalAlignment: Text.AlignHCenter
+                                            Layout.preferredWidth: 18
+                                            Layout.alignment: Qt.AlignVCenter
+                                        }
 
                                         Text {
                                             text: availModCard.modelData.name
@@ -821,15 +854,16 @@ ColumnLayout {
                                             color: avHover.hovered ? self.root.theme.textPrimary : self.root.theme.textSecondary
                                             elide: Text.ElideRight
                                             Layout.fillWidth: true
+                                            Layout.alignment: Qt.AlignVCenter
                                         }
 
                                         Text {
                                             visible: avHover.hovered
-                                            text: "Add"
+                                            text: "󰐕"
                                             font.family: self.root.font
-                                            font.pixelSize: 10
-                                            font.bold: true
+                                            font.pixelSize: 12
                                             color: self.root.theme.accentPrimary
+                                            Layout.alignment: Qt.AlignVCenter
                                         }
                                     }
 
@@ -1062,9 +1096,29 @@ ColumnLayout {
 
                                                         RowLayout {
                                                             anchors.fill: parent
-                                                            anchors.leftMargin: 10
+                                                            anchors.leftMargin: 8
                                                             anchors.rightMargin: 8
                                                             spacing: 6
+
+                                                            Text {
+                                                                text: "󰍜"
+                                                                font.family: self.root.font
+                                                                font.pixelSize: 11
+                                                                color: tActHov.hovered ? self.root.theme.textSecondary : self.root.theme.textMuted
+                                                                opacity: tActHov.hovered ? 0.85 : 0.35
+                                                                Layout.preferredWidth: 12
+                                                                Layout.alignment: Qt.AlignVCenter
+                                                            }
+
+                                                            Text {
+                                                                text: actTileCard.modelData.icon || "󰕰"
+                                                                font.family: self.root.font
+                                                                font.pixelSize: 13
+                                                                color: self.root.theme.accentPrimary
+                                                                horizontalAlignment: Text.AlignHCenter
+                                                                Layout.preferredWidth: 18
+                                                                Layout.alignment: Qt.AlignVCenter
+                                                            }
 
                                                             Text {
                                                                 text: actTileCard.modelData.label
@@ -1074,27 +1128,31 @@ ColumnLayout {
                                                                 color: self.root.theme.textPrimary
                                                                 elide: Text.ElideRight
                                                                 Layout.fillWidth: true
+                                                                Layout.alignment: Qt.AlignVCenter
                                                             }
 
-                                                            Rectangle {
-                                                                visible: (tActHov.hovered || tRmHov.hovered) && (self.curControlTiles || []).length > 1
+                                                            RowLayout {
+                                                                id: tileBtnRow
                                                                 z: 2
-                                                                width: tRmTxt.implicitWidth + 12
-                                                                height: 22
-                                                                radius: 6
-                                                                color: tRmHov.hovered ? self.root.withAlpha(self.root.theme.accentRed, 0.16) : "transparent"
-                                                                HoverHandler { id: tRmHov }
-                                                                Text {
-                                                                    id: tRmTxt
-                                                                    anchors.centerIn: parent
-                                                                    text: "Remove"
-                                                                    font.family: self.root.font
-                                                                    font.pixelSize: 10
-                                                                    color: tRmHov.hovered ? self.root.theme.accentRed : self.root.theme.textSecondary
+                                                                spacing: 3
+                                                                Layout.alignment: Qt.AlignVCenter
+
+                                                                MiniIconButton {
+                                                                    visible: tActHov.hovered && actTileCard.index > 0
+                                                                    iconText: "󰅃"
+                                                                    onClicked: self.reorderControlTile(actTileCard.modelData.id, actTileCard.index - 1)
                                                                 }
-                                                                MouseArea {
-                                                                    anchors.fill: parent
-                                                                    cursorShape: Qt.PointingHandCursor
+
+                                                                MiniIconButton {
+                                                                    visible: tActHov.hovered && actTileCard.index < activeTileRepeater.count - 1
+                                                                    iconText: "󰅀"
+                                                                    onClicked: self.reorderControlTile(actTileCard.modelData.id, actTileCard.index + 1)
+                                                                }
+
+                                                                MiniIconButton {
+                                                                    visible: (self.curControlTiles || []).length > 1
+                                                                    iconText: "󰅖"
+                                                                    dangerHover: true
                                                                     onClicked: self.removeControlTile(actTileCard.modelData.id)
                                                                 }
                                                             }
@@ -1102,7 +1160,7 @@ ColumnLayout {
 
                                                         MouseArea {
                                                             anchors.fill: parent
-                                                            anchors.rightMargin: (self.curControlTiles || []).length > 1 ? 58 : 0
+                                                            anchors.rightMargin: tileBtnRow.width + 10
                                                             preventStealing: true
                                                             cursorShape: self.dragTileId !== "" ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
@@ -1197,9 +1255,19 @@ ColumnLayout {
 
                                                     RowLayout {
                                                         anchors.fill: parent
-                                                        anchors.leftMargin: 10
-                                                        anchors.rightMargin: 10
+                                                        anchors.leftMargin: 8
+                                                        anchors.rightMargin: 8
                                                         spacing: 6
+
+                                                        Text {
+                                                            text: avTileCard.modelData.icon || "󰕰"
+                                                            font.family: self.root.font
+                                                            font.pixelSize: 13
+                                                            color: tAvHov.hovered ? self.root.theme.accentPrimary : self.root.theme.textMuted
+                                                            horizontalAlignment: Text.AlignHCenter
+                                                            Layout.preferredWidth: 18
+                                                            Layout.alignment: Qt.AlignVCenter
+                                                        }
 
                                                         Text {
                                                             text: avTileCard.modelData.label
@@ -1209,15 +1277,16 @@ ColumnLayout {
                                                             color: tAvHov.hovered ? self.root.theme.textPrimary : self.root.theme.textSecondary
                                                             elide: Text.ElideRight
                                                             Layout.fillWidth: true
+                                                            Layout.alignment: Qt.AlignVCenter
                                                         }
 
                                                         Text {
                                                             visible: tAvHov.hovered
-                                                            text: "Add"
+                                                            text: "󰐕"
                                                             font.family: self.root.font
-                                                            font.pixelSize: 10
-                                                            font.bold: true
+                                                            font.pixelSize: 12
                                                             color: self.root.theme.accentPrimary
+                                                            Layout.alignment: Qt.AlignVCenter
                                                         }
                                                     }
 
@@ -1449,9 +1518,29 @@ ColumnLayout {
 
                                                 RowLayout {
                                                     anchors.fill: parent
-                                                    anchors.leftMargin: 10
+                                                    anchors.leftMargin: 8
                                                     anchors.rightMargin: 8
                                                     spacing: 6
+
+                                                    Text {
+                                                        text: "󰍜"
+                                                        font.family: self.root.font
+                                                        font.pixelSize: 11
+                                                        color: aActHov.hovered ? self.root.theme.textSecondary : self.root.theme.textMuted
+                                                        opacity: aActHov.hovered ? 0.85 : 0.35
+                                                        Layout.preferredWidth: 12
+                                                        Layout.alignment: Qt.AlignVCenter
+                                                    }
+
+                                                    Text {
+                                                        text: "󰀻"
+                                                        font.family: self.root.font
+                                                        font.pixelSize: 13
+                                                        color: self.root.theme.accentPrimary
+                                                        horizontalAlignment: Text.AlignHCenter
+                                                        Layout.preferredWidth: 18
+                                                        Layout.alignment: Qt.AlignVCenter
+                                                    }
 
                                                     Text {
                                                         text: actAppCard.modelData.name
@@ -1461,27 +1550,30 @@ ColumnLayout {
                                                         color: self.root.theme.textPrimary
                                                         elide: Text.ElideRight
                                                         Layout.fillWidth: true
+                                                        Layout.alignment: Qt.AlignVCenter
                                                     }
 
-                                                    Rectangle {
-                                                        visible: aActHov.hovered || aRmHov.hovered
+                                                    RowLayout {
+                                                        id: appBtnRow
                                                         z: 2
-                                                        width: aRmTxt.implicitWidth + 12
-                                                        height: 22
-                                                        radius: 6
-                                                        color: aRmHov.hovered ? self.root.withAlpha(self.root.theme.accentRed, 0.16) : "transparent"
-                                                        HoverHandler { id: aRmHov }
-                                                        Text {
-                                                            id: aRmTxt
-                                                            anchors.centerIn: parent
-                                                            text: "Remove"
-                                                            font.family: self.root.font
-                                                            font.pixelSize: 10
-                                                            color: aRmHov.hovered ? self.root.theme.accentRed : self.root.theme.textSecondary
+                                                        spacing: 3
+                                                        Layout.alignment: Qt.AlignVCenter
+
+                                                        MiniIconButton {
+                                                            visible: aActHov.hovered && actAppCard.index > 0
+                                                            iconText: "󰅃"
+                                                            onClicked: self.reorderAppShortcut(actAppCard.modelData.id, actAppCard.index - 1)
                                                         }
-                                                        MouseArea {
-                                                            anchors.fill: parent
-                                                            cursorShape: Qt.PointingHandCursor
+
+                                                        MiniIconButton {
+                                                            visible: aActHov.hovered && actAppCard.index < activeAppRepeater.count - 1
+                                                            iconText: "󰅀"
+                                                            onClicked: self.reorderAppShortcut(actAppCard.modelData.id, actAppCard.index + 1)
+                                                        }
+
+                                                        MiniIconButton {
+                                                            iconText: "󰅖"
+                                                            dangerHover: true
                                                             onClicked: self.removeAppShortcut(actAppCard.modelData.id)
                                                         }
                                                     }
@@ -1489,7 +1581,7 @@ ColumnLayout {
 
                                                 MouseArea {
                                                     anchors.fill: parent
-                                                    anchors.rightMargin: 58
+                                                    anchors.rightMargin: appBtnRow.width + 10
                                                     preventStealing: true
                                                     cursorShape: self.dragAppId !== "" ? Qt.ClosedHandCursor : Qt.OpenHandCursor
 
@@ -1615,9 +1707,19 @@ ColumnLayout {
 
                                                     RowLayout {
                                                         anchors.fill: parent
-                                                        anchors.leftMargin: 10
-                                                        anchors.rightMargin: 10
+                                                        anchors.leftMargin: 8
+                                                        anchors.rightMargin: 8
                                                         spacing: 6
+
+                                                        Text {
+                                                            text: "󰀻"
+                                                            font.family: self.root.font
+                                                            font.pixelSize: 13
+                                                            color: aAvHov.hovered ? self.root.theme.accentPrimary : self.root.theme.textMuted
+                                                            horizontalAlignment: Text.AlignHCenter
+                                                            Layout.preferredWidth: 18
+                                                            Layout.alignment: Qt.AlignVCenter
+                                                        }
 
                                                         Text {
                                                             text: avAppCard.modelData.name
@@ -1627,15 +1729,16 @@ ColumnLayout {
                                                             color: aAvHov.hovered ? self.root.theme.textPrimary : self.root.theme.textSecondary
                                                             elide: Text.ElideRight
                                                             Layout.fillWidth: true
+                                                            Layout.alignment: Qt.AlignVCenter
                                                         }
 
                                                         Text {
                                                             visible: aAvHov.hovered
-                                                            text: "Pin"
+                                                            text: "󰐕"
                                                             font.family: self.root.font
-                                                            font.pixelSize: 10
-                                                            font.bold: true
+                                                            font.pixelSize: 12
                                                             color: self.root.theme.accentPrimary
+                                                            Layout.alignment: Qt.AlignVCenter
                                                         }
                                                     }
 
