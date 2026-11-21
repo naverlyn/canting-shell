@@ -582,18 +582,24 @@ ColumnLayout {
                             }
                         }
 
-                        ColumnLayout {
+                        Column {
                             id: activeModListCol
                             Layout.fillWidth: true
                             spacing: 6
+                            move: Transition { NumberAnimation { properties: "x,y"; duration: 180; easing.type: Easing.OutCubic } }
+                            add: Transition { NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 180; easing.type: Easing.OutCubic } }
 
                             Repeater {
                                 id: activeModRepeater
-                                model: self.getActiveModuleDefs()
+                                model: ScriptModel {
+                                    values: self.getActiveModuleDefs()
+                                    objectProp: "id"
+                                }
                                 delegate: Rectangle {
                                     id: activeModCard
                                     required property var modelData
                                     required property int index
+                                    width: activeModListCol.width
                                     readonly property bool isDragged: self.dragModId === modelData.id
                                     readonly property bool isBeforeThis: self.dragModId !== "" && !isDragged && self.dragHoverModIndex === index
                                     readonly property bool isAfterThis: self.dragModId !== "" && !isDragged && (
@@ -602,7 +608,6 @@ ColumnLayout {
                                     )
                                     readonly property bool isDropTarget: isBeforeThis || isAfterThis
 
-                                    Layout.fillWidth: true
                                     height: 38
                                     radius: 8
                                     scale: isDragged ? 0.96 : 1.0
@@ -1024,6 +1029,8 @@ ColumnLayout {
                                         color: isPanelTarget ? self.root.withAlpha(self.root.theme.accentPrimary, 0.06) : self.root.theme.bgSurface
                                         border.color: isPanelTarget ? self.root.theme.accentPrimary : self.root.theme.bgBorder
                                         border.width: isPanelTarget ? 1.5 : 1
+                                        Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                        Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
                                         ColumnLayout {
                                             id: actTileCol
@@ -1047,18 +1054,24 @@ ColumnLayout {
                                                 }
                                             }
 
-                                            ColumnLayout {
+                                            Column {
                                                 id: activeTileListCol
                                                 Layout.fillWidth: true
                                                 spacing: 6
+                                                move: Transition { NumberAnimation { properties: "x,y"; duration: 180; easing.type: Easing.OutCubic } }
+                                                add: Transition { NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 180; easing.type: Easing.OutCubic } }
 
                                                 Repeater {
                                                     id: activeTileRepeater
-                                                    model: self.getActiveControlTileDefs()
+                                                    model: ScriptModel {
+                                                        values: self.getActiveControlTileDefs()
+                                                        objectProp: "id"
+                                                    }
                                                     delegate: Rectangle {
                                                         id: actTileCard
                                                         required property var modelData
                                                         required property int index
+                                                        width: activeTileListCol.width
                                                         readonly property bool isDragged: self.dragTileId === modelData.id
                                                         readonly property bool isBeforeThis: self.dragTileId !== "" && !isDragged && self.dragHoverTileIndex === index
                                                         readonly property bool isAfterThis: self.dragTileId !== "" && !isDragged && (
@@ -1067,7 +1080,6 @@ ColumnLayout {
                                                         )
                                                         readonly property bool isDropTarget: isBeforeThis || isAfterThis
 
-                                                        Layout.fillWidth: true
                                                         height: 36
                                                         radius: 8
                                                         scale: isDragged ? 0.96 : 1.0
@@ -1079,6 +1091,10 @@ ColumnLayout {
                                                             ? self.root.theme.accentPrimary
                                                             : (tActHov.hovered ? self.root.theme.accentPrimary : self.root.theme.bgBorder)
                                                         border.width: isDropTarget ? 1.5 : 1
+                                                        Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                                        Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                                        Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                                        Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
                                                         HoverHandler { id: tActHov }
 
@@ -1216,6 +1232,8 @@ ColumnLayout {
                                         color: isPoolTarget ? self.root.withAlpha(self.root.theme.accentRed, 0.12) : self.root.theme.bgSurface
                                         border.color: isPoolTarget ? self.root.theme.accentRed : self.root.theme.bgBorder
                                         border.width: isPoolTarget ? 1.5 : 1
+                                        Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                        Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
                                         ColumnLayout {
                                             id: avTileCol
@@ -1250,6 +1268,8 @@ ColumnLayout {
                                                     color: tAvHov.hovered ? self.root.theme.bgHover : self.root.theme.bgBase
                                                     border.color: tAvHov.hovered ? self.root.theme.accentPrimary : self.root.theme.bgBorder
                                                     border.width: 1
+                                                    Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                                    Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
                                                     HoverHandler { id: tAvHov }
 
@@ -1446,6 +1466,8 @@ ColumnLayout {
                                 color: isPanelTarget ? self.root.withAlpha(self.root.theme.accentPrimary, 0.06) : self.root.theme.bgSurface
                                 border.color: isPanelTarget ? self.root.theme.accentPrimary : self.root.theme.bgBorder
                                 border.width: isPanelTarget ? 1.5 : 1
+                                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
                                 ColumnLayout {
                                     id: actAppCol
@@ -1469,18 +1491,24 @@ ColumnLayout {
                                         }
                                     }
 
-                                    ColumnLayout {
+                                    Column {
                                         id: activeAppListCol
                                         Layout.fillWidth: true
                                         spacing: 6
+                                        move: Transition { NumberAnimation { properties: "x,y"; duration: 180; easing.type: Easing.OutCubic } }
+                                        add: Transition { NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 180; easing.type: Easing.OutCubic } }
 
                                         Repeater {
                                             id: activeAppRepeater
-                                            model: self.getPinnedAppEntries()
+                                            model: ScriptModel {
+                                                values: self.getPinnedAppEntries()
+                                                objectProp: "id"
+                                            }
                                             delegate: Rectangle {
                                                 id: actAppCard
                                                 required property var modelData
                                                 required property int index
+                                                width: activeAppListCol.width
                                                 readonly property bool isDragged: self.dragAppId === modelData.id
                                                 readonly property bool isBeforeThis: self.dragAppId !== "" && !isDragged && self.dragHoverAppIndex === index
                                                 readonly property bool isAfterThis: self.dragAppId !== "" && !isDragged && (
@@ -1489,7 +1517,6 @@ ColumnLayout {
                                                 )
                                                 readonly property bool isDropTarget: isBeforeThis || isAfterThis
 
-                                                Layout.fillWidth: true
                                                 height: 36
                                                 radius: 8
                                                 scale: isDragged ? 0.96 : 1.0
@@ -1501,6 +1528,10 @@ ColumnLayout {
                                                     ? self.root.theme.accentPrimary
                                                     : (aActHov.hovered ? self.root.theme.accentPrimary : self.root.theme.bgBorder)
                                                 border.width: isDropTarget ? 1.5 : 1
+                                                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                                Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                                Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
                                                 HoverHandler { id: aActHov }
 
@@ -1655,6 +1686,8 @@ ColumnLayout {
                                 color: isPoolTarget ? self.root.withAlpha(self.root.theme.accentRed, 0.12) : self.root.theme.bgSurface
                                 border.color: isPoolTarget ? self.root.theme.accentRed : self.root.theme.bgBorder
                                 border.width: isPoolTarget ? 1.5 : 1
+                                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
                                 ColumnLayout {
                                     anchors.fill: parent
@@ -1702,6 +1735,8 @@ ColumnLayout {
                                                     color: aAvHov.hovered ? self.root.theme.bgHover : self.root.theme.bgBase
                                                     border.color: aAvHov.hovered ? self.root.theme.accentPrimary : self.root.theme.bgBorder
                                                     border.width: 1
+                                                    Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                                    Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
 
                                                     HoverHandler { id: aAvHov }
 
