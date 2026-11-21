@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
+import Quickshell.Widgets
 import "../../../bar"
 import "../../../ControlCenter"
 import "../Common"
@@ -52,15 +53,6 @@ ColumnLayout {
     property int dragHoverTileIndex: -1
     property real dragTileX: 0
     property real dragTileY: 0
-
-    // Drag-to-reorder state for Pinned App Shortcuts
-    property string dragAppId: ""
-    property string dragAppLabel: ""
-    property bool dragAppFromAvail: false
-    property bool dragAppOverAvail: false
-    property int dragHoverAppIndex: -1
-    property real dragAppX: 0
-    property real dragAppY: 0
 
     function updateModDrag(selfX, selfY) {
         self.dragModX = selfX;
@@ -329,30 +321,40 @@ ColumnLayout {
         const out = [];
         for (let i = 0; i < ids.length; i++) {
             const e = self.findDesktopEntry(ids[i]);
-            if (e) out.push({ id: String(e.id || ids[i]), name: String(e.name || ids[i]) });
+            if (e) {
+                out.push({
+                    id: String(e.id || ids[i]),
+                    name: String(e.name || ids[i]),
+                    icon: String(e.icon || "")
+                });
+            }
         }
         return out;
     }
 
-    function getAvailableAppEntries() {
-        const pinned = (self.curAppShortcuts || []).map(x => String(x).toLowerCase());
+    function getFilteredDesktopApps() {
         const q = self.appSearchQuery.trim().toLowerCase();
         const all = self.getAllDesktopEntries();
-        const out = [];
-        for (let i = 0; i < all.length; i++) {
-            const e = all[i];
-            const eid = String(e.id || e.name || "");
-            if (pinned.indexOf(eid.toLowerCase()) !== -1) continue;
-            if (q !== "") {
-                const match = (e.name && e.name.toLowerCase().includes(q)) ||
-                              (e.genericName && e.genericName.toLowerCase().includes(q)) ||
-                              (eid.toLowerCase().includes(q));
-                if (!match) continue;
-            }
-            out.push({ id: eid, name: String(e.name || eid) });
-            if (out.length >= 40) break;
+        return all.filter(e => {
+            if (self.findPinnedIndex(e) !== -1) return false;
+            if (q === "") return true;
+            const eid = String(e.id || "").toLowerCase();
+            return (e.name && e.name.toLowerCase().includes(q)) ||
+                   (e.genericName && e.genericName.toLowerCase().includes(q)) ||
+                   eid.includes(q);
+        });
+    }
+
+    function findPinnedIndex(entry) {
+        if (!entry) return -1;
+        const eid = String(entry.id || entry.name || "").toLowerCase();
+        const ename = String(entry.name || "").toLowerCase();
+        const list = self.curAppShortcuts || [];
+        for (let i = 0; i < list.length; i++) {
+            const cur = String(list[i] || "").toLowerCase();
+            if (cur === eid || cur === ename) return i;
         }
-        return out;
+        return -1;
     }
 
     function addAppShortcut(appId) {
@@ -364,64 +366,23 @@ ColumnLayout {
 
     function removeAppShortcut(appId) {
         let list = (self.curAppShortcuts || []).slice();
-        const idx = list.indexOf(appId);
+        const lower = String(appId || "").toLowerCase();
+        const idx = list.findIndex(x => String(x || "").toLowerCase() === lower);
         if (idx === -1) return;
         list.splice(idx, 1);
         BarConfig.updateBarProp("islandAppShortcuts", list);
     }
 
-    function updateAppDrag(selfX, selfY) {
-        self.dragAppX = selfX;
-        self.dragAppY = selfY;
-        const ap = activeAppPanel.mapFromItem(self, selfX, selfY);
-        if (ap.x >= -8 && ap.x <= activeAppPanel.width + 8 && ap.y >= -8 && ap.y <= activeAppPanel.height + 8) {
-            self.dragAppOverAvail = false;
-            const listPt = activeAppListCol.mapFromItem(self, selfX, selfY);
-            const cnt = activeAppRepeater.count;
-            let found = cnt;
-            for (let i = 0; i < cnt; i++) {
-                const it = activeAppRepeater.itemAt(i);
-                if (!it) continue;
-                if (listPt.y <= it.y + it.height * 0.5) {
-                    found = i;
-                    break;
-                }
-            }
-            self.dragHoverAppIndex = found;
-            return;
-        }
-        const avp = availAppPanel.mapFromItem(self, selfX, selfY);
-        if (!self.dragAppFromAvail && avp.x >= -8 && avp.x <= availAppPanel.width + 8 && avp.y >= -8 && avp.y <= availAppPanel.height + 8) {
-            self.dragAppOverAvail = true;
-            self.dragHoverAppIndex = -1;
-            return;
-        }
-        self.dragAppOverAvail = false;
-        self.dragHoverAppIndex = -1;
-    }
-
-    function finishAppDrag() {
-        const id = self.dragAppId;
-        if (!id) return;
-        if (self.dragAppOverAvail && !self.dragAppFromAvail) {
-            self.removeAppShortcut(id);
-        } else if (self.dragHoverAppIndex >= 0) {
-            let list = (self.curAppShortcuts || []).slice();
-            const fromIdx = list.indexOf(id);
-            let target = self.dragHoverAppIndex;
-            if (fromIdx !== -1) {
-                list.splice(fromIdx, 1);
-                if (fromIdx < target) target = Math.max(0, target - 1);
-            }
-            target = Math.max(0, Math.min(list.length, target));
-            list.splice(target, 0, id);
-            BarConfig.updateBarProp("islandAppShortcuts", list);
-        }
-        self.dragAppId = "";
-        self.dragAppLabel = "";
-        self.dragAppFromAvail = false;
-        self.dragAppOverAvail = false;
-        self.dragHoverAppIndex = -1;
+    function reorderAppShortcut(appId, targetIdx) {
+        let list = (self.curAppShortcuts || []).slice();
+        const lower = String(appId || "").toLowerCase();
+        const fromIdx = list.findIndex(x => String(x || "").toLowerCase() === lower);
+        if (fromIdx === -1) return;
+        const clamped = Math.max(0, Math.min(list.length - 1, targetIdx));
+        if (clamped === fromIdx) return;
+        const item = list.splice(fromIdx, 1)[0];
+        list.splice(clamped, 0, item);
+        BarConfig.updateBarProp("islandAppShortcuts", list);
     }
 
     RowLayout {
@@ -461,14 +422,12 @@ ColumnLayout {
             id: modGhost
             readonly property bool isMod: self.dragModId !== ""
             readonly property bool isTile: self.dragTileId !== ""
-            readonly property bool isApp: self.dragAppId !== ""
-            readonly property bool active: isMod || isTile || isApp
+            readonly property bool active: isMod || isTile
             readonly property bool isRemoving: (isMod && self.dragModOverAvail && !self.dragModFromAvail)
                 || (isTile && self.dragTileOverAvail && !self.dragTileFromAvail)
-                || (isApp && self.dragAppOverAvail && !self.dragAppFromAvail)
-            readonly property string labelText: isMod ? self.dragModLabel : (isTile ? self.dragTileLabel : self.dragAppLabel)
-            readonly property real targetX: isMod ? self.dragModX : (isTile ? self.dragTileX : self.dragAppX)
-            readonly property real targetY: isMod ? self.dragModY : (isTile ? self.dragTileY : self.dragAppY)
+            readonly property string labelText: isMod ? self.dragModLabel : self.dragTileLabel
+            readonly property real targetX: isMod ? self.dragModX : self.dragTileX
+            readonly property real targetY: isMod ? self.dragModY : self.dragTileY
 
             visible: opacity > 0.01
             z: 9999
@@ -1381,444 +1340,432 @@ ColumnLayout {
                 }
             }
 
-            // App Shortcuts section (visible when App Shortcuts module is enabled)
+            // App Shortcuts section (Pinned Apps strip on top + AppGrid-style picker below)
             AnimatedSection {
                 expanded: self.isModuleEnabled("appShortcuts")
 
-                Rectangle {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    implicitHeight: appSecCol.implicitHeight + 20
-                    radius: 10
-                    color: self.root.theme.bgBase
-                    border.color: self.root.theme.bgBorder
-                    border.width: 1
+                    spacing: 10
 
-                    ColumnLayout {
-                        id: appSecCol
-                        anchors {
-                            left: parent.left
-                            right: parent.right
-                            top: parent.top
-                            margins: 10
-                        }
-                        spacing: 10
+                    // 1. Pinned Apps Strip (top)
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: pinnedAppsCol.implicitHeight + 20
+                        radius: 10
+                        color: self.root.theme.bgBase
+                        border.color: self.root.theme.bgBorder
+                        border.width: 1
 
-                        RowLayout {
-                            Layout.fillWidth: true
+                        ColumnLayout {
+                            id: pinnedAppsCol
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                top: parent.top
+                                margins: 10
+                            }
                             spacing: 10
 
-                            Text {
-                                text: "App Shortcuts"
-                                font.family: self.root.font
-                                font.pixelSize: 12
-                                font.bold: true
-                                color: self.root.theme.textPrimary
+                            RowLayout {
                                 Layout.fillWidth: true
+                                spacing: 8
+
+                                Text {
+                                    text: "Pinned Apps"
+                                    font.family: self.root.font
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                    color: self.root.theme.accentPrimary
+                                }
+
+                                Rectangle {
+                                    implicitWidth: pinBadgeTxt.implicitWidth + 10
+                                    implicitHeight: 18
+                                    radius: 9
+                                    color: self.root.withAlpha(self.root.theme.textMuted, 0.12)
+
+                                    Text {
+                                        id: pinBadgeTxt
+                                        anchors.centerIn: parent
+                                        text: "(" + (self.curAppShortcuts || []).length + ")"
+                                        font.family: self.root.font
+                                        font.pixelSize: 10
+                                        color: self.root.theme.textMuted
+                                    }
+                                }
+
+                                Item { Layout.fillWidth: true }
+
+                            }
+
+                            Flow {
+                                id: pinnedAppsFlow
+                                visible: (self.curAppShortcuts || []).length > 0
+                                Layout.fillWidth: true
+                                spacing: 8
+                                move: Transition { NumberAnimation { properties: "x,y"; duration: 180; easing.type: Easing.OutCubic } }
+                                add: Transition { NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 180; easing.type: Easing.OutCubic } }
+
+                                Repeater {
+                                    id: activeAppRepeater
+                                    model: ScriptModel {
+                                        values: self.getPinnedAppEntries()
+                                        objectProp: "id"
+                                    }
+                                    delegate: Rectangle {
+                                        id: actAppCard
+                                        required property var modelData
+                                        required property int index
+                                        readonly property bool hasIcon: (modelData.icon ?? "") !== "" && Quickshell.iconPath(modelData.icon ?? "", true) !== ""
+
+                                        width: 94
+                                        height: 76
+                                        radius: 10
+                                        color: aActHov.hovered ? self.root.theme.bgHover : self.root.theme.bgSurface
+                                        border.color: aActHov.hovered ? self.root.theme.accentPrimary : self.root.theme.bgBorder
+                                        border.width: 1
+                                        Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                        Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+
+                                        HoverHandler { id: aActHov }
+
+                                        // Order badge (#1, #2, ...)
+                                        Rectangle {
+                                            anchors.top: parent.top
+                                            anchors.left: parent.left
+                                            anchors.margins: 5
+                                            implicitWidth: pinIdxTxt.implicitWidth + 8
+                                            height: 14
+                                            radius: 4
+                                            color: self.root.theme.accentPrimary
+
+                                            Text {
+                                                id: pinIdxTxt
+                                                anchors.centerIn: parent
+                                                text: "#" + (actAppCard.index + 1)
+                                                font.family: self.root.font
+                                                font.pixelSize: 8
+                                                font.bold: true
+                                                color: self.root.theme.bgBase
+                                            }
+                                        }
+
+                                        // Unpin button (top-right)
+                                        MiniIconButton {
+                                            z: 3
+                                            anchors.top: parent.top
+                                            anchors.right: parent.right
+                                            anchors.margins: 4
+                                            iconText: "󰅖"
+                                            dangerHover: true
+                                            onClicked: self.removeAppShortcut(actAppCard.modelData.id)
+                                        }
+
+                                        // Left/Right reorder arrows on hover (bottom corners)
+                                        MiniIconButton {
+                                            z: 3
+                                            visible: aActHov.hovered && actAppCard.index > 0
+                                            anchors.bottom: parent.bottom
+                                            anchors.left: parent.left
+                                            anchors.margins: 3
+                                            iconText: "󰅁"
+                                            onClicked: self.reorderAppShortcut(actAppCard.modelData.id, actAppCard.index - 1)
+                                        }
+
+                                        MiniIconButton {
+                                            z: 3
+                                            visible: aActHov.hovered && actAppCard.index < activeAppRepeater.count - 1
+                                            anchors.bottom: parent.bottom
+                                            anchors.right: parent.right
+                                            anchors.margins: 3
+                                            iconText: "󰅂"
+                                            onClicked: self.reorderAppShortcut(actAppCard.modelData.id, actAppCard.index + 1)
+                                        }
+
+                                        Column {
+                                            anchors.centerIn: parent
+                                            width: parent.width - 12
+                                            spacing: 5
+
+                                            Item {
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                width: 30
+                                                height: 30
+
+                                                IconImage {
+                                                    anchors.centerIn: parent
+                                                    implicitSize: 30
+                                                    source: actAppCard.hasIcon ? Quickshell.iconPath(actAppCard.modelData.icon ?? "", true) : ""
+                                                    visible: actAppCard.hasIcon
+                                                }
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: "󰀻"
+                                                    color: self.root.theme.accentPrimary
+                                                    font.pixelSize: 20
+                                                    font.family: self.root.font
+                                                    visible: !actAppCard.hasIcon
+                                                }
+                                            }
+
+                                            Text {
+                                                width: parent.width
+                                                text: actAppCard.modelData.name
+                                                font.family: self.root.font
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: self.root.theme.textPrimary
+                                                horizontalAlignment: Text.AlignHCenter
+                                                elide: Text.ElideRight
+                                            }
+                                        }
+                                    }
+                                }
                             }
 
                             Rectangle {
-                                width: 220
-                                height: 30
-                                radius: 7
+                                visible: (self.curAppShortcuts || []).length === 0
+                                Layout.fillWidth: true
+                                implicitHeight: 68
+                                radius: 8
+                                color: "transparent"
+                                border.color: self.root.theme.bgBorder
+                                border.width: 1
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "No pinned apps yet — click an app below to pin it"
+                                    font.family: self.root.font
+                                    font.pixelSize: 11
+                                    color: self.root.theme.textMuted
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. Installed Applications Grid (matching ControlCenterQuickLaunchCard)
+                    Rectangle {
+                        id: availAppPanel
+                        readonly property var filteredApps: self.getFilteredDesktopApps()
+                        Layout.fillWidth: true
+                        implicitHeight: appPickerCol.implicitHeight + 24
+                        radius: 10
+                        color: self.root.theme.bgBase
+                        border.color: self.root.theme.bgBorder
+                        border.width: 1
+
+                        ColumnLayout {
+                            id: appPickerCol
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                top: parent.top
+                                margins: 12
+                            }
+                            spacing: 10
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 8
+
+                                Text {
+                                    text: "Installed Applications"
+                                    font.family: self.root.font
+                                    font.pixelSize: 11
+                                    font.bold: true
+                                    color: self.root.theme.accentPrimary
+                                }
+
+                                Text {
+                                    text: "(" + availAppPanel.filteredApps.length + " installed)"
+                                    font.family: self.root.font
+                                    font.pixelSize: 11
+                                    color: self.root.theme.textMuted
+                                }
+
+                                Item { Layout.fillWidth: true }
+                            }
+
+                            // Full-width Search Bar
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 36
+                                radius: 8
                                 color: self.root.theme.bgSurface
                                 border.color: appSearchInput.activeFocus ? self.root.theme.accentPrimary : self.root.theme.bgBorder
                                 border.width: 1
+                                Behavior on border.color { ColorAnimation { duration: 140 } }
 
-                                TextInput {
-                                    id: appSearchInput
+                                RowLayout {
                                     anchors.fill: parent
                                     anchors.leftMargin: 10
                                     anchors.rightMargin: 10
-                                    verticalAlignment: TextInput.AlignVCenter
-                                    font.family: self.root.font
-                                    font.pixelSize: 11
-                                    color: self.root.theme.textPrimary
-                                    clip: true
-                                    onTextChanged: self.appSearchQuery = text
+                                    spacing: 8
 
                                     Text {
-                                        anchors.fill: parent
-                                        verticalAlignment: Text.AlignVCenter
-                                        text: "Search apps to pin..."
+                                        text: "󰍉"
+                                        color: appSearchInput.activeFocus ? self.root.theme.accentPrimary : self.root.theme.textMuted
+                                        font.pixelSize: 13
                                         font.family: self.root.font
-                                        font.pixelSize: 11
-                                        color: self.root.theme.textMuted
-                                        visible: appSearchInput.text === "" && !appSearchInput.activeFocus
+                                        Layout.alignment: Qt.AlignVCenter
+                                    }
+
+                                    Item {
+                                        Layout.fillWidth: true
+                                        Layout.alignment: Qt.AlignVCenter
+                                        implicitHeight: appSearchInput.implicitHeight
+
+                                        TextInput {
+                                            id: appSearchInput
+                                            anchors.left: parent.left
+                                            anchors.right: parent.right
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            color: self.root.theme.textPrimary
+                                            font.pixelSize: 12
+                                            font.family: self.root.font
+                                            clip: true
+                                            selectByMouse: true
+                                            onTextChanged: self.appSearchQuery = text
+                                        }
+
+                                        Text {
+                                            text: "Search applications to pin..."
+                                            color: self.root.theme.textMuted
+                                            font.pixelSize: 12
+                                            font.family: self.root.font
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            visible: appSearchInput.text === ""
+                                        }
+                                    }
+
+                                    MiniIconButton {
+                                        visible: appSearchInput.text !== ""
+                                        iconText: "󰅖"
+                                        onClicked: appSearchInput.text = ""
                                     }
                                 }
                             }
-                        }
 
-                        GridLayout {
-                            columns: 2
-                            columnSpacing: 12
-                            rowSpacing: 12
-                            Layout.fillWidth: true
-
-                            // Pinned Apps (Drag-to-reorder)
-                            Rectangle {
-                                id: activeAppPanel
-                                readonly property bool isPanelTarget: self.dragAppId !== "" && !self.dragAppOverAvail && self.dragHoverAppIndex >= 0
+                            // 5-column GridView of Installed Desktop Applications
+                            GridView {
+                                id: islandAppGrid
                                 Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                implicitHeight: Math.max(180, actAppCol.implicitHeight + 16)
-                                radius: 9
-                                color: isPanelTarget ? self.root.withAlpha(self.root.theme.accentPrimary, 0.06) : self.root.theme.bgSurface
-                                border.color: isPanelTarget ? self.root.theme.accentPrimary : self.root.theme.bgBorder
-                                border.width: isPanelTarget ? 1.5 : 1
-                                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                Layout.preferredHeight: 240
+                                cellWidth: Math.max(100, Math.floor(width / 5))
+                                cellHeight: 78
+                                clip: true
+                                boundsBehavior: Flickable.StopAtBounds
+                                model: availAppPanel.filteredApps
 
-                                ColumnLayout {
-                                    id: actAppCol
-                                    anchors { left: parent.left; right: parent.right; top: parent.top; margins: 8 }
-                                    spacing: 6
+                                ScrollBar.vertical: ScrollBar {
+                                    policy: ScrollBar.AsNeeded
+                                    contentItem: Rectangle {
+                                        implicitWidth: 4
+                                        radius: 2
+                                        color: self.root.theme.bgBorder
+                                    }
+                                }
+
+                                delegate: Item {
+                                    id: appGridCell
+                                    required property var modelData
+                                    required property int index
+                                    width: islandAppGrid.cellWidth
+                                    height: islandAppGrid.cellHeight
+
+                                    readonly property bool hasIcon: (appGridCell.modelData.icon ?? "") !== "" && Quickshell.iconPath(appGridCell.modelData.icon ?? "", true) !== ""
+                                    readonly property int pinnedSlot: self.findPinnedIndex(appGridCell.modelData)
 
                                     Rectangle {
-                                        Layout.fillWidth: true
-                                        height: 28
-                                        radius: 6
-                                        color: self.root.theme.bgSelected
-                                        Text {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            anchors.left: parent.left
-                                            anchors.leftMargin: 10
-                                            text: "Pinned Apps (" + (self.curAppShortcuts || []).length + ")"
-                                            font.family: self.root.font
-                                            font.pixelSize: 11
-                                            font.bold: true
-                                            color: self.root.theme.accentPrimary
-                                        }
-                                    }
+                                        anchors.fill: parent
+                                        anchors.margins: 3
+                                        radius: 10
+                                        color: appGridCell.pinnedSlot >= 0
+                                            ? self.root.withAlpha(self.root.theme.accentPrimary, 0.1)
+                                            : (cellHoverArea.containsMouse ? self.root.theme.bgHover : self.root.theme.bgSurface)
+                                        border.color: cellHoverArea.containsMouse || appGridCell.pinnedSlot >= 0
+                                            ? self.root.theme.accentPrimary
+                                            : self.root.theme.bgBorder
+                                        border.width: 1
 
-                                    Column {
-                                        id: activeAppListCol
-                                        Layout.fillWidth: true
-                                        spacing: 6
-                                        move: Transition { NumberAnimation { properties: "x,y"; duration: 180; easing.type: Easing.OutCubic } }
-                                        add: Transition { NumberAnimation { property: "opacity"; from: 0.0; to: 1.0; duration: 180; easing.type: Easing.OutCubic } }
+                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                        Behavior on border.color { ColorAnimation { duration: 120 } }
 
-                                        Repeater {
-                                            id: activeAppRepeater
-                                            model: ScriptModel {
-                                                values: self.getPinnedAppEntries()
-                                                objectProp: "id"
-                                            }
-                                            delegate: Rectangle {
-                                                id: actAppCard
-                                                required property var modelData
-                                                required property int index
-                                                width: activeAppListCol.width
-                                                readonly property bool isDragged: self.dragAppId === modelData.id
-                                                readonly property bool isBeforeThis: self.dragAppId !== "" && !isDragged && self.dragHoverAppIndex === index
-                                                readonly property bool isAfterThis: self.dragAppId !== "" && !isDragged && (
-                                                    (self.dragHoverAppIndex === index + 1) ||
-                                                    (index === activeAppRepeater.count - 1 && self.dragHoverAppIndex >= activeAppRepeater.count)
-                                                )
-                                                readonly property bool isDropTarget: isBeforeThis || isAfterThis
-
-                                                height: 36
-                                                radius: 8
-                                                scale: isDragged ? 0.96 : 1.0
-                                                opacity: isDragged ? 0.35 : 1.0
-                                                color: isDropTarget
-                                                    ? self.root.theme.bgSelected
-                                                    : (aActHov.hovered ? self.root.theme.bgHover : self.root.theme.bgBase)
-                                                border.color: (isDropTarget || isDragged)
-                                                    ? self.root.theme.accentPrimary
-                                                    : (aActHov.hovered ? self.root.theme.accentPrimary : self.root.theme.bgBorder)
-                                                border.width: isDropTarget ? 1.5 : 1
-                                                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                                                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                                                Behavior on opacity { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                                                Behavior on scale { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-
-                                                HoverHandler { id: aActHov }
-
-                                                Rectangle {
-                                                    visible: actAppCard.isDropTarget
-                                                    anchors.left: parent.left
-                                                    anchors.right: parent.right
-                                                    anchors.leftMargin: 8
-                                                    anchors.rightMargin: 8
-                                                    y: actAppCard.isAfterThis ? parent.height - 3 : 1
-                                                    height: 2
-                                                    radius: 1
-                                                    color: self.root.theme.accentPrimary
-                                                }
-
-                                                RowLayout {
-                                                    anchors.fill: parent
-                                                    anchors.leftMargin: 8
-                                                    anchors.rightMargin: 8
-                                                    spacing: 6
-
-                                                    Text {
-                                                        text: "󰍜"
-                                                        font.family: self.root.font
-                                                        font.pixelSize: 11
-                                                        color: aActHov.hovered ? self.root.theme.textSecondary : self.root.theme.textMuted
-                                                        opacity: aActHov.hovered ? 0.85 : 0.35
-                                                        Layout.preferredWidth: 12
-                                                        Layout.alignment: Qt.AlignVCenter
-                                                    }
-
-                                                    Text {
-                                                        text: "󰀻"
-                                                        font.family: self.root.font
-                                                        font.pixelSize: 13
-                                                        color: self.root.theme.accentPrimary
-                                                        horizontalAlignment: Text.AlignHCenter
-                                                        Layout.preferredWidth: 18
-                                                        Layout.alignment: Qt.AlignVCenter
-                                                    }
-
-                                                    Text {
-                                                        text: actAppCard.modelData.name
-                                                        font.family: self.root.font
-                                                        font.pixelSize: 11
-                                                        font.bold: true
-                                                        color: self.root.theme.textPrimary
-                                                        elide: Text.ElideRight
-                                                        Layout.fillWidth: true
-                                                        Layout.alignment: Qt.AlignVCenter
-                                                    }
-
-                                                    RowLayout {
-                                                        id: appBtnRow
-                                                        z: 2
-                                                        spacing: 3
-                                                        Layout.alignment: Qt.AlignVCenter
-
-                                                        MiniIconButton {
-                                                            visible: aActHov.hovered && actAppCard.index > 0
-                                                            iconText: "󰅃"
-                                                            onClicked: self.reorderAppShortcut(actAppCard.modelData.id, actAppCard.index - 1)
-                                                        }
-
-                                                        MiniIconButton {
-                                                            visible: aActHov.hovered && actAppCard.index < activeAppRepeater.count - 1
-                                                            iconText: "󰅀"
-                                                            onClicked: self.reorderAppShortcut(actAppCard.modelData.id, actAppCard.index + 1)
-                                                        }
-
-                                                        MiniIconButton {
-                                                            iconText: "󰅖"
-                                                            dangerHover: true
-                                                            onClicked: self.removeAppShortcut(actAppCard.modelData.id)
-                                                        }
-                                                    }
-                                                }
-
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    anchors.rightMargin: appBtnRow.width + 10
-                                                    preventStealing: true
-                                                    cursorShape: self.dragAppId !== "" ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-
-                                                    property real pressX: 0
-                                                    property real pressY: 0
-                                                    property bool dragging: false
-
-                                                    onPressed: (mouse) => {
-                                                        pressX = mouse.x;
-                                                        pressY = mouse.y;
-                                                        dragging = false;
-                                                    }
-                                                    onPositionChanged: (mouse) => {
-                                                        if (!pressed) return;
-                                                        const pt = mapToItem(self, mouse.x, mouse.y);
-                                                        if (!dragging && Math.hypot(mouse.x - pressX, mouse.y - pressY) > 4) {
-                                                            dragging = true;
-                                                            self.dragAppId = actAppCard.modelData.id;
-                                                            self.dragAppLabel = actAppCard.modelData.name;
-                                                            self.dragAppFromAvail = false;
-                                                        }
-                                                        if (dragging) {
-                                                            self.updateAppDrag(pt.x, pt.y);
-                                                        }
-                                                    }
-                                                    onReleased: (mouse) => {
-                                                        if (dragging) {
-                                                            const pt = mapToItem(self, mouse.x, mouse.y);
-                                                            self.updateAppDrag(pt.x, pt.y);
-                                                            self.finishAppDrag();
-                                                        }
-                                                        dragging = false;
-                                                    }
-                                                    onCanceled: {
-                                                        if (dragging) self.finishAppDrag();
-                                                        dragging = false;
-                                                    }
-                                                }
-                                            }
-                                        }
-
+                                        // Pinned Slot Badge
                                         Rectangle {
-                                            visible: (self.curAppShortcuts || []).length === 0
-                                            Layout.fillWidth: true
-                                            implicitHeight: 70
-                                            radius: 8
-                                            color: "transparent"
-                                            border.color: self.root.theme.bgBorder
-                                            border.width: 1
+                                            visible: appGridCell.pinnedSlot >= 0
+                                            anchors.top: parent.top
+                                            anchors.right: parent.right
+                                            anchors.margins: 4
+                                            implicitWidth: pinnedBadgeTxt.implicitWidth + 8
+                                            height: 14
+                                            radius: 4
+                                            color: self.root.theme.accentPrimary
 
                                             Text {
+                                                id: pinnedBadgeTxt
                                                 anchors.centerIn: parent
-                                                text: "Click or drag apps here to pin"
+                                                text: "#" + (appGridCell.pinnedSlot + 1)
                                                 font.family: self.root.font
-                                                font.pixelSize: 11
-                                                color: self.root.theme.textMuted
+                                                font.pixelSize: 8
+                                                font.bold: true
+                                                color: self.root.theme.bgBase
                                             }
                                         }
-                                    }
-                                }
-                            }
 
-                            // Available Installed Apps (Scrollable)
-                            Rectangle {
-                                id: availAppPanel
-                                readonly property bool isPoolTarget: self.dragAppId !== "" && self.dragAppOverAvail && !self.dragAppFromAvail
-                                Layout.fillWidth: true
-                                Layout.fillHeight: true
-                                implicitHeight: 220
-                                radius: 9
-                                color: isPoolTarget ? self.root.withAlpha(self.root.theme.accentRed, 0.12) : self.root.theme.bgSurface
-                                border.color: isPoolTarget ? self.root.theme.accentRed : self.root.theme.bgBorder
-                                border.width: isPoolTarget ? 1.5 : 1
-                                Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                                Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                                        Column {
+                                            anchors.centerIn: parent
+                                            width: parent.width - 10
+                                            spacing: 5
 
-                                ColumnLayout {
-                                    anchors.fill: parent
-                                    anchors.margins: 8
-                                    spacing: 6
+                                            Item {
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                width: 30
+                                                height: 30
 
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        height: 28
-                                        radius: 6
-                                        color: self.root.theme.bgSelected
-                                        Text {
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            anchors.left: parent.left
-                                            anchors.leftMargin: 10
-                                            text: "Installed Apps"
-                                            font.family: self.root.font
-                                            font.pixelSize: 11
-                                            font.bold: true
-                                            color: self.root.theme.textSecondary
+                                                IconImage {
+                                                    anchors.centerIn: parent
+                                                    implicitSize: 30
+                                                    source: appGridCell.hasIcon ? Quickshell.iconPath(appGridCell.modelData.icon ?? "", true) : ""
+                                                    visible: appGridCell.hasIcon
+                                                }
+
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: "󰀻"
+                                                    color: self.root.theme.accentPrimary
+                                                    font.pixelSize: 20
+                                                    font.family: self.root.font
+                                                    visible: !appGridCell.hasIcon
+                                                }
+                                            }
+
+                                            Text {
+                                                width: parent.width
+                                                text: appGridCell.modelData.name ?? ""
+                                                color: (cellHoverArea.containsMouse || appGridCell.pinnedSlot >= 0) ? self.root.theme.textPrimary : self.root.theme.textSecondary
+                                                font.pixelSize: 10
+                                                font.family: self.root.font
+                                                font.bold: cellHoverArea.containsMouse || appGridCell.pinnedSlot >= 0
+                                                horizontalAlignment: Text.AlignHCenter
+                                                elide: Text.ElideRight
+                                            }
                                         }
-                                    }
 
-                                    Flickable {
-                                        Layout.fillWidth: true
-                                        Layout.fillHeight: true
-                                        contentHeight: avAppListCol.implicitHeight
-                                        contentWidth: width
-                                        clip: true
-                                        boundsBehavior: Flickable.StopAtBounds
-
-                                        ColumnLayout {
-                                            id: avAppListCol
-                                            width: parent.width
-                                            spacing: 6
-
-                                            Repeater {
-                                                model: self.getAvailableAppEntries()
-                                                delegate: Rectangle {
-                                                    id: avAppCard
-                                                    required property var modelData
-                                                    Layout.fillWidth: true
-                                                    height: 36
-                                                    radius: 8
-                                                    color: aAvHov.hovered ? self.root.theme.bgHover : self.root.theme.bgBase
-                                                    border.color: aAvHov.hovered ? self.root.theme.accentPrimary : self.root.theme.bgBorder
-                                                    border.width: 1
-                                                    Behavior on color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                                                    Behavior on border.color { ColorAnimation { duration: 140; easing.type: Easing.OutCubic } }
-
-                                                    HoverHandler { id: aAvHov }
-
-                                                    RowLayout {
-                                                        anchors.fill: parent
-                                                        anchors.leftMargin: 8
-                                                        anchors.rightMargin: 8
-                                                        spacing: 6
-
-                                                        Text {
-                                                            text: "󰀻"
-                                                            font.family: self.root.font
-                                                            font.pixelSize: 13
-                                                            color: aAvHov.hovered ? self.root.theme.accentPrimary : self.root.theme.textMuted
-                                                            horizontalAlignment: Text.AlignHCenter
-                                                            Layout.preferredWidth: 18
-                                                            Layout.alignment: Qt.AlignVCenter
-                                                        }
-
-                                                        Text {
-                                                            text: avAppCard.modelData.name
-                                                            font.family: self.root.font
-                                                            font.pixelSize: 11
-                                                            font.bold: true
-                                                            color: aAvHov.hovered ? self.root.theme.textPrimary : self.root.theme.textSecondary
-                                                            elide: Text.ElideRight
-                                                            Layout.fillWidth: true
-                                                            Layout.alignment: Qt.AlignVCenter
-                                                        }
-
-                                                        Text {
-                                                            visible: aAvHov.hovered
-                                                            text: "󰐕"
-                                                            font.family: self.root.font
-                                                            font.pixelSize: 12
-                                                            color: self.root.theme.accentPrimary
-                                                            Layout.alignment: Qt.AlignVCenter
-                                                        }
-                                                    }
-
-                                                    MouseArea {
-                                                        anchors.fill: parent
-                                                        preventStealing: true
-                                                        cursorShape: self.dragAppId !== "" ? Qt.ClosedHandCursor : Qt.OpenHandCursor
-
-                                                        property real pressX: 0
-                                                        property real pressY: 0
-                                                        property bool dragging: false
-
-                                                        onPressed: (mouse) => {
-                                                            pressX = mouse.x;
-                                                            pressY = mouse.y;
-                                                            dragging = false;
-                                                        }
-                                                        onPositionChanged: (mouse) => {
-                                                            if (!pressed) return;
-                                                            const pt = mapToItem(self, mouse.x, mouse.y);
-                                                            if (!dragging && Math.hypot(mouse.x - pressX, mouse.y - pressY) > 4) {
-                                                                dragging = true;
-                                                                self.dragAppId = avAppCard.modelData.id;
-                                                                self.dragAppLabel = avAppCard.modelData.name;
-                                                                self.dragAppFromAvail = true;
-                                                            }
-                                                            if (dragging) {
-                                                                self.updateAppDrag(pt.x, pt.y);
-                                                            }
-                                                        }
-                                                        onReleased: (mouse) => {
-                                                            if (dragging) {
-                                                                const pt = mapToItem(self, mouse.x, mouse.y);
-                                                                self.updateAppDrag(pt.x, pt.y);
-                                                                self.finishAppDrag();
-                                                            } else {
-                                                                self.addAppShortcut(avAppCard.modelData.id);
-                                                            }
-                                                            dragging = false;
-                                                        }
-                                                        onCanceled: {
-                                                            if (dragging) self.finishAppDrag();
-                                                            dragging = false;
-                                                        }
-                                                    }
+                                        MouseArea {
+                                            id: cellHoverArea
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                const eid = String(appGridCell.modelData.id || appGridCell.modelData.name || "");
+                                                if (!eid) return;
+                                                if (appGridCell.pinnedSlot >= 0) {
+                                                    self.removeAppShortcut(eid);
+                                                } else {
+                                                    self.addAppShortcut(eid);
                                                 }
                                             }
                                         }

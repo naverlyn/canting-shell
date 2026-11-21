@@ -101,6 +101,8 @@ PanelWindow {
 
   // Expose compact width back to Bar.qml so neighboring panels never collide
   readonly property real compactWidthOut: Math.max(110, compactView.implicitWidth)
+  readonly property real islandX: islandShell.x
+  readonly property real islandW: islandShell.width
 
   // Live Media state
   readonly property bool isMediaPlaying: {

@@ -488,8 +488,21 @@ Scope {
             height: barWindow.windowIsVert ? barWindow.height : barInstanceScope.barThickness
           }
 
+          Item {
+            id: islandMaskHole
+            readonly property var islWin: dynamicIslandLoader.item
+            x: islWin ? islWin.islandX : 0
+            y: 0
+            width: islWin ? islWin.islandW : 0
+            height: barWindow.height
+          }
+
           mask: Region {
             item: barInputMask
+            Region {
+              item: (barWindow.windowIsDynamicIsland && dynamicIslandLoader.item) ? islandMaskHole : null
+              intersection: Intersection.Subtract
+            }
           }
 
           Loader {
