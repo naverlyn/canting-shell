@@ -230,12 +230,12 @@
     "bgBorder": "#54487A",
     "textPrimary": "#FAFAFA",
     "textSecondary": "#DDDAEC",
-    "textMuted": "#9890B3",
-    "accentPrimary": "#61538D",
-    "accentCyan": "#6FB3B8",
-    "accentGreen": "#6BA37A",
-    "accentOrange": "#D9A45B",
-    "accentRed": "#C95D63"
+    "textMuted": "#A39BBF",
+    "accentPrimary": "#9D8CD6",
+    "accentCyan": "#7CC4C9",
+    "accentGreen": "#78B888",
+    "accentOrange": "#E3B068",
+    "accentRed": "#E06C75"
   },
   {
     "name": "Gentoo Light",
@@ -244,15 +244,15 @@
     "bgSurface": "#F2F0F7",
     "bgHover": "#E6E3F0",
     "bgSelected": "#DDDAEC",
-    "bgBorder": "#C4BED9",
-    "textPrimary": "#221D33",
-    "textSecondary": "#453A64",
-    "textMuted": "#6E658C",
+    "bgBorder": "#B8B0D4",
+    "textPrimary": "#1E192E",
+    "textSecondary": "#3E335C",
+    "textMuted": "#5A5078",
     "accentPrimary": "#54487A",
-    "accentCyan": "#2E7D82",
-    "accentGreen": "#3A7D4E",
-    "accentOrange": "#B8731E",
-    "accentRed": "#B83B44"
+    "accentCyan": "#1F6E75",
+    "accentGreen": "#2B6E40",
+    "accentOrange": "#A66214",
+    "accentRed": "#AD2E38"
   },
   {
     "name": "Night",
