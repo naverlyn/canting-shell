@@ -97,11 +97,6 @@ Item {
             : (rawImg.startsWith("/") ? ("file://" + rawImg) : rawImg);
         const imgStr = (normImg.indexOf("image://qsimage/") !== -1 || normImg === "__sample__") ? "" : normImg;
         const appFormatted = SocialApps.formatAppName(h.displayAppName || h.appName || "", h.socialApp);
-        const acts = (!h.isSample && h.actions) ? (h.actions || []).map(a => ({
-            label: a.label || a.text || "",
-            identifier: String(a.identifier || ""),
-            customCmd: String(a.customCmd || "")
-        })).filter(a => a.label !== "") : [];
         return {
             rawItem: h,
             notifId: h.notifId,
@@ -113,8 +108,7 @@ Item {
             notifTime: h.timeStr || "Now",
             notifUrgency: h.urgency !== undefined ? h.urgency : NotificationUrgency.Normal,
             customGlyph: h.customGlyph || "",
-            isSample: Boolean(h.isSample),
-            notifActions: acts
+            isSample: Boolean(h.isSample)
         };
     })
 
@@ -976,54 +970,6 @@ Item {
                                                     anchors.fill: parent
                                                     cursorShape: Qt.PointingHandCursor
                                                     onClicked: root.toggleGroup(groupDelegate.appName)
-                                                }
-                                            }
-                                        }
-
-                                        // Interactive Inline Actions
-                                        RowLayout {
-                                            Layout.fillWidth: true
-                                            Layout.preferredHeight: Math.max(16, Math.round(28 * root.scaleFactor))
-                                            spacing: Math.max(4, Math.round(6 * root.scaleFactor))
-                                            Layout.topMargin: Math.round(2 * root.scaleFactor)
-                                            visible: root.showContent && !root.isStageEditor && notifDelegate.notif.notifActions && notifDelegate.notif.notifActions.length > 0
-
-                                            Repeater {
-                                                model: notifDelegate.notif.notifActions
-                                                delegate: Rectangle {
-                                                    required property var modelData
-                                                    Layout.fillWidth: true
-                                                    Layout.preferredWidth: 1
-                                                    Layout.preferredHeight: Math.max(16, Math.round(28 * root.scaleFactor))
-                                                    height: Layout.preferredHeight
-                                                    radius: height / 2
-                                                    color: actionHover.containsMouse
-                                                        ? Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.12)
-                                                        : Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.06)
-
-                                                    Text {
-                                                        anchors.centerIn: parent
-                                                        text: modelData.label
-                                                        color: root.moduleAccent
-                                                        font.family: root.font
-                                                        font.pixelSize: Math.max(6, Math.round(11 * root.scaleFactor))
-                                                        font.bold: true
-                                                    }
-
-                                                    MouseArea {
-                                                        id: actionHover
-                                                        anchors.fill: parent
-                                                        hoverEnabled: true
-                                                        cursorShape: Qt.PointingHandCursor
-                                                        onClicked: {
-                                                            if (typeof NotificationService !== "undefined" && notifDelegate.currentNotifId && modelData.identifier) {
-                                                                NotificationService.invokeHistoryAction(notifDelegate.currentNotifId, modelData.identifier);
-                                                            } else if (modelData.customCmd && modelData.customCmd !== "") {
-                                                                Quickshell.execDetached(["sh", "-c", modelData.customCmd]);
-                                                            }
-                                                            notifWrap.triggerDismiss(notifWrap.width + 40);
-                                                        }
-                                                    }
                                                 }
                                             }
                                         }
