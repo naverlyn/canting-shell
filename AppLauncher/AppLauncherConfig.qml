@@ -13,6 +13,7 @@ Singleton {
     // Configuration Properties
     property int spotlightWidth: 620
     property int spotlightHeight: 480
+    property string spotlightPosition: "center" // "top", "center", "bottom"
     property string defaultMode: "apps" // "apps" or "command"
     property string sortMode: "frecency" // "frecency", "alphabetical", "recent"
     property bool matchGenericName: true
@@ -38,6 +39,12 @@ Singleton {
     readonly property var modeOptions: [
         { id: "apps",    label: "Applications",    desc: "Open directly in application search mode" },
         { id: "command", label: "Execute Command", desc: "Open directly in terminal command runner mode" }
+    ]
+
+    readonly property var positionOptions: [
+        { id: "top",    label: "Top",    icon: "󰁝" },
+        { id: "center", label: "Center", icon: "󰆾" },
+        { id: "bottom", label: "Bottom", icon: "󰁅" }
     ]
 
     function isAppHidden(appKey) {
@@ -91,6 +98,15 @@ Singleton {
         if (root.spotlightHeight !== clamped) {
             root.spotlightHeight = clamped;
             saveDebounceTimer.restart();
+        }
+    }
+
+    function setSpotlightPosition(pos) {
+        if (["top", "center", "bottom"].indexOf(pos) !== -1) {
+            if (root.spotlightPosition !== pos) {
+                root.spotlightPosition = pos;
+                root.saveConfig();
+            }
         }
     }
 
@@ -156,6 +172,7 @@ Singleton {
     function resetDefaults() {
         root.spotlightWidth = 620;
         root.spotlightHeight = 480;
+        root.spotlightPosition = "center";
         root.defaultMode = "apps";
         root.sortMode = "frecency";
         root.matchGenericName = true;
@@ -182,6 +199,7 @@ Singleton {
         const data = {
             spotlightWidth: root.spotlightWidth,
             spotlightHeight: root.spotlightHeight,
+            spotlightPosition: root.spotlightPosition,
             defaultMode: root.defaultMode,
             sortMode: root.sortMode,
             matchGenericName: root.matchGenericName,
@@ -207,6 +225,10 @@ Singleton {
         if (!cfg) return;
         if (cfg.spotlightWidth !== undefined) root.spotlightWidth = Math.max(480, Math.min(840, Number(cfg.spotlightWidth) || 620));
         if (cfg.spotlightHeight !== undefined) root.spotlightHeight = Math.max(360, Math.min(680, Number(cfg.spotlightHeight) || 480));
+        if (cfg.spotlightPosition !== undefined) {
+            const sp = String(cfg.spotlightPosition);
+            if (["top", "center", "bottom"].indexOf(sp) !== -1) root.spotlightPosition = sp;
+        }
         if (cfg.defaultMode !== undefined) root.defaultMode = String(cfg.defaultMode) === "command" ? "command" : "apps";
         if (cfg.sortMode !== undefined) {
             const sm = String(cfg.sortMode);

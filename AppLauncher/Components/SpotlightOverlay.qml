@@ -61,16 +61,33 @@ PanelWindow {
     }
   }
 
+  readonly property string posMode: AppLauncherConfig.spotlightPosition || "center"
+
   ParallelAnimation {
     id: openAnim
     NumberAnimation { target: launcherBox; property: "opacity"; from: 0.0; to: 1.0; duration: 150; easing.type: Easing.OutCubic }
     NumberAnimation { target: launcherBox; property: "scale"; from: 0.96; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
+    NumberAnimation {
+      target: launcherSlide
+      property: "y"
+      from: root.posMode === "bottom" ? 20 : (root.posMode === "top" ? -16 : 10)
+      to: 0
+      duration: 180
+      easing.type: Easing.OutCubic
+    }
   }
 
   ParallelAnimation {
     id: closeAnim
     NumberAnimation { target: launcherBox; property: "opacity"; to: 0.0; duration: 110; easing.type: Easing.InCubic }
     NumberAnimation { target: launcherBox; property: "scale"; to: 0.97; duration: 110; easing.type: Easing.InCubic }
+    NumberAnimation {
+      target: launcherSlide
+      property: "y"
+      to: root.posMode === "bottom" ? 14 : (root.posMode === "top" ? -12 : 6)
+      duration: 110
+      easing.type: Easing.InCubic
+    }
     onFinished: root.visible = false
   }
 
@@ -93,11 +110,19 @@ PanelWindow {
     onClicked: root.requestClose()
   }
 
-  // Centered Spotlight Runner Box
+  // Spotlight Runner Box (Top / Center / Bottom placement)
   Rectangle {
     id: launcherBox
     anchors.horizontalCenter: parent.horizontalCenter
-    y: Math.max(80, (root.height - height) / 2 - (root.isExpanded ? 0 : 60))
+    y: {
+      if (root.posMode === "top") {
+        return 68;
+      }
+      if (root.posMode === "bottom") {
+        return Math.max(48, root.height - height - 64);
+      }
+      return Math.max(80, Math.round((root.height - height) / 2) - (root.isExpanded ? 0 : 60));
+    }
     width: AppLauncherConfig.spotlightWidth
     height: root.isExpanded ? AppLauncherConfig.spotlightHeight : 60
     radius: 16
@@ -107,6 +132,8 @@ PanelWindow {
     clip: true
     opacity: 0.0
     scale: 0.96
+    transformOrigin: root.posMode === "bottom" ? Item.Bottom : (root.posMode === "top" ? Item.Top : Item.Center)
+    transform: Translate { id: launcherSlide; y: 0 }
 
     Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
     Behavior on y { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
