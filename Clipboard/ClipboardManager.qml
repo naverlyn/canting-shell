@@ -5,11 +5,12 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import "Components"
+import "../ThemeSwitcher"
 
 Scope {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
 
     property int selectedIndex: 0

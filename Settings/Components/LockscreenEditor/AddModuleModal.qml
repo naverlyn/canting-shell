@@ -2,11 +2,12 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import "../../../Lockscreen"
+import "../../../ThemeSwitcher"
 
 Item {
     id: modalRoot
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: (modalRoot.theme && modalRoot.theme.fontFamily) ? modalRoot.theme.fontFamily : "Lato Nerd Font"
 
     signal moduleChosen(string modType)

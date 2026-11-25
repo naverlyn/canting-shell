@@ -3,11 +3,12 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import ".."
+import "../../ThemeSwitcher"
 
 Rectangle {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
     property int currentBrightness: 50
     property bool hasBacklightDevice: true

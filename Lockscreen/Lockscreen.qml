@@ -3,11 +3,12 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Pam
 import QtQuick
+import "../ThemeSwitcher"
 
 Scope {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property bool isLocked: false
     property bool isAuthenticating: false
     property bool isUnlocking: false

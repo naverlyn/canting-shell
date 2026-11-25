@@ -2,11 +2,12 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Mpris
 import ".."
+import "../../ThemeSwitcher"
 
 Rectangle {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
 
     readonly property var player: {

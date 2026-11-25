@@ -5,10 +5,11 @@ import Quickshell
 import Quickshell.Io
 import ".."
 import "./Bluetooth"
+import "../../ThemeSwitcher"
 
 Item {
     id: root
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font
 
     property var devices: []

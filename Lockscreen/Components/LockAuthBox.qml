@@ -4,11 +4,12 @@ import QtQuick.Controls
 import Quickshell
 import ".."
 import "../../utils/ColorUtils.js" as ColorUtils
+import "../../ThemeSwitcher"
 
 Item {
     id: authRoot
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "JetBrainsMono Nerd Font"
     property string username: Quickshell.env("USER") || "User"
     property bool isAuthenticating: false

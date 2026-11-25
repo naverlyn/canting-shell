@@ -6,10 +6,11 @@ import Quickshell.Io
 import "../../bar"
 import ".."
 import "./Wifi"
+import "../../ThemeSwitcher"
 
 Item {
     id: root
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font
 
     readonly property var networks: WifiService.networkList

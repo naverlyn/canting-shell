@@ -11,7 +11,7 @@ import ".."
 ColumnLayout {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
     property string mode: "tiles" // "connectivity", "tiles", "tiles2", "both" or "panelTiles"
 

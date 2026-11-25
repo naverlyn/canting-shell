@@ -4,13 +4,14 @@ import QtQuick.Controls
 import Quickshell
 import "../Common"
 import "../../../Lockscreen"
+import "../../../ThemeSwitcher"
 
 Rectangle {
     id: cardRoot
 
     property var moduleData: ({})
     property int moduleIndex: 0
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: (cardRoot.theme && cardRoot.theme.fontFamily) ? cardRoot.theme.fontFamily : "Lato Nerd Font"
     property bool isExpanded: false
 

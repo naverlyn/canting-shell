@@ -40,7 +40,7 @@ Scope {
   ClipboardManager { theme: ts.theme }
   OSD { theme: ts.theme }
   MonitorManager { theme: ts.theme }
-  CaffeineToggle { theme: ts.theme }
+  CaffeineToggle {}
   Lockscreen { theme: ts.theme }
   PowerMenu { theme: ts.theme }
   PolkitAgentService { theme: ts.theme }

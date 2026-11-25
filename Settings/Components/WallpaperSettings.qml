@@ -19,10 +19,11 @@ import Quickshell.Io
 import "../../wallpaper"
 import ".."
 import "./Wallpaper"
+import "../../ThemeSwitcher"
 
 Item {
     id: root
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
 
     // View state: 0: Gallery, 1: Folders

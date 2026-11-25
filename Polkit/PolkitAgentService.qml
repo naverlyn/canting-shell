@@ -2,14 +2,13 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Polkit
 import QtQuick
-import "../ThemeSwitcher" as TS
+import "../ThemeSwitcher"
 import "Components"
 
 Scope {
     id: root
 
-    TS.DefaultTheme { id: defaultTheme }
-    property var theme: defaultTheme
+    property var theme: Theme
     property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
 
     property bool previewMode: false
@@ -70,7 +69,7 @@ Scope {
         id: overlayLoader
         active: root.overlayActive
         sourceComponent: PolkitOverlay {
-            theme: root.theme || defaultTheme
+            theme: root.theme || Theme
             font: root.font
 
             actionId: root.previewMode

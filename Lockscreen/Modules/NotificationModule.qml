@@ -8,11 +8,12 @@ import "../../notifications"
 import "../../notifications/SocialApps.js" as SocialApps
 import ".."
 import "../../utils/ColorUtils.js" as ColorUtils
+import "../../ThemeSwitcher"
 
 Item {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "JetBrainsMono Nerd Font"
     property var moduleData: ({})
     property bool previewMode: false

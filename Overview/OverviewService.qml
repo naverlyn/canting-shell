@@ -2,14 +2,13 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick
-import "../ThemeSwitcher" as TS
+import "../ThemeSwitcher"
 import "Components"
 
 Scope {
     id: root
 
-    TS.DefaultTheme { id: defaultTheme }
-    property var theme: defaultTheme
+    property var theme: Theme
     property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
 
     property bool panelVisible: false
@@ -243,7 +242,7 @@ Scope {
     Loader {
         active: root.panelVisible
         sourceComponent: OverviewOverlay {
-            theme: root.theme || defaultTheme
+            theme: root.theme || Theme
             font: root.font
             mode: root.mode
             toplevels: root.sortedToplevels
