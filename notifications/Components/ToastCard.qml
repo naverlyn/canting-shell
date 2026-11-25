@@ -45,7 +45,7 @@ Rectangle {
     }
 
     Layout.fillWidth: true
-    Layout.preferredHeight: cardOuterRow.implicitHeight + (pad * 2)
+    Layout.preferredHeight: cardOuterRow.implicitHeight + (pad * 2) + (notifCard.stripPos === "top" ? NotificationService.accentStripWidth + 2 : 0)
     radius: NotificationService.cardRadius
     opacity: NotificationService.cardOpacity
     color: cardHover.hovered ? Qt.lighter(notifCard.theme.bgBase, 1.12) : notifCard.theme.bgBase
@@ -495,6 +495,7 @@ Rectangle {
                 ? Text.AlignHCenter
                 : (NotificationService.titleAlignment === "right" ? Text.AlignRight : Text.AlignLeft)
             visible: text !== ""
+            textFormat: Text.PlainText
         }
     }
 
@@ -527,7 +528,7 @@ Rectangle {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
+                Layout.alignment: Qt.AlignVCenter
                 spacing: 3
 
                 Text {
@@ -544,6 +545,7 @@ Rectangle {
                         : (NotificationService.titleAlignment === "right" ? Text.AlignRight : Text.AlignLeft)
                     Layout.fillWidth: true
                     visible: NotificationService.isBlockVisible("title") && text !== ""
+                    textFormat: Text.PlainText
                 }
 
                 Text {
@@ -566,7 +568,7 @@ Rectangle {
             ToastImageBox {
                 Layout.preferredWidth: NotificationService.imageSize
                 Layout.preferredHeight: NotificationService.imageSize
-                Layout.alignment: Qt.AlignTop
+                Layout.alignment: Qt.AlignVCenter
                 visible: parent.showThumb
                 imageSource: notifCard.hasImg && !notifCard.isSampleImg ? notifCard.modelData.image : ""
                 urgencyColor: notifCard.urgencyColor

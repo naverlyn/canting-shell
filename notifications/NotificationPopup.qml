@@ -67,7 +67,8 @@ Scope {
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             WlrLayershell.namespace: "quickshell-notifications"
 
-            exclusionMode: ExclusionMode.Ignore
+            exclusionMode: ExclusionMode.Normal
+            exclusiveZone: 0
 
             anchors {
                 top: notifWindow.isTop
