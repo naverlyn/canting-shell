@@ -48,7 +48,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: dragGhostCard.isRemoving ? "󰅖" : (dragGhostCard.isTargetMaxed ? "󰀪" : dragGhostCard.dragMeta.icon)
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             color: (dragGhostCard.isRemoving || dragGhostCard.isTargetMaxed) ? root.theme.accentRed : dragGhostCard.dragColor
         }
 
@@ -58,7 +58,7 @@ Rectangle {
                 ? (dragGhostCard.dragMeta.name + " (Maxed out)")
                 : (dragGhostCard.isRemoving ? ("Remove " + dragGhostCard.dragMeta.name) : dragGhostCard.dragMeta.name)
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: (dragGhostCard.isRemoving || dragGhostCard.isTargetMaxed) ? root.theme.accentRed : root.theme.textPrimary
         }

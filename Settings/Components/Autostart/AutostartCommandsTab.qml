@@ -22,10 +22,10 @@ ColumnLayout {
             Layout.fillWidth: true
             height: 36
             radius: 7
-            color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
+            color: root.theme.bgBase
             border.color: cmdSearchInput.activeFocus
                 ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
-                : ((root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08))
+                : root.theme.bgBorder
             border.width: 1
 
             RowLayout {
@@ -37,7 +37,7 @@ ColumnLayout {
                 Text {
                     text: "󰍉"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     color: cmdSearchInput.activeFocus
                         ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
                         : ((root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060")
@@ -47,7 +47,7 @@ ColumnLayout {
                     id: cmdSearchInput
                     Layout.fillWidth: true
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                     clip: true
                     selectByMouse: true
@@ -59,7 +59,7 @@ ColumnLayout {
                         visible: !parent.text && !parent.activeFocus
                         text: "Filter startup commands or daemons..."
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: (root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060"
                     }
                 }
@@ -68,14 +68,14 @@ ColumnLayout {
                     width: 18
                     height: 18
                     radius: 9
-                    color: clearCmdSearchHover.hovered ? ((root.theme && root.theme.bgHover) ? root.theme.bgHover : Qt.rgba(1, 1, 1, 0.1)) : "transparent"
+                    color: clearCmdSearchHover.hovered ? root.theme.bgHover : "transparent"
                     visible: cmdSearchInput.text.length > 0
 
                     Text {
                         anchors.centerIn: parent
                         text: "✕"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                     }
 
@@ -107,8 +107,8 @@ ColumnLayout {
         Layout.fillWidth: true
         height: 440
         radius: 8
-        color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.2)
-        border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
+        color: root.theme.bgBase
+        border.color: root.theme.bgBorder
         border.width: 1
         clip: true
 
@@ -125,7 +125,7 @@ ColumnLayout {
                 contentItem: Rectangle {
                     implicitWidth: 4
                     radius: 2
-                    color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.15)
+                    color: root.theme.bgBorder
                 }
             }
 
@@ -136,8 +136,8 @@ ColumnLayout {
                 width: cmdsListView.width - 8
                 height: 62
                 radius: 6
-                color: cmdHover.hovered ? ((root.theme && root.theme.bgSurface) ? root.theme.bgSurface : Qt.rgba(1, 1, 1, 0.05)) : "transparent"
-                border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.06)
+                color: cmdHover.hovered ? root.theme.bgSurface : "transparent"
+                border.color: root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -154,8 +154,8 @@ ColumnLayout {
                         width: 36
                         height: 36
                         radius: 7
-                        color: (root.theme && root.theme.bgSurface) ? root.theme.bgSurface : Qt.rgba(1, 1, 1, 0.08)
-                        border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
+                        color: root.theme.bgSurface
+                        border.color: root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -163,7 +163,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: cmdItemRow.modelData.is_system ? "" : "󰆍"
                             font.family: root.font
-                            font.pixelSize: 16
+                            font.pixelSize: Style.px(16)
                             color: cmdItemRow.modelData.is_system
                                 ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
                                 : ((root.theme && root.theme.accentCyan) ? root.theme.accentCyan : "#7dcfff")
@@ -181,7 +181,7 @@ ColumnLayout {
                             Text {
                                 text: cmdItemRow.modelData.name
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: cmdItemRow.modelData.enabled
                                     ? ((root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff")
@@ -202,7 +202,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: cmdItemRow.modelData.file
                                     font.family: root.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     font.bold: true
                                     color: cmdItemRow.modelData.is_system
                                         ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
@@ -216,7 +216,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             height: 22
                             radius: 4
-                            color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.25)
+                            color: root.theme.bgBase
 
                             Text {
                                 anchors.fill: parent
@@ -225,7 +225,7 @@ ColumnLayout {
                                 verticalAlignment: Text.AlignVCenter
                                 text: cmdItemRow.modelData.cmd
                                 font.family: "JetBrains Mono, monospace"
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                                 elide: Text.ElideRight
                             }
@@ -243,9 +243,9 @@ ColumnLayout {
                             height: 28
                             radius: 6
                             color: testBtnHover.hovered
-                                ? ((root.theme && root.theme.bgHover) ? root.theme.bgHover : Qt.rgba(1, 1, 1, 0.1))
-                                : ((root.theme && root.theme.bgSurface) ? root.theme.bgSurface : Qt.rgba(1, 1, 1, 0.05))
-                            border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
+                                ? root.theme.bgHover
+                                : root.theme.bgSurface
+                            border.color: root.theme.bgBorder
                             border.width: 1
 
                             HoverHandler { id: testBtnHover }
@@ -261,13 +261,13 @@ ColumnLayout {
                                 Text {
                                     text: "󰐊"
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     color: (root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7"
                                 }
                                 Text {
                                     text: "Test"
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: true
                                     color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                                 }
@@ -295,7 +295,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "󰆴"
                                 font.family: root.font
-                                font.pixelSize: 14
+                                font.pixelSize: Style.px(14)
                                 color: delCmdHover.hovered
                                     ? ((root.theme && root.theme.accentRed) ? root.theme.accentRed : "#f7768e")
                                     : ((root.theme && root.theme.textMuted) ? root.theme.textMuted : "#707070")

@@ -39,7 +39,7 @@ Rectangle {
             Text {
                 text: "Available Quick Tiles"
                 font.family: hostRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: tilesPool.isPoolDropTarget ? hostRoot.theme.accentRed : hostRoot.theme.accentPrimary
             }
@@ -47,7 +47,7 @@ Rectangle {
             Text {
                 text: "(" + tilesPool.totalAvailCount + " available)"
                 font.family: hostRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: hostRoot.theme.textMuted
             }
 
@@ -92,7 +92,7 @@ Rectangle {
                             horizontalAlignment: Text.AlignHCenter
                             text: tilePoolChip.modelData.icon || "󰒓"
                             font.family: hostRoot.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             color: hostRoot.theme.accentPrimary
                         }
 
@@ -100,7 +100,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             text: tilePoolChip.modelData.label
                             font.family: hostRoot.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: hostRoot.theme.textPrimary
                         }

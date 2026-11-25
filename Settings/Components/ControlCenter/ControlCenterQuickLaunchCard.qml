@@ -284,14 +284,14 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                             Text {
                                 text: "󰀻"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 color: root.theme.accentPrimary
                             }
 
                             Text {
                                 text: "Quick Launch Layout Preview (" + ControlCenterConfig.quickAppsMaxCount + " / 15 Apps)"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -307,7 +307,7 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                                     anchors.centerIn: parent
                                     text: "Editing Slot #" + (quickLaunchCard.selectedSlotIndex + 1)
                                     font.family: root.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     font.bold: true
                                     color: root.theme.accentPrimary
                                 }
@@ -448,7 +448,7 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                                                         visible: !previewTile.hasSysIcon
                                                         text: previewTile.modelData.icon || "󰀻"
                                                         font.family: root.font
-                                                        font.pixelSize: 17
+                                                        font.pixelSize: Style.px(17)
                                                         color: previewTile.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                                     }
                                                 }
@@ -458,7 +458,7 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                                                     horizontalAlignment: Text.AlignHCenter
                                                     text: previewTile.modelData.label || "App"
                                                     font.family: root.font
-                                                    font.pixelSize: 10
+                                                    font.pixelSize: Style.px(10)
                                                     font.bold: previewTile.isSel || previewTileHover.hovered
                                                     color: previewTile.isSel ? root.theme.textPrimary : root.theme.textSecondary
                                                     elide: Text.ElideRight
@@ -505,7 +505,7 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                             Text {
                                 text: "AppGrid Applications"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: root.theme.accentPrimary
                             }
@@ -513,7 +513,7 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                             Text {
                                 text: "(" + quickLaunchCard.filteredDesktopApps.length + " installed)"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textMuted
                             }
 
@@ -538,7 +538,7 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                                 Text {
                                     text: "󰍉"
                                     color: settingsAppSearch.activeFocus ? root.theme.accentPrimary : root.theme.textMuted
-                                    font.pixelSize: 13
+                                    font.pixelSize: Style.px(13)
                                     font.family: root.font
                                     Layout.alignment: Qt.AlignVCenter
                                 }
@@ -554,7 +554,7 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                                         anchors.right: parent.right
                                         anchors.verticalCenter: parent.verticalCenter
                                         color: root.theme.textPrimary
-                                        font.pixelSize: 12
+                                        font.pixelSize: Style.px(12)
                                         font.family: root.font
                                         clip: true
                                         selectByMouse: true
@@ -563,7 +563,7 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                                     Text {
                                         text: "Search applications to assign to Slot #" + (quickLaunchCard.selectedSlotIndex + 1) + "..."
                                         color: root.theme.textMuted
-                                        font.pixelSize: 12
+                                        font.pixelSize: Style.px(12)
                                         font.family: root.font
                                         anchors.verticalCenter: parent.verticalCenter
                                         visible: settingsAppSearch.text === ""
@@ -666,7 +666,7 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                                                 anchors.centerIn: parent
                                                 text: "󰀻"
                                                 color: root.theme.accentPrimary
-                                                font.pixelSize: 20
+                                                font.pixelSize: Style.px(20)
                                                 font.family: root.font
                                                 visible: !appGridCell.hasIcon
                                             }
@@ -676,7 +676,7 @@ import "../../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
                                             width: parent.width
                                             text: appGridCell.modelData.name ?? ""
                                             color: (cellHoverArea.containsMouse || appGridCell.assignedSlot >= 0) ? root.theme.textPrimary : root.theme.textSecondary
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             font.family: root.font
                                             font.bold: cellHoverArea.containsMouse || appGridCell.assignedSlot >= 0
                                             horizontalAlignment: Text.AlignHCenter

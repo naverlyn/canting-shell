@@ -21,7 +21,7 @@ ColumnLayout {
         Text {
             text: "Volume Levels"
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             font.bold: true
             color: root.theme.textSecondary
             Layout.leftMargin: 4
@@ -32,7 +32,7 @@ ColumnLayout {
         Text {
             text: root.appStreams.length > 0 ? (root.appStreams.length + (root.appStreams.length === 1 ? " application" : " applications")) : "No active streams"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             color: root.theme.textSecondary
             Layout.rightMargin: 4
         }
@@ -43,7 +43,7 @@ ColumnLayout {
         implicitHeight: streamCol.implicitHeight + 16
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         Column {
@@ -69,7 +69,7 @@ ColumnLayout {
                     Text {
                         text: "No applications currently playing audio"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.bold: true
                         color: root.theme.textPrimary
                         Layout.alignment: Qt.AlignHCenter
@@ -78,7 +78,7 @@ ColumnLayout {
                     Text {
                         text: "Streams will appear here automatically when apps produce sound"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textSecondary
                         Layout.alignment: Qt.AlignHCenter
                     }
@@ -112,7 +112,7 @@ ColumnLayout {
                             Text {
                                 text: root.getStreamAppName(streamNode)
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: root.theme.textPrimary
                                 elide: Text.ElideRight
@@ -122,7 +122,7 @@ ColumnLayout {
                             Text {
                                 text: isStreamMuted ? "Muted" : (streamVolPct + "%")
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: isStreamMuted ? (root.theme.accentRed ?? "#f7768e") : (root.theme.accentPrimary ?? "#7aa2f7")
                             }
@@ -136,8 +136,8 @@ ColumnLayout {
                             implicitHeight: 6
                             height: 6
                             radius: 3
-                            color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.1)
-                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                            color: root.theme.bgSelected
+                            border.color: root.theme.bgBorder
                             border.width: 1
                             Layout.alignment: Qt.AlignVCenter
 
@@ -219,10 +219,10 @@ ColumnLayout {
                             radius: root.btnRadius
                             color: isStreamMuted 
                                 ? Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.18) 
-                                : (appMuteHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)))
+                                : (appMuteHover.hovered ? root.theme.bgHover : root.theme.bgBase)
                             border.color: isStreamMuted 
                                 ? Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.4) 
-                                : (appMuteHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
+                                : (appMuteHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder)
                             border.width: 1
                             Layout.alignment: Qt.AlignVCenter
 
@@ -235,7 +235,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: isStreamMuted ? "Muted" : "Mute"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 font.bold: true
                                 color: isStreamMuted ? root.theme.accentRed : root.theme.textPrimary
                             }
@@ -261,7 +261,7 @@ ColumnLayout {
                         anchors.leftMargin: 12
                         anchors.rightMargin: 12
                         height: 1
-                        color: Qt.rgba(1, 1, 1, 0.05)
+                        color: Style.withAlpha(Style.theme.bgBorder, 0.5)
                     }
                 }
             }

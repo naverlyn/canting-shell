@@ -24,7 +24,7 @@ ColumnLayout {
         Text {
             text: "Night Light"
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             font.bold: true
             color: root.theme.textSecondary
         }
@@ -34,7 +34,7 @@ ColumnLayout {
         Text {
             text: root.nightLightEnabled ? (root.nightLightTemp + " K · Active") : "Disabled"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: root.nightLightEnabled ? (root.theme.accentOrange ?? root.theme.accentPrimary) : root.theme.textMuted
         }
@@ -45,7 +45,7 @@ ColumnLayout {
         implicitHeight: nlGroupCol.implicitHeight + 16
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -59,80 +59,13 @@ ColumnLayout {
             spacing: 0
 
             /* Row 1: Enable Night Light Switch */
-            Item {
-                Layout.fillWidth: true
-                height: 40
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 12
-                    anchors.rightMargin: 12
-                    spacing: 16
-
-                    ColumnLayout {
-                        spacing: 2
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Text {
-                            text: "Night Light"
-                            font.family: root.font
-                            font.pixelSize: 13
-                            font.bold: true
-                            color: root.theme.textPrimary
-                        }
-                    }
-
-                    Item { Layout.fillWidth: true }
-
-                    /* Libadwaita Toggle Switch */
-                    Rectangle {
-                        width: 44
-                        height: 24
-                        radius: 12
-                        color: root.nightLightEnabled
-                            ? root.theme.accentPrimary
-                            : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3))
-                        border.color: root.nightLightEnabled
-                            ? root.theme.accentPrimary
-                            : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15))
-                        border.width: 1
-                        Layout.alignment: Qt.AlignVCenter
-
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                        Behavior on border.color { ColorAnimation { duration: 150 } }
-
-                        Rectangle {
-                            width: 18
-                            height: 18
-                            radius: 9
-                            anchors.verticalCenter: parent.verticalCenter
-                            x: root.nightLightEnabled ? (parent.width - width - 3) : 3
-                            color: root.nightLightEnabled
-                                ? "#ffffff"
-                                : root.theme.textPrimary
-
-                            Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            preventStealing: true
-                            onClicked: root.setNightLight(!root.nightLightEnabled)
-                        }
-                    }
-                }
+            SettingToggleRow {
+                title: "Night Light"
+                checked: root.nightLightEnabled
+                onToggled: (val) => root.setNightLight(val)
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 2: Color Temperature Slider */
             Item {
@@ -155,7 +88,7 @@ ColumnLayout {
                         Text {
                             text: "Color Temperature"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -163,7 +96,7 @@ ColumnLayout {
                         Text {
                             text: root.getNightLightLabel(root.nightLightTemp)
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textSecondary
                         }
                     }
@@ -175,7 +108,7 @@ ColumnLayout {
                         height: 8
                         radius: 4
                         color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.14)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        border.color: root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -265,7 +198,7 @@ ColumnLayout {
                         height: 26
                         radius: 6
                         color: root.theme.bgBase
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        border.color: root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -273,7 +206,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: root.nightLightTemp + " K"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: root.nightLightEnabled ? (root.theme.accentOrange ?? root.theme.accentPrimary) : root.theme.textMuted
                         }
@@ -281,14 +214,7 @@ ColumnLayout {
                 }
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 3: Temperature Presets */
             DisplayWarmthPresets {

@@ -33,7 +33,7 @@ ColumnLayout {
                 Text {
                     text: "Resolution"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -55,7 +55,7 @@ ColumnLayout {
                     ? root.theme.accentPrimary
                     : (resPillHover.hovered
                         ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.5)
-                        : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
+                        : root.theme.bgBorder)
                 border.width: resPopup.visible ? 1.5 : 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -80,7 +80,7 @@ ColumnLayout {
                             return root.currentResString;
                         }
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textPrimary
                         elide: Text.ElideRight
@@ -90,7 +90,7 @@ ColumnLayout {
                     Text {
                         text: "󰅀"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         color: resPopup.visible ? root.theme.accentPrimary : root.theme.textSecondary
                         rotation: resPopup.visible ? 180 : 0
                         Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -186,7 +186,7 @@ ColumnLayout {
                                         Text {
                                             text: resOptItem.modelData.label
                                             font.family: root.font
-                                            font.pixelSize: 12
+                                            font.pixelSize: Style.px(12)
                                             font.bold: resOptItem.isSelected
                                             color: resOptItem.isSelected ? root.theme.accentPrimary : root.theme.textPrimary
                                         }
@@ -204,7 +204,7 @@ ColumnLayout {
                                                 anchors.centerIn: parent
                                                 text: resOptItem.modelData.aspect
                                                 font.family: root.font
-                                                font.pixelSize: 9
+                                                font.pixelSize: Style.px(9)
                                                 color: root.theme.textSecondary
                                             }
                                         }

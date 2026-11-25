@@ -21,7 +21,7 @@ Rectangle {
     clip: true
     radius: 8
     color: Qt.rgba(0, 0, 0, 0.18)
-    border.color: root.outputDropdownOpen ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+    border.color: root.outputDropdownOpen ? root.theme.bgBorder : "transparent"
     border.width: 1
 
     Behavior on Layout.preferredHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
@@ -46,8 +46,8 @@ Rectangle {
                 radius: root.btnRadius
                 readonly property bool isSelected: Boolean(modelData && root.defaultSink && root.defaultSink.id === modelData.id)
                 color: isSelected 
-                    ? (root.theme.bgSelected ?? Qt.rgba(1,1,1,0.12)) 
-                    : (itemHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.06)) : "transparent")
+                    ? root.theme.bgSelected 
+                    : (itemHover.hovered ? root.theme.bgHover : "transparent")
                 border.color: isSelected 
                     ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.3) 
                     : "transparent"
@@ -67,7 +67,7 @@ Rectangle {
                     Text {
                         text: modelData ? (modelData.description || modelData.name || "Output Device") : "Output Device"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: isSelected
                         color: isSelected ? (root.theme.accentPrimary ?? "#7aa2f7") : root.theme.textPrimary
                         elide: Text.ElideRight
@@ -89,7 +89,7 @@ Rectangle {
                             anchors.centerIn: parent
                             text: "Current"
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             font.bold: true
                             color: root.theme.accentPrimary
                         }

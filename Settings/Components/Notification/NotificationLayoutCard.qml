@@ -76,7 +76,7 @@ ColumnLayout {
                     Text {
                         text: "Layout Presets:"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -114,7 +114,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: layPresetBtn.modelData.label
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: true
                                     color: layPresetHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
                                 }

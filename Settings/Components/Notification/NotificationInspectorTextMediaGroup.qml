@@ -86,7 +86,7 @@ ColumnLayout {
             Text {
                 text: "Title Text Alignment"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
                 Layout.fillWidth: true
@@ -169,7 +169,7 @@ ColumnLayout {
             Text {
                 text: "Body Text Alignment"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
                 Layout.fillWidth: true
@@ -216,7 +216,7 @@ ColumnLayout {
             Text {
                 text: "Preview Image Position"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
                 Layout.fillWidth: true

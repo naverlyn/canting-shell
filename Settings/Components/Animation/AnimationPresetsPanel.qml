@@ -20,7 +20,7 @@ ColumnLayout {
         Text {
             text: "Animation Profiles & Presets"
             font.family: root.font
-            font.pixelSize: 14
+            font.pixelSize: Style.px(14)
             font.bold: true
             color: root.theme.textPrimary
         }
@@ -28,7 +28,7 @@ ColumnLayout {
         Text {
             text: "(" + root.filteredPresets.length + " profiles)"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             color: root.theme.textMuted
         }
 
@@ -40,7 +40,7 @@ ColumnLayout {
             height: 28
             radius: 14
             color: root.theme.bgSurface
-            border.color: searchInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+            border.color: searchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
             border.width: 1
 
             Behavior on border.color { ColorAnimation { duration: 150 } }
@@ -54,7 +54,7 @@ ColumnLayout {
                     id: searchInput
                     Layout.fillWidth: true
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.textPrimary
                     clip: true
                     verticalAlignment: TextInput.AlignVCenter
@@ -65,7 +65,7 @@ ColumnLayout {
                         verticalAlignment: Text.AlignVCenter
                         text: "Search presets..."
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !searchInput.text && !searchInput.activeFocus
                     }
@@ -89,8 +89,8 @@ ColumnLayout {
                 radius: 13
                 color: root.selectedFamily === modelData
                     ? root.theme.bgSelected
-                    : (famMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.05)) : root.theme.bgSurface)
-                border.color: root.selectedFamily === modelData ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                    : (famMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface)
+                border.color: root.selectedFamily === modelData ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -101,7 +101,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: parent.modelData
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     font.bold: root.selectedFamily === parent.modelData
                     color: root.selectedFamily === parent.modelData ? root.theme.accentPrimary : root.theme.textSecondary
                 }
@@ -136,11 +136,11 @@ ColumnLayout {
                 height: 84
                 radius: 10
                 color: modelData.active
-                    ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12))
-                    : (cardMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.06)) : root.theme.bgSurface)
+                    ? root.theme.bgSelected
+                    : (cardMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface)
                 border.color: modelData.active
                     ? root.theme.accentPrimary
-                    : (cardMouse.containsMouse ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.5) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
+                    : (cardMouse.containsMouse ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.5) : root.theme.bgBorder)
                 border.width: modelData.active ? 1.5 : 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -180,7 +180,7 @@ ColumnLayout {
                             Text {
                                 text: presetCard.modelData.displayName || presetCard.modelData.name
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: presetCard.modelData.active ? root.theme.accentPrimary : root.theme.textPrimary
                                 elide: Text.ElideRight
@@ -198,7 +198,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: presetCard.modelData.family
                                     font.family: root.font
-                                    font.pixelSize: 9
+                                    font.pixelSize: Style.px(9)
                                     font.bold: true
                                     color: root.theme.textSecondary
                                 }
@@ -208,7 +208,7 @@ ColumnLayout {
                         Text {
                             text: presetCard.modelData.description || ""
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             color: root.theme.textSecondary
                             elide: Text.ElideRight
                             Layout.fillWidth: true
@@ -221,7 +221,7 @@ ColumnLayout {
                             Text {
                                 text: presetCard.modelData.bezierCount + " beziers • " + presetCard.modelData.animCount + " rules"
                                 font.family: root.font
-                                font.pixelSize: 9
+                                font.pixelSize: Style.px(9)
                                 color: root.theme.textMuted
                             }
                         }
@@ -237,7 +237,7 @@ ColumnLayout {
                             height: 28
                             implicitWidth: editBtnText.implicitWidth + 16
                             radius: 6
-                            color: editMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : Qt.rgba(1, 1, 1, 0.05)
+                            color: editMouse.containsMouse ? root.theme.bgHover : Qt.rgba(1, 1, 1, 0.05)
                             border.color: editMouse.containsMouse ? root.theme.accentPrimary : Qt.rgba(1, 1, 1, 0.1)
                             border.width: 1
 
@@ -249,7 +249,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "Edit"
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: true
                                 color: editMouse.containsMouse ? root.theme.accentPrimary : root.theme.textSecondary
                             }
@@ -283,7 +283,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "Delete"
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: true
                                 color: delMouse.containsMouse ? "#f7768e" : root.theme.textMuted
                             }
@@ -306,8 +306,8 @@ ColumnLayout {
                             radius: 6
                             color: presetCard.modelData.active
                                 ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.15)
-                                : (applyBtnMouse.containsMouse ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.08)))
-                            border.color: presetCard.modelData.active ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                                : (applyBtnMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgSelected)
+                            border.color: presetCard.modelData.active ? root.theme.accentPrimary : root.theme.bgBorder
                             border.width: 1
 
                             Behavior on color { ColorAnimation { duration: 120 } }
@@ -317,7 +317,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: presetCard.modelData.active ? "Active" : "Apply"
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: true
                                 color: presetCard.modelData.active
                                     ? root.theme.accentPrimary
@@ -349,7 +349,7 @@ ColumnLayout {
             radius: 10
             visible: root.filteredPresets.length === 0
             color: root.theme.bgSurface
-            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            border.color: root.theme.bgBorder
             border.width: 1
 
             ColumnLayout {
@@ -359,7 +359,7 @@ ColumnLayout {
                 Text {
                     text: "No animation profiles match your filter"
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.bold: true
                     color: root.theme.textPrimary
                     Layout.alignment: Qt.AlignHCenter
@@ -370,7 +370,7 @@ ColumnLayout {
                         ? "Click 'New Animation' above to create your own profile"
                         : "Try selecting 'All' or clearing your search query"
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: root.theme.textSecondary
                     Layout.alignment: Qt.AlignHCenter
                 }

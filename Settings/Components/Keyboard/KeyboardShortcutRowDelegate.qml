@@ -32,7 +32,7 @@ Item {
         }
         height: 50
         radius: 8
-        color: rowItem.isEditing ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.08)) : (shortcutMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.04)) : "transparent")
+        color: rowItem.isEditing ? root.theme.bgSelected : (shortcutMouse.containsMouse ? root.theme.bgHover : "transparent")
 
         Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -50,7 +50,7 @@ Item {
                 Text {
                     text: root.getFriendlyAction(modelData)
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                     elide: Text.ElideRight
@@ -60,7 +60,7 @@ Item {
                 Text {
                     text: (modelData.dispatcher || "") + (modelData.arg ? " " + modelData.arg : "")
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: root.theme.textSecondary
                     elide: Text.ElideRight
                     Layout.fillWidth: true
@@ -83,8 +83,8 @@ Item {
                             implicitWidth: keyLabel.implicitWidth + 12
                             height: 24
                             radius: 6
-                            color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3)
-                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.12)
+                            color: root.theme.bgBase
+                            border.color: root.theme.bgBorder
                             border.width: 1
 
                             Text {
@@ -92,7 +92,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: modelData
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -105,15 +105,15 @@ Item {
                     width: 26
                     height: 24
                     radius: 6
-                    color: rowItem.isEditing ? root.theme.accentPrimary : (editHoverMouse.containsMouse ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)))
-                    border.color: rowItem.isEditing ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                    color: rowItem.isEditing ? root.theme.accentPrimary : (editHoverMouse.containsMouse ? root.theme.bgSelected : root.theme.bgSurface)
+                    border.color: rowItem.isEditing ? root.theme.accentPrimary : root.theme.bgBorder
                     border.width: 1
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰏫"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: rowItem.isEditing ? root.theme.bgBase : root.theme.textPrimary
                     }
 

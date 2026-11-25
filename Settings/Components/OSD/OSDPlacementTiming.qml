@@ -19,7 +19,7 @@ ColumnLayout {
     Text {
         text: "Placement & Timing"
         font.family: root.font
-        font.pixelSize: 13
+        font.pixelSize: Style.px(13)
         font.bold: true
         color: root.theme.textSecondary
         Layout.leftMargin: 4
@@ -30,7 +30,7 @@ ColumnLayout {
         implicitHeight: slidersCol.implicitHeight + 16
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -62,7 +62,7 @@ ColumnLayout {
                         Text {
                             text: root.isEdgeX ? (root.osdPos === "left" ? "Left Edge Margin (X)" : "Right Edge Margin (X)") : "Horizontal Offset (X)"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -75,7 +75,7 @@ ColumnLayout {
                                 return root.marginX + " px (Left)";
                             }
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: root.theme.accentPrimary
                         }
@@ -88,8 +88,8 @@ ColumnLayout {
                         Layout.preferredHeight: 6
                         height: 6
                         radius: 3
-                        color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.1)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        color: root.theme.bgSelected
+                        border.color: root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -169,14 +169,7 @@ ColumnLayout {
                 }
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 2: Vertical Placement (Y) Slider */
             Item {
@@ -197,7 +190,7 @@ ColumnLayout {
                         Text {
                             text: root.isEdgeY ? (root.osdPos === "top" ? "Top Edge Margin (Y)" : "Bottom Edge Margin (Y)") : "Vertical Offset (Y)"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -210,7 +203,7 @@ ColumnLayout {
                                 return root.marginY + " px (Up)";
                             }
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: root.theme.accentPrimary
                         }
@@ -223,8 +216,8 @@ ColumnLayout {
                         Layout.preferredHeight: 6
                         height: 6
                         radius: 3
-                        color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.1)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        color: root.theme.bgSelected
+                        border.color: root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -304,14 +297,7 @@ ColumnLayout {
                 }
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 3: Display Timeout Slider */
             Item {
@@ -332,7 +318,7 @@ ColumnLayout {
                         Text {
                             text: "Display Duration"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -340,7 +326,7 @@ ColumnLayout {
                         Text {
                             text: (root.timeoutMs / 1000).toFixed(1) + " s"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: root.theme.accentPrimary
                         }
@@ -353,8 +339,8 @@ ColumnLayout {
                         Layout.preferredHeight: 6
                         height: 6
                         radius: 3
-                        color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.1)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        color: root.theme.bgSelected
+                        border.color: root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 

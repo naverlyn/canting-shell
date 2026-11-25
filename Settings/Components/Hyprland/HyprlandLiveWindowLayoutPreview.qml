@@ -580,7 +580,7 @@ ColumnLayout {
                             Layout.preferredHeight: 30
                             Layout.alignment: Qt.AlignVCenter
                             radius: 8
-                            border.color: Qt.rgba(1, 1, 1, 0.14)
+                            border.color: Style.theme.bgBorder
                             border.width: 1
 
                             gradient: Gradient {
@@ -603,7 +603,7 @@ ColumnLayout {
                                 height: 20
                                 radius: 5
                                 color: Qt.rgba(0, 0, 0, 0.48)
-                                border.color: Qt.rgba(1, 1, 1, 0.14)
+                                border.color: Style.theme.bgBorder
                                 border.width: 1
 
                                 Text {
@@ -648,7 +648,7 @@ ColumnLayout {
                                     Layout.alignment: Qt.AlignVCenter
                                     radius: 5
                                     color: borderPreviewStrip.inactiveColHex
-                                    border.color: Qt.rgba(1, 1, 1, 0.25)
+                                    border.color: Style.theme.bgBorder
                                     border.width: 1
 
                                     Behavior on color { ColorAnimation { duration: 180 } }

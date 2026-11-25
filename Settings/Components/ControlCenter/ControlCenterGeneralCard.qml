@@ -70,7 +70,7 @@ ColumnLayout {
                         Text {
                             text: "Flyout Layout Orientation"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -137,7 +137,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: layBtn.modelData.label
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: layBtn.isSel
                                         color: layBtn.isSel ? root.theme.accentPrimary : root.theme.textSecondary
                                         opacity: layBtn.isSel || layHover.hovered ? 1.0 : 0.75

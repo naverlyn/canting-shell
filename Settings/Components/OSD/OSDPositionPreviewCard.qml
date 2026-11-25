@@ -10,7 +10,7 @@ Rectangle {
     implicitHeight: posCol.implicitHeight + 24
     radius: 12
     color: root.theme.bgSurface
-    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+    border.color: root.theme.bgBorder
     border.width: 1
 
     ColumnLayout {
@@ -29,8 +29,8 @@ Rectangle {
             Layout.fillWidth: true
             height: 180
             radius: 10
-            color: posCard.root.theme.bgBase ?? Qt.rgba(0,0,0,0.3)
-            border.color: posCard.root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+            color: posCard.root.theme.bgBase
+            border.color: posCard.root.theme.bgBorder
             border.width: 1
             clip: true
 

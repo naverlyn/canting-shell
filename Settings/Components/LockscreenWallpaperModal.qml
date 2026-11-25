@@ -120,7 +120,7 @@ PanelWindow {
                     Text {
                         text: "Choose Lock Screen Wallpaper"
                         font.family: root.font
-                        font.pixelSize: 15
+                        font.pixelSize: Style.px(15)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -135,7 +135,7 @@ PanelWindow {
                             return total + " wallpapers available in library";
                         }
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textSecondary
                     }
                 }
@@ -161,7 +161,7 @@ PanelWindow {
                         verticalAlignment: TextInput.AlignVCenter
                         text: root.searchText
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textPrimary
                         clip: true
 
@@ -173,7 +173,7 @@ PanelWindow {
                             visible: parent.text === "" && !parent.activeFocus
                             text: "Search wallpapers..."
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textMuted
                         }
                     }
@@ -202,7 +202,7 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: "Rescan"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textPrimary
                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -239,7 +239,7 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: "Close"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textPrimary
                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -275,7 +275,7 @@ PanelWindow {
                     Text {
                         text: "No wallpapers found"
                         font.family: root.font
-                        font.pixelSize: 14
+                        font.pixelSize: Style.px(14)
                         font.bold: true
                         color: root.theme.textSecondary
                         Layout.alignment: Qt.AlignHCenter
@@ -284,7 +284,7 @@ PanelWindow {
                     Text {
                         text: root.searchText !== "" ? "Try adjusting your search query." : "Ensure ~/Pictures/wallpapers has image files."
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: root.theme.textSecondary
                         Layout.alignment: Qt.AlignHCenter
                     }
@@ -377,7 +377,7 @@ PanelWindow {
                                         verticalAlignment: Text.AlignVCenter
                                         text: delegateRoot.filename
                                         font.family: root.font
-                                        font.pixelSize: 10
+                                        font.pixelSize: Style.px(10)
                                         color: root.theme.textPrimary
                                         elide: Text.ElideRight
                                     }
@@ -413,7 +413,7 @@ PanelWindow {
                                     anchors.centerIn: parent
                                     text: "Active"
                                     font.family: root.font
-                                    font.pixelSize: 9
+                                    font.pixelSize: Style.px(9)
                                     font.bold: true
                                     color: root.theme.bgBase
                                 }
@@ -453,7 +453,7 @@ PanelWindow {
                 Text {
                     text: root.currentSelected !== "" ? ("Current: " + root.currentSelected.split("/").pop()) : "No wallpaper selected"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.textSecondary
                     elide: Text.ElideMiddle
                     Layout.fillWidth: true
@@ -462,7 +462,7 @@ PanelWindow {
                 Text {
                     text: "Click any image to select • Press Esc to cancel"
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: root.theme.textMuted
                     Layout.alignment: Qt.AlignRight
                 }

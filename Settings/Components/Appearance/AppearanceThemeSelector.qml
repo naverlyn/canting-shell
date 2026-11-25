@@ -22,14 +22,14 @@ ColumnLayout {
         Text {
             text: "󰔎"
             font.family: root.font
-            font.pixelSize: 16
+            font.pixelSize: Style.px(16)
             color: root.theme.accentPrimary
         }
 
         Text {
             text: "Theme Selector"
             font.family: root.font
-            font.pixelSize: 14
+            font.pixelSize: Style.px(14)
             font.bold: true
             color: root.theme.textPrimary
         }
@@ -37,7 +37,7 @@ ColumnLayout {
         Text {
             text: "(" + root.filteredThemes.length + " themes)"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             color: root.theme.textMuted
         }
 
@@ -48,8 +48,8 @@ ColumnLayout {
             height: 26
             implicitWidth: modalBtnRow.implicitWidth + 14
             radius: 6
-            color: modalBtnMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.08)) : root.theme.bgSurface
-            border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)
+            color: modalBtnMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
+            border.color: root.theme.bgBorder
             border.width: 1
 
             Behavior on color { ColorAnimation { duration: 150 } }
@@ -62,13 +62,13 @@ ColumnLayout {
                 Text {
                     text: "󰔎"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.accentPrimary
                 }
                 Text {
                     text: "Full View"
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: root.theme.textPrimary
                 }
             }

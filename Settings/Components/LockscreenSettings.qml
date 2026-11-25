@@ -15,6 +15,7 @@ import "../../wallpaper"
 import "../../Lockscreen"
 import "Common"
 import "./LockscreenEditor"
+import "./Common"
 
 Item {
     id: root
@@ -349,14 +350,8 @@ Item {
         onModuleChosen: (mType) => root.addModule(mType)
     }
 
-    ToastBanner {
-        id: toastBanner
-        theme: root.theme
-        font: root.font
-        durationMs: 2200
-    }
 
     function showStatus(msg) {
-        toastBanner.show(msg, false);
+        Style.notify(msg, false);
     }
 }

@@ -15,7 +15,7 @@ Rectangle {
     height: 42
     radius: 8
     color: root.theme.bgSurface
-    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+    border.color: root.theme.bgBorder
     border.width: 1
 
     RowLayout {
@@ -27,7 +27,7 @@ Rectangle {
         Text {
             text: "Active:"
             color: root.theme.textSecondary
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.family: root.font
             font.bold: true
         }
@@ -53,8 +53,8 @@ Rectangle {
                         height: 24
                         width: chipRow.implicitWidth + 14
                         radius: 6
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                        color: root.theme.bgBase
+                        border.color: root.theme.bgBorder
                         border.width: 1
 
                         RowLayout {
@@ -65,7 +65,7 @@ Rectangle {
                             Text {
                                 text: WallpaperService.displayPath(modelData)
                                 color: root.theme.textPrimary
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.family: root.font
                             }
 
@@ -84,7 +84,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                     text: "×"
                                     color: chipRemHover.hovered ? root.theme.bgBase : root.theme.textMuted
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.family: root.font
                                 }
 
@@ -104,7 +104,7 @@ Rectangle {
         Text {
             text: "Reset"
             color: resetHover.hovered ? root.theme.accentPrimary : root.theme.textMuted
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.family: root.font
             font.underline: true
             scale: resetHover.hovered ? 1.05 : 1.0

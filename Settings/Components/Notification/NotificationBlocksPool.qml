@@ -49,7 +49,7 @@ Rectangle {
                     ? "󰩺  Drop Here to Remove Building Block from Toast"
                     : "Available Building Blocks (" + NotificationService.unassignedBlocks.length + ")"
                 font.family: hostRoot.font
-                font.pixelSize: 12
+                font.pixelSize: Style.px(12)
                 font.bold: true
                 color: availPoolCard.isPoolDropTarget
                     ? hostRoot.theme.accentRed
@@ -60,7 +60,7 @@ Rectangle {
                 visible: !availPoolCard.isPoolDropTarget
                 text: "Drag any block into Header, Content, or Footer"
                 font.family: hostRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: hostRoot.theme.textMuted
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -107,14 +107,14 @@ Rectangle {
                             visible: poolChip.modelData.icon !== ""
                             text: poolChip.modelData.icon
                             font.family: hostRoot.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             color: hostRoot.theme.accentPrimary
                         }
 
                         Text {
                             text: poolChip.modelData.label
                             font.family: hostRoot.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: hostRoot.theme.textPrimary
                         }
@@ -181,7 +181,7 @@ Rectangle {
                 visible: NotificationService.unassignedBlocks.length === 0
                 text: "All 9 notification building blocks are currently active on the toast card."
                 font.family: hostRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: hostRoot.theme.textMuted
             }
         }

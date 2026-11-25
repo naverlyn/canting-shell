@@ -15,7 +15,7 @@ RowLayout {
     Text {
         text: "Action:"
         font.family: root.font
-        font.pixelSize: 11
+        font.pixelSize: Style.px(11)
         font.bold: true
         color: root.theme.textSecondary
         Layout.preferredWidth: 70
@@ -29,7 +29,7 @@ RowLayout {
         height: 32
         radius: 7
         color: root.theme.bgBase
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
         Layout.alignment: Qt.AlignVCenter
 
@@ -73,7 +73,7 @@ RowLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     radius: 5
-                    color: !isSel && aSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                    color: !isSel && aSegHover.hovered ? root.theme.bgHover : "transparent"
                     Behavior on color { ColorAnimation { duration: 140 } }
 
                     HoverHandler { id: aSegHover }
@@ -82,7 +82,7 @@ RowLayout {
                         anchors.centerIn: parent
                         text: aSegBtn.modelData.name
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: aSegBtn.isSel
                         color: aSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                         opacity: aSegBtn.isSel || aSegHover.hovered ? 1.0 : 0.75

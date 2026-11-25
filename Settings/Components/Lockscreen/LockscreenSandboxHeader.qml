@@ -17,7 +17,7 @@ RowLayout {
             Text {
                 text: "Interactive Lock Screen Stage"
                 font.family: stageRoot.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: stageRoot.theme.textPrimary
             }
@@ -37,7 +37,7 @@ RowLayout {
                     anchors.centerIn: parent
                     text: "Unsaved Moves"
                     font.family: stageRoot.font
-                    font.pixelSize: 9
+                    font.pixelSize: Style.px(9)
                     font.bold: true
                     color: stageRoot.theme.accentOrange
                 }
@@ -49,7 +49,7 @@ RowLayout {
                 ? "Live Preview Mode active: rendering real clock, date, and lock screen typography"
                 : "Drag any label or password box across the screen (snaps to center & sibling edges)"
             font.family: stageRoot.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             color: stageRoot.theme.textSecondary
             elide: Text.ElideRight
             Layout.fillWidth: true
@@ -89,7 +89,7 @@ RowLayout {
                 anchors.centerIn: parent
                 text: "Preview Anim"
                 font.family: stageRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: previewStageHover.hovered ? stageRoot.theme.accentPrimary : stageRoot.theme.textPrimary
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -130,7 +130,7 @@ RowLayout {
                 anchors.centerIn: parent
                 text: "Snap"
                 font.family: stageRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: stageRoot.snapEnabled ? stageRoot.theme.accentPrimary : stageRoot.theme.textPrimary
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -168,7 +168,7 @@ RowLayout {
                 anchors.centerIn: parent
                 text: "Center X: 0"
                 font.family: stageRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: stageRoot.theme.textPrimary
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -224,7 +224,7 @@ RowLayout {
                 Text {
                     text: "✕"
                     font.family: stageRoot.font
-                    font.pixelSize: 9
+                    font.pixelSize: Style.px(9)
                     font.bold: true
                     color: stageRoot.theme.accentRed
                 }
@@ -232,7 +232,7 @@ RowLayout {
                 Text {
                     text: "Remove"
                     font.family: stageRoot.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: stageRoot.theme.accentRed
                 }
@@ -270,7 +270,7 @@ RowLayout {
                 anchors.centerIn: parent
                 text: "Reset"
                 font.family: stageRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: stageRoot.theme.textPrimary
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -316,7 +316,7 @@ RowLayout {
                 anchors.centerIn: parent
                 text: stageRoot.hasUnsavedMoves ? "Apply Layout" : "Save Positions"
                 font.family: stageRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: stageRoot.hasUnsavedMoves ? stageRoot.theme.accentPrimary : stageRoot.theme.textPrimary
                 Behavior on color { ColorAnimation { duration: 140 } }

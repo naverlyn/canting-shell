@@ -15,7 +15,7 @@ RowLayout {
     Text {
         text: "Béziers:"
         font.family: root.font
-        font.pixelSize: 11
+        font.pixelSize: Style.px(11)
         font.bold: true
         color: root.theme.textPrimary
     }
@@ -36,11 +36,11 @@ RowLayout {
                 implicitWidth: bTabText.implicitWidth + 16
                 radius: 6
                 color: root.selectedBezierIndex === tabIdx
-                    ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12))
-                    : (bTabHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.06)) : root.theme.bgBase)
+                    ? root.theme.bgSelected
+                    : (bTabHover.hovered ? root.theme.bgHover : root.theme.bgBase)
                 border.color: root.selectedBezierIndex === tabIdx
                     ? root.theme.accentPrimary
-                    : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                    : root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -53,7 +53,7 @@ RowLayout {
                     anchors.centerIn: parent
                     text: bTabPill.bezierTabItem.name
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     font.bold: root.selectedBezierIndex === bTabPill.tabIdx
                     color: root.selectedBezierIndex === bTabPill.tabIdx ? root.theme.accentPrimary : root.theme.textPrimary
                 }
@@ -77,8 +77,8 @@ RowLayout {
             height: 26
             implicitWidth: addCurveText.implicitWidth + 18
             radius: 6
-            color: addCurveHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase
-            border.color: addCurveHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.12))
+            color: addCurveHover.hovered ? root.theme.bgHover : root.theme.bgBase
+            border.color: addCurveHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
             border.width: 1
 
             Behavior on color { ColorAnimation { duration: 140 } }
@@ -91,7 +91,7 @@ RowLayout {
                 anchors.centerIn: parent
                 text: "+ Add Curve"
                 font.family: root.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 font.bold: true
                 color: root.theme.accentPrimary
             }
@@ -110,7 +110,7 @@ RowLayout {
             implicitWidth: remCurveText.implicitWidth + 16
             radius: 6
             color: remCurveHover.hovered ? Qt.rgba(0.97, 0.46, 0.56, 0.18) : root.theme.bgBase
-            border.color: remCurveHover.hovered ? (root.theme.accentRed ?? "#f7768e") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+            border.color: remCurveHover.hovered ? (root.theme.accentRed ?? "#f7768e") : root.theme.bgBorder
             border.width: 1
 
             Behavior on color { ColorAnimation { duration: 140 } }
@@ -123,7 +123,7 @@ RowLayout {
                 anchors.centerIn: parent
                 text: "- Remove"
                 font.family: root.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 font.bold: true
                 color: remCurveHover.hovered ? (root.theme.accentRed ?? "#f7768e") : root.theme.textMuted
             }

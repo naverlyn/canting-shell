@@ -27,7 +27,7 @@ ColumnLayout {
                 ? ("Display Configuration  —  " + root.selectedMonitor.name)
                 : "Display Configuration"
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             font.bold: true
             color: root.theme.textSecondary
         }
@@ -36,7 +36,7 @@ ColumnLayout {
             visible: root.selectedMonitor !== null && (root.selectedMonitor.description || "") !== ""
             text: root.selectedMonitor ? ("·  " + root.selectedMonitor.description) : ""
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             color: root.theme.textMuted
             elide: Text.ElideRight
             Layout.fillWidth: true
@@ -48,7 +48,7 @@ ColumnLayout {
         implicitHeight: configCol.implicitHeight + 16
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -66,71 +66,35 @@ ColumnLayout {
                 root: self.root
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 2: Resolution Expander Row */
             DisplayResolutionExpander {
                 root: self.root
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 3: Refresh Rate Selector */
             DisplayRefreshRateRow {
                 root: self.root
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 4: Scale Selector */
             DisplayScaleSelector {
                 root: self.root
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 5: Orientation / Rotation (Segmented control) */
             DisplayOrientation {
                 root: self.root
             }
 
-            /* Row Divider (only when multiple monitors exist) */
-            Rectangle {
-                visible: root.editState.length > 1
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider { visible: root.editState.length > 1 }
 
             /* Row 6: Mirror Display Expander (visible when >1 monitor connected) */
             DisplayMirrorSelector {

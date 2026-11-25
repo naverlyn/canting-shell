@@ -31,7 +31,7 @@ Item {
         }
         implicitHeight: addCol.implicitHeight + 20
         radius: 8
-        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.25)
+        color: root.theme.bgBase
         border.color: root.theme.accentPrimary
         border.width: 1
 
@@ -48,7 +48,7 @@ Item {
             Text {
                 text: "Create New Keybinding"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
             }
@@ -61,7 +61,7 @@ Item {
                 Text {
                     text: "Name:"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.theme.textSecondary
                     Layout.preferredWidth: 70
@@ -72,8 +72,8 @@ Item {
                     Layout.fillWidth: true
                     height: 32
                     radius: 6
-                    color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
-                    border.color: addNameInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                    color: root.theme.bgSurface
+                    border.color: addNameInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                     border.width: addNameInput.activeFocus ? 2 : 1
 
                     TextInput {
@@ -83,7 +83,7 @@ Item {
                         anchors.rightMargin: 8
                         verticalAlignment: TextInput.AlignVCenter
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: root.theme.textPrimary
                         clip: true
                         onTextChanged: root.addName = text
@@ -91,7 +91,7 @@ Item {
                         Text {
                             text: "Shortcut Name (e.g. Browser, Terminal, Screenshot)"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textSecondary
                             visible: !addNameInput.text && !addNameInput.activeFocus
                             anchors.verticalCenter: parent.verticalCenter
@@ -114,7 +114,7 @@ Item {
                 Text {
                     text: "Dispatcher:"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.theme.textSecondary
                     Layout.preferredWidth: 70
@@ -125,8 +125,8 @@ Item {
                     Layout.fillWidth: true
                     height: 32
                     radius: 6
-                    color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
-                    border.color: addCustomDispInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                    color: root.theme.bgSurface
+                    border.color: addCustomDispInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                     border.width: addCustomDispInput.activeFocus ? 2 : 1
 
                     TextInput {
@@ -136,7 +136,7 @@ Item {
                         anchors.rightMargin: 8
                         verticalAlignment: TextInput.AlignVCenter
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: root.theme.textPrimary
                         clip: true
                         onTextChanged: root.addCustomDisp = text
@@ -144,7 +144,7 @@ Item {
                         Text {
                             text: "Hyprland dispatcher name (e.g. splitratio, movetoworkspace, pin)"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textSecondary
                             visible: !addCustomDispInput.text && !addCustomDispInput.activeFocus
                             anchors.verticalCenter: parent.verticalCenter
@@ -164,7 +164,7 @@ Item {
                           (root.addDispatcher === "fullscreen" ? "Mode:" :
                           (root.addDispatcher === "custom" ? "Argument:" : "Command:"))
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.theme.textSecondary
                     Layout.preferredWidth: 70
@@ -175,8 +175,8 @@ Item {
                     Layout.fillWidth: true
                     height: 32
                     radius: 6
-                    color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
-                    border.color: addArgInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                    color: root.theme.bgSurface
+                    border.color: addArgInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                     border.width: addArgInput.activeFocus ? 2 : 1
 
                     TextInput {
@@ -186,7 +186,7 @@ Item {
                         anchors.rightMargin: 8
                         verticalAlignment: TextInput.AlignVCenter
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: root.theme.textPrimary
                         clip: true
                         onTextChanged: root.addArg = text
@@ -196,7 +196,7 @@ Item {
                                   (root.addDispatcher === "fullscreen" ? "0 (toggle fullscreen) or 1 (maximize)" :
                                   (root.addDispatcher === "custom" ? "Optional argument (e.g. 1, +0.1, or l)" : "Command to run (e.g. firefox, kitty, grim -g ...)"))
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textSecondary
                             visible: !addArgInput.text && !addArgInput.activeFocus
                             anchors.verticalCenter: parent.verticalCenter
@@ -214,7 +214,7 @@ Item {
                 Text {
                     text: "Detail:"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.theme.textSecondary
                     Layout.preferredWidth: 70
@@ -224,7 +224,7 @@ Item {
                 Text {
                     text: root.addDispatcher === "killactive" ? "Closes the active window (no extra parameters needed)." : "Toggles window floating / tiling state (no extra parameters needed)."
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.italic: true
                     color: root.theme.textSecondary
                     Layout.fillWidth: true
@@ -245,7 +245,7 @@ Item {
                 Text {
                     text: "Key:"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.theme.textSecondary
                     Layout.preferredWidth: 70
@@ -256,8 +256,8 @@ Item {
                     width: 190
                     height: 32
                     radius: 7
-                    color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
-                    border.color: addKeyInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                    color: root.theme.bgSurface
+                    border.color: addKeyInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                     border.width: addKeyInput.activeFocus ? 2 : 1
 
                     TextInput {
@@ -268,7 +268,7 @@ Item {
                         verticalAlignment: TextInput.AlignVCenter
                         text: root.addKey
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textPrimary
                         clip: true
@@ -283,8 +283,8 @@ Item {
                     implicitWidth: addRecLabel.implicitWidth + 24
                     height: 32
                     radius: 7
-                    color: root.isCapturingAddKey ? root.theme.accentPrimary : (addRecMouse.containsMouse ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)))
-                    border.color: root.isCapturingAddKey ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                    color: root.isCapturingAddKey ? root.theme.accentPrimary : (addRecMouse.containsMouse ? root.theme.bgSelected : root.theme.bgSurface)
+                    border.color: root.isCapturingAddKey ? root.theme.accentPrimary : root.theme.bgBorder
                     border.width: 1
 
                     RowLayout {
@@ -295,7 +295,7 @@ Item {
                             id: addRecLabel
                             text: root.isCapturingAddKey ? "Listening... Press keys (Esc cancels)" : "Record Key"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: root.isCapturingAddKey ? root.theme.bgBase : root.theme.textPrimary
                         }
@@ -324,7 +324,7 @@ Item {
                     Text {
                         text: "Preview:"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textSecondary
                     }
 
@@ -335,7 +335,7 @@ Item {
                             implicitWidth: addPrevPillText.implicitWidth + 12
                             height: 24
                             radius: 5
-                            color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15)
+                            color: root.theme.bgSelected
                             border.color: root.theme.accentPrimary
                             border.width: 1
 
@@ -344,7 +344,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: modelData
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -365,8 +365,8 @@ Item {
                     implicitWidth: cancelAddText.implicitWidth + 24
                     height: 32
                     radius: 7
-                    color: cancelAddHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase
-                    border.color: cancelAddHover.hovered ? root.theme.textSecondary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                    color: cancelAddHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                    border.color: cancelAddHover.hovered ? root.theme.textSecondary : root.theme.bgBorder
                     border.width: 1
 
                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -379,7 +379,7 @@ Item {
                         anchors.centerIn: parent
                         text: "Cancel"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: cancelAddHover.hovered ? root.theme.textPrimary : root.theme.textSecondary
                     }
@@ -402,7 +402,7 @@ Item {
                     readonly property bool canSave: root.addKey.trim().length > 0
                     color: canSave
                         ? (saveAddHover.hovered ? Qt.lighter(root.theme.accentPrimary, 1.1) : root.theme.accentPrimary)
-                        : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
+                        : root.theme.bgSelected
                     opacity: canSave ? 1.0 : 0.5
 
                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -415,7 +415,7 @@ Item {
                         anchors.centerIn: parent
                         text: "Add Keybind"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: parent.canSave ? root.theme.bgBase : root.theme.textMuted
                     }

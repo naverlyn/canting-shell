@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../Common"
 
 ColumnLayout {
     id: outputSection
@@ -11,7 +12,7 @@ ColumnLayout {
     Text {
         text: "Output"
         font.family: outputSection.root.font
-        font.pixelSize: 13
+        font.pixelSize: Style.px(13)
         font.bold: true
         color: outputSection.root.theme.textSecondary
         Layout.leftMargin: 4
@@ -22,7 +23,7 @@ ColumnLayout {
         implicitHeight: outputCol.implicitHeight + 16
         radius: 12
         color: outputSection.root.theme.bgSurface
-        border.color: outputSection.root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: outputSection.root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -55,7 +56,7 @@ ColumnLayout {
                         Text {
                             text: "Output Device"
                             font.family: outputSection.root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: outputSection.root.theme.textPrimary
                         }
@@ -65,7 +66,7 @@ ColumnLayout {
                                 ? (outputSection.root.defaultSink.description || outputSection.root.defaultSink.name || "Default Output")
                                 : "No output device available"
                             font.family: outputSection.root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: outputSection.root.theme.textSecondary
                             elide: Text.ElideRight
                             Layout.fillWidth: true
@@ -82,11 +83,11 @@ ColumnLayout {
                         height: outputSection.root.btnHeight
                         radius: outputSection.root.btnRadius
                         color: outputSection.root.outputDropdownOpen
-                            ? (outputSection.root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
-                            : (sinkChangeHover.hovered ? (outputSection.root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (outputSection.root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)))
+                            ? outputSection.root.theme.bgSelected
+                            : (sinkChangeHover.hovered ? outputSection.root.theme.bgHover : outputSection.root.theme.bgBase)
                         border.color: outputSection.root.outputDropdownOpen
                             ? outputSection.root.theme.accentPrimary
-                            : (sinkChangeHover.hovered ? Qt.rgba(outputSection.root.theme.accentPrimary.r, outputSection.root.theme.accentPrimary.g, outputSection.root.theme.accentPrimary.b, 0.4) : (outputSection.root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
+                            : (sinkChangeHover.hovered ? Qt.rgba(outputSection.root.theme.accentPrimary.r, outputSection.root.theme.accentPrimary.g, outputSection.root.theme.accentPrimary.b, 0.4) : outputSection.root.theme.bgBorder)
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -99,7 +100,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: outputSection.root.outputDropdownOpen ? "Done" : "Change"
                             font.family: outputSection.root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: outputSection.root.outputDropdownOpen ? outputSection.root.theme.accentPrimary : outputSection.root.theme.textPrimary
                         }
@@ -121,14 +122,7 @@ ColumnLayout {
                 root: outputSection.root
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 2: Master Volume Slider & Mute Toggle */
             SoundMasterVolumeRow {
@@ -136,14 +130,7 @@ ColumnLayout {
                 root: outputSection.root
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 3: Stereo Balance Slider */
             Item {
@@ -164,7 +151,7 @@ ColumnLayout {
                         Text {
                             text: "Balance"
                             font.family: outputSection.root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: outputSection.root.theme.textPrimary
                         }
@@ -174,7 +161,7 @@ ColumnLayout {
                                 ? "Balanced"
                                 : (outputSection.root.balance < 0 ? ("Left " + Math.round(-outputSection.root.balance * 100) + "%") : ("Right " + Math.round(outputSection.root.balance * 100) + "%"))
                             font.family: outputSection.root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: Math.abs(outputSection.root.balance) < 0.04 ? outputSection.root.theme.textSecondary : outputSection.root.theme.accentPrimary
                         }
@@ -187,8 +174,8 @@ ColumnLayout {
                         implicitHeight: 6
                         height: 6
                         radius: 3
-                        color: outputSection.root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.1)
-                        border.color: outputSection.root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        color: outputSection.root.theme.bgSelected
+                        border.color: outputSection.root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -287,8 +274,8 @@ ColumnLayout {
                         width: outputSection.root.actionBtnWidth
                         height: outputSection.root.btnHeight
                         radius: outputSection.root.btnRadius
-                        color: centerHover.hovered ? (outputSection.root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (outputSection.root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2))
-                        border.color: centerHover.hovered ? outputSection.root.theme.accentPrimary : (outputSection.root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                        color: centerHover.hovered ? outputSection.root.theme.bgHover : outputSection.root.theme.bgBase
+                        border.color: centerHover.hovered ? outputSection.root.theme.accentPrimary : outputSection.root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -301,7 +288,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: "Center"
                             font.family: outputSection.root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: outputSection.root.theme.textPrimary
                         }
@@ -315,14 +302,7 @@ ColumnLayout {
                 }
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 4: Stereo Speaker Channel Test */
             SoundChannelTestRow {

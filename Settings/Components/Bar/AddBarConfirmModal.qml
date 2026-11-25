@@ -66,7 +66,7 @@ Rectangle {
                     Text {
                         text: "Add Desktop Bar"
                         font.family: root.font
-                        font.pixelSize: 16
+                        font.pixelSize: Style.px(16)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -74,7 +74,7 @@ Rectangle {
                     Text {
                         text: "Choose which monitor or display target this bar should appear on:"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: root.theme.textMuted
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
@@ -96,7 +96,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "✕"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: closeBtnHover.hovered ? root.theme.textPrimary : root.theme.textMuted
                         Behavior on color { ColorAnimation { duration: 120 } }
                     }
@@ -172,7 +172,7 @@ Rectangle {
                                 Text {
                                     text: targetOptCard.modelData.title
                                     font.family: root.font
-                                    font.pixelSize: 13
+                                    font.pixelSize: Style.px(13)
                                     font.bold: isSelected
                                     color: isSelected ? root.theme.textPrimary : root.theme.textSecondary
                                 }
@@ -180,7 +180,7 @@ Rectangle {
                                 Text {
                                     text: targetOptCard.modelData.desc
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     color: root.theme.textMuted
                                 }
                             }
@@ -206,7 +206,7 @@ Rectangle {
                 Text {
                     text: "Dock Edge Position"
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.bold: true
                     color: root.theme.textSecondary
                 }
@@ -246,7 +246,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: posBtn.modelData.label
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 font.bold: isSelected
                                 color: isSelected ? root.theme.textPrimary : root.theme.textSecondary
                                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -291,7 +291,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Cancel"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: cancelHover.hovered ? root.theme.textPrimary : root.theme.textSecondary
                         Behavior on color { ColorAnimation { duration: 120 } }
                     }
@@ -327,7 +327,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Add Bar"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: addConfirmHover.hovered ? root.theme.bgBase : root.theme.textPrimary
                         Behavior on color { ColorAnimation { duration: 120 } }

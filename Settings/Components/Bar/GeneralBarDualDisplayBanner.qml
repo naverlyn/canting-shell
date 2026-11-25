@@ -30,7 +30,7 @@ Rectangle {
         Text {
             text: "Dual displays active (" + root.activeMonitorsSummary + "). Secondary bar layout and options can be configured in Layout & Panels."
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             color: root.theme.textSecondary
             Layout.fillWidth: true
             elide: Text.ElideRight
@@ -59,7 +59,7 @@ Rectangle {
                 Text {
                     text: "󰕮"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: jumpPanelsHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
                     anchors.verticalCenter: parent.verticalCenter
                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -69,7 +69,7 @@ Rectangle {
                     id: jumpPanelsTxt
                     text: "Layout & Panels"
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     font.bold: true
                     color: jumpPanelsHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
                     anchors.verticalCenter: parent.verticalCenter

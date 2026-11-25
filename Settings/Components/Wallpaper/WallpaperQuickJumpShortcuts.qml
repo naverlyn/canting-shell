@@ -19,8 +19,8 @@ RowLayout {
         implicitWidth: homeText.implicitWidth + 24
         height: 30
         radius: 6
-        color: homeHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.1)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+        color: homeHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+        border.color: root.theme.bgBorder
         border.width: 1
         scale: homeHover.hovered ? 1.04 : 1.0
         HoverHandler { id: homeHover }
@@ -34,7 +34,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "Home"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: root.theme.textPrimary
         }
@@ -51,8 +51,8 @@ RowLayout {
         implicitWidth: picText.implicitWidth + 24
         height: 30
         radius: 6
-        color: picHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.1)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+        color: picHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+        border.color: root.theme.bgBorder
         border.width: 1
         scale: picHover.hovered ? 1.04 : 1.0
         HoverHandler { id: picHover }
@@ -66,7 +66,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "Pictures"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: root.theme.textPrimary
         }
@@ -83,8 +83,8 @@ RowLayout {
         implicitWidth: dlText.implicitWidth + 24
         height: 30
         radius: 6
-        color: dlHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.1)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+        color: dlHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+        border.color: root.theme.bgBorder
         border.width: 1
         scale: dlHover.hovered ? 1.04 : 1.0
         HoverHandler { id: dlHover }
@@ -98,7 +98,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "Downloads"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: root.theme.textPrimary
         }
@@ -115,8 +115,8 @@ RowLayout {
         implicitWidth: upText.implicitWidth + 22
         height: 30
         radius: 6
-        color: upHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.1)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05))
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+        color: upHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+        border.color: root.theme.bgBorder
         border.width: 1
         scale: upHover.hovered ? 1.04 : 1.0
         HoverHandler { id: upHover }
@@ -130,7 +130,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "Up"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: root.theme.textPrimary
         }
@@ -147,8 +147,8 @@ RowLayout {
         Layout.fillWidth: true
         height: 30
         radius: 6
-        color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.04)
-        border.color: jumpInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+        color: root.theme.bgSurface
+        border.color: jumpInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
         border.width: 1
 
         Behavior on border.color { ColorAnimation { duration: 150 } }
@@ -164,7 +164,7 @@ RowLayout {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
                 color: root.theme.textPrimary
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.family: root.font
                 clip: true
                 selectByMouse: true
@@ -179,7 +179,7 @@ RowLayout {
             Text {
                 text: "Jump to path (e.g. ~/Wallpapers)..."
                 color: root.theme.textMuted
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.family: root.font
                 visible: jumpInput.text === "" && !jumpInput.activeFocus
             }

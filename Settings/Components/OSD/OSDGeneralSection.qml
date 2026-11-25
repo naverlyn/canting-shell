@@ -16,7 +16,7 @@ ColumnLayout {
     Text {
         text: "General"
         font.family: root.font
-        font.pixelSize: 13
+        font.pixelSize: Style.px(13)
         font.bold: true
         color: root.theme.textSecondary
         Layout.leftMargin: 4
@@ -27,7 +27,7 @@ ColumnLayout {
         implicitHeight: generalCol.implicitHeight + 16
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -58,7 +58,7 @@ ColumnLayout {
                         Text {
                             text: "Test Overlay"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -71,8 +71,8 @@ ColumnLayout {
                         width: root.actionBtnWidth
                         height: root.btnHeight
                         radius: root.btnRadius
-                        color: testHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.12)) : (root.theme.bgBase ?? Qt.rgba(0,0,0,0.2))
-                        border.color: testHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
+                        color: testHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                        border.color: testHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -85,7 +85,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: "Test OSD"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -99,14 +99,7 @@ ColumnLayout {
                 }
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 2: Reset Defaults */
             Item {
@@ -126,7 +119,7 @@ ColumnLayout {
                         Text {
                             text: "Reset to Defaults"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -140,8 +133,8 @@ ColumnLayout {
                         height: root.btnHeight
                         radius: root.btnRadius
                         opacity: root.isCustomized ? 1.0 : 0.4
-                        color: resetHover.hovered && root.isCustomized ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.12)) : (root.theme.bgBase ?? Qt.rgba(0,0,0,0.2))
-                        border.color: resetHover.hovered && root.isCustomized ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
+                        color: resetHover.hovered && root.isCustomized ? root.theme.bgHover : root.theme.bgBase
+                        border.color: resetHover.hovered && root.isCustomized ? root.theme.accentPrimary : root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -154,7 +147,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: "Reset"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: root.theme.textPrimary
                         }

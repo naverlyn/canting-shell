@@ -86,7 +86,7 @@ ColumnLayout {
                             Text {
                                 text: "Swipe Fingers"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: root.theme.textPrimary
                                 Layout.fillWidth: true
@@ -95,7 +95,7 @@ ColumnLayout {
                             Text {
                                 text: "Number of fingers required for touchpad workspace swipe"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textSecondary
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight

@@ -17,10 +17,10 @@ ColumnLayout {
         Layout.fillWidth: true
         height: 36
         radius: 7
-        color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
+        color: root.theme.bgBase
         border.color: envSearchInput.activeFocus
             ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
-            : ((root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08))
+            : root.theme.bgBorder
         border.width: 1
 
         RowLayout {
@@ -32,7 +32,7 @@ ColumnLayout {
             Text {
                 text: "󰍉"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 color: envSearchInput.activeFocus
                     ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
                     : ((root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060")
@@ -42,7 +42,7 @@ ColumnLayout {
                 id: envSearchInput
                 Layout.fillWidth: true
                 font.family: root.font
-                font.pixelSize: 12
+                font.pixelSize: Style.px(12)
                 color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                 clip: true
                 selectByMouse: true
@@ -54,7 +54,7 @@ ColumnLayout {
                     visible: !parent.text && !parent.activeFocus
                     text: "Filter environment variables..."
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: (root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060"
                 }
             }
@@ -63,14 +63,14 @@ ColumnLayout {
                 width: 18
                 height: 18
                 radius: 9
-                color: clearEnvSearchHover.hovered ? ((root.theme && root.theme.bgHover) ? root.theme.bgHover : Qt.rgba(1, 1, 1, 0.1)) : "transparent"
+                color: clearEnvSearchHover.hovered ? root.theme.bgHover : "transparent"
                 visible: envSearchInput.text.length > 0
 
                 Text {
                     anchors.centerIn: parent
                     text: "✕"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                 }
 
@@ -89,8 +89,8 @@ ColumnLayout {
         Layout.fillWidth: true
         height: 440
         radius: 8
-        color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.2)
-        border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
+        color: root.theme.bgBase
+        border.color: root.theme.bgBorder
         border.width: 1
         clip: true
 
@@ -107,7 +107,7 @@ ColumnLayout {
                 contentItem: Rectangle {
                     implicitWidth: 4
                     radius: 2
-                    color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.15)
+                    color: root.theme.bgBorder
                 }
             }
 
@@ -118,8 +118,8 @@ ColumnLayout {
                 width: envListView.width - 8
                 height: 42
                 radius: 6
-                color: envHover.hovered ? ((root.theme && root.theme.bgSurface) ? root.theme.bgSurface : Qt.rgba(1, 1, 1, 0.05)) : "transparent"
-                border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.06)
+                color: envHover.hovered ? root.theme.bgSurface : "transparent"
+                border.color: root.theme.bgBorder
                 border.width: 1
 
                 HoverHandler { id: envHover }
@@ -134,7 +134,7 @@ ColumnLayout {
                         Layout.preferredWidth: 260
                         text: envRow.modelData.key
                         font.family: "JetBrains Mono, monospace"
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: (root.theme && root.theme.accentCyan) ? root.theme.accentCyan : "#7dcfff"
                         elide: Text.ElideRight
@@ -143,7 +143,7 @@ ColumnLayout {
                     Text {
                         text: "="
                         font.family: "JetBrains Mono, monospace"
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: (root.theme && root.theme.textMuted) ? root.theme.textMuted : "#707070"
                     }
 
@@ -151,7 +151,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         text: envRow.modelData.value
                         font.family: "JetBrains Mono, monospace"
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                         elide: Text.ElideRight
                     }

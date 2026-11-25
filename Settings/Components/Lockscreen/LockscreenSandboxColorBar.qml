@@ -22,7 +22,7 @@ Rectangle {
         Text {
             text: "Password Box Color:"
             font.family: stageRoot.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: stageRoot.theme.textSecondary
         }
@@ -62,7 +62,7 @@ Rectangle {
                     Text {
                         text: modelData.name
                         font.family: stageRoot.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         font.bold: isSel
                         color: isSel ? stageRoot.theme.accentPrimary : stageRoot.theme.textPrimary
                     }

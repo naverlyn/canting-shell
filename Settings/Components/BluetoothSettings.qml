@@ -6,6 +6,7 @@ import Quickshell.Io
 import ".."
 import "./Bluetooth"
 import "../../ThemeSwitcher"
+import "./Common"
 
 Item {
     id: root
@@ -282,7 +283,7 @@ Item {
                     Layout.fillWidth: true
                     text: root.errorMessage
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.accentRed
                     wrapMode: Text.WordWrap
                 }
@@ -290,7 +291,7 @@ Item {
                 Text {
                     text: "✕"
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.accentRed
                     MouseArea {
                         anchors.fill: parent
@@ -407,7 +408,7 @@ Item {
                     Text {
                         text: "Paired devices"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textSecondary
                         Layout.leftMargin: 4
@@ -478,7 +479,7 @@ Item {
                         Text {
                             text: "Available devices"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: root.theme.textSecondary
                             Layout.fillWidth: true
@@ -487,7 +488,7 @@ Item {
                         Text {
                             text: btScanProc.running ? "Scanning..." : "Scan"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: btScanProc.running ? root.theme.textMuted : root.theme.accentPrimary
 
@@ -563,7 +564,7 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: btScanProc.running ? "Scanning for devices..." : "No other devices nearby"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 color: root.theme.textSecondary
                             }
                         }
@@ -579,7 +580,7 @@ Item {
                     Text {
                         text: "Additional settings"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textSecondary
                         Layout.leftMargin: 4
@@ -634,7 +635,7 @@ Item {
                                             text: "Manage paired devices"
                                             color: root.theme.textPrimary
                                             font.family: root.font
-                                            font.pixelSize: 13
+                                            font.pixelSize: Style.px(13)
                                             font.bold: true
                                             Layout.fillWidth: true
                                         }
@@ -645,7 +646,7 @@ Item {
                                                 : (root.allPairedDevices.length + (root.allPairedDevices.length === 1 ? " paired device" : " paired devices"))
                                             color: root.theme.textSecondary
                                             font.family: root.font
-                                            font.pixelSize: 11
+                                            font.pixelSize: Style.px(11)
                                             Layout.fillWidth: true
                                         }
                                     }
@@ -674,7 +675,7 @@ Item {
                                             text: root.confirmForgetAll ? "Confirm forget all?" : "Forget all"
                                             color: root.confirmForgetAll ? root.theme.bgBase : root.theme.accentRed
                                             font.family: root.font
-                                            font.pixelSize: 11
+                                            font.pixelSize: Style.px(11)
                                             font.bold: true
                                         }
 
@@ -699,7 +700,7 @@ Item {
                                         text: "›"
                                         color: root.theme.textMuted
                                         font.family: root.font
-                                        font.pixelSize: 16
+                                        font.pixelSize: Style.px(16)
                                         font.bold: true
                                         Layout.preferredWidth: 16
                                         horizontalAlignment: Text.AlignHCenter
@@ -762,7 +763,7 @@ Item {
                                             text: "No paired Bluetooth devices"
                                             color: root.theme.textMuted
                                             font.family: root.font
-                                            font.pixelSize: 12
+                                            font.pixelSize: Style.px(12)
                                         }
 
                                         Repeater {
@@ -786,7 +787,7 @@ Item {
                                                         text: modelData.connected ? "󰂱" : "󰂯"
                                                         color: modelData.connected ? root.theme.accentPrimary : root.theme.textSecondary
                                                         font.family: root.font
-                                                        font.pixelSize: 15
+                                                        font.pixelSize: Style.px(15)
                                                     }
 
                                                     ColumnLayout {
@@ -797,7 +798,7 @@ Item {
                                                             text: modelData.name
                                                             color: root.theme.textPrimary
                                                             font.family: root.font
-                                                            font.pixelSize: 12
+                                                            font.pixelSize: Style.px(12)
                                                             font.bold: modelData.connected
                                                             elide: Text.ElideRight
                                                             Layout.fillWidth: true
@@ -807,7 +808,7 @@ Item {
                                                             text: modelData.connected ? ("Connected • " + modelData.mac) : modelData.mac
                                                             color: modelData.connected ? root.theme.accentPrimary : root.theme.textMuted
                                                             font.family: root.font
-                                                            font.pixelSize: 10
+                                                            font.pixelSize: Style.px(10)
                                                             elide: Text.ElideRight
                                                             Layout.fillWidth: true
                                                         }
@@ -830,7 +831,7 @@ Item {
                                                             text: "Forget"
                                                             color: pairedForgetHov.hovered ? root.theme.accentRed : root.theme.textSecondary
                                                             font.family: root.font
-                                                            font.pixelSize: 11
+                                                            font.pixelSize: Style.px(11)
                                                         }
 
                                                         MouseArea {

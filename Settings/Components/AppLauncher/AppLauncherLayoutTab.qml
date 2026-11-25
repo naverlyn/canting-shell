@@ -107,14 +107,14 @@ ColumnLayout {
                                     Text {
                                         text: "󰍉"
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         color: root.previewMode === "spotlight" ? root.theme.bgBase : root.theme.textMuted
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     Text {
                                         text: "Spotlight Runner"
                                         font.family: root.font
-                                        font.pixelSize: 10
+                                        font.pixelSize: Style.px(10)
                                         font.bold: root.previewMode === "spotlight"
                                         color: root.previewMode === "spotlight" ? root.theme.bgBase : root.theme.textSecondary
                                         anchors.verticalCenter: parent.verticalCenter
@@ -141,14 +141,14 @@ ColumnLayout {
                                     Text {
                                         text: "󰕮"
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         color: root.previewMode === "grid" ? root.theme.bgBase : root.theme.textMuted
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     Text {
                                         text: "App Grid Menu"
                                         font.family: root.font
-                                        font.pixelSize: 10
+                                        font.pixelSize: Style.px(10)
                                         font.bold: root.previewMode === "grid"
                                         color: root.previewMode === "grid" ? root.theme.bgBase : root.theme.textSecondary
                                         anchors.verticalCenter: parent.verticalCenter
@@ -183,7 +183,7 @@ ColumnLayout {
                         height: 154
                         radius: 8
                         color: Qt.darker(root.theme.bgBase, 1.25)
-                        border.color: Qt.rgba(1, 1, 1, 0.06)
+                        border.color: Style.theme.bgBorder
                         border.width: 1
 
                         // A. SPOTLIGHT RUNNER PREVIEW
@@ -225,7 +225,7 @@ ColumnLayout {
                                         Text {
                                             text: AppLauncherConfig.defaultMode === "command" ? "$" : "󰍉"
                                             font.family: root.font
-                                            font.pixelSize: 9
+                                            font.pixelSize: Style.px(9)
                                             font.bold: true
                                             color: root.theme.accentPrimary
                                         }
@@ -380,7 +380,7 @@ ColumnLayout {
                                         Text {
                                             text: "󰍉"
                                             font.family: root.font
-                                            font.pixelSize: 9
+                                            font.pixelSize: Style.px(9)
                                             color: root.theme.accentPrimary
                                         }
 
@@ -537,7 +537,7 @@ ColumnLayout {
                             Text {
                                 text: "Default Opening Mode"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }

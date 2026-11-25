@@ -257,6 +257,7 @@ Singleton {
   readonly property string syncConfPath: Qt.resolvedUrl("../configs/wallpaper_sync.conf").toString().replace(/^file:\/\//, "")
   readonly property string modeConfPath: Qt.resolvedUrl("../configs/wallpaper_mode.conf").toString().replace(/^file:\/\//, "")
   readonly property string configJsonPath: Qt.resolvedUrl("../configs/wallpaper_config.json").toString().replace(/^file:\/\//, "")
+  readonly property string configPath: configJsonPath
   readonly property string legacyDisplaysJsonPath: Qt.resolvedUrl("../configs/wallpaper_displays.json").toString().replace(/^file:\/\//, "")
 
   property bool autoSyncPalette: false

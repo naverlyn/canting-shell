@@ -19,7 +19,7 @@ ColumnLayout {
     Text {
         text: "Input"
         font.family: root.font
-        font.pixelSize: 13
+        font.pixelSize: Style.px(13)
         font.bold: true
         color: root.theme.textSecondary
         Layout.leftMargin: 4
@@ -30,7 +30,7 @@ ColumnLayout {
         implicitHeight: inputCol.implicitHeight + 16
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -62,7 +62,7 @@ ColumnLayout {
                         Text {
                             text: "Input Device"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -70,7 +70,7 @@ ColumnLayout {
                         Text {
                             text: root.defaultSource ? (root.defaultSource.description || root.defaultSource.name || "Default Microphone") : "No input device available"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textSecondary
                             elide: Text.ElideRight
                             Layout.fillWidth: true
@@ -88,11 +88,11 @@ ColumnLayout {
                         height: root.btnHeight
                         radius: root.btnRadius
                         color: root.inputDropdownOpen 
-                            ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15)) 
-                            : (srcChangeHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)))
+                            ? root.theme.bgSelected 
+                            : (srcChangeHover.hovered ? root.theme.bgHover : root.theme.bgBase)
                         border.color: root.inputDropdownOpen 
                             ? root.theme.accentPrimary 
-                            : (srcChangeHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
+                            : (srcChangeHover.hovered ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : root.theme.bgBorder)
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -105,7 +105,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: root.inputDropdownOpen ? "Done" : "Change"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: root.inputDropdownOpen ? root.theme.accentPrimary : root.theme.textPrimary
                         }
@@ -127,14 +127,7 @@ ColumnLayout {
                 root: self.root
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Row 2: Input Volume Slider & Mute Toggle */
             Item {
@@ -155,7 +148,7 @@ ColumnLayout {
                         Text {
                             text: "Volume"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -163,7 +156,7 @@ ColumnLayout {
                         Text {
                             text: root.isSourceMuted ? "Muted" : (root.sourceVolumePercent + "%")
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: root.isSourceMuted ? (root.theme.accentRed ?? "#f7768e") : (root.theme.accentPrimary ?? "#7aa2f7")
                         }
@@ -177,8 +170,8 @@ ColumnLayout {
                         implicitHeight: 6
                         height: 6
                         radius: 3
-                        color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.1)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        color: root.theme.bgSelected
+                        border.color: root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -254,10 +247,10 @@ ColumnLayout {
                         radius: root.btnRadius
                         color: root.isSourceMuted 
                             ? Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.18) 
-                            : (srcMuteHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)))
+                            : (srcMuteHover.hovered ? root.theme.bgHover : root.theme.bgBase)
                         border.color: root.isSourceMuted 
                             ? Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.4) 
-                            : (srcMuteHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
+                            : (srcMuteHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder)
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -270,7 +263,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: root.isSourceMuted ? "Muted" : "Mute"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: root.isSourceMuted ? root.theme.accentRed : root.theme.textPrimary
                         }

@@ -267,7 +267,7 @@ Item {
     readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_animations.py").toString().replace(/^file:\/\//, "")
 
     function showStatus(msg) {
-        toastBanner.show(msg, false);
+        Style.notify(msg, false);
     }
 
     /* Query Animation Status */
@@ -538,7 +538,7 @@ Item {
             contentItem: Rectangle {
                 implicitWidth: 4
                 radius: 2
-                color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15)
+                color: root.theme.bgBorder
             }
         }
 
@@ -548,9 +548,4 @@ Item {
         }
     }
 
-    ToastBanner {
-        id: toastBanner
-        theme: root.theme
-        font: root.font
-    }
 }

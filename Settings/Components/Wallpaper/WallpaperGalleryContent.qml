@@ -43,7 +43,7 @@ ColumnLayout {
             Layout.fillHeight: true
             radius: 12
             color: root.theme.bgSurface
-            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            border.color: root.theme.bgBorder
             border.width: 1
             clip: true
 
@@ -59,7 +59,7 @@ ColumnLayout {
                     Text {
                         text: "No wallpapers found"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.bold: true
                         color: root.theme.textPrimary
                         Layout.alignment: Qt.AlignHCenter
@@ -70,7 +70,7 @@ ColumnLayout {
                             ? "Try a different search query"
                             : "Add folders in the Folders tab to index wallpaper files"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textSecondary
                         Layout.alignment: Qt.AlignHCenter
                     }
@@ -99,7 +99,7 @@ ColumnLayout {
                     contentItem: Rectangle {
                         implicitWidth: 4
                         radius: 2
-                        color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.2)
+                        color: root.theme.bgBorder
                     }
                 }
 
@@ -125,13 +125,13 @@ ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 4
                         radius: 8
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)
+                        color: root.theme.bgBase
                         scale: itemHover.hovered ? 1.02 : 1.0
                         border.color: delItem.isCurrent
                             ? ((WallpaperService.hasMultipleMonitors && delItem.isCurrentB && !delItem.isCurrentA)
                                 ? (root.theme.accentCyan ?? root.theme.accentPrimary)
                                 : root.theme.accentPrimary)
-                            : (itemHover.hovered ? (root.theme.accentPrimary ?? Qt.rgba(1, 1, 1, 0.3)) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
+                            : (itemHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder)
                         border.width: delItem.isCurrent ? 2 : 1
 
                         Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
@@ -179,7 +179,7 @@ ColumnLayout {
                                 anchors.margins: 6
                                 text: delItem.filename
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 color: "#ffffff"
                                 elide: Text.ElideRight
                             }
@@ -224,7 +224,7 @@ ColumnLayout {
                                     return "Active";
                                 }
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: true
                                 color: root.theme.bgBase
                             }
@@ -270,21 +270,21 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     radius: 4
                     color: root.theme.bgSurface
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.color: root.theme.bgBorder
                     border.width: 1
                     Text {
                         id: clickBadge
                         anchors.centerIn: parent
                         text: "click"
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: root.theme.textSecondary
                     }
                 }
                 Text {
                     text: "apply"
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: root.theme.textMuted
                 }
             }
@@ -297,21 +297,21 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     radius: 4
                     color: root.theme.bgSurface
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.color: root.theme.bgBorder
                     border.width: 1
                     Text {
                         id: rclickBadge
                         anchors.centerIn: parent
                         text: "right-click"
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: root.theme.textSecondary
                     }
                 }
                 Text {
                     text: "preview"
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: root.theme.textMuted
                 }
             }
@@ -324,7 +324,7 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     radius: 4
                     color: root.theme.bgSurface
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.color: root.theme.bgBorder
                     border.width: 1
                     Text {
                         id: targetFooterText
@@ -338,7 +338,7 @@ ColumnLayout {
                             return "Display: " + WallpaperService.displayAName;
                         }
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: root.theme.accentPrimary
                     }
                 }
@@ -352,7 +352,7 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     radius: 4
                     color: root.theme.bgSurface
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.color: root.theme.bgBorder
                     border.width: 1
                     Text {
                         id: typeFooterText
@@ -364,7 +364,7 @@ ColumnLayout {
                             return "Type: " + modeLabel;
                         }
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: root.theme.accentPrimary
                     }
                 }
@@ -375,14 +375,14 @@ ColumnLayout {
                     Layout.alignment: Qt.AlignVCenter
                     radius: 4
                     color: root.theme.bgSurface
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.color: root.theme.bgBorder
                     border.width: 1
                     Text {
                         id: filterFooterText
                         anchors.centerIn: parent
                         text: "Filter: " + (WallpaperService.filterMode || "Lanczos3")
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: (root.theme && root.theme.accentCyan) ? root.theme.accentCyan : root.theme.accentPrimary
                     }
                 }
@@ -393,7 +393,7 @@ ColumnLayout {
             Text {
                 text: "Backend: " + (WallpaperService.backend || "awww + wallust")
                 font.family: root.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 color: root.theme.textMuted
             }
         }
@@ -422,7 +422,7 @@ ColumnLayout {
             Layout.fillHeight: true
             radius: 10
             color: root.theme.bgSurface
-            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            border.color: root.theme.bgBorder
             border.width: 1
             clip: true
 
@@ -439,7 +439,7 @@ ColumnLayout {
                     contentItem: Rectangle {
                         implicitWidth: 4
                         radius: 2
-                        color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15)
+                        color: root.theme.bgBorder
                     }
                 }
 
@@ -457,7 +457,7 @@ ColumnLayout {
                     width: dirListView.width
                     height: 38
                     radius: 6
-                    color: itemHover.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                    color: itemHover.containsMouse ? root.theme.bgHover : "transparent"
                     scale: itemHover.containsMouse ? 1.01 : 1.0
 
                     Behavior on scale { NumberAnimation { duration: 100 } }
@@ -472,7 +472,7 @@ ColumnLayout {
                         Text {
                             text: dirRowItem.modelData
                             color: dirRowItem.isSubAdded ? root.theme.accentPrimary : root.theme.textPrimary
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.family: root.font
                             font.bold: dirRowItem.isSubAdded
                             Layout.fillWidth: true
@@ -495,7 +495,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "Added"
                                 color: root.theme.accentGreen
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.family: root.font
                                 font.bold: true
                             }
@@ -505,7 +505,7 @@ ColumnLayout {
                         Text {
                             text: "›"
                             color: itemHover.containsMouse ? root.theme.accentPrimary : root.theme.textMuted
-                            font.pixelSize: 14
+                            font.pixelSize: Style.px(14)
                             font.family: root.font
 
                             Behavior on color { ColorAnimation { duration: 120 } }
@@ -528,7 +528,7 @@ ColumnLayout {
                         ? "Scanning directory..."
                         : "No subdirectories found in this folder"
                     color: root.theme.textMuted
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.family: root.font
                     visible: !WallpaperService.browseEntries || WallpaperService.browseEntries.length === 0
                 }
@@ -550,7 +550,7 @@ ColumnLayout {
             Text {
                 text: "click: navigate folder"
                 font.family: root.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 color: root.theme.textMuted
             }
 
@@ -559,7 +559,7 @@ ColumnLayout {
             Text {
                 text: "Backend: " + (WallpaperService.backend || "awww + wallust")
                 font.family: root.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 color: root.theme.textMuted
             }
         }

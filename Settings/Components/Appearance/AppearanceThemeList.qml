@@ -15,7 +15,7 @@ Rectangle {
     Layout.minimumHeight: 180
     radius: 10
     color: root.theme.bgSurface
-    border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)
+    border.color: root.theme.bgBorder
     border.width: 1
     clip: true
 
@@ -57,7 +57,7 @@ Rectangle {
             contentItem: Rectangle {
                 implicitWidth: 4
                 radius: 2
-                color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.2)
+                color: root.theme.bgBorder
             }
         }
 
@@ -74,10 +74,10 @@ Rectangle {
             readonly property bool isPreviewing: root.theme.previewIndex === modelData.originalIndex
 
             color: isPreviewing
-                   ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.08))
+                   ? root.theme.bgHover
                    : (isSelected
                       ? root.theme.bgSelected
-                      : (hoverArea.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.05)) : "transparent"))
+                      : (hoverArea.containsMouse ? root.theme.bgHover : "transparent"))
 
             Behavior on color { ColorAnimation { duration: 80 } }
 
@@ -103,7 +103,7 @@ Rectangle {
                 Text {
                     text: delegateRoot.modelData.data.name
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.bold: isSelected || isPreviewing
                     color: (isSelected || isPreviewing) ? root.theme.textPrimary : root.theme.textSecondary
                     Layout.alignment: Qt.AlignVCenter
@@ -124,7 +124,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: delegateRoot.modelData.data.family
                         font.family: root.font
-                        font.pixelSize: 9
+                        font.pixelSize: Style.px(9)
                         color: root.theme.textMuted
                     }
                 }
@@ -151,7 +151,7 @@ Rectangle {
                             height: 12
                             radius: 6
                             color: modelData
-                            border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)
+                            border.color: root.theme.bgBorder
                             border.width: 1
                         }
                     }
@@ -167,7 +167,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "󰄬"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.bold: true
                         color: root.theme.accentGreen
                         visible: isSelected
@@ -197,7 +197,7 @@ Rectangle {
             anchors.centerIn: parent
             text: "No themes found matching \"" + root.searchText + "\""
             font.family: root.font
-            font.pixelSize: 12
+            font.pixelSize: Style.px(12)
             color: root.theme.textMuted
             visible: themeList.count === 0
         }

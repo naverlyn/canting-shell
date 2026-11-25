@@ -7,6 +7,7 @@ import "../../bar"
 import ".."
 import "./Wifi"
 import "../../ThemeSwitcher"
+import "./Common"
 
 Item {
     id: root
@@ -109,14 +110,14 @@ Item {
                     Layout.fillWidth: true
                     text: WifiService.lastError
                     color: root.theme.accentRed
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.family: root.font
                     wrapMode: Text.WordWrap
                 }
                 Text {
                     text: "✕"
                     color: root.theme.accentRed
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.family: root.font
                     MouseArea {
                         anchors.fill: parent
@@ -145,14 +146,14 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "󰖪"
                     font.family: root.font
-                    font.pixelSize: 32
+                    font.pixelSize: Style.px(32)
                     color: root.theme.textMuted
                 }
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "Wi-Fi is turned off"
                     font.family: root.font
-                    font.pixelSize: 14
+                    font.pixelSize: Style.px(14)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -160,7 +161,7 @@ Item {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "Turn on Wi-Fi above to view and connect to available networks"
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textSecondary
                 }
             }
@@ -241,7 +242,7 @@ Item {
                     Text {
                         text: "Saved networks"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textSecondary
                         Layout.leftMargin: 4
@@ -325,7 +326,7 @@ Item {
                         Text {
                             text: "Available networks"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: root.theme.textSecondary
                             Layout.fillWidth: true
@@ -334,7 +335,7 @@ Item {
                         Text {
                             text: WifiService.isScanning ? "Scanning..." : "Refresh"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: WifiService.isScanning ? root.theme.textMuted : root.theme.accentPrimary
 
@@ -416,7 +417,7 @@ Item {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 text: WifiService.isScanning ? "Scanning for networks..." : "No other networks nearby"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 color: root.theme.textSecondary
                             }
                         }
@@ -432,7 +433,7 @@ Item {
                     Text {
                         text: "Additional settings"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textSecondary
                         Layout.leftMargin: 4
@@ -487,7 +488,7 @@ Item {
                                             text: "Manage saved networks"
                                             color: root.theme.textPrimary
                                             font.family: root.font
-                                            font.pixelSize: 13
+                                            font.pixelSize: Style.px(13)
                                             font.bold: true
                                             Layout.fillWidth: true
                                         }
@@ -498,7 +499,7 @@ Item {
                                                 : (WifiService.savedConnectionList.length + (WifiService.savedConnectionList.length === 1 ? " saved network" : " saved networks"))
                                             color: root.theme.textSecondary
                                             font.family: root.font
-                                            font.pixelSize: 11
+                                            font.pixelSize: Style.px(11)
                                             Layout.fillWidth: true
                                         }
                                     }
@@ -527,7 +528,7 @@ Item {
                                             text: root.confirmForgetAll ? "Confirm forget all?" : "Forget all"
                                             color: root.confirmForgetAll ? root.theme.bgBase : root.theme.accentRed
                                             font.family: root.font
-                                            font.pixelSize: 11
+                                            font.pixelSize: Style.px(11)
                                             font.bold: true
                                         }
 
@@ -552,7 +553,7 @@ Item {
                                         text: "›"
                                         color: root.theme.textMuted
                                         font.family: root.font
-                                        font.pixelSize: 16
+                                        font.pixelSize: Style.px(16)
                                         font.bold: true
                                         Layout.preferredWidth: 16
                                         horizontalAlignment: Text.AlignHCenter
@@ -615,7 +616,7 @@ Item {
                                     text: "No saved Wi-Fi networks"
                                     color: root.theme.textMuted
                                     font.family: root.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                 }
 
                                 Repeater {
@@ -639,7 +640,7 @@ Item {
                                                 text: "󰖩"
                                                 color: modelData === root.currentSsid ? root.theme.accentPrimary : root.theme.textSecondary
                                                 font.family: root.font
-                                                font.pixelSize: 15
+                                                font.pixelSize: Style.px(15)
                                             }
 
                                             ColumnLayout {
@@ -650,7 +651,7 @@ Item {
                                                     text: modelData
                                                     color: root.theme.textPrimary
                                                     font.family: root.font
-                                                    font.pixelSize: 12
+                                                    font.pixelSize: Style.px(12)
                                                     font.bold: modelData === root.currentSsid
                                                     elide: Text.ElideRight
                                                     Layout.fillWidth: true
@@ -661,7 +662,7 @@ Item {
                                                     text: "Connected"
                                                     color: root.theme.accentPrimary
                                                     font.family: root.font
-                                                    font.pixelSize: 10
+                                                    font.pixelSize: Style.px(10)
                                                 }
                                             }
 
@@ -682,7 +683,7 @@ Item {
                                                     text: "Forget"
                                                     color: savedForgetHov.hovered ? root.theme.accentRed : root.theme.textSecondary
                                                     font.family: root.font
-                                                    font.pixelSize: 11
+                                                    font.pixelSize: Style.px(11)
                                                 }
 
                                                 MouseArea {

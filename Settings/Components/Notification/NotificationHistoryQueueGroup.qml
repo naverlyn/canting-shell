@@ -16,7 +16,7 @@ ColumnLayout {
     Text {
         text: "History"
         font.family: root.font
-        font.pixelSize: 13
+        font.pixelSize: Style.px(13)
         font.bold: true
         color: root.theme.textSecondary
         Layout.leftMargin: 4
@@ -27,7 +27,7 @@ ColumnLayout {
         implicitHeight: historyCol.implicitHeight + 16
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         Behavior on implicitHeight { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -61,7 +61,7 @@ ColumnLayout {
                                 ? "Active Notifications: " + root.totalCount 
                                 : "No Active Notifications"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -69,7 +69,7 @@ ColumnLayout {
                         Text {
                             text: "Recent notifications are displayed in the Control Center"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textSecondary
                         }
                     }
@@ -83,8 +83,8 @@ ColumnLayout {
                         radius: 6
                         readonly property bool canClear: root.totalCount > 0
                         opacity: canClear ? 1.0 : 0.4
-                        color: clearHover.hovered && canClear ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.12)) : root.theme.bgBase
-                        border.color: clearHover.hovered && canClear ? (root.theme.accentRed ?? "#f7768e") : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
+                        color: clearHover.hovered && canClear ? root.theme.bgHover : root.theme.bgBase
+                        border.color: clearHover.hovered && canClear ? (root.theme.accentRed ?? "#f7768e") : root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -98,7 +98,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: "Clear All"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: clearBtn.canClear && clearHover.hovered ? (root.theme.accentRed ?? "#f7768e") : root.theme.textPrimary
                         }

@@ -37,7 +37,7 @@ Rectangle {
                 Text {
                     text: root.newAnimName ? ("Animation Studio • " + root.newAnimName) : "Animation Studio • Custom Profile"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -45,7 +45,7 @@ Rectangle {
                 Text {
                     text: "Design Bézier curves, motion physics, and Hyprland animation tree rules"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.textSecondary
                 }
             }
@@ -64,7 +64,7 @@ Rectangle {
             Text {
                 text: "Profile Name"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textPrimary
                 Layout.preferredWidth: 100
@@ -75,7 +75,7 @@ Rectangle {
                 height: 34
                 radius: 7
                 color: root.theme.bgBase
-                border.color: nameInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                border.color: nameInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: 1
 
                 TextInput {
@@ -85,7 +85,7 @@ Rectangle {
                     anchors.rightMargin: 12
                     verticalAlignment: TextInput.AlignVCenter
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.textPrimary
                     text: root.newAnimName
                     onTextChanged: root.newAnimName = text
@@ -116,7 +116,7 @@ Rectangle {
                     Text {
                         text: "Compositor Animation Rules (Hyprland Tree)"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -124,7 +124,7 @@ Rectangle {
                     Text {
                         text: "Configure target rules, speeds, and Bézier easing curves according to Hyprland's official animation tree"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textSecondary
                     }
                 }
@@ -134,8 +134,8 @@ Rectangle {
                     height: 30
                     implicitWidth: expBtnText.implicitWidth + 24
                     radius: 7
-                    color: expHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgSurface
-                    border.color: expHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                    color: expHover.hovered ? root.theme.bgHover : root.theme.bgSurface
+                    border.color: expHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
                     border.width: 1
 
                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -148,7 +148,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: root.expandAllRules ? "Collapse All" : "Expand All"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: expHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
                     }
@@ -168,7 +168,7 @@ Rectangle {
                 height: 40
                 radius: 10
                 color: root.theme.bgSurface
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.color: root.theme.bgBorder
                 border.width: 1
 
                 RowLayout {
@@ -222,7 +222,7 @@ Rectangle {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: subTabItem.modelData.label
                                     font.family: root.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                     font.bold: subTabItem.isCurrent
                                     color: subTabItem.isCurrent
                                         ? root.theme.accentPrimary

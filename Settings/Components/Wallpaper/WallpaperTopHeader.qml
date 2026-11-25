@@ -25,7 +25,7 @@ Item {
         Text {
             text: "Wallpaper"
             font.family: root.font
-            font.pixelSize: 20
+            font.pixelSize: Style.px(20)
             font.bold: true
             color: root.theme.textPrimary
         }
@@ -39,8 +39,8 @@ Item {
         width: 172
         height: 30
         radius: 6
-        color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.08)
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        color: root.theme.bgSelected
+        border.color: root.theme.bgBorder
         border.width: 1
 
         // Sliding active pill
@@ -51,7 +51,7 @@ Item {
             height: parent.height - 4
             radius: 4
             color: root.theme.bgSurface
-            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.12)
+            border.color: root.theme.bgBorder
             border.width: 1
 
             Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -70,7 +70,7 @@ Item {
                     anchors.centerIn: parent
                     text: "Gallery"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: root.currentView === 0
                     color: root.currentView === 0 ? root.theme.accentPrimary : root.theme.textSecondary
                 }
@@ -94,7 +94,7 @@ Item {
                     anchors.centerIn: parent
                     text: "Folders"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: root.currentView === 1
                     color: root.currentView === 1 ? root.theme.accentPrimary : root.theme.textSecondary
                 }

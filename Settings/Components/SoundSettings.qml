@@ -19,6 +19,7 @@ import Quickshell.Services.Pipewire
 import "../../osd"
 import ".."
 import "./Sound"
+import "./Common"
 
 Item {
     id: root
@@ -275,7 +276,7 @@ Item {
                 Text {
                     text: "Sound"
                     font.family: root.font
-                    font.pixelSize: 20
+                    font.pixelSize: Style.px(20)
                     font.bold: true
                     color: root.theme.textPrimary
                 }

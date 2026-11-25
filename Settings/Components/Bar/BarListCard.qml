@@ -112,7 +112,7 @@ ColumnLayout {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: root.hasMultipleMonitors ? ("Dual Monitors (" + root.monitorCount + ")") : "Single Monitor"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: root.hasMultipleMonitors ? root.theme.accentPrimary : root.theme.accentCyan
                             }
@@ -170,7 +170,7 @@ ColumnLayout {
                                         anchors.verticalCenter: parent.verticalCenter
                                         text: modelData.name + (root.hasMultipleMonitors ? (index === 0 ? " · Primary" : " · Secondary") : "")
                                         font.family: root.font
-                                        font.pixelSize: 10
+                                        font.pixelSize: Style.px(10)
                                         font.bold: scrBtn.isSelected
                                         color: scrBtn.isSelected ? root.theme.accentPrimary : root.theme.textPrimary
                                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -181,7 +181,7 @@ ColumnLayout {
                                         anchors.verticalCenter: parent.verticalCenter
                                         text: "(" + modelData.model.split(" ")[0] + ")"
                                         font.family: root.font
-                                        font.pixelSize: 9
+                                        font.pixelSize: Style.px(9)
                                         color: scrBtn.isSelected ? root.theme.accentPrimary : root.theme.textMuted
                                         opacity: scrBtn.isSelected ? 0.85 : 0.6
                                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -242,7 +242,7 @@ ColumnLayout {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "All Screens"
                                     font.family: root.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     font.bold: allScreensBtn.isSelected
                                     color: allScreensBtn.isSelected ? root.theme.accentPrimary : root.theme.textPrimary
                                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -340,7 +340,7 @@ ColumnLayout {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: barTabBtn.tabName
                                     font.family: root.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                     font.bold: barTabBtn.isCurrent
                                     color: barTabBtn.isCurrent
                                         ? root.theme.accentPrimary
@@ -368,7 +368,7 @@ ColumnLayout {
                                             anchors.verticalCenter: parent.verticalCenter
                                             text: barTabBtn.modelData.monitor
                                             font.family: root.font
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             font.bold: true
                                             color: barTabBtn.isCurrent ? root.theme.accentPrimary : root.theme.textSecondary
                                             Behavior on color { ColorAnimation { duration: 140 } }
@@ -389,7 +389,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: barTabBtn.posLabel + (barTabBtn.modelData.enabled === false ? " · Off" : "")
                                         font.family: root.font
-                                        font.pixelSize: 10
+                                        font.pixelSize: Style.px(10)
                                         font.bold: true
                                         color: barTabBtn.isCurrent ? root.theme.accentPrimary : root.theme.textMuted
                                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -431,7 +431,7 @@ ColumnLayout {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "No bars on " + (root.selectedMonitorFilter === "secondary" ? (root.getMonitorNameForTarget("secondary") || "Secondary Display") : root.getMonitorNameForTarget("primary")) + " · Click Add Bar to create one"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textMuted
                             }
                         }

@@ -140,7 +140,7 @@ ColumnLayout {
                 Text {
                     text: "Pinned Apps"
                     font.family: shortcutsSec.rootRef.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: shortcutsSec.rootRef.theme.accentPrimary
                 }
@@ -156,7 +156,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "(" + (shortcutsSec.curAppShortcuts || []).length + ")"
                         font.family: shortcutsSec.rootRef.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: shortcutsSec.rootRef.theme.textMuted
                     }
                 }
@@ -267,7 +267,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: "󰀻"
                                     color: shortcutsSec.rootRef.theme.accentPrimary
-                                    font.pixelSize: 20
+                                    font.pixelSize: Style.px(20)
                                     font.family: shortcutsSec.rootRef.font
                                     visible: !actAppCard.hasIcon
                                 }
@@ -277,7 +277,7 @@ ColumnLayout {
                                 width: parent.width
                                 text: actAppCard.modelData.name
                                 font.family: shortcutsSec.rootRef.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: true
                                 color: shortcutsSec.rootRef.theme.textPrimary
                                 horizontalAlignment: Text.AlignHCenter
@@ -301,7 +301,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "No pinned apps yet — click an app below to pin it"
                     font.family: shortcutsSec.rootRef.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: shortcutsSec.rootRef.theme.textMuted
                 }
             }
@@ -330,7 +330,7 @@ ColumnLayout {
                 Text {
                     text: "Installed Applications"
                     font.family: shortcutsSec.rootRef.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: shortcutsSec.rootRef.theme.accentPrimary
                 }
@@ -338,7 +338,7 @@ ColumnLayout {
                 Text {
                     text: "(" + shortcutsSec.filteredDesktopApps.length + " installed)"
                     font.family: shortcutsSec.rootRef.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: shortcutsSec.rootRef.theme.textMuted
                 }
 
@@ -363,7 +363,7 @@ ColumnLayout {
                     Text {
                         text: "󰍉"
                         color: appSearchInput.activeFocus ? shortcutsSec.rootRef.theme.accentPrimary : shortcutsSec.rootRef.theme.textMuted
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.family: shortcutsSec.rootRef.font
                         Layout.alignment: Qt.AlignVCenter
                     }
@@ -379,7 +379,7 @@ ColumnLayout {
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
                             color: shortcutsSec.rootRef.theme.textPrimary
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.family: shortcutsSec.rootRef.font
                             clip: true
                             selectByMouse: true
@@ -389,7 +389,7 @@ ColumnLayout {
                         Text {
                             text: "Search applications to pin..."
                             color: shortcutsSec.rootRef.theme.textMuted
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.family: shortcutsSec.rootRef.font
                             anchors.verticalCenter: parent.verticalCenter
                             visible: appSearchInput.text === ""
@@ -493,7 +493,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: "󰀻"
                                     color: shortcutsSec.rootRef.theme.accentPrimary
-                                    font.pixelSize: 20
+                                    font.pixelSize: Style.px(20)
                                     font.family: shortcutsSec.rootRef.font
                                     visible: !appGridCell.hasIcon
                                 }
@@ -503,7 +503,7 @@ ColumnLayout {
                                 width: parent.width
                                 text: appGridCell.modelData.name ?? ""
                                 color: (cellHoverArea.containsMouse || appGridCell.pinnedSlot >= 0) ? shortcutsSec.rootRef.theme.textPrimary : shortcutsSec.rootRef.theme.textSecondary
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.family: shortcutsSec.rootRef.font
                                 font.bold: cellHoverArea.containsMouse || appGridCell.pinnedSlot >= 0
                                 horizontalAlignment: Text.AlignHCenter

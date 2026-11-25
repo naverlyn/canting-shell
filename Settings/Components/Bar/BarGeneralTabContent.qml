@@ -63,7 +63,7 @@ ColumnLayout {
                 Text {
                     text: "󰍉"
                     font.family: generalTabContent.root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     color: optionSearchInput.activeFocus ? generalTabContent.root.theme.accentPrimary : generalTabContent.root.theme.textMuted
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -74,7 +74,7 @@ ColumnLayout {
                     Layout.fillHeight: true
                     verticalAlignment: TextInput.AlignVCenter
                     font.family: generalTabContent.root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: generalTabContent.root.theme.textPrimary
                     selectByMouse: true
                     clip: true
@@ -86,7 +86,7 @@ ColumnLayout {
                         anchors.verticalCenter: parent.verticalCenter
                         text: "Search widget settings..."
                         font.family: generalTabContent.root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: generalTabContent.root.theme.textMuted
                     }
                 }
@@ -105,7 +105,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "✕"
                         font.family: generalTabContent.root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: clearOptionSearchHover.hovered ? generalTabContent.root.theme.textPrimary : generalTabContent.root.theme.textMuted
                     }
 
@@ -235,7 +235,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: "No widget settings matching \"" + generalTabContent.root.optionSearchQuery.trim() + "\""
                     font.family: generalTabContent.root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: generalTabContent.root.theme.textMuted
                 }
             }

@@ -25,7 +25,7 @@ Rectangle {
         height: 270
         radius: 12
         color: (root.theme && root.theme.bgSurface) ? root.theme.bgSurface : "#1e1e2e"
-        border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.12)
+        border.color: root.theme.bgBorder
         border.width: 1
         anchors.centerIn: parent
 
@@ -50,7 +50,7 @@ Rectangle {
                     Text {
                         text: "Add Startup Command"
                         font.family: root.font
-                        font.pixelSize: 16
+                        font.pixelSize: Style.px(16)
                         font.bold: true
                         color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                     }
@@ -58,7 +58,7 @@ Rectangle {
                     Text {
                         text: "Runs automatically via hl.exec_cmd() when Hyprland starts"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                     }
                 }
@@ -67,7 +67,7 @@ Rectangle {
                     width: 28
                     height: 28
                     radius: 14
-                    color: closeCmdHover.hovered ? ((root.theme && root.theme.bgHover) ? root.theme.bgHover : Qt.rgba(1, 1, 1, 0.1)) : "transparent"
+                    color: closeCmdHover.hovered ? root.theme.bgHover : "transparent"
 
                     HoverHandler { id: closeCmdHover }
                     MouseArea {
@@ -80,7 +80,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "✕"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                     }
                 }
@@ -94,7 +94,7 @@ Rectangle {
                 Text {
                     text: "Command Name / Description"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                 }
@@ -103,10 +103,10 @@ Rectangle {
                     Layout.fillWidth: true
                     height: 34
                     radius: 6
-                    color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
+                    color: root.theme.bgBase
                     border.color: nameInput.activeFocus
                         ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
-                        : ((root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08))
+                        : root.theme.bgBorder
                     border.width: 1
 
                     TextInput {
@@ -114,7 +114,7 @@ Rectangle {
                         anchors.fill: parent
                         anchors.margins: 8
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                         clip: true
                         selectByMouse: true
@@ -126,7 +126,7 @@ Rectangle {
                             visible: !parent.text && !parent.activeFocus
                             text: "e.g. Discord in Background"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             color: (root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060"
                         }
                     }
@@ -141,7 +141,7 @@ Rectangle {
                 Text {
                     text: "Executable Command Line"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                 }
@@ -150,10 +150,10 @@ Rectangle {
                     Layout.fillWidth: true
                     height: 34
                     radius: 6
-                    color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
+                    color: root.theme.bgBase
                     border.color: execInput.activeFocus
                         ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
-                        : ((root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08))
+                        : root.theme.bgBorder
                     border.width: 1
 
                     TextInput {
@@ -161,7 +161,7 @@ Rectangle {
                         anchors.fill: parent
                         anchors.margins: 8
                         font.family: "JetBrains Mono, monospace"
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                         clip: true
                         selectByMouse: true
@@ -173,7 +173,7 @@ Rectangle {
                             visible: !parent.text && !parent.activeFocus
                             text: "e.g. discord --start-minimized"
                             font.family: "JetBrains Mono, monospace"
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: (root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060"
                         }
                     }

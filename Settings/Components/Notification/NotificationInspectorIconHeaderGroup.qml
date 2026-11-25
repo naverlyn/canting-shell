@@ -43,7 +43,7 @@ ColumnLayout {
             Text {
                 text: "Icon Placement Mode"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
                 Layout.fillWidth: true
@@ -160,7 +160,7 @@ ColumnLayout {
             Text {
                 text: "Timestamp Format"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
                 Layout.fillWidth: true

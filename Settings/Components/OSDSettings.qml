@@ -124,7 +124,7 @@ Item {
             contentItem: Rectangle {
                 implicitWidth: 4
                 radius: 2
-                color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15)
+                color: root.theme.bgBorder
             }
         }
 
@@ -145,7 +145,7 @@ Item {
                     Text {
                         text: "On-Screen Display"
                         font.family: root.font
-                        font.pixelSize: 20
+                        font.pixelSize: Style.px(20)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -186,7 +186,7 @@ Item {
                     Text {
                         text: "Screen Position & Placement"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.bold: true
                         color: root.theme.textSecondary
                     }
@@ -194,7 +194,7 @@ Item {
                     Text {
                         text: "Active: " + OSDService.getPositionLabel(root.osdPos)
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.accentPrimary
                     }

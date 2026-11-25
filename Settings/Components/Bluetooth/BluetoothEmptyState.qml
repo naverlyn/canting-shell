@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../Common"
 
 ColumnLayout {
     id: emptyState
@@ -21,7 +22,7 @@ ColumnLayout {
             anchors.centerIn: parent
             text: !emptyState.btAvailable ? "󰂲" : (!emptyState.btEnabled ? "󰂲" : "󰂯")
             font.family: emptyState.font
-            font.pixelSize: 26
+            font.pixelSize: Style.px(26)
             color: emptyState.theme.textMuted
         }
     }
@@ -32,7 +33,7 @@ ColumnLayout {
             ? "No Bluetooth Adapter Found"
             : (!emptyState.btEnabled ? "Bluetooth is Disabled" : "No Paired Devices Found")
         font.family: emptyState.font
-        font.pixelSize: 14
+        font.pixelSize: Style.px(14)
         font.bold: true
         color: emptyState.theme.textSecondary
     }
@@ -43,7 +44,7 @@ ColumnLayout {
             ? "Plug in a Bluetooth dongle or enable your wireless card."
             : (!emptyState.btEnabled ? "Turn on Bluetooth to scan and connect devices." : "Click scan to search for nearby Bluetooth devices.")
         font.family: emptyState.font
-        font.pixelSize: 12
+        font.pixelSize: Style.px(12)
         color: emptyState.theme.textMuted
     }
 }

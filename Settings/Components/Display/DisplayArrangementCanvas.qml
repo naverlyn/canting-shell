@@ -23,7 +23,7 @@ ColumnLayout {
         Text {
             text: "Display Arrangement"
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             font.bold: true
             color: root.theme.textSecondary
         }
@@ -33,7 +33,7 @@ ColumnLayout {
                 ? "·  Drag displays to arrange layout or click to configure"
                 : "·  Live preview of active display geometry and orientation"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             color: root.theme.textMuted
             elide: Text.ElideRight
             Layout.fillWidth: true
@@ -45,7 +45,7 @@ ColumnLayout {
                 ? ("Selected: " + root.selectedMonitor.name)
                 : ""
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: root.theme.accentPrimary
         }
@@ -58,7 +58,7 @@ ColumnLayout {
         color: root.theme.bgSurface
         border.color: root.hasUnsavedChanges
             ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.45)
-            : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+            : root.theme.bgBorder
         border.width: 1
 
         Behavior on border.color { ColorAnimation { duration: 160 } }
@@ -81,7 +81,7 @@ ColumnLayout {
                 color: root.theme.bgBase
                 border.color: root.hasOverlap
                     ? (root.theme.accentOrange ?? "#ff9e64")
-                    : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                    : root.theme.bgBorder
                 border.width: root.hasOverlap ? 1.5 : 1
                 clip: true
 
@@ -118,7 +118,7 @@ ColumnLayout {
                     implicitWidth: coordText.implicitWidth + 14
                     radius: 6
                     color: Qt.rgba(root.theme.bgSurface.r, root.theme.bgSurface.g, root.theme.bgSurface.b, 0.88)
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                    border.color: root.theme.bgBorder
                     border.width: 1
 
                     Text {
@@ -130,7 +130,7 @@ ColumnLayout {
                                Math.round(root.selectedMonitor.x) + ", " + Math.round(root.selectedMonitor.y) + ")")
                             : ""
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: root.theme.textSecondary
                     }
                 }
@@ -155,10 +155,10 @@ ColumnLayout {
                         radius: 8
                         color: isCurrent
                             ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.16)
-                            : (monPillHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase)
+                            : (monPillHover.hovered ? root.theme.bgHover : root.theme.bgBase)
                         border.color: isCurrent
                             ? root.theme.accentPrimary
-                            : (monPillHover.hovered ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.18)) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
+                            : (monPillHover.hovered ? root.theme.bgBorder : root.theme.bgBorder)
                         border.width: isCurrent ? 1.5 : 1
 
                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -184,7 +184,7 @@ ColumnLayout {
                             Text {
                                 text: monTabPill.modelData.name
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 font.bold: monTabPill.isCurrent
                                 color: monTabPill.isCurrent ? root.theme.accentPrimary : root.theme.textPrimary
                             }
@@ -194,7 +194,7 @@ ColumnLayout {
                                     ? "Disabled"
                                     : (monTabPill.modelData.selectedMode || "").replace("Hz", " Hz")
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textSecondary
                             }
                         }
@@ -233,7 +233,7 @@ ColumnLayout {
                             ? root.applyError
                             : "Displays are overlapping — drag them apart before applying."
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.accentRed ?? "#f7768e"
                         elide: Text.ElideRight
@@ -243,7 +243,7 @@ ColumnLayout {
                         visible: root.applyError !== ""
                         text: "Dismiss"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.accentRed ?? "#f7768e"
 
@@ -279,7 +279,7 @@ ColumnLayout {
                         Text {
                             text: root.isApplying ? "Applying display changes…" : "Unsaved Display Changes"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -289,7 +289,7 @@ ColumnLayout {
                                 ? ("Will apply live and save to " + MonitorService.persistenceFilePath)
                                 : "Will apply live to current Hyprland session"
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             color: root.theme.textSecondary
                             elide: Text.ElideRight
                             Layout.fillWidth: true
@@ -301,8 +301,8 @@ ColumnLayout {
                         width: 68
                         height: 30
                         radius: 6
-                        color: revertHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.1)) : root.theme.bgBase
-                        border.color: revertHover.hovered ? root.theme.textSecondary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                        color: revertHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                        border.color: revertHover.hovered ? root.theme.textSecondary : root.theme.bgBorder
                         border.width: 1
                         enabled: !root.isApplying
 
@@ -312,7 +312,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: "Revert"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -343,7 +343,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: root.isApplying ? "Applying…" : "Apply & Save"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: parent.canApply ? root.theme.bgBase : root.theme.textMuted
                         }

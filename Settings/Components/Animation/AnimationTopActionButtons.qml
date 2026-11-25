@@ -16,8 +16,8 @@ RowLayout {
         height: 32
         implicitWidth: topTestText.implicitWidth + 24
         radius: 8
-        color: topTestHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase
-        border.color: topTestHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+        color: topTestHover.hovered ? root.theme.bgHover : root.theme.bgBase
+        border.color: topTestHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
         border.width: 1
 
         Behavior on color { ColorAnimation { duration: 140 } }
@@ -30,7 +30,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "Test Live Motion"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: topTestHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
         }
@@ -57,7 +57,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "Save & Apply Profile"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: "#ffffff"
         }
@@ -74,8 +74,8 @@ RowLayout {
         height: 32
         implicitWidth: topCloseText.implicitWidth + 22
         radius: 8
-        color: topCloseHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase
-        border.color: topCloseHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+        color: topCloseHover.hovered ? root.theme.bgHover : root.theme.bgBase
+        border.color: topCloseHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
         border.width: 1
 
         Behavior on color { ColorAnimation { duration: 140 } }
@@ -88,7 +88,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "Close"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: topCloseHover.hovered ? root.theme.accentPrimary : root.theme.textSecondary
         }

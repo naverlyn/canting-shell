@@ -28,7 +28,7 @@ Item {
             Text {
                 text: "Channel Test"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
             }
@@ -51,8 +51,8 @@ Item {
                 width: root.dualBtnWidth
                 height: root.btnHeight
                 radius: root.btnRadius
-                color: leftTestHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.12)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2))
-                border.color: leftTestHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                color: leftTestHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                border.color: leftTestHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -64,7 +64,7 @@ Item {
                     anchors.centerIn: parent
                     text: "Test Left"
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -85,8 +85,8 @@ Item {
                 width: root.dualBtnWidth
                 height: root.btnHeight
                 radius: root.btnRadius
-                color: rightTestHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.12)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2))
-                border.color: rightTestHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                color: rightTestHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                border.color: rightTestHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -98,7 +98,7 @@ Item {
                     anchors.centerIn: parent
                     text: "Test Right"
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.bold: true
                     color: root.theme.textPrimary
                 }

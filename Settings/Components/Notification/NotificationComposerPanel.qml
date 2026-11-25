@@ -34,7 +34,7 @@ Rectangle {
             Text {
                 text: "󰏫  Test Notification Content"
                 font.family: root.font
-                font.pixelSize: 12
+                font.pixelSize: Style.px(12)
                 font.bold: true
                 color: root.theme.textPrimary
             }
@@ -42,7 +42,7 @@ Rectangle {
             Text {
                 text: "·  Customize the sample icon, text, and buttons before sending a live test"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: root.theme.textMuted
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -57,7 +57,7 @@ Rectangle {
             Text {
                 text: "Icon"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 95
@@ -83,7 +83,7 @@ Rectangle {
                             anchors.centerIn: parent
                             text: modelData
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             color: isChosen ? root.theme.accentPrimary : root.theme.textPrimary
                         }
 
@@ -114,7 +114,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     horizontalAlignment: TextInput.AlignHCenter
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     text: NotificationService.composerIcon
                     selectByMouse: true
@@ -131,7 +131,7 @@ Rectangle {
             Text {
                 text: "Urgency:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
             }
@@ -169,7 +169,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: modelData.label
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: isUrg
                                 color: isUrg ? root.theme.accentPrimary : root.theme.textSecondary
                             }
@@ -196,7 +196,7 @@ Rectangle {
             Text {
                 text: "App & Title"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 95
@@ -217,7 +217,7 @@ Rectangle {
                     anchors.rightMargin: 8
                     verticalAlignment: TextInput.AlignVCenter
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.textPrimary
                     text: NotificationService.composerAppName
                     selectByMouse: true
@@ -244,7 +244,7 @@ Rectangle {
                     anchors.rightMargin: 8
                     verticalAlignment: TextInput.AlignVCenter
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.theme.textPrimary
                     text: NotificationService.composerTitle
@@ -266,7 +266,7 @@ Rectangle {
             Text {
                 text: "Body Message"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 95
@@ -287,7 +287,7 @@ Rectangle {
                     anchors.rightMargin: 8
                     verticalAlignment: TextInput.AlignVCenter
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.textPrimary
                     text: NotificationService.composerBody
                     selectByMouse: true
@@ -315,14 +315,14 @@ Rectangle {
                     Text {
                         text: "󰋩"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: NotificationService.composerShowImage ? root.theme.accentPrimary : root.theme.textMuted
                     }
 
                     Text {
                         text: NotificationService.composerShowImage ? "Thumbnail: ON" : "Thumbnail: OFF"
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         font.bold: NotificationService.composerShowImage
                         color: NotificationService.composerShowImage ? root.theme.accentPrimary : root.theme.textSecondary
                     }
@@ -347,7 +347,7 @@ Rectangle {
             Text {
                 text: "Action Buttons"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 95
@@ -382,7 +382,7 @@ Rectangle {
                                 Layout.fillWidth: true
                                 verticalAlignment: TextInput.AlignVCenter
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: root.theme.accentPrimary
                                 text: btnChip.modelData.label || ""
@@ -425,14 +425,14 @@ Rectangle {
                         Text {
                             text: "󰐕"
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             color: root.theme.accentPrimary
                         }
 
                         Text {
                             text: "Add Button"
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             font.bold: true
                             color: root.theme.textPrimary
                         }

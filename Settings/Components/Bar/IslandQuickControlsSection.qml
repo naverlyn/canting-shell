@@ -142,7 +142,7 @@ Rectangle {
                     Text {
                         text: "Drag active tiles to reorder, or click available tiles to add"
                         font.family: qcCard.rootRef.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: qcCard.rootRef.theme.textSecondary
                         Layout.fillWidth: true
                         elide: Text.ElideRight

@@ -25,7 +25,7 @@ Item {
         Text {
             text: "Warmth Presets"
             font.family: root.font
-            font.pixelSize: 12
+            font.pixelSize: Style.px(12)
             font.bold: true
             color: root.theme.textSecondary
             Layout.alignment: Qt.AlignVCenter
@@ -41,7 +41,7 @@ Item {
             height: 32
             radius: 7
             color: root.theme.bgBase
-            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            border.color: root.theme.bgBorder
             border.width: 1
             Layout.alignment: Qt.AlignVCenter
 
@@ -104,7 +104,7 @@ Item {
                             anchors.centerIn: parent
                             text: nlSegBtn.modelData.label
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: nlSegBtn.isSel
                             color: nlSegBtn.isSel ? (root.theme.accentOrange ?? root.theme.accentPrimary) : root.theme.textPrimary
                             opacity: !root.nightLightEnabled ? 0.45 : (nlSegBtn.isSel || nlHover.hovered ? 1.0 : 0.75)

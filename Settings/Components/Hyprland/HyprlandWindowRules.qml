@@ -118,7 +118,7 @@ ColumnLayout {
             Text {
                 text: "Lua Window & Layer Rules"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textSecondary
             }
@@ -126,7 +126,7 @@ ColumnLayout {
             Text {
                 text: "(" + root.windowRules.length + " in WindowWorkspaces.lua)"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: root.theme.textMuted
             }
 
@@ -155,7 +155,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: root.isAddingRule ? "Close Rule Form" : "+ Add Lua Rule"
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.bold: true
                     color: root.isAddingRule || addRuleBtnHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
                     Behavior on color { ColorAnimation { duration: 150 } }
@@ -211,7 +211,7 @@ ColumnLayout {
                         height: 32
                         radius: 7
                         color: root.theme.bgBase
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        border.color: root.theme.bgBorder
                         border.width: 1
 
                         readonly property var catIds: ["all", "opacity", "float", "special", "tag", "layer"]
@@ -255,7 +255,7 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     radius: 5
-                                    color: !isCatSel && catHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                    color: !isCatSel && catHover.hovered ? root.theme.bgHover : "transparent"
                                     Behavior on color { ColorAnimation { duration: 140 } }
 
                                     HoverHandler { id: catHover }
@@ -265,7 +265,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: modelData.label
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: isCatSel
                                         color: isCatSel ? root.theme.accentPrimary : root.theme.textPrimary
                                         opacity: isCatSel || catHover.hovered ? 1.0 : 0.75
@@ -289,7 +289,7 @@ ColumnLayout {
                         height: 32
                         radius: 7
                         color: root.theme.bgBase
-                        border.color: ruleSearchInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                        border.color: ruleSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                         border.width: ruleSearchInput.activeFocus ? 2 : 1
 
                         Behavior on border.color { ColorAnimation { duration: 140 } }
@@ -303,7 +303,7 @@ ColumnLayout {
                             Text {
                                 text: "󰍉"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 color: root.theme.textSecondary
                             }
 
@@ -311,7 +311,7 @@ ColumnLayout {
                                 id: ruleSearchInput
                                 Layout.fillWidth: true
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 color: root.theme.textPrimary
                                 clip: true
                                 selectByMouse: true
@@ -320,7 +320,7 @@ ColumnLayout {
                                 Text {
                                     text: "Filter rules (firefox, float, pip)..."
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     color: root.theme.textMuted
                                     visible: !ruleSearchInput.text && !ruleSearchInput.activeFocus
                                     anchors.verticalCenter: parent.verticalCenter
@@ -331,7 +331,7 @@ ColumnLayout {
                                 visible: ruleSearchInput.text.length > 0
                                 text: "✕"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textSecondary
                                 MouseArea {
                                     anchors.fill: parent
@@ -413,7 +413,7 @@ ColumnLayout {
                                     Text {
                                         text: modelData.name
                                         font.family: root.font
-                                        font.pixelSize: 13
+                                        font.pixelSize: Style.px(13)
                                         font.bold: true
                                         color: root.theme.textPrimary
                                         elide: Text.ElideRight
@@ -432,7 +432,7 @@ ColumnLayout {
                                             anchors.centerIn: parent
                                             text: modelData.ruleType === "layer_rule" ? "layer" : modelData.category
                                             font.family: root.font
-                                            font.pixelSize: 9
+                                            font.pixelSize: Style.px(9)
                                             font.bold: true
                                             color: root.theme.textSecondary
                                         }
@@ -442,7 +442,7 @@ ColumnLayout {
                                 Text {
                                     text: modelData.matchSummary
                                     font.family: root.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     color: root.theme.textSecondary
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true
@@ -471,7 +471,7 @@ ColumnLayout {
                                             anchors.centerIn: parent
                                             text: modelData
                                             font.family: root.font
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             font.bold: true
                                             color: root.theme.accentPrimary
                                         }
@@ -484,8 +484,8 @@ ColumnLayout {
                                 width: 32
                                 height: 28
                                 radius: 6
-                                color: ruleRowRect.isBeingEdited ? root.theme.bgSelected : (editBtnMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase)
-                                border.color: ruleRowRect.isBeingEdited || editBtnMouse.containsMouse ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                                color: ruleRowRect.isBeingEdited ? root.theme.bgSelected : (editBtnMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
+                                border.color: ruleRowRect.isBeingEdited || editBtnMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgBorder
                                 border.width: 1
                                 scale: editBtnMouse.pressed ? 0.94 : 1.0
 
@@ -497,7 +497,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: "󰏫"
                                     font.family: root.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                     color: ruleRowRect.isBeingEdited || editBtnMouse.containsMouse ? root.theme.accentPrimary : root.theme.textPrimary
                                     Behavior on color { ColorAnimation { duration: 140 } }
                                 }
@@ -532,14 +532,14 @@ ColumnLayout {
                             Text {
                                 text: "Show all " + root.windowRules.length + " Lua rules"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 font.bold: true
                                 color: root.theme.accentPrimary
                             }
                             Text {
                                 text: "󰅀"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 color: root.theme.accentPrimary
                             }
                         }

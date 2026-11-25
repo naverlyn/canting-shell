@@ -19,6 +19,7 @@ import Quickshell.Wayland
 import "../../bar"
 import ".."
 import "./Power"
+import "./Common"
 
 Item {
     id: root
@@ -140,7 +141,7 @@ Item {
             Text {
                 text: "Power"
                 font.family: root.font
-                font.pixelSize: 20
+                font.pixelSize: Style.px(20)
                 font.bold: true
                 color: root.theme.textPrimary
                 Layout.fillWidth: true

@@ -22,10 +22,10 @@ ColumnLayout {
             Layout.fillWidth: true
             height: 36
             radius: 7
-            color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
+            color: root.theme.bgBase
             border.color: appSearchInput.activeFocus
                 ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
-                : ((root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08))
+                : root.theme.bgBorder
             border.width: 1
 
             RowLayout {
@@ -37,7 +37,7 @@ ColumnLayout {
                 Text {
                     text: "󰍉"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     color: appSearchInput.activeFocus
                         ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
                         : ((root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060")
@@ -47,7 +47,7 @@ ColumnLayout {
                     id: appSearchInput
                     Layout.fillWidth: true
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                     clip: true
                     selectByMouse: true
@@ -59,7 +59,7 @@ ColumnLayout {
                         visible: !parent.text && !parent.activeFocus
                         text: "Filter startup applications..."
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: (root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060"
                     }
                 }
@@ -68,14 +68,14 @@ ColumnLayout {
                     width: 18
                     height: 18
                     radius: 9
-                    color: clearAppSearchHover.hovered ? ((root.theme && root.theme.bgHover) ? root.theme.bgHover : Qt.rgba(1, 1, 1, 0.1)) : "transparent"
+                    color: clearAppSearchHover.hovered ? root.theme.bgHover : "transparent"
                     visible: appSearchInput.text.length > 0
 
                     Text {
                         anchors.centerIn: parent
                         text: "✕"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                     }
 
@@ -95,8 +95,8 @@ ColumnLayout {
             implicitWidth: 260
             height: 36
             radius: 7
-            color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
-            border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
+            color: root.theme.bgBase
+            border.color: root.theme.bgBorder
             border.width: 1
 
             readonly property var modes: ["all", "enabled", "disabled"]
@@ -109,7 +109,7 @@ ColumnLayout {
                 width: appFilterSeg.cellWidth
                 x: 3 + appFilterSeg.activeIdx * (appFilterSeg.cellWidth + 3)
                 radius: 5
-                color: (root.theme && root.theme.bgSelected) ? root.theme.bgSelected : Qt.rgba(1, 1, 1, 0.15)
+                color: root.theme.bgSelected
                 border.color: (root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7"
                 border.width: 1
                 Behavior on x { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
@@ -135,7 +135,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         radius: 5
-                        color: !isSel && fHover.hovered ? ((root.theme && root.theme.bgHover) ? root.theme.bgHover : Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                        color: !isSel && fHover.hovered ? root.theme.bgHover : "transparent"
 
                         HoverHandler { id: fHover }
                         MouseArea {
@@ -148,7 +148,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: fBtn.modelData.label
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: fBtn.isSel
                             color: fBtn.isSel
                                 ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
@@ -177,8 +177,8 @@ ColumnLayout {
         Layout.fillWidth: true
         height: 440
         radius: 8
-        color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.2)
-        border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
+        color: root.theme.bgBase
+        border.color: root.theme.bgBorder
         border.width: 1
         clip: true
 
@@ -195,7 +195,7 @@ ColumnLayout {
                 contentItem: Rectangle {
                     implicitWidth: 4
                     radius: 2
-                    color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.15)
+                    color: root.theme.bgBorder
                 }
             }
 
@@ -214,7 +214,7 @@ ColumnLayout {
                         Layout.alignment: Qt.AlignHCenter
                         text: "󰵆"
                         font.family: root.font
-                        font.pixelSize: 32
+                        font.pixelSize: Style.px(32)
                         color: (root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060"
                     }
 
@@ -222,7 +222,7 @@ ColumnLayout {
                         Layout.alignment: Qt.AlignHCenter
                         text: root.appSearchQuery ? "No matching startup applications" : "No startup applications configured"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.bold: true
                         color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                     }
@@ -236,8 +236,8 @@ ColumnLayout {
                 width: appsListView.width - 8
                 height: 58
                 radius: 6
-                color: appItemHover.hovered ? ((root.theme && root.theme.bgSurface) ? root.theme.bgSurface : Qt.rgba(1, 1, 1, 0.05)) : "transparent"
-                border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.06)
+                color: appItemHover.hovered ? root.theme.bgSurface : "transparent"
+                border.color: root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -255,8 +255,8 @@ ColumnLayout {
                         width: 36
                         height: 36
                         radius: 7
-                        color: (root.theme && root.theme.bgSurface) ? root.theme.bgSurface : Qt.rgba(1, 1, 1, 0.08)
-                        border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
+                        color: root.theme.bgSurface
+                        border.color: root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -280,7 +280,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: "󰵆"
                             font.family: root.font
-                            font.pixelSize: 18
+                            font.pixelSize: Style.px(18)
                             color: (root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7"
                             visible: appIconBox.resolvedIcon === ""
                         }
@@ -297,7 +297,7 @@ ColumnLayout {
                             Text {
                                 text: appItemRow.modelData.name || "Unknown Application"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: appItemRow.modelData.enabled
                                     ? ((root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff")
@@ -318,7 +318,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: appItemRow.modelData.scope === "user" ? "User" : "System"
                                     font.family: root.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     font.bold: true
                                     color: appItemRow.modelData.scope === "user"
                                         ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
@@ -331,7 +331,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             text: appItemRow.modelData.comment || appItemRow.modelData.exec || ""
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: (root.theme && root.theme.textMuted) ? root.theme.textMuted : "#707070"
                             elide: Text.ElideRight
                         }
@@ -363,7 +363,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "󰆴"
                                 font.family: root.font
-                                font.pixelSize: 14
+                                font.pixelSize: Style.px(14)
                                 color: delAppHover.hovered
                                     ? ((root.theme && root.theme.accentRed) ? root.theme.accentRed : "#f7768e")
                                     : ((root.theme && root.theme.textMuted) ? root.theme.textMuted : "#707070")

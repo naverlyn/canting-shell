@@ -78,7 +78,7 @@ ColumnLayout {
                 Text {
                     text: "Active Theme Semantic Roles (" + ((root.theme && root.theme.currentName) ? root.theme.currentName : "Current Theme") + ")"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.theme.textSecondary
                 }
@@ -121,7 +121,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: semanticRoleBtn.modelData.label
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: semanticRoleBtn.modelData.key === ""
                                     ? (semanticRoleBtn.isChosen ? root.theme.textPrimary : root.theme.textSecondary)
@@ -157,7 +157,7 @@ ColumnLayout {
                     Text {
                         text: "All Palettes (" + root.filteredThemesList.length + " themes)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.textSecondary
                     }
@@ -179,7 +179,7 @@ ColumnLayout {
                             anchors.rightMargin: 10
                             verticalAlignment: TextInput.AlignVCenter
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textPrimary
                             selectByMouse: true
                             onTextChanged: root.themeSearchQuery = text
@@ -189,7 +189,7 @@ ColumnLayout {
                                 anchors.verticalCenter: parent.verticalCenter
                                 text: "Search (e.g. Night, Mocha, Taiga)..."
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 color: root.theme.textMuted
                             }
                         }
@@ -247,7 +247,7 @@ ColumnLayout {
                                         Text {
                                             text: themePaletteCard.modelData.name
                                             font.family: root.font
-                                            font.pixelSize: 11
+                                            font.pixelSize: Style.px(11)
                                             font.bold: true
                                             color: root.theme.textPrimary
                                             elide: Text.ElideRight
@@ -257,7 +257,7 @@ ColumnLayout {
                                         Text {
                                             text: themePaletteCard.modelData.family || "Theme"
                                             font.family: root.font
-                                            font.pixelSize: 9
+                                            font.pixelSize: Style.px(9)
                                             color: root.theme.textMuted
                                             elide: Text.ElideRight
                                             Layout.fillWidth: true

@@ -25,7 +25,7 @@ ColumnLayout {
         Text {
             text: "Toast Position & Placement"
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             font.bold: true
             color: root.theme.textSecondary
         }
@@ -37,7 +37,7 @@ ColumnLayout {
                 ? ("Snap to: " + root.getPositionLabel(monitorPreview.dragHoverPos))
                 : ("Active: " + root.getPositionLabel(root.toastPos))
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: root.theme.accentPrimary
         }
@@ -48,7 +48,7 @@ ColumnLayout {
         implicitHeight: posCol.implicitHeight + 24
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -68,7 +68,7 @@ ColumnLayout {
                 height: 170
                 radius: 10
                 color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                border.color: root.theme.bgBorder
                 border.width: 1
                 clip: true
 
@@ -81,7 +81,7 @@ ColumnLayout {
                     anchors.margins: 6
                     radius: 7
                     color: Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.03)
-                    border.color: Qt.rgba(1, 1, 1, 0.04)
+                    border.color: Style.theme.bgBorder
                     border.width: 1
                 }
 
@@ -112,7 +112,7 @@ ColumnLayout {
                                     : "transparent")
                             border.color: isDragTarget || isSelected
                                 ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, isDragTarget ? 0.85 : 0.35)
-                                : (zoneHover.hovered ? (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.18)) : Qt.rgba(1, 1, 1, 0.05))
+                                : (zoneHover.hovered ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.05))
                             border.width: isDragTarget ? 1.5 : 1
 
                             Behavior on color { ColorAnimation { duration: 130 } }
@@ -125,7 +125,7 @@ ColumnLayout {
                                 visible: !zoneBox.isSelected || monitorPreview.draggingToast
                                 text: zoneBox.modelData.label
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: zoneBox.isDragTarget || zoneHover.hovered
                                 color: zoneBox.isDragTarget
                                     ? root.theme.accentPrimary
@@ -206,7 +206,7 @@ ColumnLayout {
                         Text {
                             text: "󰂚"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             color: root.theme.accentPrimary
                             Layout.alignment: Qt.AlignVCenter
                         }
@@ -219,7 +219,7 @@ ColumnLayout {
                             Text {
                                 text: "Toast Popup"
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: true
                                 color: root.theme.textPrimary
                                 elide: Text.ElideRight
@@ -229,7 +229,7 @@ ColumnLayout {
                             Text {
                                 text: root.getPositionLabel(miniToastCard.activeP)
                                 font.family: root.font
-                                font.pixelSize: 9
+                                font.pixelSize: Style.px(9)
                                 color: root.theme.textSecondary
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
@@ -278,12 +278,7 @@ ColumnLayout {
                 }
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider { sideMargin: 0 }
 
             /* Horizontal Edge Margin (X Offset) */
             Item {
@@ -307,7 +302,7 @@ ColumnLayout {
                         Text {
                             text: "Horizontal Margin"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -315,7 +310,7 @@ ColumnLayout {
                         Text {
                             text: root.isCenterPos ? "Centered horizontally on screen" : "Distance from left/right edge"
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             color: root.theme.textSecondary
                         }
                     }
@@ -325,7 +320,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         height: 6
                         radius: 3
-                        color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12)
+                        color: root.theme.bgSelected
                         Layout.alignment: Qt.AlignVCenter
 
                         readonly property real frac: Math.max(0, Math.min(1, root.marginX / 200))
@@ -391,7 +386,7 @@ ColumnLayout {
                     Text {
                         text: root.marginX + "px"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textSecondary
                         Layout.preferredWidth: 42
@@ -420,7 +415,7 @@ ColumnLayout {
                         Text {
                             text: "Vertical Margin"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -428,7 +423,7 @@ ColumnLayout {
                         Text {
                             text: "Distance from top/bottom edge"
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             color: root.theme.textSecondary
                         }
                     }
@@ -438,7 +433,7 @@ ColumnLayout {
                         Layout.fillWidth: true
                         height: 6
                         radius: 3
-                        color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12)
+                        color: root.theme.bgSelected
                         Layout.alignment: Qt.AlignVCenter
 
                         readonly property real frac: Math.max(0, Math.min(1, root.marginY / 200))
@@ -503,7 +498,7 @@ ColumnLayout {
                     Text {
                         text: root.marginY + "px"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textSecondary
                         Layout.preferredWidth: 42
@@ -529,11 +524,11 @@ ColumnLayout {
                     radius: 6
                     opacity: root.isPositionCustomized ? 1.0 : 0.4
                     color: resetPosHover.hovered && root.isPositionCustomized
-                        ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.12))
+                        ? root.theme.bgHover
                         : root.theme.bgBase
                     border.color: resetPosHover.hovered && root.isPositionCustomized
                         ? root.theme.accentPrimary
-                        : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                        : root.theme.bgBorder
                     border.width: 1
 
                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -546,7 +541,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "Reset Position"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.textPrimary
                     }

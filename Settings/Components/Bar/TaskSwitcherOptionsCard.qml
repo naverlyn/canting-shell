@@ -69,7 +69,7 @@ ColumnLayout {
                         Text {
                             text: "Display Mode"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -118,7 +118,7 @@ ColumnLayout {
                         Text {
                             text: "Window Scope"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -169,7 +169,7 @@ ColumnLayout {
                         Text {
                             text: "Max Label Width"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }

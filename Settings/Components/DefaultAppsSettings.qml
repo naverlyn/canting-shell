@@ -64,7 +64,7 @@ Item {
     }
 
     function showStatus(msg) {
-        toastBanner.show(msg, false);
+        Style.notify(msg, false);
     }
 
     /* Available options discovered / configured for the system */
@@ -203,7 +203,7 @@ Item {
             Text {
                 text: "Default Applications"
                 font.family: root.font
-                font.pixelSize: 20
+                font.pixelSize: Style.px(20)
                 font.bold: true
                 color: root.theme.textPrimary
                 Layout.fillWidth: true
@@ -215,10 +215,4 @@ Item {
         }
     }
 
-    ToastBanner {
-        id: toastBanner
-        theme: root.theme
-        font: root.font
-        durationMs: 2600
-    }
 }

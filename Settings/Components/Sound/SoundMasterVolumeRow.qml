@@ -29,7 +29,7 @@ Item {
             Text {
                 text: "Volume"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
             }
@@ -37,7 +37,7 @@ Item {
             Text {
                 text: root.isSinkMuted ? "Muted" : (root.sinkVolumePercent + "%")
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.isSinkMuted ? (root.theme.accentRed ?? "#f7768e") : (root.theme.accentPrimary ?? "#7aa2f7")
             }
@@ -51,8 +51,8 @@ Item {
             implicitHeight: 6
             height: 6
             radius: 3
-            color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.1)
-            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            color: root.theme.bgSelected
+            border.color: root.theme.bgBorder
             border.width: 1
             Layout.alignment: Qt.AlignVCenter
 
@@ -128,10 +128,10 @@ Item {
             radius: root.btnRadius
             color: root.isSinkMuted 
                 ? Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.18) 
-                : (muteHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)))
+                : (muteHover.hovered ? root.theme.bgHover : root.theme.bgBase)
             border.color: root.isSinkMuted 
                 ? Qt.rgba(root.theme.accentRed.r, root.theme.accentRed.g, root.theme.accentRed.b, 0.4) 
-                : (muteHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
+                : (muteHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder)
             border.width: 1
             Layout.alignment: Qt.AlignVCenter
 
@@ -144,7 +144,7 @@ Item {
                 anchors.centerIn: parent
                 text: root.isSinkMuted ? "Muted" : "Mute"
                 font.family: root.font
-                font.pixelSize: 12
+                font.pixelSize: Style.px(12)
                 font.bold: true
                 color: root.isSinkMuted ? root.theme.accentRed : root.theme.textPrimary
             }
