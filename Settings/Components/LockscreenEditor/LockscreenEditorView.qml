@@ -119,7 +119,7 @@ ColumnLayout {
                 id: restoreMouse
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.restoreProcRef.running = true
+                onClicked: root.restoreDefaults()
             }
         }
 

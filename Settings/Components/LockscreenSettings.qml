@@ -20,14 +20,10 @@ Item {
     id: root
     property alias wallpaperModalRef: wallpaperModal
     property alias addModuleModalRef: addModuleModal
-    property alias restoreProcRef: restoreProc
     property alias testLockProcRef: testLockProc
-    property alias updatePositionsProcRef: updatePositionsProc
-    property alias loadSettingsProcRef: loadSettingsProc
     property var theme: Style.theme
     property string font: Style.font
     property bool showHeaderActions: true
-    readonly property string scriptPath: "/usr/bin/true"
 
     /* State bound directly to native LockscreenConfig */
     property var textBlocks: LockscreenConfig.text_blocks || []
@@ -287,48 +283,16 @@ Item {
     }
 
     /* Process runners for actions */
+    function restoreDefaults() {
+        LockscreenConfig.resetDefaults();
+        showStatus("Restored default lock screen settings");
+    }
+
     Process {
         id: testLockProc
         command: ["qs", "ipc", "call", "lockscreen", "lock"]
         running: false
         onExited: showStatus("Launching Quickshell lock screen...")
-    }
-
-    Process {
-        id: restoreProc
-        command: ["/usr/bin/true"]
-        running: false
-        onExited: {
-            LockscreenConfig.resetDefaults();
-            showStatus("Restored default lock screen settings");
-        }
-    }
-
-    Process {
-        id: updatePositionsProc
-        command: ["/usr/bin/true"]
-        running: false
-        onCommandChanged: {
-            if (command && command.length >= 3 && (command[1] === "update-positions" || command[1] === "update_positions")) {
-                try {
-                    const payload = JSON.parse(command[2]);
-                    LockscreenConfig.updatePositions(payload);
-                    showStatus("Positions saved to Quickshell lock screen");
-                } catch(e) {
-                    console.error("Failed to parse update-positions payload:", e);
-                }
-            }
-        }
-    }
-
-    Process {
-        id: loadSettingsProc
-        command: ["/usr/bin/true"]
-        running: false
-        onExited: {
-            root.textBlocks = LockscreenConfig.text_blocks;
-            showStatus("Reset stage sandbox to saved positions");
-        }
     }
 
     /* Main Scrollable View */

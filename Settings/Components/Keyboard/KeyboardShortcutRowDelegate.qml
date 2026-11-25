@@ -16,7 +16,7 @@ Item {
     readonly property bool isEditing: root.editingUid === modelData.uid && root.editingUid !== -1
     readonly property bool isConfirmingUnbind: root.confirmingUnbindUid === modelData.uid
 
-    implicitHeight: isEditing ? (50 + editDrawer.implicitHeight + 8) : 50
+    implicitHeight: (isEditing && editDrawerLoader.item) ? (50 + editDrawerLoader.item.implicitHeight + 8) : 50
 
     Behavior on implicitHeight { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
 
@@ -137,12 +137,23 @@ Item {
         }
     }
 
-    /* Expandable Edit Drawer */
-    KeyboardShortcutEditDrawer {
-        id: editDrawer
-        root: rowItem.root
-        rowItem: rowItem
-        mainRowRect: mainRowRect
-        modelData: rowItem.modelData
+    /* Expandable Edit Drawer (lazy-loaded so 100+ drawers are not instantiated on open) */
+    Loader {
+        id: editDrawerLoader
+        active: rowItem.isEditing || rowItem.implicitHeight > 50.5
+        anchors {
+            top: mainRowRect.bottom
+            left: parent.left
+            right: parent.right
+            leftMargin: 8
+            rightMargin: 8
+            topMargin: 2
+        }
+        sourceComponent: KeyboardShortcutEditDrawer {
+            root: rowItem.root
+            rowItem: rowItem
+            mainRowRect: mainRowRect
+            modelData: rowItem.modelData
+        }
     }
 }

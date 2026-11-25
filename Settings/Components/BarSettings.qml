@@ -7,6 +7,7 @@ import "../../bar"
 import "../../MonitorManager"
 import "./Common"
 import "./Bar"
+import "./Bar/BarColorSpecUtils.js" as BarColorSpecUtils
 import "../../utils/ColorUtils.js" as ColorUtils
 
 Item {
@@ -30,9 +31,8 @@ Item {
     property string optionSearchQuery: ""
 
     function matchesOptionFilter(keywords) {
-        var q = optionSearchQuery.toLowerCase().trim();
-        if (q === "") return true;
-        return keywords.toLowerCase().indexOf(q) !== -1;
+        const q = optionSearchQuery.toLowerCase().trim();
+        return q === "" || keywords.toLowerCase().indexOf(q) !== -1;
     }
 
     property bool isDraggingBlock: false
@@ -69,7 +69,47 @@ Item {
 
     property int _monitorRevision: 0
     property alias subTabContentAnimation: subTabContentAnim
-    property alias generalTab: generalTabCol
+    property alias generalTab: barState
+
+    // Reactive current-bar state shared across all sub-tabs without keeping hidden sub-tab UI mounted
+    QtObject {
+        id: barState
+        readonly property string curPos: BarConfig.currentBar ? BarConfig.currentBar.position : BarConfig.position
+        readonly property bool curIsVert: (curPos === "left" || curPos === "right")
+        readonly property int curHeight: BarConfig.currentBar ? Number(BarConfig.currentBar.barHeight) : BarConfig.barHeight
+        readonly property string curDisplayTarget: BarConfig.currentBar ? (BarConfig.currentBar.displayTarget || (BarConfig.currentBar.allMonitors ? "all" : "primary")) : BarConfig.displayTarget
+        readonly property bool isEditingSecondary: root.hasMultipleMonitors && curDisplayTarget === "all" && BarConfig.activeEditingDisplay === "secondary"
+        readonly property bool curFloating: BarConfig.currentBar
+            ? (isEditingSecondary && BarConfig.currentBar.secondaryFloating !== undefined
+                ? Boolean(BarConfig.currentBar.secondaryFloating)
+                : Boolean(BarConfig.currentBar.floating))
+            : BarConfig.floating
+        readonly property bool curDashed: BarConfig.currentBar
+            ? (isEditingSecondary && BarConfig.currentBar.secondaryDashed !== undefined
+                ? Boolean(BarConfig.currentBar.secondaryDashed)
+                : Boolean(BarConfig.currentBar.dashed))
+            : BarConfig.dashed
+        readonly property bool curDynamicIsland: BarConfig.currentBar
+            ? (isEditingSecondary && BarConfig.currentBar.secondaryDynamicIsland !== undefined
+                ? Boolean(BarConfig.currentBar.secondaryDynamicIsland)
+                : Boolean(BarConfig.currentBar.dynamicIsland))
+            : BarConfig.dynamicIsland
+        readonly property real curOpacity: BarConfig.currentBar ? Number(BarConfig.currentBar.barOpacity) : BarConfig.barOpacity
+        readonly property int curPillRadius: BarConfig.currentBar ? (BarConfig.currentBar.pillRadius !== undefined ? Number(BarConfig.currentBar.pillRadius) : 10) : BarConfig.pillRadius
+        readonly property real curPillOpacity: BarConfig.currentBar ? (BarConfig.currentBar.pillOpacity !== undefined ? Number(BarConfig.currentBar.pillOpacity) : 1.0) : BarConfig.pillOpacity
+        readonly property bool curHidePill: BarConfig.currentBar ? Boolean(BarConfig.currentBar.hidePill) : BarConfig.hidePill
+        readonly property bool curScaleWidgets: BarConfig.currentBar ? (BarConfig.currentBar.scaleWidgets !== undefined ? Boolean(BarConfig.currentBar.scaleWidgets) : Boolean(BarConfig.scaleWidgets)) : Boolean(BarConfig.scaleWidgets)
+        readonly property string curActiveStyle: BarConfig.currentBar ? (BarConfig.currentBar.activeStyle || BarConfig.activeStyle || "pill") : (BarConfig.activeStyle || "pill")
+        readonly property string curBarColor: BarConfig.currentBar
+            ? (isEditingSecondary && BarConfig.currentBar.secondaryBarColor !== undefined
+                ? String(BarConfig.currentBar.secondaryBarColor)
+                : (BarConfig.currentBar.barColor || ""))
+            : (BarConfig.barColor || "")
+        readonly property bool curAllMonitors: BarConfig.currentBar ? Boolean(BarConfig.currentBar.allMonitors) : BarConfig.allMonitors
+        readonly property string curSecondaryMode: BarConfig.currentBar ? (BarConfig.currentBar.secondaryMode || "custom") : BarConfig.secondaryMode
+        readonly property bool curBlankOnSecondary: BarConfig.currentBar ? (BarConfig.currentBar.blankOnSecondary !== undefined ? Boolean(BarConfig.currentBar.blankOnSecondary) : false) : BarConfig.blankOnSecondary
+        readonly property bool curEnabled: BarConfig.currentBar ? (BarConfig.currentBar.enabled !== false) : BarConfig.barVisible
+    }
 
     Component.onCompleted: {
         if (typeof MonitorService !== "undefined") {
@@ -136,7 +176,6 @@ Item {
         return s || (fallback || "Primary Bar");
     }
 
-    // Live active monitor detection
     readonly property var activeScreensList: {
         void root._monitorRevision;
         if (Quickshell.screens) void Quickshell.screens.length;
@@ -182,10 +221,7 @@ Item {
             return (screens.length > 0 && screens[0] && screens[0].name) ? screens[0].name : "HDMI-A-1";
         }
         if (target === "secondary") {
-            if (screens.length > 1 && screens[1] && screens[1].name) {
-                return screens[1].name;
-            }
-            return "";
+            return (screens.length > 1 && screens[1] && screens[1].name) ? screens[1].name : "";
         }
         for (let i = 0; i < screens.length; i++) {
             if (screens[i] && screens[i].name === target) return screens[i].name;
@@ -193,12 +229,8 @@ Item {
         return target || (screens.length > 0 ? screens[0].name : "Display");
     }
 
-    readonly property string activeMonitorsSummary: {
-        const screens = root.activeScreensList;
-        return screens.map(s => s.name || "Display").join(", ");
-    }
+    readonly property string activeMonitorsSummary: root.activeScreensList.map(s => s.name || "Display").join(", ")
 
-    /* Add Bar Confirmation Dialog State */
     property bool addBarModalVisible: false
     property string addBarChosenTarget: "primary"
     property string addBarChosenPosition: "bottom"
@@ -208,15 +240,13 @@ Item {
         const primMon = root.getMonitorNameForTarget("primary");
         const secMon = root.getMonitorNameForTarget("secondary");
 
-        const opts = [
-            {
-                id: "primary",
-                title: "Primary Display (" + primMon + ")",
-                desc: root.hasMultipleMonitors
-                    ? "Show this bar only on your main screen"
-                    : "Show this bar on your active display (" + primMon + ")"
-            }
-        ];
+        const opts = [{
+            id: "primary",
+            title: "Primary Display (" + primMon + ")",
+            desc: root.hasMultipleMonitors
+                ? "Show this bar only on your main screen"
+                : "Show this bar on your active display (" + primMon + ")"
+        }];
 
         if (root.hasMultipleMonitors && secMon) {
             opts.push({
@@ -237,15 +267,13 @@ Item {
             });
         }
 
-        if (screens.length > 2) {
-            for (let i = 2; i < screens.length; i++) {
-                const sName = screens[i] ? screens[i].name : ("Display " + (i + 1));
-                opts.push({
-                    id: sName,
-                    title: "Display " + (i + 1) + " (" + sName + ")",
-                    desc: "Show this bar only on " + sName
-                });
-            }
+        for (let i = 2; i < screens.length; i++) {
+            const sName = screens[i] ? screens[i].name : ("Display " + (i + 1));
+            opts.push({
+                id: sName,
+                title: "Display " + (i + 1) + " (" + sName + ")",
+                desc: "Show this bar only on " + sName
+            });
         }
         return opts;
     }
@@ -295,23 +323,11 @@ Item {
 
     function selectMonitorFilter(target) {
         root.selectedMonitorFilter = target;
-        if (target === "secondary") {
-            BarConfig.activeEditingDisplay = "secondary";
-            const secTabs = root.allDesktopBarTabs.filter(t => t.monitorTarget === "secondary");
-            if (secTabs.length > 0) {
-                const hasCurrent = secTabs.some(t => t.barIndex === BarConfig.selectedBarIndex);
-                if (!hasCurrent) {
-                    BarConfig.selectedBarIndex = secTabs[0].barIndex;
-                }
-            }
-        } else if (target === "primary") {
-            BarConfig.activeEditingDisplay = "primary";
-            const primTabs = root.allDesktopBarTabs.filter(t => t.monitorTarget === "primary");
-            if (primTabs.length > 0) {
-                const hasCurrent = primTabs.some(t => t.barIndex === BarConfig.selectedBarIndex);
-                if (!hasCurrent) {
-                    BarConfig.selectedBarIndex = primTabs[0].barIndex;
-                }
+        if (target === "secondary" || target === "primary") {
+            BarConfig.activeEditingDisplay = target;
+            const matching = root.allDesktopBarTabs.filter(t => t.monitorTarget === target);
+            if (matching.length > 0 && !matching.some(t => t.barIndex === BarConfig.selectedBarIndex)) {
+                BarConfig.selectedBarIndex = matching[0].barIndex;
             }
         }
         subTabContentAnim.restart();
@@ -328,7 +344,6 @@ Item {
 
         const primMon = root.getMonitorNameForTarget("primary");
         const secMon = root.getMonitorNameForTarget("secondary");
-
         const list = [];
         const rawBars = BarConfig.bars || [];
         for (let i = 0; i < rawBars.length; ++i) {
@@ -341,63 +356,36 @@ Item {
 
             if (dispTarget === "all") {
                 list.push({
-                    barIndex: i,
-                    display: "primary",
+                    barIndex: i, display: "primary",
                     name: (rawBars.length === 1 && i === 0) ? "Primary Bar" : baseName,
-                    pos: primPos,
-                    posLabel: primPos.charAt(0).toUpperCase() + primPos.slice(1),
-                    monitor: primMon,
-                    monitorRole: root.hasMultipleMonitors ? "Primary" : "Single",
-                    monitorTarget: "primary",
-                    enabled: bar.enabled !== false,
-                    isSecondary: false,
-                    rawBar: bar
+                    pos: primPos, posLabel: primPos.charAt(0).toUpperCase() + primPos.slice(1),
+                    monitor: primMon, monitorRole: root.hasMultipleMonitors ? "Primary" : "Single",
+                    monitorTarget: "primary", enabled: bar.enabled !== false, isSecondary: false, rawBar: bar
                 });
-
                 if (root.hasMultipleMonitors && secMon) {
                     list.push({
-                        barIndex: i,
-                        display: "secondary",
+                        barIndex: i, display: "secondary",
                         name: (rawBars.length === 1 && i === 0) ? "Secondary Bar" : baseName,
-                        pos: secPos,
-                        posLabel: secPos.charAt(0).toUpperCase() + secPos.slice(1),
-                        monitor: secMon,
-                        monitorRole: "Secondary",
-                        monitorTarget: "secondary",
-                        enabled: bar.enabled !== false,
-                        isSecondary: true,
-                        rawBar: bar
+                        pos: secPos, posLabel: secPos.charAt(0).toUpperCase() + secPos.slice(1),
+                        monitor: secMon, monitorRole: "Secondary",
+                        monitorTarget: "secondary", enabled: bar.enabled !== false, isSecondary: true, rawBar: bar
                     });
                 }
             } else if (dispTarget === "secondary") {
                 const targetMon = secMon || (root.hasMultipleMonitors ? "Secondary" : primMon);
                 list.push({
-                    barIndex: i,
-                    display: root.hasMultipleMonitors ? "secondary" : "primary",
-                    name: baseName,
-                    pos: secPos,
-                    posLabel: secPos.charAt(0).toUpperCase() + secPos.slice(1),
-                    monitor: targetMon,
-                    monitorRole: root.hasMultipleMonitors ? "Secondary" : "Single",
-                    monitorTarget: "secondary",
-                    enabled: bar.enabled !== false,
-                    isSecondary: root.hasMultipleMonitors,
-                    rawBar: bar
+                    barIndex: i, display: root.hasMultipleMonitors ? "secondary" : "primary",
+                    name: baseName, pos: secPos, posLabel: secPos.charAt(0).toUpperCase() + secPos.slice(1),
+                    monitor: targetMon, monitorRole: root.hasMultipleMonitors ? "Secondary" : "Single",
+                    monitorTarget: "secondary", enabled: bar.enabled !== false, isSecondary: root.hasMultipleMonitors, rawBar: bar
                 });
             } else {
                 const targetMon = (dispTarget === "primary") ? primMon : root.getMonitorNameForTarget(dispTarget);
                 list.push({
-                    barIndex: i,
-                    display: "primary",
-                    name: baseName,
-                    pos: primPos,
-                    posLabel: primPos.charAt(0).toUpperCase() + primPos.slice(1),
-                    monitor: targetMon,
-                    monitorRole: root.hasMultipleMonitors ? "Primary" : "Single",
-                    monitorTarget: "primary",
-                    enabled: bar.enabled !== false,
-                    isSecondary: false,
-                    rawBar: bar
+                    barIndex: i, display: "primary",
+                    name: baseName, pos: primPos, posLabel: primPos.charAt(0).toUpperCase() + primPos.slice(1),
+                    monitor: targetMon, monitorRole: root.hasMultipleMonitors ? "Primary" : "Single",
+                    monitorTarget: "primary", enabled: bar.enabled !== false, isSecondary: false, rawBar: bar
                 });
             }
         }
@@ -406,9 +394,7 @@ Item {
 
     readonly property var desktopBarTabs: {
         const all = root.allDesktopBarTabs;
-        if (!root.hasMultipleMonitors || root.selectedMonitorFilter === "all") {
-            return all;
-        }
+        if (!root.hasMultipleMonitors || root.selectedMonitorFilter === "all") return all;
         return all.filter(t => t.monitorTarget === root.selectedMonitorFilter);
     }
 
@@ -442,29 +428,14 @@ Item {
         return 0;
     }
 
-    function _trackColorDeps() {
-        void root._colorRevision;
-    }
-
     function getBlockColorSpec(widgetId) {
         void root._colorRevision;
-        if (!widgetId) return "";
-        const prefix = "@color:" + currentBarId() + ":" + widgetId + "=";
-        const rem = BarConfig.removedWidgets || [];
-        for (let i = 0; i < rem.length; i++) {
-            const s = String(rem[i]);
-            if (s.startsWith(prefix)) return s.substring(prefix.length).trim();
-        }
-        return "";
+        return BarColorSpecUtils.getBlockColorSpec(currentBarId(), widgetId, BarConfig.removedWidgets);
     }
 
     function setBlockColorSpec(widgetId, spec) {
         if (!widgetId) return;
-        const prefix = "@color:" + currentBarId() + ":" + widgetId + "=";
-        let rem = (BarConfig.removedWidgets || []).filter(item => !String(item).startsWith(prefix));
-        const clean = spec ? String(spec).trim() : "";
-        if (clean !== "") rem.push(prefix + clean);
-        BarConfig.removedWidgets = rem;
+        BarConfig.removedWidgets = BarColorSpecUtils.buildUpdatedWidgetColorSpec(currentBarId(), widgetId, spec, BarConfig.removedWidgets);
         BarConfig.saveConfig();
     }
 
@@ -473,33 +444,15 @@ Item {
         if (panelIndex < 0 || panelIndex >= pList.length) return;
         const widgets = pList[panelIndex] || [];
         if (widgets.length === 0) return;
-        const bId = currentBarId();
-        const prefixes = widgets.map(w => "@color:" + bId + ":" + w + "=");
-        const clean = spec ? String(spec).trim() : "";
-        let rem = (BarConfig.removedWidgets || []).filter(item => {
-            const s = String(item);
-            return !prefixes.some(p => s.startsWith(p));
-        });
-        if (clean !== "") {
-            for (let i = 0; i < prefixes.length; i++) {
-                rem.push(prefixes[i] + clean);
-            }
-        }
-        BarConfig.removedWidgets = rem;
+        BarConfig.removedWidgets = BarColorSpecUtils.buildUpdatedPanelColorSpecs(currentBarId(), widgets, spec, BarConfig.removedWidgets);
         BarConfig.saveConfig();
     }
 
     function getPanelColorSpec(panelIndex) {
-        _trackColorDeps();
+        void root._colorRevision;
         const pList = BarConfig.panels || [];
         if (panelIndex < 0 || panelIndex >= pList.length) return "";
-        const widgets = pList[panelIndex] || [];
-        if (widgets.length === 0) return "";
-        const firstSpec = getBlockColorSpec(widgets[0]);
-        for (let i = 1; i < widgets.length; i++) {
-            if (getBlockColorSpec(widgets[i]) !== firstSpec) return "";
-        }
-        return firstSpec;
+        return BarColorSpecUtils.getPanelUniformColorSpec(currentBarId(), pList[panelIndex] || [], BarConfig.removedWidgets);
     }
 
     function clearAllBlockColorsForCurrentBar() {
@@ -509,18 +462,11 @@ Item {
     }
 
     function isEditingSecondaryBar() {
-        const cur = BarConfig.currentBar;
-        const tgt = cur ? (cur.displayTarget || (cur.allMonitors ? "all" : "primary")) : "primary";
-        return root.hasMultipleMonitors && tgt === "all" && BarConfig.activeEditingDisplay === "secondary";
+        return barState.isEditingSecondary;
     }
 
     function getActiveTargetSpec() {
-        if (root.selectedColorTargetType === "bar") {
-            if (!BarConfig.currentBar) return BarConfig.barColor || "";
-            return (root.isEditingSecondaryBar() && BarConfig.currentBar.secondaryBarColor !== undefined)
-                ? String(BarConfig.currentBar.secondaryBarColor)
-                : (BarConfig.currentBar.barColor || "");
-        }
+        if (root.selectedColorTargetType === "bar") return barState.curBarColor;
         return root.selectedColorTargetType === "panel"
             ? root.getPanelColorSpec(root.selectedColorPanelIndex)
             : root.getBlockColorSpec(root.selectedColorWidgetId);
@@ -528,11 +474,7 @@ Item {
 
     function applyColorToActiveTarget(spec) {
         if (root.selectedColorTargetType === "bar") {
-            if (root.isEditingSecondaryBar()) {
-                BarConfig.updateBarProp("secondaryBarColor", spec);
-            } else {
-                BarConfig.updateBarProp("barColor", spec);
-            }
+            BarConfig.updateBarProp(root.isEditingSecondaryBar() ? "secondaryBarColor" : "barColor", spec);
         } else if (root.selectedColorTargetType === "panel") {
             root.setPanelBlocksColorSpec(root.selectedColorPanelIndex, spec);
         } else {
@@ -541,26 +483,13 @@ Item {
     }
 
     function resolveThemeSpec(spec, fallbackColor) {
-        _trackColorDeps();
+        void root._colorRevision;
         const fb = fallbackColor !== undefined ? fallbackColor : root.theme.accentPrimary;
         return ColorUtils.resolveThemeSpec(root.theme, spec, fb);
     }
 
     function getSpecLabel(spec) {
-        if (!spec || String(spec).trim() === "") return "Auto";
-        const s = String(spec).trim();
-        if (s.indexOf("theme:") === 0) {
-            const parts = s.split(":");
-            if (parts.length >= 3) {
-                const tName = parts.slice(1, parts.length - 1).join(":");
-                const roleKey = parts[parts.length - 1];
-                return tName + " · " + roleKey.replace("accent", "").replace("text", "");
-            }
-        }
-        for (let i = 0; i < root.themeRoles.length; i++) {
-            if (root.themeRoles[i].key === s) return root.themeRoles[i].label;
-        }
-        return s;
+        return BarColorSpecUtils.getSpecLabel(spec, root.themeRoles);
     }
 
     function getWidgetPanelBadge(widgetId) {
@@ -767,297 +696,32 @@ Item {
                     root: root
                 }
 
-                DynamicIslandModulesCard {
-                    visible: root.currentSubTab === 0 && generalTabCol.curDynamicIsland
-                    root: root
-                }
-
-                ColumnLayout {
-                    visible: root.currentSubTab === 1
+                Loader {
                     Layout.fillWidth: true
-                    spacing: 16
-
-                    ColorTargetCard {
-                        root: root
-                    }
-
-                    ColorAssignCard {
+                    active: root.currentSubTab === 0 && barState.curDynamicIsland
+                    visible: active
+                    sourceComponent: DynamicIslandModulesCard {
                         root: root
                     }
                 }
 
-                ColumnLayout {
-                    id: generalTabCol
-                    visible: root.currentSubTab === 2
+                Loader {
                     Layout.fillWidth: true
-                    spacing: 20
+                    active: root.currentSubTab === 1
+                    visible: active
+                    sourceComponent: ColumnLayout {
+                        spacing: 16
+                        ColorTargetCard { root: root }
+                        ColorAssignCard { root: root }
+                    }
+                }
 
-                    readonly property string curPos: BarConfig.currentBar ? BarConfig.currentBar.position : BarConfig.position
-                    readonly property bool curIsVert: (curPos === "left" || curPos === "right")
-                    readonly property int curHeight: BarConfig.currentBar ? Number(BarConfig.currentBar.barHeight) : BarConfig.barHeight
-                    readonly property string curDisplayTarget: BarConfig.currentBar ? (BarConfig.currentBar.displayTarget || (BarConfig.currentBar.allMonitors ? "all" : "primary")) : BarConfig.displayTarget
-                    readonly property bool isEditingSecondary: root.hasMultipleMonitors && curDisplayTarget === "all" && BarConfig.activeEditingDisplay === "secondary"
-                    readonly property bool curFloating: BarConfig.currentBar
-                        ? (isEditingSecondary && BarConfig.currentBar.secondaryFloating !== undefined
-                            ? Boolean(BarConfig.currentBar.secondaryFloating)
-                            : Boolean(BarConfig.currentBar.floating))
-                        : BarConfig.floating
-                    readonly property bool curDashed: BarConfig.currentBar
-                        ? (isEditingSecondary && BarConfig.currentBar.secondaryDashed !== undefined
-                            ? Boolean(BarConfig.currentBar.secondaryDashed)
-                            : Boolean(BarConfig.currentBar.dashed))
-                        : BarConfig.dashed
-                    readonly property bool curDynamicIsland: BarConfig.currentBar
-                        ? (isEditingSecondary && BarConfig.currentBar.secondaryDynamicIsland !== undefined
-                            ? Boolean(BarConfig.currentBar.secondaryDynamicIsland)
-                            : Boolean(BarConfig.currentBar.dynamicIsland))
-                        : BarConfig.dynamicIsland
-                    readonly property real curOpacity: BarConfig.currentBar ? Number(BarConfig.currentBar.barOpacity) : BarConfig.barOpacity
-                    readonly property int curPillRadius: BarConfig.currentBar ? (BarConfig.currentBar.pillRadius !== undefined ? Number(BarConfig.currentBar.pillRadius) : 10) : BarConfig.pillRadius
-                    readonly property real curPillOpacity: BarConfig.currentBar ? (BarConfig.currentBar.pillOpacity !== undefined ? Number(BarConfig.currentBar.pillOpacity) : 1.0) : BarConfig.pillOpacity
-                    readonly property bool curHidePill: BarConfig.currentBar ? Boolean(BarConfig.currentBar.hidePill) : BarConfig.hidePill
-                    readonly property bool curScaleWidgets: BarConfig.currentBar ? (BarConfig.currentBar.scaleWidgets !== undefined ? Boolean(BarConfig.currentBar.scaleWidgets) : Boolean(BarConfig.scaleWidgets)) : Boolean(BarConfig.scaleWidgets)
-                    readonly property string curActiveStyle: BarConfig.currentBar ? (BarConfig.currentBar.activeStyle || BarConfig.activeStyle || "pill") : (BarConfig.activeStyle || "pill")
-                    readonly property string curBarColor: BarConfig.currentBar
-                        ? (isEditingSecondary && BarConfig.currentBar.secondaryBarColor !== undefined
-                            ? String(BarConfig.currentBar.secondaryBarColor)
-                            : (BarConfig.currentBar.barColor || ""))
-                        : (BarConfig.barColor || "")
-                    readonly property bool curAllMonitors: BarConfig.currentBar ? Boolean(BarConfig.currentBar.allMonitors) : BarConfig.allMonitors
-                    readonly property string curSecondaryMode: BarConfig.currentBar ? (BarConfig.currentBar.secondaryMode || "custom") : BarConfig.secondaryMode
-                    readonly property bool curBlankOnSecondary: BarConfig.currentBar ? (BarConfig.currentBar.blankOnSecondary !== undefined ? Boolean(BarConfig.currentBar.blankOnSecondary) : false) : BarConfig.blankOnSecondary
-                    readonly property bool curEnabled: BarConfig.currentBar ? (BarConfig.currentBar.enabled !== false) : BarConfig.barVisible
-
-                    GeneralBarCard {
+                Loader {
+                    Layout.fillWidth: true
+                    active: root.currentSubTab === 2
+                    visible: active
+                    sourceComponent: BarGeneralTabContent {
                         root: root
-                    }
-
-                    AnimatedSection {
-                        expanded: generalTabCol.curDynamicIsland
-                        DynamicIslandOptionsCard {
-                            root: root
-                        }
-                    }
-
-                    GlobalFrameCard {
-                        root: root
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Layout.leftMargin: 4
-                        Layout.rightMargin: 4
-                        Layout.topMargin: 4
-                        spacing: 12
-
-                        Text {
-                            text: "Widget Settings"
-                            font.family: Style.font
-                            font.pixelSize: Style.px(13)
-                            font.bold: Style.boldHeadings
-                            font.letterSpacing: Style.letterSpacing
-                            font.hintingPreference: Style.fontHintingEnum
-                            antialiasing: Style.fontAntialiasing
-                            renderType: Style.fontRenderTypeEnum
-                            color: Style.theme.textSecondary
-                            Layout.alignment: Qt.AlignVCenter
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        Rectangle {
-                            width: 260
-                            height: 32
-                            radius: 7
-                            color: root.theme.bgSurface
-                            border.color: optionSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
-                            border.width: 1
-
-                            RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: 10
-                                anchors.rightMargin: 8
-                                spacing: 6
-
-                                Text {
-                                    text: "󰍉"
-                                    font.family: root.font
-                                    font.pixelSize: 13
-                                    color: optionSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.textMuted
-                                    Layout.alignment: Qt.AlignVCenter
-                                }
-
-                                TextInput {
-                                    id: optionSearchInput
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    verticalAlignment: TextInput.AlignVCenter
-                                    font.family: root.font
-                                    font.pixelSize: 12
-                                    color: root.theme.textPrimary
-                                    selectByMouse: true
-                                    clip: true
-                                    text: root.optionSearchQuery
-                                    onTextChanged: root.optionSearchQuery = text
-
-                                    Text {
-                                        visible: parent.text === ""
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: "Search widget settings..."
-                                        font.family: root.font
-                                        font.pixelSize: 11
-                                        color: root.theme.textMuted
-                                    }
-                                }
-
-                                Rectangle {
-                                    visible: optionSearchInput.text !== ""
-                                    width: 18
-                                    height: 18
-                                    radius: 9
-                                    color: clearOptionSearchHover.hovered ? root.theme.bgHover : "transparent"
-                                    Layout.alignment: Qt.AlignVCenter
-
-                                    HoverHandler { id: clearOptionSearchHover }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "✕"
-                                        font.family: root.font
-                                        font.pixelSize: 10
-                                        color: clearOptionSearchHover.hovered ? root.theme.textPrimary : root.theme.textMuted
-                                    }
-
-                                    MouseArea {
-                                        anchors.fill: parent
-                                        cursorShape: Qt.PointingHandCursor
-                                        onClicked: {
-                                            optionSearchInput.text = "";
-                                            root.optionSearchQuery = "";
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-
-                        readonly property bool hasAnyMatch:
-                            root.matchesOptionFilter("app grid launcher icon")
-                            || root.matchesOptionFilter("network speed down up compact")
-                            || root.matchesOptionFilter("clock time date seconds year calendar")
-                            || root.matchesOptionFilter("workspaces index scroll hyprland")
-                            || root.matchesOptionFilter("task switcher window scope label width")
-                            || root.matchesOptionFilter("global menu appmenu")
-                            || root.matchesOptionFilter("weather location unit forecast")
-                            || root.matchesOptionFilter("battery percentage low threshold")
-                            || root.matchesOptionFilter("cava audio visualizer bars stereo")
-                            || root.matchesOptionFilter("media player mpris album art seekbar popup")
-                            || root.matchesOptionFilter("hardware cpu gpu memory disk temp alert")
-                            || root.matchesOptionFilter("wifi bluetooth connectivity labels")
-                            || root.matchesOptionFilter("brightness night light step")
-                            || root.matchesOptionFilter("custom script command interval png image")
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("app grid launcher icon")
-                            AppGridOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("network speed down up compact")
-                            NetworkSpeedOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("clock time date seconds year calendar")
-                            ClockOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("workspaces index scroll hyprland")
-                            WorkspacesOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("task switcher window scope label width")
-                            TaskSwitcherOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("global menu appmenu")
-                            GlobalMenuOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("weather location unit forecast")
-                            WeatherOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("battery percentage low threshold")
-                            BatteryOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("cava audio visualizer bars stereo")
-                            CavaOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("media player mpris album art seekbar popup")
-                            MediaOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("hardware cpu gpu memory disk temp alert")
-                            HardwareMonitorOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("wifi bluetooth connectivity labels")
-                            WifiBluetoothOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("brightness night light step")
-                            BrightnessOptionsCard { root: root }
-                            Item { Layout.fillWidth: true; height: 20 }
-                        }
-
-                        AnimatedSection {
-                            expanded: root.matchesOptionFilter("custom script command interval png image")
-                            CustomScriptOptionsCard { root: root }
-                        }
-
-                        AnimatedSection {
-                            expanded: !parent.hasAnyMatch && root.optionSearchQuery.trim() !== ""
-                            Item {
-                                Layout.fillWidth: true
-                                height: 64
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "No widget settings matching \"" + root.optionSearchQuery.trim() + "\""
-                                    font.family: root.font
-                                    font.pixelSize: 12
-                                    color: root.theme.textMuted
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -1068,9 +732,13 @@ Item {
         root: root
     }
 
-    // Add Bar Confirmation Modal Overlay (for 2 or more monitors)
-    AddBarConfirmModal {
-        root: root
+    Loader {
+        anchors.fill: parent
+        active: root.addBarModalVisible
+        visible: active
+        sourceComponent: AddBarConfirmModal {
+            root: root
+        }
     }
 
     ToastBanner {

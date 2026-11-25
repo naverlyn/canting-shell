@@ -12,14 +12,7 @@ Rectangle {
     required property var mainRowRect
     required property var modelData
     id: editDrawer
-    anchors {
-        top: mainRowRect.bottom
-        left: parent.left
-        right: parent.right
-        leftMargin: 8
-        rightMargin: 8
-        topMargin: 2
-    }
+    width: parent ? parent.width : 0
     implicitHeight: rowItem.isEditing ? (drawerCol.implicitHeight + 20) : 0
     visible: opacity > 0 || implicitHeight > 0
     opacity: rowItem.isEditing ? 1.0 : 0.0

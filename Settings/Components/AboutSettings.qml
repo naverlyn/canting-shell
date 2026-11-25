@@ -73,7 +73,7 @@ Item {
     Process {
         id: sysInfoProc
         command: [root.scriptPath]
-        running: true
+        running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.trim().split("\n");
@@ -95,12 +95,36 @@ Item {
         }
     }
 
+    Process {
+        id: uptimeOnlyProc
+        command: ["uptime", "-p"]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const up = text.trim().replace(/^up\s+/, "");
+                if (up) root.uptimeStr = up;
+            }
+        }
+    }
+
+    onVisibleChanged: {
+        if (visible && !sysInfoProc.running) {
+            sysInfoProc.running = true;
+        }
+    }
+    Component.onCompleted: {
+        if (visible && !sysInfoProc.running) {
+            sysInfoProc.running = true;
+        }
+    }
+
     Timer {
-        interval: 10000
+        interval: 60000
         repeat: true
         running: root.visible
-        triggeredOnStart: true
-        onTriggered: sysInfoProc.running = true
+        onTriggered: {
+            if (!uptimeOnlyProc.running) uptimeOnlyProc.running = true;
+        }
     }
 
     Flickable {

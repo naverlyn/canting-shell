@@ -152,16 +152,9 @@ ColumnLayout {
                         menuWidth: 380
                         Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                         currentValue: self.curDefaultModule
-                        options: [
-                            { desktop: "auto",          name: "Auto (MPRIS / Calendar)", desc: "" },
-                            { desktop: "mpris",         name: "MPRIS Media",             desc: "" },
-                            { desktop: "calendar",      name: "Calendar",                desc: "" },
-                            { desktop: "notifications", name: "Notifications",           desc: "" },
-                            { desktop: "weather",       name: "Weather",                 desc: "" },
-                            { desktop: "quickControls", name: "Quick Controls",          desc: "" },
-                            { desktop: "appShortcuts",  name: "App Shortcuts",           desc: "" },
-                            { desktop: "systemStats",   name: "System Monitor",          desc: "" }
-                        ]
+                        options: [{ desktop: "auto", name: "Auto (MPRIS / Calendar)", desc: "" }].concat(
+                            (BarConfig.islandModuleDefinitions || []).map(m => ({ desktop: m.id, name: m.name, desc: "" }))
+                        )
                         onSelected: (val) => BarConfig.updateBarProp("islandDefaultModule", val)
                     }
                 }
@@ -183,15 +176,7 @@ ColumnLayout {
                         menuWidth: 380
                         Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                         currentValue: self.curSplitModules[0] || "mpris"
-                        options: [
-                            { desktop: "mpris",         name: "MPRIS Media",    desc: "" },
-                            { desktop: "calendar",      name: "Calendar",       desc: "" },
-                            { desktop: "notifications", name: "Notifications",  desc: "" },
-                            { desktop: "weather",       name: "Weather",        desc: "" },
-                            { desktop: "quickControls", name: "Quick Controls", desc: "" },
-                            { desktop: "appShortcuts",  name: "App Shortcuts",  desc: "" },
-                            { desktop: "systemStats",   name: "System Monitor", desc: "" }
-                        ]
+                        options: (BarConfig.islandModuleDefinitions || []).map(m => ({ desktop: m.id, name: m.name, desc: "" }))
                         onSelected: (val) => {
                             let pair = (self.curSplitModules || ["mpris", "calendar"]).slice(0, 2);
                             pair[0] = val;
@@ -213,15 +198,7 @@ ColumnLayout {
                         menuWidth: 380
                         Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
                         currentValue: self.curSplitModules[1] || "calendar"
-                        options: [
-                            { desktop: "mpris",         name: "MPRIS Media",    desc: "" },
-                            { desktop: "calendar",      name: "Calendar",       desc: "" },
-                            { desktop: "notifications", name: "Notifications",  desc: "" },
-                            { desktop: "weather",       name: "Weather",        desc: "" },
-                            { desktop: "quickControls", name: "Quick Controls", desc: "" },
-                            { desktop: "appShortcuts",  name: "App Shortcuts",  desc: "" },
-                            { desktop: "systemStats",   name: "System Monitor", desc: "" }
-                        ]
+                        options: (BarConfig.islandModuleDefinitions || []).map(m => ({ desktop: m.id, name: m.name, desc: "" }))
                         onSelected: (val) => {
                             let pair = (self.curSplitModules || ["mpris", "calendar"]).slice(0, 2);
                             pair[1] = val;
