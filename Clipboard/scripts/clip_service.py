@@ -119,7 +119,13 @@ def copy_item(cid):
         if p1.returncode != 0 or len(decoded) == 0:
             sys.exit(1)
 
-        p2 = subprocess.Popen(["wl-copy"], stdin=subprocess.PIPE)
+        p2 = subprocess.Popen(
+            ["wl-copy"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            close_fds=True
+        )
         p2.communicate(input=decoded)
         if p2.returncode != 0:
             sys.exit(1)
@@ -191,8 +197,21 @@ def get_status():
 
 def start_daemon():
     try:
-        subprocess.Popen("wl-paste --type text --watch cliphist store", shell=True, start_new_session=True)
-        subprocess.Popen("wl-paste --type image --watch cliphist store", shell=True, start_new_session=True)
+        for dtype in ("text", "image"):
+            chk = subprocess.run(
+                ["pgrep", "-f", f"wl-paste --type {dtype} --watch cliphist store"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            if chk.returncode != 0:
+                subprocess.Popen(
+                    ["wl-paste", "--type", dtype, "--watch", "cliphist", "store"],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    close_fds=True,
+                    start_new_session=True
+                )
         print(json.dumps({"success": True, "message": "Clipboard watcher daemon started"}))
     except Exception as e:
         print(json.dumps({"success": False, "error": str(e)}))

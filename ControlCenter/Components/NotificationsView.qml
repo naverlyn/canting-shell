@@ -8,11 +8,12 @@ import Quickshell.Services.Notifications
 import ".."
 import "../../notifications"
 import "../../notifications/SocialApps.js" as SocialApps
+import "../../ThemeSwitcher"
 
 Column {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
 
     // 1. Live History Array backed by NotificationService (single source of truth)
@@ -281,7 +282,7 @@ Column {
                         Rectangle {
                             id: notifDelegate
                             property var notif: notifWrap.modelData
-                            property int currentNotifId: notifWrap.modelData.notifId
+                            property string currentNotifId: String(notifWrap.modelData.notifId || "")
 
                             width: parent.width
                             height: notifCardCol.implicitHeight + 24
@@ -374,7 +375,7 @@ Column {
                                             radius: ccIconBox.isSocial ? (width / 2) : 8
                                             antialiasing: true
                                             visible: false
-                                            layer.enabled: true
+                                            layer.enabled: ccIconBox.hasAvatar && notifWrap.isVisibleInStack
                                             layer.smooth: true
                                             layer.textureSize: Qt.size(72, 72)
                                         }
@@ -383,7 +384,7 @@ Column {
                                             anchors.fill: parent
                                             visible: Boolean(notifDelegate.notif.notifImage)
                                             opacity: ccIconBox.hasAvatar ? 1.0 : 0.0
-                                            layer.enabled: ccIconBox.hasAvatar
+                                            layer.enabled: ccIconBox.hasAvatar && notifWrap.isVisibleInStack
                                             layer.smooth: true
                                             layer.effect: MultiEffect {
                                                 maskEnabled: true

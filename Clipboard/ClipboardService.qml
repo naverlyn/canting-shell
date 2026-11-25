@@ -17,32 +17,30 @@ Singleton {
     property string searchText: ""
     property string toastMessage: ""
 
-    // Category counts
+    // Single-pass category counts
     readonly property int totalCount: items.length
-    readonly property int textCount: {
-        let c = 0;
-        for (let i = 0; i < items.length; i++) if (items[i].category === "text") c++;
-        return c;
+    readonly property var _categoryCounts: {
+        const counts = { text: 0, image: 0, link: 0, code: 0, color: 0 };
+        for (let i = 0; i < items.length; i++) {
+            const cat = items[i] ? items[i].category : "";
+            if (counts[cat] !== undefined) counts[cat]++;
+        }
+        return counts;
     }
-    readonly property int imageCount: {
-        let c = 0;
-        for (let i = 0; i < items.length; i++) if (items[i].category === "image") c++;
-        return c;
+    readonly property int textCount: _categoryCounts.text
+    readonly property int imageCount: _categoryCounts.image
+    readonly property int linkCount: _categoryCounts.link
+    readonly property int codeCount: _categoryCounts.code
+    readonly property int colorCount: _categoryCounts.color
+
+    Timer {
+        id: toastResetTimer
+        interval: 2200
+        repeat: false
+        onTriggered: root.toastMessage = ""
     }
-    readonly property int linkCount: {
-        let c = 0;
-        for (let i = 0; i < items.length; i++) if (items[i].category === "link") c++;
-        return c;
-    }
-    readonly property int codeCount: {
-        let c = 0;
-        for (let i = 0; i < items.length; i++) if (items[i].category === "code") c++;
-        return c;
-    }
-    readonly property int colorCount: {
-        let c = 0;
-        for (let i = 0; i < items.length; i++) if (items[i].category === "color") c++;
-        return c;
+    onToastMessageChanged: {
+        if (root.toastMessage !== "") toastResetTimer.restart();
     }
 
     readonly property var filteredItems: {
@@ -144,6 +142,7 @@ Singleton {
         id: cacheWatcher
         path: ""
         watchChanges: true
+        onFileChanged: reload()
         onTextChanged: {
             const raw = cacheWatcher.text();
             if (!raw) return;

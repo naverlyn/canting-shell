@@ -6,10 +6,11 @@ import QtQuick
 import QtQuick.Layouts
 import "../bar"
 import "../utils/AppFrecencyUtils.js" as AppFrecencyUtils
+import "../ThemeSwitcher"
 
 Scope {
   id: root
-  property var theme: DefaultTheme {}
+  property var theme: Theme
   property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
   property int selectedIndex: 0
   property bool panelVisible: false
@@ -192,74 +193,12 @@ Scope {
     objectProp: "id"
     values: {
       if (!root.panelVisible) return [];
-      const usage = root.appUsage;
-      const all = [...DesktopEntries.applications.values].filter(d => {
-        const key = root.getAppKey(d);
-        return !AppLauncherConfig.isAppHidden(key);
-      });
-      const q = root.searchQuery.trim().toLowerCase();
-      const matchGen = AppLauncherConfig.matchGenericName;
-      const matchKw = AppLauncherConfig.matchKeywords;
-      const matchCat = AppLauncherConfig.matchCategories;
-      const sortMode = AppLauncherConfig.sortMode;
-
-      function compareApps(a, b) {
-        const favA = AppLauncherConfig.isAppFavorite(root.getAppKey(a));
-        const favB = AppLauncherConfig.isAppFavorite(root.getAppKey(b));
-        if (favA && !favB) return -1;
-        if (!favA && favB) return 1;
-
-        if (sortMode === "alphabetical") {
-          return (a.name || "").localeCompare(b.name || "");
-        } else if (sortMode === "recent") {
-          const recA = (usage[root.getAppKey(a)] || {}).lastUsed || 0;
-          const recB = (usage[root.getAppKey(b)] || {}).lastUsed || 0;
-          if (recA !== recB) return recB - recA;
-          return (a.name || "").localeCompare(b.name || "");
-        } else {
-          const sa = root.getFrecencyScore(a, usage);
-          const sb = root.getFrecencyScore(b, usage);
-          if (sa !== sb) return sb - sa;
-          return (a.name || "").localeCompare(b.name || "");
-        }
-      }
-
-      if (q === "") {
-        return all.sort(compareApps);
-      }
-
-      return all.filter(d =>
-        (d.name && d.name.toLowerCase().includes(q)) ||
-        (matchGen && d.genericName && d.genericName.toLowerCase().includes(q)) ||
-        (matchKw && d.keywords && d.keywords.some(k => k.toLowerCase().includes(q))) ||
-        (matchCat && d.categories && d.categories.some(c => c.toLowerCase().includes(q)))
-      ).sort((a, b) => {
-        const favA = AppLauncherConfig.isAppFavorite(root.getAppKey(a));
-        const favB = AppLauncherConfig.isAppFavorite(root.getAppKey(b));
-        if (favA && !favB) return -1;
-        if (!favA && favB) return 1;
-
-        const an = (a.name || "").toLowerCase();
-        const bn = (b.name || "").toLowerCase();
-        const as = an.startsWith(q);
-        const bs = bn.startsWith(q);
-        if (as && !bs) return -1;
-        if (!as && bs) return 1;
-
-        if (sortMode === "alphabetical") {
-          return an.localeCompare(bn);
-        } else if (sortMode === "recent") {
-          const recA = (usage[root.getAppKey(a)] || {}).lastUsed || 0;
-          const recB = (usage[root.getAppKey(b)] || {}).lastUsed || 0;
-          if (recA !== recB) return recB - recA;
-          return an.localeCompare(bn);
-        } else {
-          const sa = root.getFrecencyScore(a, usage);
-          const sb = root.getFrecencyScore(b, usage);
-          if (sa !== sb) return sb - sa;
-          return an.localeCompare(bn);
-        }
-      });
+      return AppFrecencyUtils.filterAndSortApps(
+        DesktopEntries.applications.values,
+        root.searchQuery,
+        root.appUsage,
+        AppLauncherConfig
+      );
     }
   }
 
@@ -505,6 +444,7 @@ Scope {
           Layout.fillHeight: true
           model: filteredApps
           clip: true
+          cacheBuffer: 0
           cellWidth: root.cellSize
           cellHeight: root.cellSize
           boundsBehavior: Flickable.StopAtBounds
@@ -539,6 +479,7 @@ Scope {
                   IconImage {
                     anchors.centerIn: parent
                     implicitSize: 40
+                    asynchronous: true
                     source: Quickshell.iconPath(cell.modelData.icon ?? "", true)
                     visible: (cell.modelData.icon ?? "") !== ""
                   }

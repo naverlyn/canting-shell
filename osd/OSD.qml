@@ -5,10 +5,11 @@ import Quickshell.Services.Pipewire
 import QtQuick
 import "../bar"
 import "Components"
+import "../ThemeSwitcher"
 
 Scope {
   id: root
-  property var theme: DefaultTheme {}
+  property var theme: Theme
   property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
 
   readonly property bool isHorizontal: OSDService.isHorizontal
@@ -128,31 +129,27 @@ Scope {
     onTriggered: root.showMic = false
   }
 
-  // Brightness monitoring
+  // Brightness monitoring (direct sysfs FileView read, zero subprocess per step)
+  function _readBrightnessText() {
+    const raw = brightnessFile.text();
+    if (!raw) return;
+    const val = parseInt(raw.trim());
+    if (!isNaN(val) && root.maxBrightness > 0) {
+      root.brightnessValue = val / root.maxBrightness;
+      if (root._brightnessReady) {
+        root.showBrightness = true;
+        brightnessHideTimer.restart();
+      }
+      root._brightnessReady = true;
+    }
+  }
+
   FileView {
     id: brightnessFile
     path: ""
     watchChanges: true
-    onFileChanged: brightnessReadProc.running = true
-  }
-
-  Process {
-    id: brightnessReadProc
-    command: ["brightnessctl", "-c", "backlight", "get"]
-    running: false
-    stdout: StdioCollector {
-      onStreamFinished: {
-        const val = parseInt(text.trim());
-        if (!isNaN(val) && root.maxBrightness > 0) {
-          root.brightnessValue = val / root.maxBrightness;
-          if (root._brightnessReady) {
-            root.showBrightness = true;
-            brightnessHideTimer.restart();
-          }
-          root._brightnessReady = true;
-        }
-      }
-    }
+    onFileChanged: reload()
+    onTextChanged: root._readBrightnessText()
   }
 
   Process {
@@ -166,7 +163,7 @@ Scope {
           const max = parseInt(lines[1]);
           if (!isNaN(max) && max > 0) root.maxBrightness = max;
           brightnessFile.path = lines[0];
-          brightnessReadProc.running = true;
+          brightnessFile.reload();
         }
       }
     }
@@ -203,7 +200,12 @@ Scope {
   }
 
   Variants {
-    model: (root.anyActive || root.osdMounted) ? (Quickshell.screens || []).filter(s => s && s.name && s.name !== "") : []
+    model: {
+      void BarConfig.panelsRevision;
+      void BarConfig.barVisible;
+      if (!root.anyActive && !root.osdMounted) return [];
+      return (Quickshell.screens || []).filter(s => s && s.name && s.name !== "" && !BarConfig.shouldSuppressOsdOnScreen(String(s.name)));
+    }
 
     PanelWindow {
       id: osdWindow

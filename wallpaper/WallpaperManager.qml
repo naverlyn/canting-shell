@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
 import "./Components"
+import "../ThemeSwitcher"
 
 Scope {
   id: root
@@ -27,6 +28,7 @@ Scope {
         root.browsingFolders = false;
         if (WallpaperService.wallpapers.length === 0) WallpaperService.rescan();
       } else {
+        WallpaperService.browseEntries = [];
         Qt.callLater(() => gc());
       }
     }

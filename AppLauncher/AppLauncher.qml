@@ -5,6 +5,7 @@ import QtQuick
 import "../utils/AppFrecencyUtils.js" as AppFrecencyUtils
 import "LauncherModes.js" as LauncherModes
 import "Components"
+import "../ThemeSwitcher"
 
 Scope {
   id: root
@@ -177,9 +178,14 @@ Scope {
     }
   }
 
-  // Runner process for executing Linux commands
+  property bool isLua: false
   Process {
-    id: cmdRunner
+    id: hyprFmtProc
+    command: ["sh", "-c", "[ -f \"$HOME/.config/hypr/hyprland.lua\" ] && echo lua || echo conf"]
+    running: true
+    stdout: StdioCollector {
+      onStreamFinished: root.isLua = (text.trim() === "lua")
+    }
   }
 
   function getAppKey(entry) {
@@ -230,8 +236,7 @@ Scope {
     const trimmed = cmdText.trim();
     if (trimmed !== "") {
       recordCommand(trimmed);
-      cmdRunner.command = ["sh", "-c", trimmed];
-      cmdRunner.running = true;
+      Quickshell.execDetached(["sh", "-c", trimmed]);
       root.panelVisible = false;
       root.resetSearchIfNeeded();
     }
@@ -250,75 +255,13 @@ Scope {
     id: filteredApps
     objectProp: "id"
     values: {
-      if (!root.panelVisible) return [];
-      const usage = root.appUsage;
-      const all = [...DesktopEntries.applications.values].filter(d => {
-        const key = root.getAppKey(d);
-        return !AppLauncherConfig.isAppHidden(key);
-      });
-      const q = root.searchQuery.trim().toLowerCase();
-      const matchGen = AppLauncherConfig.matchGenericName;
-      const matchKw = AppLauncherConfig.matchKeywords;
-      const matchCat = AppLauncherConfig.matchCategories;
-      const sortMode = AppLauncherConfig.sortMode;
-
-      function compareApps(a, b) {
-        const favA = AppLauncherConfig.isAppFavorite(root.getAppKey(a));
-        const favB = AppLauncherConfig.isAppFavorite(root.getAppKey(b));
-        if (favA && !favB) return -1;
-        if (!favA && favB) return 1;
-
-        if (sortMode === "alphabetical") {
-          return (a.name || "").localeCompare(b.name || "");
-        } else if (sortMode === "recent") {
-          const recA = (usage[root.getAppKey(a)] || {}).lastUsed || 0;
-          const recB = (usage[root.getAppKey(b)] || {}).lastUsed || 0;
-          if (recA !== recB) return recB - recA;
-          return (a.name || "").localeCompare(b.name || "");
-        } else {
-          const scoreA = root.getFrecencyScore(a, usage);
-          const scoreB = root.getFrecencyScore(b, usage);
-          if (scoreA !== scoreB) return scoreB - scoreA;
-          return (a.name || "").localeCompare(b.name || "");
-        }
-      }
-
-      if (q === "") {
-        return all.sort(compareApps);
-      }
-
-      return all.filter(d =>
-        (d.name && d.name.toLowerCase().includes(q)) ||
-        (matchGen && d.genericName && d.genericName.toLowerCase().includes(q)) ||
-        (matchKw && d.keywords && d.keywords.some(k => k.toLowerCase().includes(q))) ||
-        (matchCat && d.categories && d.categories.some(c => c.toLowerCase().includes(q)))
-      ).sort((a, b) => {
-        const favA = AppLauncherConfig.isAppFavorite(root.getAppKey(a));
-        const favB = AppLauncherConfig.isAppFavorite(root.getAppKey(b));
-        if (favA && !favB) return -1;
-        if (!favA && favB) return 1;
-
-        const an = (a.name || "").toLowerCase();
-        const bn = (b.name || "").toLowerCase();
-        const aStarts = an.startsWith(q);
-        const bStarts = bn.startsWith(q);
-        if (aStarts && !bStarts) return -1;
-        if (!aStarts && bStarts) return 1;
-
-        if (sortMode === "alphabetical") {
-          return an.localeCompare(bn);
-        } else if (sortMode === "recent") {
-          const recA = (usage[root.getAppKey(a)] || {}).lastUsed || 0;
-          const recB = (usage[root.getAppKey(b)] || {}).lastUsed || 0;
-          if (recA !== recB) return recB - recA;
-          return an.localeCompare(bn);
-        } else {
-          const scoreA = root.getFrecencyScore(a, usage);
-          const scoreB = root.getFrecencyScore(b, usage);
-          if (scoreA !== scoreB) return scoreB - scoreA;
-          return an.localeCompare(bn);
-        }
-      });
+      if (!root.panelVisible || root.prefixMode !== "apps") return [];
+      return AppFrecencyUtils.filterAndSortApps(
+        DesktopEntries.applications.values,
+        root.searchQuery,
+        root.appUsage,
+        AppLauncherConfig
+      );
     }
   }
 
@@ -353,9 +296,9 @@ Scope {
       toplevel.wayland.activate();
     }
     if (addr !== "") {
-      try {
+      if (root.isLua) {
         Hyprland.dispatch('hl.dsp.focus({ window = "address:' + addr + '" })');
-      } catch (e) {
+      } else {
         Hyprland.dispatch("focuswindow address:" + addr);
       }
     }

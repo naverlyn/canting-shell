@@ -4,11 +4,12 @@ import Quickshell
 import Quickshell.Io
 import "../../bar"
 import ".."
+import "../../ThemeSwitcher"
 
 Rectangle {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
 
     property string conditionText: "Clear"
@@ -59,18 +60,28 @@ Rectangle {
         return "󰖕";
     }
 
-    function refresh() {
+    function refresh(force) {
         root.parseFromSummary(SystemInfo.weatherInfo);
         if (detailProc.running) return;
         const rawLoc = (typeof SystemInfo !== "undefined" && SystemInfo.effectiveWeatherLocation)
             ? SystemInfo.effectiveWeatherLocation
             : "";
+        const u = (typeof BarConfig !== "undefined" && BarConfig.weatherUnit === "u") ? "u" : "m";
+        const cacheKey = rawLoc + "|" + u;
+        if (!force && typeof SystemInfo !== "undefined" && SystemInfo._cachedWeatherKey === cacheKey && SystemInfo._cachedWeatherMs > 0 && (Date.now() - SystemInfo._cachedWeatherMs) < 300000) {
+            if (SystemInfo._cachedWeatherCond) root.conditionText = SystemInfo._cachedWeatherCond;
+            if (SystemInfo._cachedWeatherTemp) root.tempText = SystemInfo._cachedWeatherTemp;
+            if (SystemInfo._cachedWeatherFeels) root.feelsLikeText = SystemInfo._cachedWeatherFeels;
+            if (SystemInfo._cachedWeatherHum) root.humidityText = SystemInfo._cachedWeatherHum;
+            if (SystemInfo._cachedWeatherWind) root.windText = SystemInfo._cachedWeatherWind;
+            return;
+        }
         const reqLoc = rawLoc.trim().replace(/\s+/g, "+").replace(/"/g, "");
         if (!reqLoc && typeof SystemInfo !== "undefined") {
             SystemInfo.refreshWeather();
         }
         root.isRefreshing = true;
-        const u = (typeof BarConfig !== "undefined" && BarConfig.weatherUnit === "u") ? "u" : "m";
+        detailProc._reqKey = cacheKey;
         detailProc.command = [
             "sh", "-c",
             "curl -s --connect-timeout 5 \"https://wttr.in/" + reqLoc + "?format=%C|%t|%f|%h|%w&" + u + "\" 2>/dev/null | head -n 1"
@@ -80,6 +91,7 @@ Rectangle {
 
     Process {
         id: detailProc
+        property string _reqKey: ""
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
@@ -93,6 +105,15 @@ Rectangle {
                     if (parts[2].trim()) root.feelsLikeText = parts[2].trim().replace(/^\+/, "");
                     if (parts[3].trim()) root.humidityText = parts[3].trim();
                     if (parts[4].trim()) root.windText = parts[4].trim();
+                    if (typeof SystemInfo !== "undefined") {
+                        SystemInfo._cachedWeatherCond = root.conditionText;
+                        SystemInfo._cachedWeatherTemp = root.tempText;
+                        SystemInfo._cachedWeatherFeels = root.feelsLikeText;
+                        SystemInfo._cachedWeatherHum = root.humidityText;
+                        SystemInfo._cachedWeatherWind = root.windText;
+                        SystemInfo._cachedWeatherKey = detailProc._reqKey;
+                        SystemInfo._cachedWeatherMs = Date.now();
+                    }
                 }
             }
         }
@@ -101,7 +122,7 @@ Rectangle {
 
     Component.onCompleted: {
         root.parseFromSummary(SystemInfo.weatherInfo);
-        root.refresh();
+        root.refresh(false);
     }
 
     Connections {

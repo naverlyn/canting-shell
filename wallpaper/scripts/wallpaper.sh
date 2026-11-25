@@ -71,6 +71,7 @@ send_to_daemon() {
         else
             hyprctl hyprpaper wallpaper ",$path" 2>/dev/null || true
         fi
+        hyprctl hyprpaper unload unused 2>/dev/null || true
     fi
 }
 
@@ -96,7 +97,8 @@ case "$subcmd" in
         pkill -f "^magick .*wallpaper_effects/wallpaper_modified" 2>/dev/null || true
         cacheDir="$HOME/.cache/quickshell/wallpaper_effects"
         mkdir -p "$cacheDir"
-        path="$(apply_eff "$origPath" "$effect" "$cacheDir/wallpaper_modified.png")"
+        safeTarget="$(printf '%s' "${target:-all}" | tr -cd 'a-zA-Z0-9_-')"
+        path="$(apply_eff "$origPath" "$effect" "$cacheDir/wallpaper_modified_${safeTarget:-all}.png")"
         send_to_daemon "$path" "$target" "$mode" "$filter"
         if [ "$syncFlag" = "syncTheme" ] && [ -f "$setSh" ]; then
             env WALLPAPER_THEME_TOOL=wallust sh "$setSh" "$path" 2>/dev/null || true

@@ -260,46 +260,52 @@ PanelWindow {
                     Item {
                         Layout.fillWidth: true
                         Layout.preferredHeight: overviewWindow.mode === "workspaces"
-                            ? workspaceView.implicitHeight
-                            : switcherView.implicitHeight
+                            ? (workspaceLoader.item ? workspaceLoader.item.implicitHeight : 320)
+                            : (switcherLoader.item ? switcherLoader.item.implicitHeight : 220)
 
-                        SwitcherView {
-                            id: switcherView
+                        Loader {
+                            id: switcherLoader
                             anchors.fill: parent
                             opacity: overviewWindow.mode === "switcher" ? 1.0 : 0.0
                             visible: opacity > 0.01
+                            active: overviewWindow.mode === "switcher" || opacity > 0.01
                             Behavior on opacity {
                                 enabled: overviewWindow.ready
                                 NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
                             }
-                            theme: overviewWindow.theme
-                            font: overviewWindow.font
-                            toplevels: overviewWindow.toplevels
-                            selectedIndex: overviewWindow.selectedIndex
-                            onSelectionChanged: (idx) => overviewWindow.selectionChanged(idx)
-                            onWindowClicked: (t) => overviewWindow.windowFocused(t)
-                            onWindowClosed: (t) => overviewWindow.windowClosed(t)
+                            sourceComponent: SwitcherView {
+                                theme: overviewWindow.theme
+                                font: overviewWindow.font
+                                toplevels: overviewWindow.toplevels
+                                selectedIndex: overviewWindow.selectedIndex
+                                onSelectionChanged: (idx) => overviewWindow.selectionChanged(idx)
+                                onWindowClicked: (t) => overviewWindow.windowFocused(t)
+                                onWindowClosed: (t) => overviewWindow.windowClosed(t)
+                            }
                         }
 
-                        WorkspaceGridView {
-                            id: workspaceView
+                        Loader {
+                            id: workspaceLoader
                             anchors.fill: parent
                             opacity: overviewWindow.mode === "workspaces" ? 1.0 : 0.0
                             visible: opacity > 0.01
+                            active: overviewWindow.mode === "workspaces" || opacity > 0.01
                             Behavior on opacity {
                                 enabled: overviewWindow.ready
                                 NumberAnimation { duration: 160; easing.type: Easing.OutCubic }
                             }
-                            theme: overviewWindow.theme
-                            font: overviewWindow.font
-                            workspaces: overviewWindow.workspaces
-                            toplevels: overviewWindow.toplevels
-                            searchQuery: overviewWindow.searchQuery
-                            onSearchQueryChangedByUser: (q) => overviewWindow.searchQueryChangedByUser(q)
-                            onWindowClicked: (t) => overviewWindow.windowFocused(t)
-                            onWindowClosed: (t) => overviewWindow.windowClosed(t)
-                            onWindowMoved: (t, wsId) => overviewWindow.windowMoved(t, wsId)
-                            onWorkspaceClicked: (wsId) => overviewWindow.workspaceSwitched(wsId)
+                            sourceComponent: WorkspaceGridView {
+                                theme: overviewWindow.theme
+                                font: overviewWindow.font
+                                workspaces: overviewWindow.workspaces
+                                toplevels: overviewWindow.toplevels
+                                searchQuery: overviewWindow.searchQuery
+                                onSearchQueryChangedByUser: (q) => overviewWindow.searchQueryChangedByUser(q)
+                                onWindowClicked: (t) => overviewWindow.windowFocused(t)
+                                onWindowClosed: (t) => overviewWindow.windowClosed(t)
+                                onWindowMoved: (t, wsId) => overviewWindow.windowMoved(t, wsId)
+                                onWorkspaceClicked: (wsId) => overviewWindow.workspaceSwitched(wsId)
+                            }
                         }
                     }
                 }

@@ -12,140 +12,60 @@ import QtQuick.Layouts
           spacing: 12
           visible: hostRoot.browsingFolders
 
+  readonly property var breadcrumbs: WallpaperService.getBreadcrumbs(WallpaperService.browsePath)
+  readonly property var folderShortcuts: [
+    { label: "Home",      action: "home" },
+    { label: "Pictures",  action: "pictures" },
+    { label: "Downloads", action: "downloads" },
+    { label: "Up",        action: "up" }
+  ]
+
+  function triggerShortcut(action) {
+    const home = Quickshell.env("HOME") || "";
+    if (action === "home") WallpaperService.navigateTo(home);
+    else if (action === "pictures") WallpaperService.navigateTo(home + "/Pictures");
+    else if (action === "downloads") WallpaperService.navigateTo(home + "/Downloads");
+    else if (action === "up") WallpaperService.navigateUp();
+  }
+
           // Shortcuts & Jump Input Row
           RowLayout {
             Layout.fillWidth: true
             spacing: 8
 
-            // Shortcut: Home
-            Rectangle {
-              width: homeText.implicitWidth + 20
-              height: 28
-              radius: 6
-              color: homeHover.containsMouse ? hostRoot.theme.bgHover : hostRoot.theme.bgSurface
-              border.color: hostRoot.theme.bgBorder
-              border.width: 1
-              scale: homeHover.pressed ? 0.95 : (homeHover.containsMouse ? 1.04 : 1.0)
+            Repeater {
+              model: foldersRoot.folderShortcuts
+              delegate: Rectangle {
+                required property var modelData
+                width: scTxt.implicitWidth + 20
+                height: 28
+                radius: 6
+                color: scMouse.containsMouse ? hostRoot.theme.bgHover : hostRoot.theme.bgSurface
+                border.color: hostRoot.theme.bgBorder
+                border.width: 1
+                scale: scMouse.pressed ? 0.95 : (scMouse.containsMouse ? 1.04 : 1.0)
 
-              Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
-              Behavior on color { ColorAnimation { duration: 150 } }
-              Behavior on border.color { ColorAnimation { duration: 150 } }
+                Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on border.color { ColorAnimation { duration: 150 } }
 
-              Text {
-                id: homeText
-                anchors.centerIn: parent
-                text: "Home"
-                color: hostRoot.theme.textPrimary
-                font.pixelSize: 11
-                font.family: hostRoot.font
-                font.bold: true
-              }
+                Text {
+                  id: scTxt
+                  anchors.centerIn: parent
+                  text: modelData.label
+                  color: hostRoot.theme.textPrimary
+                  font.pixelSize: 11
+                  font.family: hostRoot.font
+                  font.bold: true
+                }
 
-              MouseArea {
-                id: homeHover
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: WallpaperService.navigateTo(Quickshell.env("HOME"))
-              }
-            }
-
-            // Shortcut: Pictures
-            Rectangle {
-              width: picText.implicitWidth + 20
-              height: 28
-              radius: 6
-              color: picHover.containsMouse ? hostRoot.theme.bgHover : hostRoot.theme.bgSurface
-              border.color: hostRoot.theme.bgBorder
-              border.width: 1
-              scale: picHover.pressed ? 0.95 : (picHover.containsMouse ? 1.04 : 1.0)
-
-              Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
-              Behavior on color { ColorAnimation { duration: 150 } }
-              Behavior on border.color { ColorAnimation { duration: 150 } }
-
-              Text {
-                id: picText
-                anchors.centerIn: parent
-                text: "Pictures"
-                color: hostRoot.theme.textPrimary
-                font.pixelSize: 11
-                font.family: hostRoot.font
-                font.bold: true
-              }
-
-              MouseArea {
-                id: picHover
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: WallpaperService.navigateTo(Quickshell.env("HOME") + "/Pictures")
-              }
-            }
-
-            // Shortcut: Downloads
-            Rectangle {
-              width: dlText.implicitWidth + 20
-              height: 28
-              radius: 6
-              color: dlHover.containsMouse ? hostRoot.theme.bgHover : hostRoot.theme.bgSurface
-              border.color: hostRoot.theme.bgBorder
-              border.width: 1
-              scale: dlHover.pressed ? 0.95 : (dlHover.containsMouse ? 1.04 : 1.0)
-
-              Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
-              Behavior on color { ColorAnimation { duration: 150 } }
-              Behavior on border.color { ColorAnimation { duration: 150 } }
-
-              Text {
-                id: dlText
-                anchors.centerIn: parent
-                text: "Downloads"
-                color: hostRoot.theme.textPrimary
-                font.pixelSize: 11
-                font.family: hostRoot.font
-                font.bold: true
-              }
-
-              MouseArea {
-                id: dlHover
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: WallpaperService.navigateTo(Quickshell.env("HOME") + "/Downloads")
-              }
-            }
-
-            // Shortcut: Parent (Up)
-            Rectangle {
-              width: upText.implicitWidth + 20
-              height: 28
-              radius: 6
-              color: upHover.containsMouse ? hostRoot.theme.bgHover : hostRoot.theme.bgSurface
-              border.color: hostRoot.theme.bgBorder
-              border.width: 1
-              scale: upHover.pressed ? 0.95 : (upHover.containsMouse ? 1.04 : 1.0)
-
-              Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
-              Behavior on color { ColorAnimation { duration: 150 } }
-              Behavior on border.color { ColorAnimation { duration: 150 } }
-
-              Text {
-                id: upText
-                anchors.centerIn: parent
-                text: "Up"
-                color: hostRoot.theme.textPrimary
-                font.pixelSize: 11
-                font.family: hostRoot.font
-                font.bold: true
-              }
-
-              MouseArea {
-                id: upHover
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: WallpaperService.navigateUp()
+                MouseArea {
+                  id: scMouse
+                  anchors.fill: parent
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: foldersRoot.triggerShortcut(modelData.action)
+                }
               }
             }
 
@@ -233,9 +153,12 @@ import QtQuick.Layouts
                     anchors.verticalCenter: parent.verticalCenter
 
                     Repeater {
-                      model: WallpaperService.getBreadcrumbs(WallpaperService.browsePath)
+                      model: foldersRoot.breadcrumbs
 
                       delegate: Row {
+                        required property var modelData
+                        required property int index
+                        readonly property bool isLastCrumb: index === foldersRoot.breadcrumbs.length - 1
                         spacing: 4
                         anchors.verticalCenter: parent.verticalCenter
 
@@ -253,12 +176,10 @@ import QtQuick.Layouts
                             id: crumbLabel
                             anchors.centerIn: parent
                             text: modelData.label
-                            color: index === WallpaperService.getBreadcrumbs(WallpaperService.browsePath).length - 1
-                              ? hostRoot.theme.accentPrimary
-                              : hostRoot.theme.textPrimary
+                            color: isLastCrumb ? hostRoot.theme.accentPrimary : hostRoot.theme.textPrimary
                             font.pixelSize: 12
                             font.family: hostRoot.font
-                            font.bold: index === WallpaperService.getBreadcrumbs(WallpaperService.browsePath).length - 1
+                            font.bold: isLastCrumb
                           }
 
                           MouseArea {
@@ -276,7 +197,7 @@ import QtQuick.Layouts
                           font.pixelSize: 11
                           font.family: hostRoot.font
                           anchors.verticalCenter: parent.verticalCenter
-                          visible: index < WallpaperService.getBreadcrumbs(WallpaperService.browsePath).length - 1
+                          visible: !isLastCrumb
                         }
                       }
                     }

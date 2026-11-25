@@ -3,6 +3,7 @@ import Quickshell.Io
 import QtQuick
 import "KeybindUtils.js" as KeybindUtils
 import "Components"
+import "../ThemeSwitcher"
 
 Scope {
     id: root
@@ -30,6 +31,13 @@ Scope {
             } else {
                 root.panelVisible = false;
             }
+        }
+    }
+
+    onPanelVisibleChanged: {
+        if (!root.panelVisible) {
+            root.binds = [];
+            Qt.callLater(() => gc());
         }
     }
 

@@ -1,8 +1,8 @@
 import Quickshell
+import Quickshell.Widgets
 import ".."
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 
         ColumnLayout {
   id: gridSectionRoot
@@ -48,6 +48,8 @@ import QtQuick.Effects
                 Keys.onEscapePressed: {
                   if (hostRoot.previewPath !== "") {
                     hostRoot.previewPath = "";
+                  } else if (typeof hostPanel.requestClose === "function") {
+                    hostPanel.requestClose();
                   } else {
                     hostPanel.visible = false;
                   }
@@ -110,16 +112,13 @@ import QtQuick.Effects
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Behavior on border.color { ColorAnimation { duration: 150 } }
 
-                // Masked container so wallpaper image and filename bar curve smoothly to match the card radius
-                Item {
+                // Single-pass rounded clip container (avoids 2 offscreen FBOs per card)
+                ClippingRectangle {
                   id: imgContainer
                   anchors.fill: parent
                   anchors.margins: WallpaperService.currentWallpaper === modelData ? 2 : 1
-                  layer.enabled: true
-                  layer.effect: MultiEffect {
-                    maskEnabled: true
-                    maskSource: cardMask
-                  }
+                  radius: Math.max(2, cardRect.radius - (delItem.isCurrent ? 2 : 1))
+                  color: hostRoot.theme.bgSurface
 
                   Image {
                     anchors.fill: parent
@@ -155,20 +154,6 @@ import QtQuick.Effects
                       width: parent.width - 8
                       horizontalAlignment: Text.AlignHCenter
                     }
-                  }
-                }
-
-                // Mask item providing matching inner corner radius
-                Item {
-                  id: cardMask
-                  anchors.fill: imgContainer
-                  visible: false
-                  layer.enabled: true
-
-                  Rectangle {
-                    anchors.fill: parent
-                    radius: Math.max(2, cardRect.radius - (delItem.isCurrent ? 2 : 1))
-                    color: "black"
                   }
                 }
 

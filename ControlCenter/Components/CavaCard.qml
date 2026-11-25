@@ -2,11 +2,12 @@ import QtQuick
 import QtQuick.Layouts
 import "../../bar"
 import ".."
+import "../../ThemeSwitcher"
 
 Rectangle {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
 
     width: parent ? parent.width : 300
@@ -20,6 +21,26 @@ Rectangle {
 
     Behavior on height {
         NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+    }
+
+    property bool _registeredConsumer: false
+    function _syncCavaConsumer() {
+        const want = root.visible;
+        if (want && !_registeredConsumer) {
+            _registeredConsumer = true;
+            CavaService.externalConsumers++;
+        } else if (!want && _registeredConsumer) {
+            _registeredConsumer = false;
+            CavaService.externalConsumers = Math.max(0, CavaService.externalConsumers - 1);
+        }
+    }
+    onVisibleChanged: _syncCavaConsumer()
+    Component.onCompleted: _syncCavaConsumer()
+    Component.onDestruction: {
+        if (_registeredConsumer) {
+            _registeredConsumer = false;
+            CavaService.externalConsumers = Math.max(0, CavaService.externalConsumers - 1);
+        }
     }
 
     ColumnLayout {

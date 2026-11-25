@@ -6,11 +6,12 @@ import Quickshell.Wayland
 import Quickshell.Hyprland
 import "./Components"
 import "../bar"
+import "../ThemeSwitcher"
 
 PanelWindow {
     id: controlCenter
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: (controlCenter.theme && controlCenter.theme.fontFamily) ? controlCenter.theme.fontFamily : "Lato Nerd Font"
     property var anchorTarget
     property string barPosition: BarConfig.position
@@ -416,10 +417,14 @@ PanelWindow {
                         spacing: 12
                         bottomPadding: 6
 
-                    // Top Banner for Live Edit Mode
-                    LiveEditBanner {
-                        id: editBanner
-                        hostCenter: controlCenter
+                    // Top Banner for Live Edit Mode (lazy loaded)
+                    Loader {
+                        width: parent.width
+                        active: ControlCenterConfig.isLiveEdit
+                        visible: active
+                        sourceComponent: LiveEditBanner {
+                            hostCenter: controlCenter
+                        }
                     }
 
                     // Multi-Panel Building-Block Columns
@@ -470,7 +475,7 @@ PanelWindow {
                                 required property int index
                                 readonly property int panelIndex: index
                                 readonly property var panelIds: {
-                                    var _rev = ControlCenterConfig.cardsRevision;
+                                    var _rev = ControlCenterConfig.cardOrderRevision;
                                     return ControlCenterConfig.getPanelIds(panelIndex);
                                 }
                                 // Consecutive "tile:" modules are merged into one tile grid block
@@ -491,7 +496,7 @@ PanelWindow {
                                     return res;
                                 }
                                 readonly property bool hasVisibleModules: {
-                                    var _rev = ControlCenterConfig.cardsRevision;
+                                    var _rev = ControlCenterConfig.cardOrderRevision;
                                     if (ControlCenterConfig.isLiveEdit) return true;
                                     return panelIds.length > 0;
                                 }
@@ -656,10 +661,10 @@ PanelWindow {
                                     width: panelCol.cellWidth
                                     height: Math.max(110, emptyPanelContentCol.implicitHeight + 24)
                                     radius: 10
-                                    color: (controlCenter.isDraggingCard && controlCenter.dragTargetPanel === panelCol.panelIndex)
+                                    color: (controlCenter.isDraggingCard && controlCenter.dragCardTargetPanel === panelCol.panelIndex)
                                         ? Qt.rgba(controlCenter.theme.accentPrimary.r, controlCenter.theme.accentPrimary.g, controlCenter.theme.accentPrimary.b, 0.14)
                                         : Qt.rgba(controlCenter.theme.textPrimary.r, controlCenter.theme.textPrimary.g, controlCenter.theme.textPrimary.b, 0.03)
-                                    border.color: (controlCenter.isDraggingCard && controlCenter.dragTargetPanel === panelCol.panelIndex)
+                                    border.color: (controlCenter.isDraggingCard && controlCenter.dragCardTargetPanel === panelCol.panelIndex)
                                         ? controlCenter.theme.accentPrimary
                                         : controlCenter.theme.bgBorder
                                     border.width: 1
@@ -698,7 +703,7 @@ PanelWindow {
 
                                             // Unassigned Modules
                                             Repeater {
-                                                model: ControlCenterConfig.unassignedCards
+                                                model: (ControlCenterConfig.isLiveEdit && panelCol.panelIds.length === 0) ? ControlCenterConfig.unassignedCards : []
                                                 delegate: Rectangle {
                                                     required property var modelData
                                                     height: 24
@@ -743,7 +748,7 @@ PanelWindow {
 
                                             // Unassigned individual tiles
                                             Repeater {
-                                                model: ControlCenterConfig.unassignedTiles
+                                                model: (ControlCenterConfig.isLiveEdit && panelCol.panelIds.length === 0) ? ControlCenterConfig.unassignedTiles : []
                                                 delegate: Rectangle {
                                                     required property var modelData
                                                     height: 24
@@ -791,25 +796,42 @@ PanelWindow {
                         }
                     }
 
-                    // Available Pool Tray in Live Edit Mode
-                    LiveEditPoolTray {
-                        id: poolTray
-                        hostCenter: controlCenter
+                    // Available Pool Tray in Live Edit Mode (lazy loaded)
+                    Loader {
+                        width: parent.width
+                        active: ControlCenterConfig.isLiveEdit
+                        visible: active
+                        sourceComponent: LiveEditPoolTray {
+                            hostCenter: controlCenter
+                        }
                     }
                     }
                 }
             }
         }
 
-        // Floating card drag ghost
-        CardDragGhost {
-            id: cardDragGhost
-            hostCenter: controlCenter
-            hostMainRect: ccMainRect
+        // Floating card drag ghost (lazy loaded)
+        Loader {
+            active: ControlCenterConfig.isLiveEdit
+            sourceComponent: CardDragGhost {
+                hostCenter: controlCenter
+                hostMainRect: ccMainRect
+            }
         }
     }
 
-    // Modal Wi-Fi Selector Dialog (lazy loaded)
+    Timer {
+        id: wifiModalUnloadTimer
+        interval: 220
+        repeat: false
+        onTriggered: {
+            if (wifiModalLoader.item && !wifiModalLoader.item.visible) {
+                wifiModalLoader.active = false;
+            }
+        }
+    }
+
+    // Modal Wi-Fi Selector Dialog (lazy loaded & unloaded when closed)
     Loader {
         id: wifiModalLoader
         active: false
@@ -825,6 +847,10 @@ PanelWindow {
                 }
                 onNetworkDisconnected: (ssid) => {
                     controlCenter.refreshRequested();
+                }
+                onVisibleChanged: {
+                    if (!visible) wifiModalUnloadTimer.restart();
+                    else wifiModalUnloadTimer.stop();
                 }
                 Component.onCompleted: {
                     visible = true;
