@@ -77,14 +77,29 @@ Rectangle {
           menu: trayDelegate.modelData.menu
 
           anchor.window: trayDelegate.QsWindow.window
-          anchor.adjustment: PopupAdjustment.Flip
+          // Open away from the bar edge so the menu never runs off-screen.
+          anchor.edges: {
+            switch (hostContainer.barPos) {
+              case "bottom": return Edges.Top | Edges.Left;
+              case "left": return Edges.Right | Edges.Top;
+              case "right": return Edges.Left | Edges.Top;
+              default: return Edges.Bottom | Edges.Left;
+            }
+          }
+          anchor.gravity: {
+            switch (hostContainer.barPos) {
+              case "bottom": return Edges.Top | Edges.Right;
+              case "left": return Edges.Right | Edges.Bottom;
+              case "right": return Edges.Left | Edges.Bottom;
+              default: return Edges.Bottom | Edges.Right;
+            }
+          }
+          anchor.adjustment: PopupAdjustment.Slide | PopupAdjustment.Flip
           anchor.onAnchoring: {
             const window = trayDelegate.QsWindow.window;
             if (!window) return;
-            const widgetRect = window.contentItem.mapFromItem(
-              trayDelegate, 0, trayDelegate.height,
-              trayDelegate.width, trayDelegate.height);
-            menuAnchor.anchor.rect = widgetRect;
+            menuAnchor.anchor.rect = window.contentItem.mapFromItem(
+              trayDelegate, 0, 0, trayDelegate.width, trayDelegate.height);
           }
         }
       }
