@@ -21,7 +21,7 @@ Rectangle {
         : (tileHover.hovered ? (tile.theme.bgHover ?? tile.theme.bgSurface) : tile.theme.bgSurface)
     border.color: tileHover.hovered
         ? Style.withAlpha(tile.theme.accentPrimary, 0.45)
-        : (tile.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+        : tile.theme.bgBorder
     border.width: 1
 
     Behavior on color { ColorAnimation { duration: 120 } }
@@ -44,7 +44,7 @@ Rectangle {
             Text {
                 text: tile.iconText
                 font.family: tile.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 color: tile.theme.accentPrimary
             }
 

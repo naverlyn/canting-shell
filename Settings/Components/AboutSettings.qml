@@ -31,7 +31,7 @@ Item {
         copyProc.command = ["wl-copy", textToCopy];
         copyProc.running = false;
         copyProc.running = true;
-        toast.show(toastMessage);
+        Style.notify(toastMessage);
     }
 
     function copyAllInfo() {
@@ -60,11 +60,11 @@ Item {
         onExited: (exitCode) => {
             if (exitCode === 0 && root.pendingHostname !== "") {
                 root.hostname = root.pendingHostname;
-                toast.show("Device name updated to " + root.pendingHostname);
+                Style.notify("Device name updated to " + root.pendingHostname);
                 sysInfoProc.running = false;
                 sysInfoProc.running = true;
             } else {
-                toast.show("Failed to update device name", true);
+                Style.notify("Failed to update device name", true);
             }
             root.pendingHostname = "";
         }
@@ -168,7 +168,7 @@ Item {
                     onClicked: {
                         sysInfoProc.running = false;
                         sysInfoProc.running = true;
-                        toast.show("System info refreshed");
+                        Style.notify("System info refreshed");
                     }
                 }
             }
@@ -204,9 +204,4 @@ Item {
         }
     }
 
-    ToastBanner {
-        id: toast
-        theme: root.theme
-        font: root.font
-    }
 }
