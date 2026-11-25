@@ -22,6 +22,7 @@ Singleton {
     property bool clearSearchOnClose: true
     property int gridColumns: 5
     property int gridCellSize: 96
+    property string appMenuMode: "grid" // "grid" or "list"
     property var hiddenApps: []
     property var favoriteApps: []
 
@@ -144,6 +145,15 @@ Singleton {
         }
     }
 
+    function setAppMenuMode(mode) {
+        if (mode === "grid" || mode === "list") {
+            if (root.appMenuMode !== mode) {
+                root.appMenuMode = mode;
+                root.saveConfig();
+            }
+        }
+    }
+
     function setMatchGenericName(val) {
         root.matchGenericName = Boolean(val);
         root.saveConfig();
@@ -181,6 +191,7 @@ Singleton {
         root.clearSearchOnClose = true;
         root.gridColumns = 5;
         root.gridCellSize = 96;
+        root.appMenuMode = "grid";
         root.hiddenApps = [];
         root.favoriteApps = [];
         root.saveConfig();
@@ -208,6 +219,7 @@ Singleton {
             clearSearchOnClose: root.clearSearchOnClose,
             gridColumns: root.gridColumns,
             gridCellSize: root.gridCellSize,
+            appMenuMode: root.appMenuMode,
             hiddenApps: root.hiddenApps,
             favoriteApps: root.favoriteApps
         };
@@ -240,6 +252,7 @@ Singleton {
         if (cfg.clearSearchOnClose !== undefined) root.clearSearchOnClose = Boolean(cfg.clearSearchOnClose);
         if (cfg.gridColumns !== undefined) root.gridColumns = Math.max(3, Math.min(8, Number(cfg.gridColumns) || 5));
         if (cfg.gridCellSize !== undefined) root.gridCellSize = Math.max(72, Math.min(128, Number(cfg.gridCellSize) || 96));
+        if (cfg.appMenuMode !== undefined) root.appMenuMode = String(cfg.appMenuMode) === "list" ? "list" : "grid";
         if (Array.isArray(cfg.hiddenApps)) root.hiddenApps = cfg.hiddenApps;
         if (Array.isArray(cfg.favoriteApps)) root.favoriteApps = cfg.favoriteApps;
     }

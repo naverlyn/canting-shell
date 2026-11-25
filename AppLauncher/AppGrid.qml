@@ -18,7 +18,8 @@ Scope {
 
   readonly property int cellSize: AppLauncherConfig.gridCellSize
   readonly property int columns: AppLauncherConfig.gridColumns
-  readonly property int edgeMargin: 10
+  readonly property bool isListMode: AppLauncherConfig.appMenuMode === "list"
+  readonly property int edgeMargin: 8
 
   property string activeBarPos: "top"
   property real activeNormX: 0.05
@@ -267,7 +268,7 @@ Scope {
 
     Rectangle {
       id: box
-      width: root.columns * root.cellSize + 32
+      width: root.isListMode ? 320 : (root.columns * root.cellSize + 32)
       height: 520
 
       readonly property int topClear: Math.max(
@@ -369,23 +370,32 @@ Scope {
                 onTextChanged: {
                   root.searchQuery = searchInput.text
                   root.selectedIndex = 0
-                  grid.positionViewAtIndex(0, GridView.Beginning)
+                  if (root.isListMode) {
+                    appList.positionViewAtIndex(0, ListView.Beginning)
+                  } else {
+                    grid.positionViewAtIndex(0, GridView.Beginning)
+                  }
                 }
 
                 Keys.onEscapePressed: gridPanel.visible = false
 
                 Keys.onPressed: event => {
-                  const last = grid.count - 1;
+                  const last = (root.isListMode ? appList.count : grid.count) - 1;
                   const move = (delta) => {
                     event.accepted = true;
                     if (last < 0) return;
                     root.selectedIndex = Math.max(0, Math.min(root.selectedIndex + delta, last));
-                    grid.positionViewAtIndex(root.selectedIndex, GridView.Contain);
+                    if (root.isListMode) {
+                      appList.positionViewAtIndex(root.selectedIndex, ListView.Contain);
+                    } else {
+                      grid.positionViewAtIndex(root.selectedIndex, GridView.Contain);
+                    }
                   };
-                  if (event.key === Qt.Key_Down) { move(root.columns); return; }
-                  if (event.key === Qt.Key_Up) { move(-root.columns); return; }
-                  if (event.key === Qt.Key_Tab || event.key === Qt.Key_Right) { move(1); return; }
-                  if (event.key === Qt.Key_Left) { move(-1); return; }
+                  if (event.key === Qt.Key_Down) { move(root.isListMode ? 1 : root.columns); return; }
+                  if (event.key === Qt.Key_Up) { move(root.isListMode ? -1 : -root.columns); return; }
+                  if (event.key === Qt.Key_Tab) { move(1); return; }
+                  if (!root.isListMode && event.key === Qt.Key_Right) { move(1); return; }
+                  if (!root.isListMode && event.key === Qt.Key_Left) { move(-1); return; }
                   if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                     event.accepted = true;
                     if (root.selectedIndex >= 0 && root.selectedIndex < filteredApps.values.length)
@@ -440,6 +450,7 @@ Scope {
         // App grid
         GridView {
           id: grid
+          visible: !root.isListMode
           Layout.fillWidth: true
           Layout.fillHeight: true
           model: filteredApps
@@ -526,6 +537,96 @@ Scope {
             font.pixelSize: 13
             font.family: root.font
             visible: grid.count === 0 && searchInput.text !== ""
+          }
+        }
+
+        // App list
+        ListView {
+          id: appList
+          visible: root.isListMode
+          Layout.fillWidth: true
+          Layout.fillHeight: true
+          model: filteredApps
+          clip: true
+          cacheBuffer: 0
+          spacing: 4
+          boundsBehavior: Flickable.StopAtBounds
+          currentIndex: root.selectedIndex
+
+          delegate: Item {
+            id: listRow
+            required property var modelData
+            required property int index
+            width: appList.width
+            height: 44
+
+            Rectangle {
+              anchors.fill: parent
+              radius: 10
+              color: root.selectedIndex === listRow.index ? root.theme.bgSelected
+                   : (listHoverArea.containsMouse ? root.theme.bgHover : "transparent")
+
+              Behavior on color { ColorAnimation { duration: 100 } }
+
+              RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 10
+
+                Item {
+                  Layout.preferredWidth: 26
+                  Layout.preferredHeight: 26
+                  Layout.alignment: Qt.AlignVCenter
+
+                  IconImage {
+                    anchors.centerIn: parent
+                    implicitSize: 26
+                    asynchronous: true
+                    source: Quickshell.iconPath(listRow.modelData.icon ?? "", true)
+                    visible: (listRow.modelData.icon ?? "") !== ""
+                  }
+
+                  Text {
+                    anchors.centerIn: parent
+                    text: "󰀻"
+                    color: root.theme.accentPrimary
+                    font.pixelSize: 20
+                    font.family: root.font
+                    visible: (listRow.modelData.icon ?? "") === ""
+                  }
+                }
+
+                Text {
+                  Layout.fillWidth: true
+                  Layout.alignment: Qt.AlignVCenter
+                  text: listRow.modelData.name ?? ""
+                  color: root.selectedIndex === listRow.index ? root.theme.textPrimary : root.theme.textSecondary
+                  font.pixelSize: 13
+                  font.family: root.font
+                  font.bold: root.selectedIndex === listRow.index
+                  elide: Text.ElideRight
+                }
+              }
+
+              MouseArea {
+                id: listHoverArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.launchApp(listRow.modelData)
+                onEntered: root.selectedIndex = listRow.index
+              }
+            }
+          }
+
+          Text {
+            anchors.centerIn: parent
+            text: "No applications found"
+            color: root.theme.textMuted
+            font.pixelSize: 13
+            font.family: root.font
+            visible: appList.count === 0 && searchInput.text !== ""
           }
         }
       }

@@ -84,10 +84,9 @@ Rectangle {
       const baseEdge = hostContainer.barEdgeOffset !== undefined
         ? hostContainer.barEdgeOffset
         : ((hostContainer.isFloating ? 6 : 0) + hostScope.barThickness);
-      const clearance = hostContainer.isVert ? (baseEdge + 16) : (baseEdge + 8);
       appGridProc.command = [
         "qs", "ipc", "call", "appgrid", "toggleAt",
-        hostContainer.barPos, String(normX), String(normY), String(clearance)
+        hostContainer.barPos, String(normX), String(normY), String(baseEdge)
       ];
       appGridProc.running = true;
     }

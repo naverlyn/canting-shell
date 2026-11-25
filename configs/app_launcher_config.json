@@ -10,6 +10,7 @@
   "clearSearchOnClose": true,
   "gridColumns": 6,
   "gridCellSize": 112,
+  "appMenuMode": "grid",
   "hiddenApps": [],
   "favoriteApps": []
 }
