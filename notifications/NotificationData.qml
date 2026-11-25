@@ -160,7 +160,9 @@ QtObject {
             if (expireTimeout <= 0) expireTimeout = defaultTimeout;
             return;
         }
-        notifId   = String(notification.id || "");
+        notifId   = (notification.id !== undefined && notification.id !== null && String(notification.id) !== "")
+            ? String(notification.id)
+            : ("seq_" + seqId);
         summary   = notification.summary   || "";
         body      = notification.body      || "";
         appIcon   = notification.appIcon   || "";

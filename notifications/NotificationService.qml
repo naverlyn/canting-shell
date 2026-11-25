@@ -502,8 +502,27 @@ Singleton {
         ConfigUtils.resetDefaults(root);
     }
 
+    property bool _savePending: false
+
+    Timer {
+        id: saveDebounceTimer
+        interval: 150
+        repeat: false
+        onTriggered: root._flushSaveConfig()
+    }
+
     function saveConfig() {
         if (!root._loaded) return;
+        saveDebounceTimer.restart();
+    }
+
+    function _flushSaveConfig() {
+        if (!root._loaded) return;
+        if (saveProcess.running) {
+            root._savePending = true;
+            return;
+        }
+        root._savePending = false;
         const jsonStr = JSON.stringify(ConfigUtils.buildConfigData(root), null, 2);
         root._lastSavedJson = jsonStr;
         saveProcess.command = [
@@ -549,6 +568,12 @@ Singleton {
         id: saveProcess
         command: []
         running: false
+        onExited: {
+            if (root._savePending) {
+                root._savePending = false;
+                root._flushSaveConfig();
+            }
+        }
     }
 
     Component.onCompleted: {
@@ -671,14 +696,27 @@ Singleton {
         }
         if (!localPath) return "";
         const safeId = String(keyId || root._seqCounter).replace(/[^a-zA-Z0-9_-]/g, "_");
-        const uniqueName = "img_" + Date.now() + "_" + safeId + ".png";
-        const dstPath = "/tmp/qs_notif_cache/" + uniqueName;
+        const dstPath = "/tmp/qs_notif_cache/img_" + safeId + ".png";
         Quickshell.execDetached([
             "sh", "-c",
-            "mkdir -p /tmp/qs_notif_cache && [ -s \"$1\" ] && cp -f \"$1\" \"$2\" 2>/dev/null || true",
+            "mkdir -p /tmp/qs_notif_cache && [ -s \"$1\" ] && cp -f \"$1\" \"$2.tmp\" 2>/dev/null && mv -f \"$2.tmp\" \"$2\" 2>/dev/null || true",
             "sh", localPath, dstPath
         ]);
         return "file://" + dstPath;
+    }
+
+    function _unlinkCachedImages(entries) {
+        if (!Array.isArray(entries) || entries.length === 0) return;
+        const paths = [];
+        for (let i = 0; i < entries.length; i++) {
+            const c = entries[i] && entries[i].cachedImage ? String(entries[i].cachedImage) : "";
+            if (c.startsWith("file:///tmp/qs_notif_cache/")) {
+                paths.push(c.slice(7));
+            }
+        }
+        if (paths.length > 0) {
+            Quickshell.execDetached(["rm", "-f", ...paths]);
+        }
     }
 
     function recordToHistory(notifData) {
@@ -694,7 +732,7 @@ Singleton {
         const now = notifData.createdAt || new Date();
         const rawImg = String(notifData.image || "");
         const localImgPath = root._extractLocalImagePath(rawImg) || root._extractLocalImagePath(appIcon);
-        const cachedImg = root._cacheNotifImage(rawImg, appIcon, notifData.seqId || nId);
+        const cachedImg = root._cacheNotifImage(rawImg, appIcon, nId);
 
         const item = {
             notifId: nId,
@@ -727,7 +765,11 @@ Singleton {
         const filtered = (root.history || []).filter(function(h) {
             return h && h.notifId !== nId;
         });
-        root.history = [item, ...filtered].slice(0, 50);
+        const combined = [item, ...filtered];
+        if (combined.length > 50) {
+            root._unlinkCachedImages(combined.slice(50));
+        }
+        root.history = combined.slice(0, 50);
         root._pruneRetained();
     }
 
@@ -737,7 +779,20 @@ Singleton {
     function _retain(notifData) {
         if (!notifData || notifData.closed) return;
         const key = String(notifData.notifId || "");
-        if (key === "") return;
+        if (key === "") {
+            notifData.dismiss();
+            return;
+        }
+        const prev = root._retained[key];
+        if (prev && prev !== notifData && !prev.closed) {
+            prev.closed = true;
+            prev.destroy();
+        }
+        const inHist = (root.history || []).some(function(h) { return h && String(h.notifId) === key; });
+        if (!inHist) {
+            notifData.dismiss();
+            return;
+        }
         root._retained[key] = notifData;
     }
 
@@ -785,9 +840,16 @@ Singleton {
     function dismissHistoryItem(notifId) {
         if (!notifId) return;
         const targetId = String(notifId);
+        const removed = [];
         root.history = (root.history || []).filter(function(h) {
-            return h && String(h.notifId) !== targetId;
+            if (!h) return false;
+            if (String(h.notifId) === targetId) {
+                removed.push(h);
+                return false;
+            }
+            return true;
         });
+        root._unlinkCachedImages(removed);
         const live = root._findLive(targetId);
         if (live) live.dismiss();
         root._pruneRetained();
@@ -796,10 +858,24 @@ Singleton {
     function dismissHistoryByApp(appName) {
         if (!appName) return;
         const target = String(appName);
+        const removed = [];
         root.history = (root.history || []).filter(function(h) {
             const name = h ? SocialApps.formatAppName(h.displayAppName || h.appName || "", h.socialApp) : "";
-            return name !== target;
+            if (name === target) {
+                if (h) removed.push(h);
+                return false;
+            }
+            return true;
         });
+        root._unlinkCachedImages(removed);
+        const liveMatches = (root.notifications || []).filter(function(n) {
+            if (!n || n.closed) return false;
+            const nName = SocialApps.formatAppName(n.displayAppName || n.appName || "", n.socialApp);
+            return nName === target;
+        });
+        for (let i = 0; i < liveMatches.length; i++) {
+            liveMatches[i].dismiss();
+        }
         root._pruneRetained();
     }
 
@@ -903,6 +979,9 @@ Singleton {
         });
         root.notifications = [notifData, ...rest];
         root.recordToHistory(notifData);
+        while (root.notifications.length > root.maxVisibleToasts) {
+            root.notifications[root.notifications.length - 1].expire();
+        }
     }
 
     function dismiss(notifData) {
@@ -913,10 +992,20 @@ Singleton {
         const toRemove = [...root.notifications];
         root.notifications = [];
         for (const n of toRemove) {
-            if (!n.closed) {
+            if (n && !n.closed) {
                 n.closed = true;
                 if (n.notification) try { n.notification.dismiss(); } catch(e) {}
                 n.destroy();
+            }
+        }
+        const retainedKeys = Object.keys(root._retained || {});
+        for (let k = 0; k < retainedKeys.length; k++) {
+            const r = root._retained[retainedKeys[k]];
+            delete root._retained[retainedKeys[k]];
+            if (r && !r.closed) {
+                r.closed = true;
+                if (r.notification) try { r.notification.dismiss(); } catch(e) {}
+                r.destroy();
             }
         }
     }

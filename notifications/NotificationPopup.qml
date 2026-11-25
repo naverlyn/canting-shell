@@ -8,10 +8,11 @@ import QtQuick.Layouts
 import QtQuick.Effects
 import "../bar"
 import "Components"
+import "../ThemeSwitcher"
 
 Scope {
     id: root
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
 
     IpcHandler {
@@ -66,7 +67,7 @@ Scope {
             WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
             WlrLayershell.namespace: "quickshell-notifications"
 
-            exclusionMode: ExclusionMode.Normal
+            exclusionMode: ExclusionMode.Ignore
 
             anchors {
                 top: notifWindow.isTop
@@ -94,7 +95,7 @@ Scope {
 
                 Repeater {
                     model: ScriptModel {
-                        values: NotificationService.notifications
+                        values: notifWindow.suppressedByDynamicIsland ? [] : NotificationService.notifications
                         objectProp: "seqId"
                     }
 
