@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import "../Common"
 
 Rectangle {
     id: ghostRoot
@@ -40,7 +41,7 @@ Rectangle {
         Text {
             text: hostRoot.draggedModIcon || "󰆍"
             font.family: hostRoot.font
-            font.pixelSize: 14
+            font.pixelSize: Style.px(14)
             color: hostRoot.theme.accentPrimary
         }
 
@@ -49,7 +50,7 @@ Rectangle {
                 ? (hostRoot.draggedModName + " (Drop to Place)")
                 : hostRoot.draggedModName
             font.family: hostRoot.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: hostRoot.theme.textPrimary
         }
@@ -58,7 +59,7 @@ Rectangle {
             visible: hostRoot.isOverStage
             text: "󰐕"
             font.family: hostRoot.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             color: hostRoot.theme.accentPrimary
         }
     }

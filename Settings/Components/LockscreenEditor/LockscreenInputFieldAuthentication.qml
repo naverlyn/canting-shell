@@ -16,7 +16,7 @@ ColumnLayout {
     Text {
         text: "Input Field & Authentication"
         font.family: root.font
-        font.pixelSize: 13
+        font.pixelSize: Style.px(13)
         font.bold: true
         color: root.theme.textSecondary
         Layout.leftMargin: 4
@@ -82,30 +82,24 @@ ColumnLayout {
             }
 
             // Immediate Render Toggle
-            PreferenceRow {
+            SettingToggleRow {
                 title: "Immediate Render"
-
-                SwitchToggle {
-                    checked: root.generalImmediateRender
-                    onToggled: (st) => {
-                        root.generalImmediateRender = st;
-                        root.scheduleSave();
-                    }
+                checked: root.generalImmediateRender
+                onToggled: (st) => {
+                    root.generalImmediateRender = st;
+                    root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Lock & Unlock Animation Toggle
-            PreferenceRow {
+            SettingToggleRow {
                 title: "Lock & Unlock Animation"
-
-                SwitchToggle {
-                    checked: root.unlockAnimation
-                    onToggled: (st) => {
-                        root.unlockAnimation = st;
-                        root.scheduleSave();
-                    }
+                checked: root.unlockAnimation
+                onToggled: (st) => {
+                    root.unlockAnimation = st;
+                    root.scheduleSave();
                 }
             }
 
@@ -115,7 +109,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 0
 
-                RowDivider { sideMargin: 12; color: Qt.rgba(1, 1, 1, 0.05) }
+                RowDivider {}
 
                 Item {
                     Layout.fillWidth: true
@@ -130,7 +124,7 @@ ColumnLayout {
                         Text {
                             text: "Lock Screen Animation Style"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                             Layout.alignment: Qt.AlignVCenter
@@ -184,37 +178,31 @@ ColumnLayout {
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Show User Profile Toggle
-            PreferenceRow {
+            SettingToggleRow {
                 title: "Show User Profile"
-
-                SwitchToggle {
-                    checked: root.showUser
-                    onToggled: (st) => {
-                        root.showUser = st;
-                        root.scheduleSave();
-                    }
+                checked: root.showUser
+                onToggled: (st) => {
+                    root.showUser = st;
+                    root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Show Media Player Toggle
-            PreferenceRow {
+            SettingToggleRow {
                 title: "Show Media Player"
-
-                SwitchToggle {
-                    checked: root.showMedia
-                    onToggled: (st) => {
-                        root.showMedia = st;
-                        root.scheduleSave();
-                    }
+                checked: root.showMedia
+                onToggled: (st) => {
+                    root.showMedia = st;
+                    root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Placeholder Text Input (Refined Libadwaita styling)
             PreferenceRow {
@@ -239,7 +227,7 @@ ColumnLayout {
                         verticalAlignment: TextInput.AlignVCenter
                         text: root.inputPlaceholder
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textPrimary
                         selectByMouse: true
                         onEditingFinished: {
@@ -250,112 +238,106 @@ ColumnLayout {
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Input Field Width
-            PreferenceSlider {
+            SettingSliderRow {
                 title: "Input Box Width"
                 minVal: 180
                 maxVal: 380
                 unit: "px"
-                currentVal: root.inputWidth
-                onValueChanged: (val) => {
+                value: root.inputWidth
+                onValueModified: (val) => {
                     root.inputWidth = val;
                     root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Input Field Height
-            PreferenceSlider {
+            SettingSliderRow {
                 title: "Input Box Height"
                 minVal: 40
                 maxVal: 80
                 unit: "px"
-                currentVal: root.inputHeight
-                onValueChanged: (val) => {
+                value: root.inputHeight
+                onValueModified: (val) => {
                     root.inputHeight = val;
                     root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Outline Thickness
-            PreferenceSlider {
+            SettingSliderRow {
                 title: "Outline Border Thickness"
                 minVal: 0
                 maxVal: 6
                 unit: "px"
-                currentVal: root.inputOutlineThickness
-                onValueChanged: (val) => {
+                value: root.inputOutlineThickness
+                onValueModified: (val) => {
                     root.inputOutlineThickness = val;
                     root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Input Box Horizontal Position (X)
-            PreferenceSlider {
+            SettingSliderRow {
                 title: "Center Offset X"
                 minVal: -960
                 maxVal: 960
                 unit: "px"
-                currentVal: root.inputPosX
-                onValueChanged: (val) => {
+                value: root.inputPosX
+                onValueModified: (val) => {
                     root.inputPosX = val;
                     root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Input Box Vertical Position (Y)
-            PreferenceSlider {
+            SettingSliderRow {
                 title: "Center Offset Y"
                 minVal: -540
                 maxVal: 540
                 unit: "px"
-                currentVal: root.inputPosY
-                onValueChanged: (val) => {
+                value: root.inputPosY
+                onValueModified: (val) => {
                     root.inputPosY = val;
                     root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Fade on Empty
-            PreferenceRow {
+            SettingToggleRow {
                 title: "Fade on Empty"
-
-                SwitchToggle {
-                    checked: root.inputFadeOnEmpty
-                    onToggled: (st) => {
-                        root.inputFadeOnEmpty = st;
-                        root.scheduleSave();
-                    }
+                checked: root.inputFadeOnEmpty
+                onToggled: (st) => {
+                    root.inputFadeOnEmpty = st;
+                    root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider {}
 
             // Center Password Dots
-            PreferenceRow {
+            SettingToggleRow {
                 title: "Center Password Dots"
-
-                SwitchToggle {
-                    checked: root.inputDotsCenter
-                    onToggled: (st) => {
-                        root.inputDotsCenter = st;
-                        root.scheduleSave();
-                    }
+                checked: root.inputDotsCenter
+                onToggled: (st) => {
+                    root.inputDotsCenter = st;
+                    root.scheduleSave();
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider { sideMargin: 16 }
 
             // Password Input Outer Border Color
             LockscreenColorDropdownRow {
@@ -377,7 +359,7 @@ ColumnLayout {
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider { sideMargin: 16 }
 
             // Password Input Inner Fill Color
             LockscreenColorDropdownRow {
@@ -399,7 +381,7 @@ ColumnLayout {
                 }
             }
 
-            RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+            RowDivider { sideMargin: 16 }
 
             // Password Input Dots / Font Color
             LockscreenColorDropdownRow {

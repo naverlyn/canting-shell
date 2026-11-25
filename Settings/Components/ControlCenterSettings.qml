@@ -50,7 +50,7 @@ Item {
     }
 
     function showToast(msg, isWarn) {
-        toastBanner.show(msg, isWarn);
+        Style.notify(msg, isWarn);
     }
 
     function withAlpha(col, alpha) {
@@ -250,7 +250,7 @@ Item {
                     Text {
                         text: "Control Center Settings"
                         font.family: root.font
-                        font.pixelSize: 20
+                        font.pixelSize: Style.px(20)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -296,8 +296,16 @@ Item {
                 }
             }
 
-            ControlCenterSubTabSelector {
-                root: root
+            SubTabBar {
+                currentIndex: root.currentSubTab
+                tabs: [
+                    { idx: 0, icon: "󰕮", label: "Layout & Building Blocks" },
+                    { idx: 1, icon: "󰒓", label: "General & Options" }
+                ]
+                onTabSelected: (idx) => {
+                    root.currentSubTab = idx;
+                    root.subTabContentAnimation.restart();
+                }
             }
 
             ColumnLayout {
@@ -334,10 +342,4 @@ Item {
         root: root
     }
 
-    ToastBanner {
-        id: toastBanner
-        theme: root.theme
-        font: root.font
-        durationMs: 2800
-    }
 }

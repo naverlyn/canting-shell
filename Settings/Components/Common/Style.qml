@@ -6,8 +6,13 @@ import "../../../utils/ColorUtils.js" as ColorUtils
 // Shared look-and-feel for all Settings widgets in this folder.
 QtObject {
     readonly property var theme: Theme
-    // Emitted by Common widgets with announce:true; pages show it in their own toast.
+    // Emitted by Common widgets with announce:true or pages via Style.notify(); shown by SettingsApp's global ToastBanner.
     signal toast(string msg)
+    signal toastStatus(string msg, bool warn)
+
+    function notify(msg, warn) {
+        toastStatus(String(msg || ""), Boolean(warn));
+    }
 
     readonly property string font: (theme && theme.fontFamily) ? theme.fontFamily : "Lato Nerd Font"
     readonly property string monoFont: (theme && theme.monoFont) ? theme.monoFont : "JetBrainsMono Nerd Font"

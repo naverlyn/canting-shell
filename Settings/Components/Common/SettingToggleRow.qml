@@ -10,6 +10,7 @@ Item {
     property bool rowEnabled: true
     property bool announce: false      // emit Style.toast on click
     property bool invertThumb: false   // thumb uses base colour while checked
+    property color activeColor: Style.theme.accentPrimary
     signal toggled(bool val)
 
     Layout.fillWidth: true
@@ -77,7 +78,7 @@ Item {
             height: 24
             radius: 12
             scale: toggleRowMouse.pressed ? 0.94 : 1.0
-            color: toggleRow.checked ? Style.theme.accentPrimary : Style.theme.bgSelected
+            color: toggleRow.checked ? toggleRow.activeColor : Style.theme.bgSelected
             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
             Behavior on scale { NumberAnimation { duration: 100 } }
@@ -89,7 +90,9 @@ Item {
                 radius: 9
                 anchors.verticalCenter: parent.verticalCenter
                 x: toggleRow.checked ? parent.width - width - 3 : 3
-                color: toggleRow.checked ? "#ffffff" : (Style.theme.textPrimary ?? "#c0caf5")
+                color: toggleRow.checked
+                    ? (toggleRow.invertThumb ? Style.theme.bgBase : "#ffffff")
+                    : Style.theme.textPrimary
 
                 Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: 160 } }

@@ -134,7 +134,7 @@ Item {
             anchors.centerIn: parent
             text: dragGhost.isRemoving ? ("Remove " + editor.dragLabel) : editor.dragLabel
             font.family: editor.rootRef.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: dragGhost.isRemoving ? editor.rootRef.theme.accentRed : editor.rootRef.theme.textPrimary
         }
@@ -182,7 +182,7 @@ Item {
                         Text {
                             text: editor.activeTitle
                             font.family: editor.rootRef.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: editor.rootRef.theme.accentPrimary
                         }
@@ -198,7 +198,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: "(" + (editor.activeItems || []).length + ")"
                                 font.family: editor.rootRef.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 color: editor.rootRef.theme.textMuted
                             }
                         }
@@ -276,7 +276,7 @@ Item {
                                 Text {
                                     text: "󰍜"
                                     font.family: editor.rootRef.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     color: actCardHover.hovered ? editor.rootRef.theme.textSecondary : editor.rootRef.theme.textMuted
                                     opacity: actCardHover.hovered ? 0.85 : 0.35
                                     Layout.preferredWidth: 12
@@ -286,7 +286,7 @@ Item {
                                 Text {
                                     text: activeCard.itemIcon
                                     font.family: editor.rootRef.font
-                                    font.pixelSize: 13
+                                    font.pixelSize: Style.px(13)
                                     color: editor.rootRef.theme.accentPrimary
                                     horizontalAlignment: Text.AlignHCenter
                                     Layout.preferredWidth: 18
@@ -296,7 +296,7 @@ Item {
                                 Text {
                                     text: activeCard.itemLabel
                                     font.family: editor.rootRef.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: true
                                     color: editor.rootRef.theme.textPrimary
                                     elide: Text.ElideRight
@@ -412,7 +412,7 @@ Item {
                         Text {
                             text: editor.availableTitle
                             font.family: editor.rootRef.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: editor.rootRef.theme.textSecondary
                         }
@@ -428,7 +428,7 @@ Item {
                                 anchors.centerIn: parent
                                 text: "(" + (editor.availableItems || []).length + ")"
                                 font.family: editor.rootRef.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 color: editor.rootRef.theme.textMuted
                             }
                         }
@@ -470,7 +470,7 @@ Item {
                                 Text {
                                     text: availCard.itemIcon
                                     font.family: editor.rootRef.font
-                                    font.pixelSize: 13
+                                    font.pixelSize: Style.px(13)
                                     color: avHover.hovered ? editor.rootRef.theme.accentPrimary : editor.rootRef.theme.textMuted
                                     horizontalAlignment: Text.AlignHCenter
                                     Layout.preferredWidth: 18
@@ -480,7 +480,7 @@ Item {
                                 Text {
                                     text: availCard.itemLabel
                                     font.family: editor.rootRef.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: true
                                     color: avHover.hovered ? editor.rootRef.theme.textPrimary : editor.rootRef.theme.textSecondary
                                     elide: Text.ElideRight
@@ -492,7 +492,7 @@ Item {
                                     visible: avHover.hovered
                                     text: "󰐕"
                                     font.family: editor.rootRef.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                     color: editor.rootRef.theme.accentPrimary
                                     Layout.alignment: Qt.AlignVCenter
                                 }
@@ -556,7 +556,7 @@ Item {
                             anchors.centerIn: parent
                             text: editor.emptyAvailableText
                             font.family: editor.rootRef.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: editor.rootRef.theme.textMuted
                         }
                     }

@@ -37,7 +37,7 @@ Rectangle {
         anchors.centerIn: parent
         text: miniBtn.iconText
         font.family: Style.font
-        font.pixelSize: 12
+        font.pixelSize: Style.px(12)
         color: miniBtn.btnEnabled
             ? (btnHover.hovered ? miniBtn.hoverCol : Style.theme.textMuted)
             : Style.theme.textMuted

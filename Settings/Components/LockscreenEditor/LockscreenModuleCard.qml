@@ -154,7 +154,7 @@ Rectangle {
             Text {
                 text: cardRoot.editName
                 font.family: cardRoot.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: cardRoot.editEnabled ? cardRoot.theme.textPrimary : cardRoot.theme.textMuted
                 Layout.alignment: Qt.AlignVCenter
@@ -189,7 +189,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: cardRoot.isExpanded ? "Close" : "Edit"
                     font.family: cardRoot.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: cardRoot.isExpanded ? cardRoot.theme.accentPrimary : cardRoot.theme.textPrimary
                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -277,7 +277,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                     text: hSegBtn.modelData.label
                                     font.family: cardRoot.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: hSegBtn.isSel
                                     color: hSegBtn.isSel ? cardRoot.theme.accentPrimary : cardRoot.theme.textPrimary
                                     opacity: hSegBtn.isSel || hSegHover.hovered ? 1.0 : 0.75
@@ -364,7 +364,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                     text: vSegBtn.modelData.label
                                     font.family: cardRoot.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: vSegBtn.isSel
                                     color: vSegBtn.isSel ? cardRoot.theme.accentPrimary : cardRoot.theme.textPrimary
                                     opacity: vSegBtn.isSel || vSegHover.hovered ? 1.0 : 0.75
@@ -389,13 +389,13 @@ Rectangle {
             RowDivider {}
 
             // Offset X Slider
-            PreferenceSlider {
+            SettingSliderRow {
                 title: "Horizontal Offset (X)"
                 minVal: -600
                 maxVal: 600
                 unit: "px"
-                currentVal: cardRoot.editPosX
-                onValueChanged: (val) => {
+                value: cardRoot.editPosX
+                onValueModified: (val) => {
                     cardRoot.editPosX = val;
                     cardRoot.saveChanges();
                 }
@@ -404,13 +404,13 @@ Rectangle {
             RowDivider {}
 
             // Offset Y Slider
-            PreferenceSlider {
+            SettingSliderRow {
                 title: "Vertical Offset (Y)"
                 minVal: -400
                 maxVal: 400
                 unit: "px"
-                currentVal: cardRoot.editPosY
-                onValueChanged: (val) => {
+                value: cardRoot.editPosY
+                onValueModified: (val) => {
                     cardRoot.editPosY = val;
                     cardRoot.saveChanges();
                 }
@@ -419,15 +419,13 @@ Rectangle {
             RowDivider { visible: cardRoot.modType !== "auth" }
 
             // Card Background Toggle (available for all visual modules)
-            PreferenceRow {
+            SettingToggleRow {
                 visible: cardRoot.modType !== "auth"
                 title: "Show Card Background"
-                SwitchToggle {
-                    checked: cardRoot.editShowCard
-                    onToggled: (st) => {
-                        cardRoot.editShowCard = st;
-                        cardRoot.saveChanges();
-                    }
+                checked: cardRoot.editShowCard
+                onToggled: (st) => {
+                    cardRoot.editShowCard = st;
+                    cardRoot.saveChanges();
                 }
             }
 
@@ -468,7 +466,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Delete Module"
                         font.family: cardRoot.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: delHover.hovered ? cardRoot.theme.accentRed : cardRoot.theme.textPrimary
                         Behavior on color { ColorAnimation { duration: 140 } }
