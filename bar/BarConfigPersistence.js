@@ -1,5 +1,7 @@
 .pragma library
 
+.import "BarConfigDefaults.js" as Defaults
+
 // Config (de)serialisation and defaults for BarConfig.
 // Each function receives the BarConfig singleton as `root`.
 
@@ -386,7 +388,19 @@ function applyConfig(root, cfg) {
     root.selectedBarIndex = 0;
   }
 
-  root.removedWidgets = rem;
+  // Prune stale @color:<barId>: and @hidden:<barId>: tokens for deleted bars
+  const validBarIds = {};
+  for (let bi = 0; bi < root.bars.length; bi++) {
+    if (root.bars[bi] && root.bars[bi].id) validBarIds[String(root.bars[bi].id)] = true;
+  }
+  root.removedWidgets = rem.filter(item => {
+    const s = String(item);
+    if (s.startsWith("@color:") || s.startsWith("@hidden:")) {
+      const parts = s.split(":");
+      if (parts.length >= 3) return Boolean(validBarIds[parts[1]]);
+    }
+    return true;
+  });
 
   if (cfg.appGridIcon !== undefined) root.appGridIcon = String(cfg.appGridIcon).trim() || "󰀻";
   if (cfg.showNetDown !== undefined) root.showNetDown = Boolean(cfg.showNetDown);
@@ -528,14 +542,10 @@ function resetDefaults(root) {
   root.cavaShowIcon = false;
   root.allMonitors = true;
   root.displayTarget = "all";
-  root.secondaryPosition = "top";
+  root.secondaryPosition = "bottom";
   root.secondaryMode = "custom";
   root.blankOnSecondary = false;
-  root.secondaryPanels = [
-    ["workspaces"],
-    ["windowTitle"],
-    ["weather", "clock"]
-  ];
+  root.secondaryPanels = Defaults.clonePanels(Defaults.DEFAULT_SECONDARY_PANELS);
   root.activeEditingDisplay = "primary";
   root.innerCorners = true;
   root.fluidCards = false;
@@ -543,44 +553,11 @@ function resetDefaults(root) {
   root.screenBorderThickness = 4;
   root.screenBorderColor = "";
   root.screenBorderCorners = true;
-  root.screenBorderShadow = false;
+  root.screenBorderShadow = true;
   root.screenBorderShadowSize = 12;
 
   root.selectedBarIndex = 0;
-  root.bars = [
-    {
-      id: "bar_1",
-      name: "Primary Bar",
-      enabled: true,
-      position: "top",
-      barHeight: 32,
-      floating: false,
-      barOpacity: 0.85,
-      pillRadius: 10,
-      pillOpacity: 1.0,
-      hidePill: false,
-      scaleWidgets: true,
-      allMonitors: true,
-      displayTarget: "all",
-      secondaryPosition: "top",
-      secondaryMode: "custom",
-      blankOnSecondary: false,
-      secondaryPanels: [
-        ["workspaces"],
-        ["windowTitle"],
-        ["weather", "clock"]
-      ],
-      barColor: "",
-      secondaryBarColor: "",
-      innerCorners: true,
-      fluidCards: false,
-      panels: [
-        root.defaultLeftWidgets.slice(),
-        root.defaultCenterWidgets.slice(),
-        root.defaultRightWidgets.slice()
-      ]
-    }
-  ];
+  root.bars = [Defaults.createBarInstance()];
   root.removedWidgets = ["battery", "volume", "media"];
 
   root.showAppGrid = true;

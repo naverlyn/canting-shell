@@ -1,10 +1,7 @@
 import Quickshell
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Hyprland
-import Quickshell.Widgets
 import QtQuick.Controls
-import Quickshell.Io
 import "../Components"
 import ".."
 

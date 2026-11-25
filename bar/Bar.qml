@@ -15,10 +15,11 @@ import "./Components"
 import "./DynamicIsland"
 import "./Widgets"
 import "../utils/ColorUtils.js" as ColorUtils
+import "../ThemeSwitcher"
 
 Scope {
   id: root
-  property var theme: DefaultTheme {}
+  property var theme: Theme
   property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
   property bool barVisible: true
   property var activePopupData: null
@@ -93,21 +94,14 @@ Scope {
       const bid = (b.id !== undefined && b.id !== null) ? String(b.id) : ("bar_" + (i + 1));
       if (currentBarId && bid === currentBarId) continue;
       if (screenIdx !== undefined) {
-        const isPrim = (screenIdx === 0);
-        const scr = (Quickshell.screens && Quickshell.screens.length > screenIdx) ? Quickshell.screens[screenIdx] : null;
-        const scrName = (scr && scr.name) ? String(scr.name) : ("screen_" + screenIdx);
-        const bTarget = b.displayTarget || (b.allMonitors ? "all" : "primary");
-        if (bTarget === "primary" && !isPrim) continue;
-        if (bTarget === "secondary" && isPrim) continue;
-        if (bTarget !== "all" && bTarget !== "primary" && bTarget !== "secondary" && bTarget !== scrName) continue;
-        const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
-        const effectiveFloating = (!isPrim && bTarget === "all" && b.secondaryFloating !== undefined) ? Boolean(b.secondaryFloating) : Boolean(b.floating);
-        if (effectivePos === pos && !effectiveFloating) {
-          return b.barHeight || 32;
+        const info = _barMatchesScreen(b, screenIdx);
+        if (info && info.pos === pos && !info.floating) {
+          return info.height;
         }
         continue;
       }
-      if ((b.position || "top") === pos && !Boolean(b.floating)) {
+      const p = b.position || "top";
+      if (p === pos && !Boolean(b.floating) && !Boolean(b.dashed) && !(Boolean(b.dynamicIsland) && p === "top")) {
         return b.barHeight || 32;
       }
     }
@@ -179,17 +173,6 @@ Scope {
     }
   }
 
-  Process {
-    id: weatherProcess
-    running: false
-    onRunningChanged: {
-      if (running) {
-        SystemInfo.refreshWeather();
-        running = false;
-      }
-    }
-  }
-
   Variants {
     model: BarConfig.barIds
 
@@ -236,6 +219,32 @@ Scope {
       readonly property string secondaryMode: (barCfg.secondaryMode !== undefined && String(barCfg.secondaryMode).trim() !== "") ? String(barCfg.secondaryMode).trim() : (barCfg.blankOnSecondary ? "blank" : "custom")
       readonly property bool blankOnSecondary: (barCfg.blankOnSecondary !== undefined) ? Boolean(barCfg.blankOnSecondary) : (secondaryMode === "blank")
       readonly property var secondaryPanels: (barCfg.secondaryPanels && barCfg.secondaryPanels.length > 0) ? barCfg.secondaryPanels : BarConfig.defaultSecondaryPanels
+
+      // Cached O(1) widget -> color spec map for this bar (recomputed only when removedWidgets or barCfg changes)
+      readonly property var widgetColorSpecsMap: {
+        const bId = (barCfg && barCfg.id) ? String(barCfg.id) : "bar_1";
+        const prefix = "@color:" + bId + ":";
+        const map = {};
+        if (barCfg && barCfg.widgetColors) {
+          const keys = Object.keys(barCfg.widgetColors);
+          for (let k = 0; k < keys.length; k++) {
+            const v = barCfg.widgetColors[keys[k]];
+            if (v) map[keys[k]] = String(v).trim();
+          }
+        }
+        const rem = BarConfig.removedWidgets || [];
+        for (let i = 0; i < rem.length; i++) {
+          const item = String(rem[i]);
+          if (item.indexOf(prefix) === 0) {
+            const rest = item.substring(prefix.length);
+            const eq = rest.indexOf("=");
+            if (eq > 0) {
+              map[rest.substring(0, eq)] = rest.substring(eq + 1).trim();
+            }
+          }
+        }
+        return map;
+      }
 
 
 
@@ -312,8 +321,6 @@ Scope {
           readonly property int verticalShrink: (barWindow.screen && barWindow.height > 0 && barWindow.height < barWindow.screen.height)
             ? Math.max(0, barWindow.screen.height - barWindow.height)
             : 0
-
-          readonly property bool hasEffectiveInnerCorners: false
 
           readonly property string target: barInstanceScope.displayTarget
           readonly property string secMode: barInstanceScope.secondaryMode
@@ -519,8 +526,6 @@ Scope {
             }
           }
 
-          property string lastPos: barWindow.windowBarPos
-          onLastPosChanged: barPosSwitchAnim.restart()
           property int panelItemsRev: 0
           property int knownPanelCount: 0
           Component.onCompleted: barPosSwitchAnim.restart()
@@ -568,26 +573,6 @@ Scope {
             anchors.right: parent.right
             anchors.bottom: barWindow.windowIsVert ? parent.bottom : undefined
             height: barWindow.windowIsVert ? parent.height : barInstanceScope.barThickness
-            anchors.topMargin: barWindow.windowIsFloating
-              ? 0
-              : (barWindow.windowIsVert
-                ? 0
-                : ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "bottom") ? barInstanceScope.innerCornerRadius : 0))
-            anchors.bottomMargin: barWindow.windowIsFloating
-              ? 0
-              : (barWindow.windowIsVert
-                ? 0
-                : ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "top") ? barInstanceScope.innerCornerRadius : 0))
-            anchors.leftMargin: barWindow.windowIsFloating
-              ? 0
-              : (barWindow.windowIsVert
-                ? ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "right") ? barInstanceScope.innerCornerRadius : 0)
-                : 0)
-            anchors.rightMargin: barWindow.windowIsFloating
-              ? 0
-              : (barWindow.windowIsVert
-                ? ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "left") ? barInstanceScope.innerCornerRadius : 0)
-                : 0)
             radius: barWindow.windowIsFloating
               ? Math.min(Math.max(0, barInstanceScope.barRadius), Math.floor(Math.min(width, height) / 2))
               : 0
@@ -597,10 +582,6 @@ Scope {
             transform: Translate { id: barSlideTransform; x: 0; y: 0 }
 
             Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on anchors.topMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on anchors.bottomMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on anchors.leftMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on anchors.rightMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             Behavior on color { ColorAnimation { duration: 200 } }
             Behavior on border.color { ColorAnimation { duration: 200 } }
 
@@ -779,22 +760,8 @@ Scope {
             }
 
             function wSpec(widgetId) {
-              _trackThemeDeps();
-              try {
-                const bId = (barInstanceScope.barCfg && barInstanceScope.barCfg.id) ? String(barInstanceScope.barCfg.id) : "bar_1";
-                const prefix = "@color:" + bId + ":" + widgetId + "=";
-                const rem = BarConfig.removedWidgets || [];
-                for (let i = 0; i < rem.length; i++) {
-                  const item = String(rem[i]);
-                  if (item.indexOf(prefix) === 0) {
-                    return item.substring(prefix.length).trim();
-                  }
-                }
-                if (barInstanceScope.barCfg && barInstanceScope.barCfg.widgetColors && barInstanceScope.barCfg.widgetColors[widgetId]) {
-                  return String(barInstanceScope.barCfg.widgetColors[widgetId]).trim();
-                }
-              } catch (e) {}
-              return "";
+              const map = barInstanceScope.widgetColorSpecsMap;
+              return (widgetId && map && map[widgetId]) ? map[widgetId] : "";
             }
 
             function resolveWidgetThemeSpec(spec) {
@@ -937,61 +904,40 @@ Scope {
                 height: barContentContainer.isVert ? implicitHeight : barContentContainer.height
                 width: barContentContainer.isVert ? barContentContainer.width : (isDynamicIslandSlot ? barWindow.dynamicIslandCompactWidth : implicitWidth)
 
-                readonly property real targetX: {
-                  if (barContentContainer.isVert) return 0;
+                function _calcAxisPos(isVertAxis) {
+                  if (barContentContainer.isVert !== isVertAxis) return 0;
+                  const containerSpan = isVertAxis ? barContentContainer.height : barContentContainer.width;
+                  const selfSpan = isVertAxis ? height : width;
                   if (totalPanels <= 1 || index === 0) return 0;
-                  if (index === totalPanels - 1) return Math.max(0, barContentContainer.width - width);
-                  const gap = 8;
+                  if (index === totalPanels - 1) return Math.max(0, containerSpan - selfSpan);
+                  const gap = isVertAxis ? 6 : 8;
                   const frac = index / (totalPanels - 1);
-                  const idealX = (barContentContainer.width * frac) - (width / 2);
-                  let minX = 0;
+                  const ideal = (containerSpan * frac) - (selfSpan / 2);
+                  let minPos = 0;
                   const prev = panelsOuterRepeater.itemAt(index - 1);
                   if (prev) {
-                    minX = prev.x + prev.width + (prev.width > 0 ? gap : 0);
+                    const pPos = isVertAxis ? prev.y : prev.x;
+                    const pSpan = isVertAxis ? prev.height : prev.width;
+                    minPos = pPos + pSpan + (pSpan > 0 ? gap : 0);
                   }
-                  let maxX = Math.max(0, barContentContainer.width - width);
+                  let maxPos = Math.max(0, containerSpan - selfSpan);
                   const last = panelsOuterRepeater.itemAt(totalPanels - 1);
                   if (last) {
-                    let tailW = last.width + (last.width > 0 ? gap : 0);
+                    const lSpan = isVertAxis ? last.height : last.width;
+                    let tail = lSpan + (lSpan > 0 ? gap : 0);
                     for (let k = index + 1; k < totalPanels - 1; k++) {
                       const mid = panelsOuterRepeater.itemAt(k);
-                      if (mid && mid.width > 0) tailW += mid.width + gap;
+                      const mSpan = mid ? (isVertAxis ? mid.height : mid.width) : 0;
+                      if (mSpan > 0) tail += mSpan + gap;
                     }
-                    maxX = barContentContainer.width - tailW - width;
+                    maxPos = containerSpan - tail - selfSpan;
                   }
-                  if (minX <= maxX) {
-                    return Math.max(minX, Math.min(maxX, idealX));
-                  }
-                  return Math.max(0, Math.min(barContentContainer.width - width, minX));
+                  if (minPos <= maxPos) return Math.max(minPos, Math.min(maxPos, ideal));
+                  return Math.max(0, Math.min(containerSpan - selfSpan, minPos));
                 }
 
-                readonly property real targetY: {
-                  if (!barContentContainer.isVert) return 0;
-                  if (totalPanels <= 1 || index === 0) return 0;
-                  if (index === totalPanels - 1) return Math.max(0, barContentContainer.height - height);
-                  const gap = 6;
-                  const frac = index / (totalPanels - 1);
-                  const idealY = (barContentContainer.height * frac) - (height / 2);
-                  let minY = 0;
-                  const prev = panelsOuterRepeater.itemAt(index - 1);
-                  if (prev) {
-                    minY = prev.y + prev.height + (prev.height > 0 ? gap : 0);
-                  }
-                  let maxY = Math.max(0, barContentContainer.height - height);
-                  const last = panelsOuterRepeater.itemAt(totalPanels - 1);
-                  if (last) {
-                    let tailH = last.height + (last.height > 0 ? gap : 0);
-                    for (let k = index + 1; k < totalPanels - 1; k++) {
-                      const mid = panelsOuterRepeater.itemAt(k);
-                      if (mid && mid.height > 0) tailH += mid.height + gap;
-                    }
-                    maxY = barContentContainer.height - tailH - height;
-                  }
-                  if (minY <= maxY) {
-                    return Math.max(minY, Math.min(maxY, idealY));
-                  }
-                  return Math.max(0, Math.min(barContentContainer.height - height, minY));
-                }
+                readonly property real targetX: _calcAxisPos(false)
+                readonly property real targetY: _calcAxisPos(true)
 
                 Repeater {
                   id: sectionWidgetRepeater

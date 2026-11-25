@@ -10,11 +10,11 @@ Item {
   required property string font
   property color accent: theme.accentPrimary
 
-  property string conditionText: ""
-  property string tempText: "--°C"
-  property string feelsLikeText: "--°C"
-  property string humidityText: "--%"
-  property string windText: "--"
+  property string conditionText: SystemInfo._cachedWeatherCond || ""
+  property string tempText: SystemInfo._cachedWeatherTemp || "--°C"
+  property string feelsLikeText: SystemInfo._cachedWeatherFeels || "--°C"
+  property string humidityText: SystemInfo._cachedWeatherHum || "--%"
+  property string windText: SystemInfo._cachedWeatherWind || "--"
   property bool isRefreshing: false
 
   readonly property string locationLabel: SystemInfo.effectiveWeatherLocation || "Local Weather"
@@ -34,13 +34,19 @@ Item {
     }
   }
 
-  function refresh() {
+  function refresh(force) {
     parseSummary(SystemInfo.weatherInfo);
     if (detailProc.running) return;
+    const now = Date.now();
     const rawLoc = SystemInfo.effectiveWeatherLocation || "";
-    const reqLoc = rawLoc.trim().replace(/\s+/g, "+").replace(/"/g, "");
     const u = (BarConfig.weatherUnit === "u") ? "u" : "m";
+    const cacheKey = rawLoc + "|" + u;
+    if (!force && SystemInfo._cachedWeatherKey === cacheKey && SystemInfo._cachedWeatherMs > 0 && (now - SystemInfo._cachedWeatherMs) < 300000) {
+      return;
+    }
+    const reqLoc = rawLoc.trim().replace(/\s+/g, "+").replace(/"/g, "");
     root.isRefreshing = true;
+    detailProc._reqKey = cacheKey;
     detailProc.command = [
       "sh", "-c",
       "curl -s --connect-timeout 5 \"https://wttr.in/" + reqLoc + "?format=%C|%t|%f|%h|%w&" + u + "\" 2>/dev/null | head -n 1"
@@ -50,6 +56,7 @@ Item {
 
   Process {
     id: detailProc
+    property string _reqKey: ""
     running: false
     stdout: StdioCollector {
       onStreamFinished: {
@@ -66,6 +73,13 @@ Item {
             // Strip leading arrow glyphs so wind stays clean text
             root.windText = parts[4].trim().replace(/^[↑↓←→↖↗↘↙\s]+/, "");
           }
+          SystemInfo._cachedWeatherCond = root.conditionText;
+          SystemInfo._cachedWeatherTemp = root.tempText;
+          SystemInfo._cachedWeatherFeels = root.feelsLikeText;
+          SystemInfo._cachedWeatherHum = root.humidityText;
+          SystemInfo._cachedWeatherWind = root.windText;
+          SystemInfo._cachedWeatherKey = detailProc._reqKey;
+          SystemInfo._cachedWeatherMs = Date.now();
         }
       }
     }
@@ -74,7 +88,7 @@ Item {
 
   Component.onCompleted: {
     parseSummary(SystemInfo.weatherInfo);
-    refresh();
+    refresh(false);
   }
 
   Connections {
@@ -164,7 +178,7 @@ Item {
           onClicked: {
             refreshSpin.restart();
             SystemInfo.refreshWeather();
-            root.refresh();
+            root.refresh(true);
           }
         }
       }

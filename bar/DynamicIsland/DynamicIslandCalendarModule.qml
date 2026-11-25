@@ -10,13 +10,10 @@ Item {
   required property string font
   property color accent: theme.accentPrimary
 
-  property int viewMonth: new Date().getMonth()
-  property int viewYear: new Date().getFullYear()
+  property int viewMonth: Time.currentMonth
+  property int viewYear: Time.currentYear
 
-  readonly property bool isCurrentMonth: {
-    const now = new Date();
-    return viewMonth === now.getMonth() && viewYear === now.getFullYear();
-  }
+  readonly property bool isCurrentMonth: viewMonth === Time.currentMonth && viewYear === Time.currentYear
 
   implicitHeight: calCol.implicitHeight
   height: implicitHeight
@@ -55,9 +52,8 @@ Item {
   function prevMonth() { switchMonth(-1, -1, -1); }
   function nextMonth() { switchMonth(1, -1, -1); }
   function resetToToday() {
-    const now = new Date();
-    const m = now.getMonth();
-    const y = now.getFullYear();
+    const m = Time.currentMonth;
+    const y = Time.currentYear;
     if (y === viewYear && m === viewMonth) return;
     const dir = (y > viewYear || (y === viewYear && m > viewMonth)) ? 1 : -1;
     switchMonth(dir, m, y);
@@ -65,9 +61,8 @@ Item {
 
   onVisibleChanged: {
     if (!visible) {
-      const now = new Date();
-      viewMonth = now.getMonth();
-      viewYear = now.getFullYear();
+      viewMonth = Time.currentMonth;
+      viewYear = Time.currentYear;
     }
   }
 
@@ -136,7 +131,7 @@ Item {
           }
 
           Text {
-            text: Qt.formatDateTime(new Date(), "dddd, MMM d")
+            text: Time.fullDateString
             font.family: root.font
             font.pixelSize: 11
             color: root.theme.textSecondary

@@ -1,12 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
-import Quickshell.Widgets
 import Quickshell.Services.Notifications
 import "../../notifications"
 import "../../notifications/Components"
-import "../../notifications/SocialApps.js" as SocialApps
+import "../../notifications/NotificationPresentation.js" as NotifPres
 import ".."
 
 Item {
@@ -44,104 +42,6 @@ Item {
   // Normalized countdown progress (1.0 -> 0.0) so it stays accurate while island width animates
   property real progressFrac: 1.0
 
-  function resolveDesktopIconByAppName(app) {
-    const lower = String(app || "").toLowerCase().trim();
-    if (lower === "" || lower === "notify-send" || lower === "notification") return "";
-    const entries = (DesktopEntries && DesktopEntries.applications && DesktopEntries.applications.values)
-      ? DesktopEntries.applications.values
-      : [];
-    for (let i = 0; i < entries.length; i++) {
-      const e = entries[i];
-      if (!e || !e.icon) continue;
-      const eName = String(e.name || "").toLowerCase();
-      const eId = String(e.id || "").toLowerCase();
-      const eCls = String(e.startupClass || "").toLowerCase();
-      if (eName === lower || eId === lower || eCls === lower || (lower.length >= 3 && (eName.indexOf(lower) !== -1 || eId.indexOf(lower) !== -1))) {
-        const ep = Quickshell.iconPath(e.icon, true);
-        if (ep) return ep;
-      }
-    }
-    if (lower.indexOf("brave") !== -1) {
-      const bp = Quickshell.iconPath("brave-desktop", true) || Quickshell.iconPath("brave-browser", true);
-      if (bp) return bp;
-    }
-    return Quickshell.iconPath(lower.replace(/\s+/g, "-"), true) || Quickshell.iconPath(lower, true) || "";
-  }
-
-  function resolveIconInfo(n) {
-    if (!n) return { themeSrc: "", fileSrc: "", fallbackThemeSrc: "", glyph: "", color: root.accent };
-    const rawIcon = String(n.appIcon || "").trim();
-    const app = String(n.displayAppName || n.appName || "").trim();
-    const sum = String(n.summary || "");
-    const body = String(n.displayBody || n.body || "");
-
-    // 1. Check SocialApps FIRST so WhatsApp/Discord/Telegram Web show their real icon instead of Brave/Chrome
-    const sApp = n.socialApp || SocialApps.detectApp(n.appName || app, rawIcon, sum, body);
-    if (sApp) {
-      const sPath = sApp.appIcon ? (Quickshell.iconPath(sApp.appIcon, true) || "") : "";
-      const isFile = sPath.startsWith("file://") || sPath.startsWith("/");
-      return {
-        themeSrc: (!isFile && sPath !== "") ? sPath : "",
-        fileSrc: isFile ? (sPath.startsWith("/") ? ("file://" + sPath) : sPath) : "",
-        fallbackThemeSrc: "",
-        glyph: sApp.icon || "",
-        color: sApp.color || root.accent
-      };
-    }
-
-    const desktopFallback = resolveDesktopIconByAppName(n.appName || app);
-    const fbIsFile = desktopFallback.startsWith("file://") || desktopFallback.startsWith("/");
-    const fbTheme = (!fbIsFile && desktopFallback !== "") ? desktopFallback : "";
-    const fbFile = fbIsFile ? (desktopFallback.startsWith("/") ? ("file://" + desktopFallback) : desktopFallback) : "";
-
-    // 2. Direct appIcon (validate theme icons & route file paths to Image so IconImage never draws a pink checkerboard)
-    if (rawIcon !== "") {
-      const isVolatileTmp = rawIcon.indexOf("/tmp/") !== -1 || rawIcon.indexOf("scoped_dir") !== -1;
-      if (isVolatileTmp && desktopFallback !== "") {
-        return { themeSrc: fbTheme, fileSrc: fbFile, fallbackThemeSrc: "", glyph: "", color: root.accent };
-      }
-      if (rawIcon.startsWith("image://icon//")) {
-        return { themeSrc: "", fileSrc: "file://" + rawIcon.slice(13), fallbackThemeSrc: fbTheme, glyph: "", color: root.accent };
-      }
-      if (rawIcon.startsWith("image://icon/")) {
-        const validated = Quickshell.iconPath(rawIcon.slice(13), true) || "";
-        if (validated !== "") {
-          const vFile = validated.startsWith("file://") || validated.startsWith("/");
-          return {
-            themeSrc: !vFile ? validated : "",
-            fileSrc: vFile ? (validated.startsWith("/") ? ("file://" + validated) : validated) : "",
-            fallbackThemeSrc: fbTheme,
-            glyph: "",
-            color: root.accent
-          };
-        }
-      } else if (rawIcon.startsWith("file://")) {
-        return { themeSrc: "", fileSrc: rawIcon, fallbackThemeSrc: fbTheme, glyph: "", color: root.accent };
-      } else if (rawIcon.startsWith("/")) {
-        return { themeSrc: "", fileSrc: "file://" + rawIcon, fallbackThemeSrc: fbTheme, glyph: "", color: root.accent };
-      } else if (!rawIcon.startsWith("image://")) {
-        const validated = Quickshell.iconPath(rawIcon, true) || "";
-        if (validated !== "") {
-          const vFile = validated.startsWith("file://") || validated.startsWith("/");
-          return {
-            themeSrc: !vFile ? validated : "",
-            fileSrc: vFile ? (validated.startsWith("/") ? ("file://" + validated) : validated) : "",
-            fallbackThemeSrc: fbTheme,
-            glyph: "",
-            color: root.accent
-          };
-        }
-      }
-    }
-
-    // 3. DesktopEntries lookup by appName
-    if (desktopFallback !== "") {
-      return { themeSrc: fbTheme, fileSrc: fbFile, fallbackThemeSrc: "", glyph: "", color: root.accent };
-    }
-
-    return { themeSrc: "", fileSrc: "", fallbackThemeSrc: "", glyph: "", color: root.accent };
-  }
-
   function resolveUrgencyColor(n) {
     if (!n) return root.accent;
     if (n.urgency === NotificationUrgency.Critical) return root.theme.accentRed;
@@ -156,7 +56,7 @@ Item {
     cachedSummary = n.summary || "Notification";
     cachedBody = n.displayBody || n.body || "";
     cachedImage = String(n.image || "");
-    const iconInfo = resolveIconInfo(n);
+    const iconInfo = NotifPres.resolveIconInfo(n, root.accent, Quickshell, DesktopEntries);
     cachedAppIconThemeSrc = iconInfo.themeSrc;
     cachedAppIconFileSrc = iconInfo.fileSrc;
     cachedAppIconFallback = iconInfo.fallbackThemeSrc;
@@ -265,7 +165,7 @@ Item {
       anchors.right: parent.right
       spacing: root.expanded ? 10 : 7
 
-      // Primary notification row (when notification has an image/avatar, image goes LEFT and app icon goes RIGHT)
+      // Primary notification row
       RowLayout {
         Layout.fillWidth: true
         spacing: 10
@@ -285,14 +185,10 @@ Item {
           Behavior on Layout.preferredHeight { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
         }
 
-        // LEFT fallback: App Icon or Social Badge (hidden cleanly when notification has no icon)
-        Item {
+        // LEFT fallback: Shared App Icon / Social Badge
+        NotifAppIconBadge {
           id: avatarBadge
-          readonly property bool hasRealIcon: notifAppIconImg.status === Image.Ready || notifAppFileImg.status === Image.Ready || notifAppFallbackImg.status === Image.Ready
-          readonly property string displayGlyph: root.cachedSocialGlyph
-          readonly property color displayGlyphColor: root.cachedSocialGlyph !== "" ? root.cachedSocialColor : root.cachedUrgencyColor
-          readonly property bool showSlot: !root.hasImage && (hasRealIcon || displayGlyph !== "")
-
+          readonly property bool showSlot: !root.hasImage && hasAnyVisual
           visible: showSlot
           Layout.preferredWidth: showSlot ? (root.expanded ? 36 : 30) : 0
           Layout.preferredHeight: showSlot ? (root.expanded ? 36 : 30) : 0
@@ -300,52 +196,15 @@ Item {
           Behavior on Layout.preferredWidth { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
           Behavior on Layout.preferredHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-          IconImage {
-            id: notifAppIconImg
-            anchors.centerIn: parent
-            implicitSize: root.expanded ? 34 : 28
-            source: root.cachedAppIconThemeSrc
-            visible: root.cachedAppIconThemeSrc !== "" && status === Image.Ready
-          }
-
-          Image {
-            id: notifAppFileImg
-            anchors.centerIn: parent
-            width: root.expanded ? 34 : 28
-            height: root.expanded ? 34 : 28
-            source: root.cachedAppIconFileSrc
-            sourceSize.width: 72
-            sourceSize.height: 72
-            fillMode: Image.PreserveAspectFit
-            asynchronous: true
-            cache: false
-            visible: root.cachedAppIconFileSrc !== "" && status === Image.Ready && notifAppIconImg.status !== Image.Ready
-          }
-
-          IconImage {
-            id: notifAppFallbackImg
-            anchors.centerIn: parent
-            implicitSize: root.expanded ? 34 : 28
-            source: (notifAppIconImg.status !== Image.Ready && notifAppFileImg.status !== Image.Ready && root.cachedAppIconFallback) ? root.cachedAppIconFallback : ""
-            visible: source !== "" && status === Image.Ready && notifAppIconImg.status !== Image.Ready && notifAppFileImg.status !== Image.Ready
-          }
-
-          Rectangle {
-            anchors.fill: parent
-            radius: 10
-            visible: !avatarBadge.hasRealIcon && avatarBadge.displayGlyph !== ""
-            color: Qt.rgba(avatarBadge.displayGlyphColor.r, avatarBadge.displayGlyphColor.g, avatarBadge.displayGlyphColor.b, 0.14)
-            border.color: Qt.rgba(avatarBadge.displayGlyphColor.r, avatarBadge.displayGlyphColor.g, avatarBadge.displayGlyphColor.b, 0.30)
-            border.width: 1
-
-            Text {
-              anchors.centerIn: parent
-              text: avatarBadge.displayGlyph
-              font.family: root.font
-              font.pixelSize: root.expanded ? 18 : 15
-              color: avatarBadge.displayGlyphColor
-            }
-          }
+          themeSrc: root.cachedAppIconThemeSrc
+          fileSrc: root.cachedAppIconFileSrc
+          fallbackThemeSrc: root.cachedAppIconFallback
+          glyph: root.cachedSocialGlyph
+          glyphColor: root.cachedSocialGlyph !== "" ? root.cachedSocialColor : root.cachedUrgencyColor
+          font: root.font
+          iconSize: root.expanded ? 34 : 28
+          glyphSize: root.expanded ? 18 : 15
+          badgeRadius: 10
         }
 
         // App Name + Summary + Body
@@ -366,7 +225,6 @@ Item {
               elide: Text.ElideRight
             }
 
-            // Compact queue count pill placed cleanly before "· Now"
             Rectangle {
               visible: root.queueCount > 1
               Layout.preferredWidth: Math.max(16, qCountTxt.implicitWidth + 8)
@@ -449,64 +307,26 @@ Item {
           }
         }
 
-        // RIGHT: Swapped App Icon / Social App Badge (shown on right when preview image is on left)
-        Item {
+        // RIGHT: Swapped App Icon / Social App Badge (when preview image is on left)
+        NotifAppIconBadge {
           id: rightAppBadge
-          readonly property bool hasRealIcon: rightAppIconImg.status === Image.Ready || rightAppFileImg.status === Image.Ready || rightAppFallbackImg.status === Image.Ready
-          readonly property bool hasSocialBadge: !hasRealIcon && root.cachedSocialGlyph !== ""
-          readonly property bool showSlot: root.hasImage && (hasRealIcon || hasSocialBadge)
-
+          readonly property bool showSlot: root.hasImage && hasAnyVisual
           visible: showSlot
           Layout.preferredWidth: showSlot ? 28 : 0
           Layout.preferredHeight: 28
           Layout.alignment: Qt.AlignVCenter
 
-          IconImage {
-            id: rightAppIconImg
-            anchors.centerIn: parent
-            implicitSize: 26
-            source: root.cachedAppIconThemeSrc
-            visible: root.cachedAppIconThemeSrc !== "" && status === Image.Ready
-          }
-
-          Image {
-            id: rightAppFileImg
-            anchors.centerIn: parent
-            width: 26
-            height: 26
-            source: root.cachedAppIconFileSrc
-            sourceSize.width: 56
-            sourceSize.height: 56
-            fillMode: Image.PreserveAspectFit
-            asynchronous: true
-            cache: false
-            visible: root.cachedAppIconFileSrc !== "" && status === Image.Ready && rightAppIconImg.status !== Image.Ready
-          }
-
-          IconImage {
-            id: rightAppFallbackImg
-            anchors.centerIn: parent
-            implicitSize: 26
-            source: (rightAppIconImg.status !== Image.Ready && rightAppFileImg.status !== Image.Ready && root.cachedAppIconFallback) ? root.cachedAppIconFallback : ""
-            visible: source !== "" && status === Image.Ready && rightAppIconImg.status !== Image.Ready && rightAppFileImg.status !== Image.Ready
-          }
-
-          Rectangle {
-            anchors.fill: parent
-            radius: 9
-            visible: rightAppBadge.hasSocialBadge
-            color: Qt.rgba(root.cachedSocialColor.r, root.cachedSocialColor.g, root.cachedSocialColor.b, 0.16)
-            border.color: Qt.rgba(root.cachedSocialColor.r, root.cachedSocialColor.g, root.cachedSocialColor.b, 0.35)
-            border.width: 1
-
-            Text {
-              anchors.centerIn: parent
-              text: root.cachedSocialGlyph
-              font.family: root.font
-              font.pixelSize: 15
-              color: root.cachedSocialColor
-            }
-          }
+          themeSrc: root.cachedAppIconThemeSrc
+          fileSrc: root.cachedAppIconFileSrc
+          fallbackThemeSrc: root.cachedAppIconFallback
+          glyph: root.cachedSocialGlyph
+          glyphColor: root.cachedSocialColor
+          font: root.font
+          iconSize: 26
+          glyphSize: 15
+          badgeRadius: 9
+          glyphBgAlpha: 0.16
+          glyphBorderAlpha: 0.35
         }
       }
 

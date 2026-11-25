@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Services.Mpris
 import "../../notifications"
 import ".."
 
@@ -24,11 +23,13 @@ Item {
   signal requestSelectModule(string modId)
   signal requestCollapse()
 
+  readonly property var validModuleIds: (BarConfig.islandModuleDefinitions || []).map(m => m.id)
+
   readonly property var resolvedModules: {
     const src = Array.isArray(enabledModules) && enabledModules.length > 0
       ? enabledModules
       : ["mpris", "calendar"];
-    const valid = ["mpris", "calendar", "notifications", "weather", "quickControls", "appShortcuts", "systemStats"];
+    const valid = root.validModuleIds;
     const out = [];
     for (let i = 0; i < src.length; i++) {
       if (valid.indexOf(src[i]) !== -1 && out.indexOf(src[i]) === -1) out.push(src[i]);
@@ -62,7 +63,6 @@ Item {
     return resolvedModules[0] || "calendar";
   }
 
-  // Secondary module override in split mode (when user clicks a Misc tab below)
   property string splitOverrideRightId: ""
   readonly property string effectiveSplitRightId: (splitOverrideRightId !== "" && resolvedModules.indexOf(splitOverrideRightId) !== -1 && splitOverrideRightId !== splitLeftId)
     ? splitOverrideRightId
@@ -73,97 +73,8 @@ Item {
     return resolvedModules[0] || "mpris";
   }
 
-  // Animated displayed module state for directional slide+fade transitions (like Calendar month switch)
-  property string displayedModule: effectiveActiveModule
-  property string displayedSplitRightId: effectiveSplitRightId
-
-  onEffectiveActiveModuleChanged: {
-    if (!root.visible || displayedModule === effectiveActiveModule) {
-      singleTabAnim.stop();
-      displayedModule = effectiveActiveModule;
-      singleModWrap.opacity = 1.0;
-      singleModShift.x = 0;
-      return;
-    }
-    const oldIdx = resolvedModules.indexOf(displayedModule);
-    const newIdx = resolvedModules.indexOf(effectiveActiveModule);
-    const dir = (oldIdx !== -1 && newIdx !== -1 && newIdx < oldIdx) ? -1 : 1;
-    if (singleTabAnim.running) singleTabAnim.complete();
-    singleTabAnim.direction = dir;
-    singleTabAnim.targetModule = effectiveActiveModule;
-    singleTabAnim.restart();
-  }
-
-  onEffectiveSplitRightIdChanged: {
-    if (!root.visible || displayedSplitRightId === effectiveSplitRightId) {
-      splitRightAnim.stop();
-      displayedSplitRightId = effectiveSplitRightId;
-      splitRightWrap.opacity = 1.0;
-      splitRightShift.x = 0;
-      return;
-    }
-    const oldIdx = resolvedModules.indexOf(displayedSplitRightId);
-    const newIdx = resolvedModules.indexOf(effectiveSplitRightId);
-    const dir = (oldIdx !== -1 && newIdx !== -1 && newIdx < oldIdx) ? -1 : 1;
-    if (splitRightAnim.running) splitRightAnim.complete();
-    splitRightAnim.direction = dir;
-    splitRightAnim.targetModule = effectiveSplitRightId;
-    splitRightAnim.restart();
-  }
-
-  SequentialAnimation {
-    id: singleTabAnim
-    property int direction: 1
-    property string targetModule: "mpris"
-
-    ParallelAnimation {
-      NumberAnimation { target: singleModWrap; property: "opacity"; to: 0.0; duration: 85; easing.type: Easing.InQuad }
-      NumberAnimation { target: singleModShift; property: "x"; to: singleTabAnim.direction * -18; duration: 85; easing.type: Easing.InQuad }
-    }
-    ScriptAction {
-      script: {
-        root.displayedModule = singleTabAnim.targetModule;
-        singleModShift.x = singleTabAnim.direction * 18;
-      }
-    }
-    ParallelAnimation {
-      NumberAnimation { target: singleModWrap; property: "opacity"; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
-      NumberAnimation { target: singleModShift; property: "x"; to: 0; duration: 160; easing.type: Easing.OutCubic }
-    }
-  }
-
-  SequentialAnimation {
-    id: splitRightAnim
-    property int direction: 1
-    property string targetModule: "calendar"
-
-    ParallelAnimation {
-      NumberAnimation { target: splitRightWrap; property: "opacity"; to: 0.0; duration: 85; easing.type: Easing.InQuad }
-      NumberAnimation { target: splitRightShift; property: "x"; to: splitRightAnim.direction * -16; duration: 85; easing.type: Easing.InQuad }
-    }
-    ScriptAction {
-      script: {
-        root.displayedSplitRightId = splitRightAnim.targetModule;
-        splitRightShift.x = splitRightAnim.direction * 16;
-      }
-    }
-    ParallelAnimation {
-      NumberAnimation { target: splitRightWrap; property: "opacity"; to: 1.0; duration: 160; easing.type: Easing.OutCubic }
-      NumberAnimation { target: splitRightShift; property: "x"; to: 0; duration: 160; easing.type: Easing.OutCubic }
-    }
-  }
-
   function moduleMeta(modId) {
-    switch (modId) {
-      case "mpris":         return { id: "mpris",         label: "Media",    icon: "󰎆" };
-      case "calendar":      return { id: "calendar",      label: "Calendar", icon: "󰃭" };
-      case "notifications": return { id: "notifications", label: "Notification",   icon: "󰂚" };
-      case "weather":       return { id: "weather",       label: "Weather",  icon: "󰖐" };
-      case "quickControls": return { id: "quickControls", label: "Controls", icon: "󰕰" };
-      case "appShortcuts":  return { id: "appShortcuts",  label: "Quick Launch",     icon: "󰀻" };
-      case "systemStats":   return { id: "systemStats",   label: "System",   icon: "󰻠" };
-      default:              return { id: modId,           label: modId,      icon: "󰄲" };
-    }
+    return BarConfig.getIslandModuleMeta(modId);
   }
 
   function componentForModule(modId) {
@@ -271,7 +182,6 @@ Item {
       Layout.fillWidth: true
       spacing: 6
 
-      // Wheel scroll anywhere on tab strip cycles modules
       Item {
         Layout.fillWidth: true
         Layout.preferredHeight: 28
@@ -377,7 +287,7 @@ Item {
         }
       }
 
-      // Pin Button (clean icon-only, no circular pill/border)
+      // Pin Button
       Item {
         Layout.preferredWidth: 22
         Layout.preferredHeight: 22
@@ -410,32 +320,16 @@ Item {
       color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.08)
     }
 
-    // Tabbed Single-Module Content (with directional slide + fade transition)
-    Item {
+    // Tabbed Single-Module Content
+    DynamicIslandModuleSlot {
       visible: !root.isSplitMode
+      slotActive: !root.isSplitMode && root.visible
       Layout.fillWidth: true
-      Layout.preferredHeight: singleModLoader.item ? singleModLoader.item.implicitHeight : 100
-      clip: true
-
-      Item {
-        id: singleModWrap
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: singleModLoader.item ? singleModLoader.item.implicitHeight : 100
-        transform: Translate { id: singleModShift; x: 0 }
-
-        Loader {
-          id: singleModLoader
-          active: !root.isSplitMode && root.visible
-          anchors.left: parent.left
-          anchors.right: parent.right
-          height: item ? item.implicitHeight : 100
-          sourceComponent: root.componentForModule(root.displayedModule)
-          onLoaded: {
-            if (item) item.width = Qt.binding(() => singleModLoader.width);
-          }
-        }
-      }
+      Layout.preferredHeight: implicitHeight
+      hubRoot: root
+      targetModuleId: root.effectiveActiveModule
+      moduleOrder: root.resolvedModules
+      slideDistance: 18
     }
 
     // Split Dashboard Content (2 side-by-side modules, right pane animated on switch)
@@ -464,32 +358,16 @@ Item {
         color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.10)
       }
 
-      Item {
+      DynamicIslandModuleSlot {
+        slotActive: root.isSplitMode && root.visible
         Layout.fillWidth: true
         Layout.preferredWidth: 1
         Layout.alignment: Qt.AlignTop
-        Layout.preferredHeight: splitRightLoader.item ? splitRightLoader.item.implicitHeight : 100
-        clip: true
-
-        Item {
-          id: splitRightWrap
-          anchors.left: parent.left
-          anchors.right: parent.right
-          height: splitRightLoader.item ? splitRightLoader.item.implicitHeight : 100
-          transform: Translate { id: splitRightShift; x: 0 }
-
-          Loader {
-            id: splitRightLoader
-            active: root.isSplitMode && root.visible
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: item ? item.implicitHeight : 100
-            sourceComponent: root.componentForModule(root.displayedSplitRightId)
-            onLoaded: {
-              if (item) item.width = Qt.binding(() => splitRightLoader.width);
-            }
-          }
-        }
+        Layout.preferredHeight: implicitHeight
+        hubRoot: root
+        targetModuleId: root.effectiveSplitRightId
+        moduleOrder: root.resolvedModules
+        slideDistance: 16
       }
     }
   }

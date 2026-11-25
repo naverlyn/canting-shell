@@ -1,14 +1,6 @@
-import Quickshell
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Hyprland
-import Quickshell.Widgets
 import QtQuick.Controls
-import Quickshell.Services.SystemTray
-import Quickshell.Io
-import Quickshell.Services.Mpris
-import Quickshell.Services.Pipewire
-import QtQuick.Effects
 import "../Components"
 import ".."
 
@@ -120,7 +112,7 @@ Rectangle {
     Text {
       anchors.horizontalCenter: parent.horizontalCenter
       visible: BarConfig.showDate && BarConfig.showYear
-      text: Qt.formatDateTime(new Date(), "yyyy")
+      text: String(Time.currentYear)
       color: hostRoot.theme.textSecondary
       font.pixelSize: hostContainer.scaled(11)
       font.bold: true
@@ -140,7 +132,7 @@ Rectangle {
     property bool pinned: timeWidget.calPinned
     property var theme: hostRoot.theme
     property string font: hostRoot.font
-    property string title: Qt.formatDateTime(new Date(), "MMMM yyyy")
+    property string title: Time.monthYearString
     property string icon: ""
     property color accent: hostContainer.wAccent("clock", hostRoot.theme.accentPrimary)
     property bool hideHeader: true
@@ -148,8 +140,8 @@ Rectangle {
     property int preferredHeight: 255
     property var rows: []
 
-    property int viewMonth: new Date().getMonth()
-    property int viewYear: new Date().getFullYear()
+    property int viewMonth: Time.currentMonth
+    property int viewYear: Time.currentYear
 
     signal triggerTransition(int direction, int targetMonth, int targetYear)
 
@@ -162,9 +154,8 @@ Rectangle {
     }
 
     function resetToToday() {
-      const now = new Date();
-      const nowMonth = now.getMonth();
-      const nowYear = now.getFullYear();
+      const nowMonth = Time.currentMonth;
+      const nowYear = Time.currentYear;
       if (nowYear === viewYear && nowMonth === viewMonth) return;
       const dir = (nowYear > viewYear || (nowYear === viewYear && nowMonth > viewMonth)) ? 1 : -1;
       triggerTransition(dir, nowMonth, nowYear);
@@ -193,10 +184,7 @@ Rectangle {
       }
     }
 
-    readonly property bool isCurrentMonth: {
-      const now = new Date();
-      return viewMonth === now.getMonth() && viewYear === now.getFullYear();
-    }
+    readonly property bool isCurrentMonth: viewMonth === Time.currentMonth && viewYear === Time.currentYear
 
     property bool effectiveHovered: false
     readonly property bool isSharedCardHovered: Boolean(

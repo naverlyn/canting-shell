@@ -26,6 +26,13 @@ Singleton {
   property string diskUsage: "0%"
   property string weatherInfo: "Loading..."
   property string detectedWeatherLocation: ""
+  property string _cachedWeatherCond: ""
+  property string _cachedWeatherTemp: ""
+  property string _cachedWeatherFeels: ""
+  property string _cachedWeatherHum: ""
+  property string _cachedWeatherWind: ""
+  property string _cachedWeatherKey: ""
+  property double _cachedWeatherMs: 0
   readonly property string effectiveWeatherLocation: {
     const cfg = (typeof BarConfig !== "undefined" && BarConfig.weatherLocation)
       ? BarConfig.weatherLocation.trim()
@@ -163,21 +170,6 @@ Singleton {
             else root.batteryIcon = "󰁺"
           } else if (line.startsWith("TEMP:")) {
             root.temperature = line.substring(5) || "N/A"
-          } else if (line.startsWith("GPU:")) {
-            const gParts = line.substring(4).split(",")
-            if (gParts.length >= 2) {
-              const gu = parseInt((gParts[0] || "0").trim())
-              const gt = parseInt((gParts[1] || "0").trim())
-              root.gpuUsage = (isNaN(gu) ? 0 : gu) + "%"
-              root.gpuTemp = (isNaN(gt) || gt <= 0) ? "N/A" : (gt + "°C")
-              if (gParts.length >= 4) {
-                const mu = parseFloat((gParts[2] || "0").trim())
-                const mt = parseFloat((gParts[3] || "0").trim())
-                if (mt > 0 && !isNaN(mu)) {
-                  root.gpuVram = Math.round((mu / mt) * 100) + "%"
-                }
-              }
-            }
           }
         }
       }
@@ -256,8 +248,6 @@ Singleton {
     diskProc.running = true
   }
 
-  readonly property bool gpuActive: BarConfig.isWidgetInAnyBar("gpu")
-
   Process {
     id: gpuProc
     command: [
@@ -296,10 +286,12 @@ Singleton {
     }
   }
 
+  readonly property bool gpuActive: BarConfig.barVisible && (BarConfig.isWidgetInAnyBar("gpu") || Boolean(BarConfig.hasDynamicIslandSystemActive))
+
   // Update timer (fast polling for CPU, Mem, Net, Battery, Temp)
   Timer {
     interval: Math.max(1, (BarConfig.hwPollInterval || 2)) * 1000
-    running: true
+    running: BarConfig.barVisible
     repeat: true
     onTriggered: {
       if (!fastStatsProc.running) fastStatsProc.running = true
@@ -310,10 +302,10 @@ Singleton {
   // Disk update timer (every 30 seconds)
   Timer {
     interval: 30000
-    running: true
+    running: BarConfig.barVisible
     repeat: true
     onTriggered: {
-      diskProc.running = true;
+      if (!diskProc.running) diskProc.running = true;
       gc();
     }
   }
@@ -321,7 +313,7 @@ Singleton {
   // Weather update timer (configurable interval)
   Timer {
     interval: Math.max(5, (BarConfig.weatherIntervalMinutes || 15)) * 60 * 1000
-    running: true
+    running: BarConfig.barVisible
     repeat: true
     onTriggered: {
       root.refreshWeather();

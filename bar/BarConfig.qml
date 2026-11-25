@@ -3,6 +3,7 @@ pragma Singleton
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import "BarConfigDefaults.js" as Defaults
 import "BarConfigPanelOps.js" as PanelOps
 import "BarConfigPersistence.js" as Persistence
 
@@ -57,14 +58,21 @@ Singleton {
   property string barDropShadowColorMode: "dark" // "dark" | "accent" | "adaptive"
 
   readonly property var islandModuleDefinitions: [
-    { id: "mpris",         name: "MPRIS Media",    icon: "󰎆", desc: "Album art, live audio visualizer, seekbar & playback controls" },
-    { id: "calendar",      name: "Calendar",       icon: "󰃭", desc: "Interactive monthly calendar with clock & date header" },
-    { id: "notifications", name: "Notifications",  icon: "󰂚", desc: "Recent notification history, unread count & Do Not Disturb toggle" },
-    { id: "weather",       name: "Weather",        icon: "󰖐", desc: "Current temperature, conditions & location weather summary" },
-    { id: "quickControls", name: "Quick Controls", icon: "󰕰", desc: "Control Center quick toggle tiles (Wi-Fi, DND, Night Light, Screenshot, etc.)" },
-    { id: "appShortcuts",  name: "App Shortcuts",  icon: "󰀻", desc: "Pin favorite apps for instant launch from the Dynamic Island" },
-    { id: "systemStats",   name: "System Monitor", icon: "󰻠", desc: "Live CPU, RAM, GPU, temperature & network speed overview" }
+    { id: "mpris",         name: "MPRIS Media",    label: "Media",         icon: "󰎆", desc: "Album art, live audio visualizer, seekbar & playback controls" },
+    { id: "calendar",      name: "Calendar",       label: "Calendar",      icon: "󰃭", desc: "Interactive monthly calendar with clock & date header" },
+    { id: "notifications", name: "Notifications",  label: "Notifications", icon: "󰂚", desc: "Recent notification history, unread count & Do Not Disturb toggle" },
+    { id: "weather",       name: "Weather",        label: "Weather",       icon: "󰖐", desc: "Current temperature, conditions & location weather summary" },
+    { id: "quickControls", name: "Quick Controls", label: "Controls",      icon: "󰕰", desc: "Control Center quick toggle tiles (Wi-Fi, DND, Night Light, Screenshot, etc.)" },
+    { id: "appShortcuts",  name: "App Shortcuts",  label: "Quick Launch",  icon: "󰀻", desc: "Pin favorite apps for instant launch from the Dynamic Island" },
+    { id: "systemStats",   name: "System Monitor", label: "System",        icon: "󰻠", desc: "Live CPU, RAM, GPU, temperature & network speed overview" }
   ]
+
+  function getIslandModuleMeta(modId) {
+    for (let i = 0; i < islandModuleDefinitions.length; i++) {
+      if (islandModuleDefinitions[i].id === modId) return islandModuleDefinitions[i];
+    }
+    return { id: modId, name: modId, label: modId, icon: "󰄲", desc: "" };
+  }
   property string secondaryMode: "custom" // "blank" | "custom" | "mirror"
   property bool blankOnSecondary: false
   readonly property var defaultSecondaryPanels: [
@@ -132,68 +140,7 @@ Singleton {
 
   // Multi-Bar Configurations array
   // Each bar object: { id, name, enabled, position ("top"|"bottom"|"left"|"right"), barHeight, floating, barOpacity, pillRadius, pillOpacity, hidePill, allMonitors, displayTarget, secondaryMode, blankOnSecondary, secondaryPanels, innerCorners, panels }
-  property var bars: [
-    {
-      id: "bar_1",
-      name: "Primary Bar",
-      enabled: true,
-      position: "top",
-      barHeight: 32,
-      floating: false,
-      dashed: false,
-      dynamicIsland: false,
-      barOpacity: 0.85,
-      pillRadius: 10,
-      barRadius: 12,
-      barMargin: 6,
-      pillOpacity: 1.0,
-      hidePill: false,
-      scaleWidgets: true,
-      allMonitors: true,
-      displayTarget: "all",
-      secondaryPosition: "bottom",
-      secondaryFloating: false,
-      secondaryDashed: false,
-      secondaryDynamicIsland: false,
-      islandPosition: "center",
-      islandIdleMode: "widgets",
-      islandLiveActivity: true,
-      islandLayoutMode: "tabs",
-      islandModules: ["mpris", "calendar", "notifications", "weather", "quickControls", "systemStats"],
-      islandDefaultModule: "auto",
-      islandSplitModules: ["mpris", "calendar"],
-      islandHoverDelay: 120,
-      islandCloseDelay: 220,
-      islandExpandedWidth: 400,
-      islandNotificationMode: "island",
-      islandOsdEnabled: false,
-      islandControlTiles: [],
-      islandAppShortcuts: [],
-      barDropShadow: false,
-      barDropShadowTarget: "all",
-      barDropShadowBlur: 16,
-      barDropShadowOpacity: 0.45,
-      barDropShadowOffsetY: 4,
-      barDropShadowColorMode: "dark",
-      secondaryMode: "custom",
-      blankOnSecondary: false,
-      secondaryPanels: [
-        ["workspaces"],
-        ["windowTitle"],
-        ["weather", "clock"]
-      ],
-      innerCorners: true,
-      fluidCards: false,
-      barBorder: true,
-      barBorderWidth: 1,
-      barBorderColor: "",
-      panels: [
-        ["appGrid", "globalMenu", "cpu", "temp", "memory", "disk", "network"],
-        ["windowTitle"],
-        ["tray", "clock", "workspaces", "weather", "idleInhibitor", "controlCenter"]
-      ]
-    }
-  ]
+  property var bars: [Defaults.createBarInstance()]
 
   property var barIds: ["bar_1"]
 
@@ -229,18 +176,7 @@ Singleton {
 
   readonly property var currentBar: {
     const idx = Math.max(0, Math.min((root.bars ? root.bars.length : 1) - 1, root.selectedBarIndex));
-    return (root.bars && root.bars.length > 0) ? root.bars[idx] : {
-      id: "bar_1", name: "Primary Bar", enabled: true, position: "top",
-      barHeight: 32, floating: false, barOpacity: 0.85, pillRadius: 10, pillOpacity: 1.0, hidePill: false, scaleWidgets: true,
-      allMonitors: true, displayTarget: "all", secondaryPosition: (root.secondaryPosition || "top"), secondaryFloating: Boolean(root.secondaryFloating), secondaryMode: "custom", blankOnSecondary: false,
-      secondaryPanels: root.defaultSecondaryPanels,
-      innerCorners: root.innerCorners,
-      fluidCards: root.fluidCards,
-      barBorder: root.barBorder,
-      barBorderWidth: root.barBorderWidth,
-      barBorderColor: root.barBorderColor,
-      panels: [root.defaultLeftWidgets, root.defaultCenterWidgets, root.defaultRightWidgets]
-    };
+    return (root.bars && root.bars.length > 0) ? root.bars[idx] : Defaults.createBarInstance();
   }
 
   // Active section widget arrays (synced with selectedBarIndex and activeEditingDisplay for BarSettings editing)
@@ -455,95 +391,13 @@ Singleton {
     });
     root.bars = bList;
     if (idx === 0) {
-      if (propName === "enabled") root.barVisible = Boolean(val);
-      else if (propName === "position") {
-        root.position = String(val);
-        if (String(val) !== "top" && root.dynamicIsland) { root.dynamicIsland = false; root.dashed = true; }
-      }
-      else if (propName === "barHeight") root.barHeight = Number(val);
-      else if (propName === "floating") root.floating = Boolean(val);
-      else if (propName === "dashed") root.dashed = Boolean(val);
-      else if (propName === "dynamicIsland") {
-        root.dynamicIsland = Boolean(val);
-        if (Boolean(val)) {
-          root.position = "top";
-          root.floating = false;
-          root.dashed = false;
-          if (bList[0] && bList[0].barDropShadow !== undefined) root.barDropShadow = Boolean(bList[0].barDropShadow);
-        }
-      }
-      else if (propName === "barOpacity") root.barOpacity = Number(val);
-      else if (propName === "pillRadius") root.pillRadius = Number(val);
-      else if (propName === "barRadius") root.barRadius = Number(val);
-      else if (propName === "barMargin") root.barMargin = Number(val);
-      else if (propName === "pillOpacity") root.pillOpacity = Number(val);
-      else if (propName === "hidePill") root.hidePill = Boolean(val);
-      else if (propName === "scaleWidgets") root.scaleWidgets = Boolean(val);
-      else if (propName === "activeStyle") root.activeStyle = String(val);
-      else if (propName === "allMonitors") root.allMonitors = Boolean(val);
-      else if (propName === "displayTarget") {
-        root.displayTarget = String(val);
-        root.allMonitors = (String(val) === "all");
-      }
-      else if (propName === "secondaryPosition") {
-        root.secondaryPosition = String(val);
-        if (String(val) !== "top" && root.secondaryDynamicIsland) { root.secondaryDynamicIsland = false; root.secondaryDashed = true; }
-      }
-      else if (propName === "secondaryFloating") {
-        root.secondaryFloating = Boolean(val);
-      }
-      else if (propName === "secondaryDashed") {
-        root.secondaryDashed = Boolean(val);
-      }
-      else if (propName === "secondaryDynamicIsland") {
-        root.secondaryDynamicIsland = Boolean(val);
-        if (Boolean(val)) {
-          root.secondaryPosition = "top";
-          root.secondaryFloating = false;
-          root.secondaryDashed = false;
-        }
-      }
-      else if (propName === "islandPosition") root.islandPosition = String(val);
-      else if (propName === "islandIdleMode") root.islandIdleMode = String(val);
-      else if (propName === "islandLiveActivity") root.islandLiveActivity = Boolean(val);
-      else if (propName === "islandLayoutMode") root.islandLayoutMode = String(val);
-      else if (propName === "islandModules") root.islandModules = Array.isArray(val) ? val.slice() : root.islandModules;
-      else if (propName === "islandDefaultModule") root.islandDefaultModule = String(val);
-      else if (propName === "islandSplitModules") root.islandSplitModules = Array.isArray(val) ? val.slice() : root.islandSplitModules;
-      else if (propName === "islandHoverDelay") root.islandHoverDelay = Math.max(0, Math.min(500, Math.round(Number(val))));
-      else if (propName === "islandCloseDelay") root.islandCloseDelay = Math.max(80, Math.min(800, Math.round(Number(val))));
-      else if (propName === "islandExpandedWidth") root.islandExpandedWidth = Math.max(320, Math.min(680, Math.round(Number(val))));
-      else if (propName === "islandNotificationMode") root.islandNotificationMode = String(val);
-      else if (propName === "islandOsdEnabled") root.islandOsdEnabled = Boolean(val);
-      else if (propName === "islandControlTiles") root.islandControlTiles = Array.isArray(val) ? val.slice() : [];
-      else if (propName === "barDropShadow") root.barDropShadow = Boolean(val);
-      else if (propName === "barDropShadowTarget") root.barDropShadowTarget = String(val);
-      else if (propName === "barDropShadowBlur") root.barDropShadowBlur = Math.max(4, Math.min(36, Math.round(Number(val))));
-      else if (propName === "barDropShadowOpacity") root.barDropShadowOpacity = Math.max(0.05, Math.min(0.85, Number(val)));
-      else if (propName === "barDropShadowOffsetY") root.barDropShadowOffsetY = Math.max(0, Math.min(16, Math.round(Number(val))));
-      else if (propName === "barDropShadowColorMode") root.barDropShadowColorMode = String(val);
-      else if (propName === "secondaryMode") {
-        root.secondaryMode = String(val);
-        root.blankOnSecondary = (String(val) === "blank");
-      }
-      else if (propName === "blankOnSecondary") {
-        root.blankOnSecondary = Boolean(val);
-        root.secondaryMode = val ? "blank" : "custom";
-      }
-      else if (propName === "secondaryPanels") {
-        root.secondaryPanels = val;
-      }
-      else if (propName === "innerCorners") root.innerCorners = Boolean(val);
-      else if (propName === "fluidCards") root.fluidCards = Boolean(val);
-      else if (propName === "barBorder") root.barBorder = Boolean(val);
-      else if (propName === "barBorderWidth") root.barBorderWidth = Math.max(1, Math.min(10, Number(val)));
-      else if (propName === "barBorderColor") root.barBorderColor = String(val);
-      else if (propName === "screenBorder") root.screenBorder = Boolean(val);
+      if (propName === "screenBorder") root.screenBorder = Boolean(val);
       else if (propName === "screenBorderThickness") root.screenBorderThickness = Math.max(1, Math.min(32, Math.round(Number(val))));
       else if (propName === "screenBorderColor") root.screenBorderColor = String(val);
       else if (propName === "screenBorderCorners") root.screenBorderCorners = Boolean(val);
       else if (propName === "screenBorderShadow") root.screenBorderShadow = Boolean(val);
       else if (propName === "screenBorderShadowSize") root.screenBorderShadowSize = Math.max(1, Math.min(64, Math.round(Number(val))));
+      else if (bList[0]) Defaults.syncPrimaryBarToRoot(root, bList[0]);
     }
     root.panelsRevision++;
     saveConfig();
@@ -568,15 +422,10 @@ Singleton {
     let fallbackTarget = hasMulti ? (root.bars.length === 1 ? "secondary" : "all") : "primary";
     let finalTarget = targetDisplay || fallbackTarget;
     let isAll = (finalTarget === "all");
-    let newBar = {
+    let newBar = Defaults.createBarInstance({
       id: "bar_" + Date.now(),
       name: "Bar " + newIdx,
-      enabled: true,
       position: nextPos,
-      barHeight: 32,
-      floating: false,
-      dashed: false,
-      dynamicIsland: false,
       barOpacity: root.barOpacity,
       pillRadius: root.pillRadius,
       barRadius: root.barRadius,
@@ -587,31 +436,6 @@ Singleton {
       allMonitors: isAll,
       displayTarget: finalTarget,
       secondaryPosition: nextPos,
-      secondaryFloating: false,
-      secondaryDashed: false,
-      secondaryDynamicIsland: false,
-      islandPosition: "center",
-      islandIdleMode: "widgets",
-      islandLiveActivity: true,
-      islandLayoutMode: "tabs",
-      islandModules: ["mpris", "calendar", "notifications", "weather", "quickControls", "systemStats"],
-      islandDefaultModule: "auto",
-      islandSplitModules: ["mpris", "calendar"],
-      islandHoverDelay: 120,
-      islandCloseDelay: 220,
-      islandExpandedWidth: 400,
-      islandNotificationMode: "island",
-      islandOsdEnabled: false,
-      islandControlTiles: [],
-      islandAppShortcuts: [],
-      barDropShadow: false,
-      barDropShadowTarget: "all",
-      barDropShadowBlur: 16,
-      barDropShadowOpacity: 0.45,
-      barDropShadowOffsetY: 4,
-      barDropShadowColorMode: "dark",
-      secondaryMode: "custom",
-      blankOnSecondary: false,
       secondaryPanels: root.defaultSecondaryPanels.map(p => p.slice()),
       innerCorners: root.innerCorners,
       fluidCards: root.fluidCards,
@@ -623,16 +447,12 @@ Singleton {
         ["clock"],
         ["volume", "battery"]
       ]
-    };
+    });
     let bList = root.bars.slice();
     bList.push(newBar);
     root.bars = bList;
     root.selectedBarIndex = bList.length - 1;
-    if (finalTarget === "secondary") {
-      root.activeEditingDisplay = "secondary";
-    } else {
-      root.activeEditingDisplay = "primary";
-    }
+    root.activeEditingDisplay = (finalTarget === "secondary") ? "secondary" : "primary";
     root.panelsRevision++;
     saveConfig();
   }
@@ -654,25 +474,11 @@ Singleton {
       });
     }
     root.selectedBarIndex = Math.max(0, Math.min(bList.length - 1, root.selectedBarIndex));
-    root.panelsRevision++;
-    root.panelsUpdated();
     if (bList.length > 0) {
-      root.barVisible = Boolean(bList[0].enabled);
-      root.position = String(bList[0].position);
-      root.barHeight = Number(bList[0].barHeight);
-      root.floating = Boolean(bList[0].floating);
-      root.barOpacity = Number(bList[0].barOpacity);
-      root.allMonitors = Boolean(bList[0].allMonitors);
-      root.displayTarget = bList[0].displayTarget || (bList[0].allMonitors ? "all" : "primary");
-      root.secondaryMode = bList[0].secondaryMode || (bList[0].blankOnSecondary !== false ? "blank" : "mirror");
-      root.blankOnSecondary = bList[0].blankOnSecondary !== undefined ? Boolean(bList[0].blankOnSecondary) : (root.secondaryMode === "blank");
-      root.innerCorners = bList[0].innerCorners !== undefined ? Boolean(bList[0].innerCorners) : root.innerCorners;
-      root.fluidCards = bList[0].fluidCards !== undefined ? Boolean(bList[0].fluidCards) : root.fluidCards;
-      root.barBorder = bList[0].barBorder !== undefined ? Boolean(bList[0].barBorder) : root.barBorder;
-      root.barBorderWidth = bList[0].barBorderWidth !== undefined ? Number(bList[0].barBorderWidth) : root.barBorderWidth;
-      root.barBorderColor = bList[0].barBorderColor !== undefined ? String(bList[0].barBorderColor) : root.barBorderColor;
+      Defaults.syncPrimaryBarToRoot(root, bList[0]);
     }
     root.panelsRevision++;
+    root.panelsUpdated();
     saveConfig();
   }
 
@@ -816,6 +622,21 @@ Singleton {
       if (!primDI && !secDI) continue;
       const mods = Array.isArray(b.islandModules) ? b.islandModules : ["mpris"];
       if (b.islandLiveActivity !== false || mods.indexOf("mpris") !== -1) return true;
+    }
+    return false;
+  }
+
+  readonly property bool hasDynamicIslandSystemActive: {
+    void root.panelsRevision;
+    const list = root.bars || [];
+    for (let i = 0; i < list.length; i++) {
+      const b = list[i];
+      if (!b || b.enabled === false) continue;
+      const primDI = Boolean(b.dynamicIsland) && String(b.position || "top") === "top";
+      const secDI = Boolean(b.secondaryDynamicIsland) && String(b.secondaryPosition || "top") === "top";
+      if (!primDI && !secDI) continue;
+      const mods = Array.isArray(b.islandModules) ? b.islandModules : [];
+      if (mods.indexOf("systemStats") !== -1) return true;
     }
     return false;
   }

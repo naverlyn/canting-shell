@@ -180,6 +180,8 @@ Singleton {
         forgetProc.running = true;
     }
 
+    property string _lastDetailsSsid: ""
+
     // Fast status poll (does not trigger hardware rescan)
     Process {
         id: statusProc
@@ -198,11 +200,16 @@ Singleton {
                 const activeLine = lines.length >= 2 ? lines[1].trim() : "";
                 if (activeLine) {
                     const p = root.splitNmcliTerse(activeLine);
-                    root.currentSsid = p.length >= 2 ? p[1] : "";
+                    const nextSsid = p.length >= 2 ? p[1] : "";
+                    root.currentSsid = nextSsid;
                     root.currentSignal = p.length >= 3 ? (parseInt(p[2]) || 0) : 0;
-                    if (root.currentSsid && !detailsProc.running) detailsProc.running = true;
+                    if (nextSsid && (nextSsid !== root._lastDetailsSsid || !root.connectionDetails.ipv4) && !detailsProc.running) {
+                        root._lastDetailsSsid = nextSsid;
+                        detailsProc.running = true;
+                    }
                 } else {
                     root.currentSsid = "";
+                    root._lastDetailsSsid = "";
                     root.currentSignal = 0;
                     root.connectionDetails = { iface: "", mac: "", ipv4: "", gateway: "", dns: "" };
                 }
