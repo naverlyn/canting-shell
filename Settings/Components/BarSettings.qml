@@ -12,6 +12,7 @@ import "../../utils/ColorUtils.js" as ColorUtils
 
 Item {
     id: root
+    readonly property var settingsRoot: root
     property var theme
     property string font: "Lato Nerd Font"
     property bool showHeaderActions: true
@@ -678,7 +679,7 @@ Item {
             }
 
             BarListCard {
-                root: root
+                root: settingsRoot
             }
 
             SubTabBar {
@@ -702,7 +703,7 @@ Item {
 
                 BarLayoutCard {
                     id: layoutCard
-                    root: root
+                    root: settingsRoot
                 }
 
                 Loader {
@@ -710,7 +711,7 @@ Item {
                     active: root.currentSubTab === 0 && barState.curDynamicIsland
                     visible: active
                     sourceComponent: DynamicIslandModulesCard {
-                        root: root
+                        root: settingsRoot
                     }
                 }
 
@@ -720,8 +721,8 @@ Item {
                     visible: active
                     sourceComponent: ColumnLayout {
                         spacing: 16
-                        ColorTargetCard { root: root }
-                        ColorAssignCard { root: root }
+                        ColorTargetCard { root: settingsRoot }
+                        ColorAssignCard { root: settingsRoot }
                     }
                 }
 
@@ -730,7 +731,7 @@ Item {
                     active: root.currentSubTab === 2
                     visible: active
                     sourceComponent: BarGeneralTabContent {
-                        root: root
+                        root: settingsRoot
                     }
                 }
             }
@@ -738,7 +739,7 @@ Item {
     }
 
     DragGhostCard {
-        root: root
+        root: settingsRoot
     }
 
     Loader {
@@ -746,7 +747,7 @@ Item {
         active: root.addBarModalVisible
         visible: active
         sourceComponent: AddBarConfirmModal {
-            root: root
+            root: settingsRoot
         }
     }
 
