@@ -35,7 +35,7 @@ Rectangle {
             Text {
                 text: catGroupCard.catName.toUpperCase()
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.accentPrimary
                 Layout.leftMargin: 4
@@ -44,7 +44,7 @@ Rectangle {
             Rectangle {
                 Layout.fillWidth: true
                 height: 1
-                color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                color: root.theme.bgBorder
             }
         }
 
@@ -63,7 +63,7 @@ Rectangle {
                 color: ruleRowCard.ruleItem.enabled ? root.theme.bgSurface : Qt.rgba(0, 0, 0, 0.15)
                 border.color: isExpanded && ruleRowCard.ruleItem.enabled
                     ? root.theme.accentPrimary
-                    : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                    : root.theme.bgBorder
                 border.width: 1
                 implicitHeight: ruleRowCol.implicitHeight + 24
                 clip: true
@@ -98,7 +98,7 @@ Rectangle {
                                     Text {
                                         text: ruleRowCard.ruleItem.title || ruleRowCard.ruleItem.target
                                         font.family: root.font
-                                        font.pixelSize: 13
+                                        font.pixelSize: Style.px(13)
                                         font.bold: true
                                         color: ruleRowCard.ruleItem.enabled ? root.theme.textPrimary : root.theme.textMuted
                                     }
@@ -108,7 +108,7 @@ Rectangle {
                                         implicitWidth: targetTagText.implicitWidth + 10
                                         radius: 4
                                         color: Qt.rgba(1, 1, 1, 0.06)
-                                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                        border.color: root.theme.bgBorder
                                         border.width: 1
 
                                         Text {
@@ -116,7 +116,7 @@ Rectangle {
                                             anchors.centerIn: parent
                                             text: ruleRowCard.ruleItem.target
                                             font.family: "monospace"
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             color: root.theme.textSecondary
                                         }
                                     }
@@ -125,7 +125,7 @@ Rectangle {
                                 Text {
                                     text: ruleRowCard.ruleItem.desc || ""
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     color: root.theme.textSecondary
                                     visible: text !== ""
                                     elide: Text.ElideRight
@@ -156,7 +156,7 @@ Rectangle {
                                 implicitWidth: summaryBadgeText.implicitWidth + 16
                                 radius: 6
                                 color: root.theme.bgBase
-                                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                border.color: root.theme.bgBorder
                                 border.width: 1
 
                                 Text {
@@ -169,7 +169,7 @@ Rectangle {
                                         return c + " • " + sp + st;
                                     }
                                     font.family: root.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     color: root.theme.textSecondary
                                 }
                             }
@@ -180,8 +180,8 @@ Rectangle {
                                 height: 28
                                 implicitWidth: rPrevText.implicitWidth + 20
                                 radius: 7
-                                color: rPrevHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase
-                                border.color: rPrevHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                                color: rPrevHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                                border.color: rPrevHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
                                 border.width: 1
 
                                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -194,7 +194,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                     text: "Preview"
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: true
                                     color: rPrevHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
                                 }
@@ -219,7 +219,7 @@ Rectangle {
                                 width: 44
                                 height: 24
                                 radius: 12
-                                color: ruleRowCard.ruleItem.enabled ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
+                                color: ruleRowCard.ruleItem.enabled ? root.theme.accentPrimary : root.theme.bgSelected
                                 Layout.alignment: Qt.AlignVCenter
 
                                 Behavior on color { ColorAnimation { duration: 160 } }
@@ -251,7 +251,7 @@ Rectangle {
                                 height: 28
                                 width: 28
                                 radius: 14
-                                color: expChevronHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                color: expChevronHover.hovered ? root.theme.bgHover : "transparent"
 
                                 Behavior on color { ColorAnimation { duration: 140 } }
 
@@ -262,7 +262,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                     text: "▾"
                                     font.family: root.font
-                                    font.pixelSize: 13
+                                    font.pixelSize: Style.px(13)
                                     color: ruleRowCard.isExpanded ? root.theme.accentPrimary : root.theme.textSecondary
 
                                     transform: Rotation {
@@ -293,7 +293,7 @@ Rectangle {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                            color: root.theme.bgBorder
                         }
 
                         // 1. Easing Curve Row
@@ -311,7 +311,7 @@ Rectangle {
                                 Text {
                                     text: "Easing Curve"
                                     font.family: root.font
-                                    font.pixelSize: 13
+                                    font.pixelSize: Style.px(13)
                                     font.bold: true
                                     color: root.theme.textPrimary
                                 }
@@ -319,7 +319,7 @@ Rectangle {
                                 Text {
                                     text: "Bézier velocity profile"
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     color: root.theme.textSecondary
                                 }
                             }
@@ -344,7 +344,7 @@ Rectangle {
                                 height: 32
                                 radius: 7
                                 color: root.theme.bgBase
-                                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                border.color: root.theme.bgBorder
                                 border.width: 1
                                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
@@ -383,7 +383,7 @@ Rectangle {
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
                                             radius: 5
-                                            color: !isSel && cHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                            color: !isSel && cHover.hovered ? root.theme.bgHover : "transparent"
                                             Behavior on color { ColorAnimation { duration: 140 } }
 
                                             HoverHandler { id: cHover }
@@ -392,7 +392,7 @@ Rectangle {
                                                 anchors.centerIn: parent
                                                 text: cBtn.modelData.name
                                                 font.family: root.font
-                                                font.pixelSize: 10
+                                                font.pixelSize: Style.px(10)
                                                 font.bold: cBtn.isSel
                                                 color: cBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                                 elide: Text.ElideRight
@@ -414,7 +414,7 @@ Rectangle {
                         Rectangle {
                             Layout.fillWidth: true
                             height: 1
-                            color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                            color: root.theme.bgBorder
                         }
 
                         // 2. Speed Factor Row
@@ -432,7 +432,7 @@ Rectangle {
                                 Text {
                                     text: "Speed Factor"
                                     font.family: root.font
-                                    font.pixelSize: 13
+                                    font.pixelSize: Style.px(13)
                                     font.bold: true
                                     color: root.theme.textPrimary
                                 }
@@ -440,7 +440,7 @@ Rectangle {
                                 Text {
                                     text: (ruleRowCard.ruleItem.speed * 100) + "ms" + (ruleRowCard.ruleItem.speed <= 2 ? " (Snappy)" : ruleRowCard.ruleItem.speed >= 8 ? " (Cinematic)" : " (Balanced)")
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     color: root.theme.accentPrimary
                                 }
                             }
@@ -468,7 +468,7 @@ Rectangle {
                                 height: 32
                                 radius: 7
                                 color: root.theme.bgBase
-                                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                border.color: root.theme.bgBorder
                                 border.width: 1
                                 Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
@@ -507,7 +507,7 @@ Rectangle {
                                             Layout.fillWidth: true
                                             Layout.fillHeight: true
                                             radius: 5
-                                            color: !isSel && spHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                            color: !isSel && spHover.hovered ? root.theme.bgHover : "transparent"
                                             Behavior on color { ColorAnimation { duration: 140 } }
 
                                             HoverHandler { id: spHover }
@@ -516,7 +516,7 @@ Rectangle {
                                                 anchors.centerIn: parent
                                                 text: String(spBtn.modelData)
                                                 font.family: root.font
-                                                font.pixelSize: 11
+                                                font.pixelSize: Style.px(11)
                                                 font.bold: spBtn.isSel
                                                 color: spBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                             }
@@ -542,7 +542,7 @@ Rectangle {
                             Rectangle {
                                 Layout.fillWidth: true
                                 height: 1
-                                color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                color: root.theme.bgBorder
                             }
 
                             RowLayout {
@@ -559,7 +559,7 @@ Rectangle {
                                     Text {
                                         text: "Motion Style"
                                         font.family: root.font
-                                        font.pixelSize: 13
+                                        font.pixelSize: Style.px(13)
                                         font.bold: true
                                         color: root.theme.textPrimary
                                     }
@@ -567,7 +567,7 @@ Rectangle {
                                     Text {
                                         text: "Compositor visual effect"
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         color: root.theme.textSecondary
                                     }
                                 }
@@ -587,7 +587,7 @@ Rectangle {
                                     height: 32
                                     radius: 7
                                     color: root.theme.bgBase
-                                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                                    border.color: root.theme.bgBorder
                                     border.width: 1
                                     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
@@ -626,7 +626,7 @@ Rectangle {
                                                 Layout.fillWidth: true
                                                 Layout.fillHeight: true
                                                 radius: 5
-                                                color: !isSel && stHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                                color: !isSel && stHover.hovered ? root.theme.bgHover : "transparent"
                                                 Behavior on color { ColorAnimation { duration: 140 } }
 
                                                 HoverHandler { id: stHover }
@@ -635,7 +635,7 @@ Rectangle {
                                                     anchors.centerIn: parent
                                                     text: String(stBtn.modelData)
                                                     font.family: root.font
-                                                    font.pixelSize: 10
+                                                    font.pixelSize: Style.px(10)
                                                     font.bold: stBtn.isSel
                                                     color: stBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                                     elide: Text.ElideRight

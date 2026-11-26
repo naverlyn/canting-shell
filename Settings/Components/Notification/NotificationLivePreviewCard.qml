@@ -201,7 +201,7 @@ ColumnLayout {
                     anchors.margins: 6
                     radius: 9
                     color: root.withAlpha(root.theme.accentPrimary, 0.03)
-                    border.color: Qt.rgba(1, 1, 1, 0.04)
+                    border.color: Style.theme.bgBorder
                     border.width: 1
                 }
 

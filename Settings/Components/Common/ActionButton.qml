@@ -57,7 +57,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: actBtn.iconText
             font.family: Style.font
-            font.pixelSize: 12
+            font.pixelSize: Style.px(12)
             color: actBtn.danger
                 ? Style.theme.accentRed
                 : (actHover.hovered && actBtn.btnEnabled ? actBtn.activeCol : Style.theme.textSecondary)

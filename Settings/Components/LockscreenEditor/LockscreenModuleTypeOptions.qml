@@ -77,7 +77,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: wSegBtn.modelData.label
                             font.family: optionsRoot.hostCard.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: wSegBtn.isSel
                             color: wSegBtn.isSel ? optionsRoot.hostCard.theme.accentPrimary : optionsRoot.hostCard.theme.textPrimary
                             opacity: wSegBtn.isSel || wSegHover.hovered ? 1.0 : 0.75
@@ -166,7 +166,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: tfBtn.modelData.label
                             font.family: optionsRoot.hostCard.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: tfBtn.isSel
                             color: tfBtn.isSel ? optionsRoot.hostCard.theme.accentPrimary : optionsRoot.hostCard.theme.textPrimary
                             opacity: tfBtn.isSel || tfHover.hovered ? 1.0 : 0.75
@@ -190,13 +190,13 @@ ColumnLayout {
 
     RowDivider {}
 
-    PreferenceSlider {
+    SettingSliderRow {
         title: "Clock Font Size"
         minVal: 40
         maxVal: 140
         unit: "px"
-        currentVal: optionsRoot.hostCard.editFontSize
-        onValueChanged: (val) => {
+        value: optionsRoot.hostCard.editFontSize
+        onValueModified: (val) => {
             optionsRoot.hostCard.editFontSize = val;
             optionsRoot.hostCard.saveChanges();
         }
@@ -204,27 +204,23 @@ ColumnLayout {
 
     RowDivider {}
 
-    PreferenceRow {
+    SettingToggleRow {
         title: "Show Date"
-        SwitchToggle {
-            checked: optionsRoot.hostCard.editShowDate
-            onToggled: (st) => {
-                optionsRoot.hostCard.editShowDate = st;
-                optionsRoot.hostCard.saveChanges();
-            }
+        checked: optionsRoot.hostCard.editShowDate
+        onToggled: (st) => {
+            optionsRoot.hostCard.editShowDate = st;
+            optionsRoot.hostCard.saveChanges();
         }
     }
 
     RowDivider {}
 
-    PreferenceRow {
+    SettingToggleRow {
         title: "Show Seconds"
-        SwitchToggle {
-            checked: optionsRoot.hostCard.editShowSeconds
-            onToggled: (st) => {
-                optionsRoot.hostCard.editShowSeconds = st;
-                optionsRoot.hostCard.saveChanges();
-            }
+        checked: optionsRoot.hostCard.editShowSeconds
+        onToggled: (st) => {
+            optionsRoot.hostCard.editShowSeconds = st;
+            optionsRoot.hostCard.saveChanges();
         }
     }
 }
@@ -295,7 +291,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: mSegBtn.modelData.label
                             font.family: optionsRoot.hostCard.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: mSegBtn.isSel
                             color: mSegBtn.isSel ? optionsRoot.hostCard.theme.accentPrimary : optionsRoot.hostCard.theme.textPrimary
                             opacity: mSegBtn.isSel || mSegHover.hovered ? 1.0 : 0.75
@@ -383,7 +379,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: nSegBtn.modelData.label
                             font.family: optionsRoot.hostCard.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: nSegBtn.isSel
                             color: nSegBtn.isSel ? optionsRoot.hostCard.theme.accentPrimary : optionsRoot.hostCard.theme.textPrimary
                             opacity: nSegBtn.isSel || nSegHover.hovered ? 1.0 : 0.75
@@ -406,14 +402,14 @@ ColumnLayout {
 
     RowDivider { visible: optionsRoot.hostCard.editDisplayMode !== "compact" }
 
-    PreferenceSlider {
+    SettingSliderRow {
         visible: optionsRoot.hostCard.editDisplayMode !== "compact"
         title: "Max Visible Notifications"
         minVal: 1
         maxVal: 6
         unit: ""
-        currentVal: optionsRoot.hostCard.editMaxVisible
-        onValueChanged: (val) => {
+        value: optionsRoot.hostCard.editMaxVisible
+        onValueModified: (val) => {
             optionsRoot.hostCard.editMaxVisible = val;
             optionsRoot.hostCard.saveChanges();
         }
@@ -421,27 +417,23 @@ ColumnLayout {
 
     RowDivider {}
 
-    PreferenceRow {
+    SettingToggleRow {
         title: "Show Message Content"
-        SwitchToggle {
-            checked: optionsRoot.hostCard.editShowContent
-            onToggled: (st) => {
-                optionsRoot.hostCard.editShowContent = st;
-                optionsRoot.hostCard.saveChanges();
-            }
+        checked: optionsRoot.hostCard.editShowContent
+        onToggled: (st) => {
+            optionsRoot.hostCard.editShowContent = st;
+            optionsRoot.hostCard.saveChanges();
         }
     }
 
     RowDivider {}
 
-    PreferenceRow {
+    SettingToggleRow {
         title: "Hide When Empty"
-        SwitchToggle {
-            checked: optionsRoot.hostCard.editHideWhenEmpty
-            onToggled: (st) => {
-                optionsRoot.hostCard.editHideWhenEmpty = st;
-                optionsRoot.hostCard.saveChanges();
-            }
+        checked: optionsRoot.hostCard.editHideWhenEmpty
+        onToggled: (st) => {
+            optionsRoot.hostCard.editHideWhenEmpty = st;
+            optionsRoot.hostCard.saveChanges();
         }
     }
 }
@@ -467,7 +459,7 @@ ColumnLayout {
                 anchors.margins: 6
                 text: optionsRoot.hostCard.editText
                 font.family: optionsRoot.hostCard.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: optionsRoot.hostCard.theme.textPrimary
                 onEditingFinished: {
                     optionsRoot.hostCard.editText = text;
@@ -494,7 +486,7 @@ ColumnLayout {
                 anchors.margins: 6
                 text: optionsRoot.hostCard.editCmd
                 font.family: optionsRoot.hostCard.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: optionsRoot.hostCard.theme.textPrimary
                 onEditingFinished: {
                     optionsRoot.hostCard.editCmd = text;
@@ -506,13 +498,13 @@ ColumnLayout {
 
     RowDivider {}
 
-    PreferenceSlider {
+    SettingSliderRow {
         title: "Update Interval"
         minVal: 1
         maxVal: 60
         unit: "s"
-        currentVal: Math.round(optionsRoot.hostCard.editInterval / 1000)
-        onValueChanged: (val) => {
+        value: Math.round(optionsRoot.hostCard.editInterval / 1000)
+        onValueModified: (val) => {
             optionsRoot.hostCard.editInterval = val * 1000;
             optionsRoot.hostCard.saveChanges();
         }
@@ -520,13 +512,13 @@ ColumnLayout {
 
     RowDivider {}
 
-    PreferenceSlider {
+    SettingSliderRow {
         title: "Font Size"
         minVal: 9
         maxVal: 48
         unit: "px"
-        currentVal: optionsRoot.hostCard.editFontSize
-        onValueChanged: (val) => {
+        value: optionsRoot.hostCard.editFontSize
+        onValueModified: (val) => {
             optionsRoot.hostCard.editFontSize = val;
             optionsRoot.hostCard.saveChanges();
         }

@@ -17,7 +17,7 @@ ColumnLayout {
     Text {
         text: "Key Repeat"
         font.family: root.font
-        font.pixelSize: 13
+        font.pixelSize: Style.px(13)
         font.bold: true
         color: root.theme.textSecondary
         Layout.leftMargin: 4
@@ -28,7 +28,7 @@ ColumnLayout {
         implicitHeight: repeatCol.implicitHeight + 16
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -55,7 +55,7 @@ ColumnLayout {
                     Text {
                         text: "Repeat Delay"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.bold: true
                         color: root.theme.textPrimary
                         Layout.preferredWidth: 120
@@ -143,7 +143,7 @@ ColumnLayout {
                     Text {
                         text: root.repeatDelay + " ms"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textSecondary
                         Layout.preferredWidth: 64
@@ -153,14 +153,7 @@ ColumnLayout {
                 }
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Repeat Speed / Rate Row */
             Item {
@@ -176,7 +169,7 @@ ColumnLayout {
                     Text {
                         text: "Repeat Speed"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.bold: true
                         color: root.theme.textPrimary
                         Layout.preferredWidth: 120
@@ -264,7 +257,7 @@ ColumnLayout {
                     Text {
                         text: root.repeatRate + " / sec"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textSecondary
                         Layout.preferredWidth: 64
@@ -274,14 +267,7 @@ ColumnLayout {
                 }
             }
 
-            /* Row Divider */
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             /* Interactive Test Field Row */
             Item {
@@ -297,7 +283,7 @@ ColumnLayout {
                     Text {
                         text: "Test Repeat"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.bold: true
                         color: root.theme.textPrimary
                         Layout.preferredWidth: 120
@@ -308,8 +294,8 @@ ColumnLayout {
                         Layout.fillWidth: true
                         height: 38
                         radius: 8
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)
-                        border.color: testInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                        color: root.theme.bgBase
+                        border.color: testInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                         border.width: testInput.activeFocus ? 2 : 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -323,7 +309,7 @@ ColumnLayout {
                                 id: testInput
                                 Layout.fillWidth: true
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 color: root.theme.textPrimary
                                 clip: true
                                 selectByMouse: true
@@ -331,7 +317,7 @@ ColumnLayout {
                                 Text {
                                     text: "Type here to test key repeat speed..."
                                     font.family: root.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                     color: root.theme.textSecondary
                                     visible: !testInput.text && !testInput.activeFocus
                                     anchors.verticalCenter: parent.verticalCenter
@@ -341,7 +327,7 @@ ColumnLayout {
                             Text {
                                 text: "✕"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 color: clearMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary
                                 visible: testInput.text.length > 0
 

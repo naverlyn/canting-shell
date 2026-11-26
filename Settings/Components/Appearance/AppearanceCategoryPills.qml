@@ -26,7 +26,7 @@ RowLayout {
                 implicitWidth: pillText.implicitWidth + 14
                 radius: 12
                 color: root.selectedFamily === modelData ? root.theme.bgSelected : root.theme.bgSurface
-                border.color: root.selectedFamily === modelData ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
+                border.color: root.selectedFamily === modelData ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -37,7 +37,7 @@ RowLayout {
                     anchors.centerIn: parent
                     text: modelData
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     font.bold: root.selectedFamily === modelData
                     color: root.selectedFamily === modelData ? root.theme.accentPrimary : root.theme.textSecondary
                 }
@@ -57,7 +57,7 @@ RowLayout {
             implicitWidth: wpPillText.implicitWidth + 14
             radius: 12
             color: root.theme.wallpaperMode ? root.theme.bgSelected : root.theme.bgSurface
-            border.color: root.theme.wallpaperMode ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
+            border.color: root.theme.wallpaperMode ? root.theme.accentPrimary : root.theme.bgBorder
             border.width: 1
 
             Behavior on color { ColorAnimation { duration: 120 } }
@@ -68,7 +68,7 @@ RowLayout {
                 anchors.centerIn: parent
                 text: "Wallpaper"
                 font.family: root.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 font.bold: root.theme.wallpaperMode
                 color: root.theme.wallpaperMode ? root.theme.accentPrimary : root.theme.textSecondary
             }
@@ -92,7 +92,7 @@ RowLayout {
         height: 26
         radius: 13
         color: root.theme.bgSurface
-        border.color: searchInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1))
+        border.color: searchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
         border.width: 1
 
         Behavior on border.color { ColorAnimation { duration: 150 } }
@@ -106,7 +106,7 @@ RowLayout {
             Text {
                 text: "󰍉"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: root.theme.textMuted
             }
 
@@ -115,7 +115,7 @@ RowLayout {
                 Layout.fillWidth: true
                 color: root.theme.textPrimary
                 font.family: root.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 clip: true
                 selectByMouse: true
 
@@ -124,7 +124,7 @@ RowLayout {
                 Text {
                     text: "Search..."
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: root.theme.textMuted
                     anchors.verticalCenter: parent.verticalCenter
                     visible: searchInput.text === ""
@@ -134,7 +134,7 @@ RowLayout {
             Text {
                 text: "󰅖"
                 font.family: root.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 color: root.theme.textMuted
                 visible: searchInput.text !== ""
 

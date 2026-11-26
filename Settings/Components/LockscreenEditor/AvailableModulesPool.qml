@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import "../../../Lockscreen"
+import "../Common"
 
 Rectangle {
     id: poolRoot
@@ -59,7 +60,7 @@ Rectangle {
             Text {
                 text: "Available Building Blocks"
                 font.family: hostRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: poolRoot.isPoolDropTarget ? hostRoot.theme.accentRed : hostRoot.theme.accentPrimary
             }
@@ -67,7 +68,7 @@ Rectangle {
             Text {
                 text: "(" + poolRoot.allDefs.length + " available)"
                 font.family: hostRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: hostRoot.theme.textMuted
             }
 
@@ -80,7 +81,7 @@ Rectangle {
                     ? "Release here to remove from Lock Screen"
                     : "Drag block into live preview above or click to add"
                 font.family: hostRoot.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 font.bold: poolRoot.isPoolDropTarget
                 color: poolRoot.isPoolDropTarget ? hostRoot.theme.accentRed : hostRoot.theme.textMuted
                 elide: Text.ElideRight
@@ -136,14 +137,14 @@ Rectangle {
                         Text {
                             text: chipCard.mIcon
                             font.family: hostRoot.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             color: hostRoot.theme.accentPrimary
                         }
 
                         Text {
                             text: chipCard.mName
                             font.family: hostRoot.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: hostRoot.theme.textPrimary
                         }

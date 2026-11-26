@@ -105,7 +105,7 @@ ColumnLayout {
                         Text {
                             text: "Critical Alert Threshold"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -155,7 +155,7 @@ ColumnLayout {
                         Text {
                             text: "Hardware Polling Frequency"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }

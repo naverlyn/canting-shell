@@ -31,7 +31,7 @@ Item {
         copyProc.command = ["wl-copy", textToCopy];
         copyProc.running = false;
         copyProc.running = true;
-        toast.show(toastMessage);
+        Style.notify(toastMessage);
     }
 
     function copyAllInfo() {
@@ -60,11 +60,11 @@ Item {
         onExited: (exitCode) => {
             if (exitCode === 0 && root.pendingHostname !== "") {
                 root.hostname = root.pendingHostname;
-                toast.show("Device name updated to " + root.pendingHostname);
+                Style.notify("Device name updated to " + root.pendingHostname);
                 sysInfoProc.running = false;
                 sysInfoProc.running = true;
             } else {
-                toast.show("Failed to update device name", true);
+                Style.notify("Failed to update device name", true);
             }
             root.pendingHostname = "";
         }
@@ -73,7 +73,7 @@ Item {
     Process {
         id: sysInfoProc
         command: [root.scriptPath]
-        running: true
+        running: false
         stdout: StdioCollector {
             onStreamFinished: {
                 const lines = text.trim().split("\n");
@@ -95,12 +95,36 @@ Item {
         }
     }
 
+    Process {
+        id: uptimeOnlyProc
+        command: ["uptime", "-p"]
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const up = text.trim().replace(/^up\s+/, "");
+                if (up) root.uptimeStr = up;
+            }
+        }
+    }
+
+    onVisibleChanged: {
+        if (visible && !sysInfoProc.running) {
+            sysInfoProc.running = true;
+        }
+    }
+    Component.onCompleted: {
+        if (visible && !sysInfoProc.running) {
+            sysInfoProc.running = true;
+        }
+    }
+
     Timer {
-        interval: 10000
+        interval: 60000
         repeat: true
         running: root.visible
-        triggeredOnStart: true
-        onTriggered: sysInfoProc.running = true
+        onTriggered: {
+            if (!uptimeOnlyProc.running) uptimeOnlyProc.running = true;
+        }
     }
 
     Flickable {
@@ -144,7 +168,7 @@ Item {
                     onClicked: {
                         sysInfoProc.running = false;
                         sysInfoProc.running = true;
-                        toast.show("System info refreshed");
+                        Style.notify("System info refreshed");
                     }
                 }
             }
@@ -180,9 +204,4 @@ Item {
         }
     }
 
-    ToastBanner {
-        id: toast
-        theme: root.theme
-        font: root.font
-    }
 }

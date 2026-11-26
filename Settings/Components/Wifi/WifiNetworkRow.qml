@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../Common"
 
 Rectangle {
     id: netDelegate
@@ -85,7 +86,7 @@ Rectangle {
                         return sec ? "󰤡" : "󰤟";
                     }
                     color: netDelegate.isCurrent ? netDelegate.theme.accentPrimary : netDelegate.theme.textPrimary
-                    font.pixelSize: 17
+                    font.pixelSize: Style.px(17)
                     font.family: netDelegate.font
                     Layout.preferredWidth: 22
                     horizontalAlignment: Text.AlignHCenter
@@ -102,7 +103,7 @@ Rectangle {
                         Text {
                             text: netDelegate.networkData.ssid
                             color: netDelegate.theme.textPrimary
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.family: netDelegate.font
                             font.bold: netDelegate.isCurrent || netDelegate.isExpanded
                             Layout.fillWidth: false
@@ -127,7 +128,7 @@ Rectangle {
                                 text: netDelegate.networkData.band || ""
                                 color: netDelegate.isCurrent ? netDelegate.theme.accentPrimary : netDelegate.theme.textMuted
                                 font.family: netDelegate.font
-                                font.pixelSize: 9
+                                font.pixelSize: Style.px(9)
                                 font.bold: true
                             }
                         }
@@ -143,7 +144,7 @@ Rectangle {
                             return netDelegate.hasSecurity ? "Secured" : "Open";
                         }
                         color: netDelegate.isCurrent ? netDelegate.theme.accentPrimary : netDelegate.theme.textSecondary
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.family: netDelegate.font
                         elide: Text.ElideRight
                         Layout.fillWidth: true
@@ -153,7 +154,7 @@ Rectangle {
                 Text {
                     text: (netDelegate.networkData.signal || 0) + "%"
                     color: netDelegate.theme.textMuted
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.family: netDelegate.font
                 }
 
@@ -161,7 +162,7 @@ Rectangle {
                     text: ""
                     visible: netDelegate.hasSecurity && !netDelegate.isCurrent
                     color: netDelegate.theme.textMuted
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.family: netDelegate.font
                 }
             }
@@ -207,13 +208,13 @@ Rectangle {
                         text: "IPv4 Address"
                         color: netDelegate.theme.textMuted
                         font.family: netDelegate.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                     }
                     Text {
                         text: (netDelegate.connectionDetails && netDelegate.connectionDetails.ipv4) || "—"
                         color: netDelegate.theme.textPrimary
                         font.family: netDelegate.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
@@ -222,13 +223,13 @@ Rectangle {
                         text: "Gateway"
                         color: netDelegate.theme.textMuted
                         font.family: netDelegate.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                     }
                     Text {
                         text: (netDelegate.connectionDetails && netDelegate.connectionDetails.gateway) || "—"
                         color: netDelegate.theme.textPrimary
                         font.family: netDelegate.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
@@ -237,13 +238,13 @@ Rectangle {
                         text: "DNS"
                         color: netDelegate.theme.textMuted
                         font.family: netDelegate.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                     }
                     Text {
                         text: (netDelegate.connectionDetails && netDelegate.connectionDetails.dns) || "—"
                         color: netDelegate.theme.textPrimary
                         font.family: netDelegate.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
@@ -252,7 +253,7 @@ Rectangle {
                         text: "MAC Address"
                         color: netDelegate.theme.textMuted
                         font.family: netDelegate.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                     }
                     Text {
                         text: {
@@ -262,7 +263,7 @@ Rectangle {
                         }
                         color: netDelegate.theme.textPrimary
                         font.family: netDelegate.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
@@ -293,7 +294,7 @@ Rectangle {
                             id: pwdInput
                             anchors.fill: parent
                             color: netDelegate.theme.textPrimary
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.family: netDelegate.font
                             echoMode: netDelegate.showPassword ? TextInput.Normal : TextInput.Password
                             verticalAlignment: TextInput.AlignVCenter
@@ -317,7 +318,7 @@ Rectangle {
                         Text {
                             text: "Enter network security key..."
                             color: netDelegate.theme.textMuted
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.family: netDelegate.font
                             anchors.verticalCenter: parent.verticalCenter
                             visible: pwdInput.text === "" && !pwdInput.activeFocus
@@ -327,7 +328,7 @@ Rectangle {
                     Text {
                         text: netDelegate.showPassword ? "󰈉" : "󰈈"
                         font.family: netDelegate.font
-                        font.pixelSize: 14
+                        font.pixelSize: Style.px(14)
                         color: eyeHov.hovered ? netDelegate.theme.textPrimary : netDelegate.theme.textMuted
                         HoverHandler { id: eyeHov }
                         MouseArea {
@@ -361,7 +362,7 @@ Rectangle {
                         text: "Forget"
                         color: forgetMouse.containsMouse ? netDelegate.theme.accentRed : netDelegate.theme.textSecondary
                         font.family: netDelegate.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                     }
 
                     MouseArea {
@@ -391,7 +392,7 @@ Rectangle {
                         text: "Cancel"
                         color: netDelegate.theme.textPrimary
                         font.family: netDelegate.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                     }
 
                     MouseArea {
@@ -422,7 +423,7 @@ Rectangle {
                         text: netDelegate.connecting ? "Connecting..." : "Connect"
                         color: netDelegate.theme.bgBase
                         font.family: netDelegate.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                     }
 
@@ -458,7 +459,7 @@ Rectangle {
                             ? netDelegate.theme.bgBase
                             : netDelegate.theme.accentRed
                         font.family: netDelegate.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         Behavior on color { ColorAnimation { duration: 140 } }
                     }

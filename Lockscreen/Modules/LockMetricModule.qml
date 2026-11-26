@@ -2,12 +2,13 @@ import QtQuick
 import QtQuick.Layouts
 import ".."
 import "../../utils/FormatUtils.js" as FormatUtils
+import "../../ThemeSwitcher"
 
 // Reusable lockscreen metric card with icon, label, value text, and progress bar.
 Rectangle {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "JetBrainsMono Nerd Font"
     property var moduleData: ({})
     property bool previewMode: false

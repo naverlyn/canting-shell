@@ -22,7 +22,7 @@ PanelWindow {
     property int step: 0
     property bool closing: false
     property var pendingCloseAction: null
-    readonly property var stepTitles: ["Choose Preset", "Theme & Wallpaper", "Lockscreen", "Display & Input", "Shortcuts", "Optional Tools", "Default Apps"]
+    readonly property var stepTitles: ["Choose Preset", "Theme & Wallpaper", "Lockscreen", "Display & Input", "Shortcuts", "Default Apps", "Optional Tools"]
 
     function closeWith(action) {
         if (root.closing) return;

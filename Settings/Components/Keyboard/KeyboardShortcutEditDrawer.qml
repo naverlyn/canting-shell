@@ -12,19 +12,12 @@ Rectangle {
     required property var mainRowRect
     required property var modelData
     id: editDrawer
-    anchors {
-        top: mainRowRect.bottom
-        left: parent.left
-        right: parent.right
-        leftMargin: 8
-        rightMargin: 8
-        topMargin: 2
-    }
+    width: parent ? parent.width : 0
     implicitHeight: rowItem.isEditing ? (drawerCol.implicitHeight + 20) : 0
     visible: opacity > 0 || implicitHeight > 0
     opacity: rowItem.isEditing ? 1.0 : 0.0
     radius: 8
-    color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.3)
+    color: root.theme.bgBase
     border.color: root.theme.accentPrimary
     border.width: 1
     clip: true
@@ -50,7 +43,7 @@ Rectangle {
             Text {
                 text: "Name:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -61,8 +54,8 @@ Rectangle {
                 Layout.fillWidth: true
                 height: 32
                 radius: 7
-                color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
-                border.color: editNameInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                color: root.theme.bgSurface
+                border.color: editNameInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: editNameInput.activeFocus ? 2 : 1
 
                 TextInput {
@@ -73,7 +66,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.editName
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     onTextChanged: {
@@ -83,7 +76,7 @@ Rectangle {
                     Text {
                         text: "Shortcut Name (e.g. Browser, Terminal, Screenshot)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textSecondary
                         visible: !editNameInput.text && !editNameInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -100,7 +93,7 @@ Rectangle {
             Text {
                 text: "Action:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -114,7 +107,7 @@ Rectangle {
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.color: root.theme.bgBorder
                 border.width: 1
                 Layout.alignment: Qt.AlignVCenter
 
@@ -158,7 +151,7 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             radius: 5
-                            color: !isSel && eSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                            color: !isSel && eSegHover.hovered ? root.theme.bgHover : "transparent"
                             Behavior on color { ColorAnimation { duration: 140 } }
 
                             HoverHandler { id: eSegHover }
@@ -167,7 +160,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: eSegBtn.modelData.name
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: eSegBtn.isSel
                                 color: eSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                 opacity: eSegBtn.isSel || eSegHover.hovered ? 1.0 : 0.75
@@ -198,7 +191,7 @@ Rectangle {
             Text {
                 text: "Dispatcher:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -209,8 +202,8 @@ Rectangle {
                 Layout.fillWidth: true
                 height: 32
                 radius: 7
-                color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
-                border.color: customDispEditInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                color: root.theme.bgSurface
+                border.color: customDispEditInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: customDispEditInput.activeFocus ? 2 : 1
 
                 TextInput {
@@ -221,7 +214,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.editCustomDisp
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     onTextChanged: {
@@ -233,7 +226,7 @@ Rectangle {
                         visible: !customDispEditInput.text && !customDispEditInput.activeFocus
                         text: "Hyprland dispatcher name (e.g. splitratio, layoutmsg, movetoworkspace)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textSecondary
                     }
                 }
@@ -252,7 +245,7 @@ Rectangle {
                       (root.editDispatcher === "fullscreen" ? "Mode:" :
                       (root.editDispatcher === "custom" ? "Argument:" : "Parameter:")))
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -263,8 +256,8 @@ Rectangle {
                 Layout.fillWidth: true
                 height: 32
                 radius: 7
-                color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
-                border.color: cmdEditInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                color: root.theme.bgSurface
+                border.color: cmdEditInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: cmdEditInput.activeFocus ? 2 : 1
 
                 TextInput {
@@ -275,7 +268,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.editArg
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     onTextChanged: {
@@ -289,7 +282,7 @@ Rectangle {
                               (root.editDispatcher === "workspace" ? "Workspace index or name (e.g. 1, 2, m+1)" :
                               (root.editDispatcher === "fullscreen" ? "0 (toggle fullscreen) or 1 (maximize)" : "Optional arguments"))
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textSecondary
                     }
                 }
@@ -305,7 +298,7 @@ Rectangle {
             Text {
                 text: "Detail:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -315,7 +308,7 @@ Rectangle {
             Text {
                 text: root.editDispatcher === "killactive" ? "Closes the active window (no extra parameters needed)." : "Toggles window floating / tiling state (no extra parameters needed)."
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.italic: true
                 color: root.theme.textSecondary
                 Layout.fillWidth: true
@@ -331,7 +324,7 @@ Rectangle {
             Text {
                 text: "Modifiers:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -344,7 +337,7 @@ Rectangle {
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.color: root.theme.bgBorder
                 border.width: 1
                 Layout.alignment: Qt.AlignVCenter
 
@@ -375,7 +368,7 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             radius: 5
-                            color: isActive ? root.theme.bgSelected : (editModHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                            color: isActive ? root.theme.bgSelected : (editModHover.hovered ? root.theme.bgHover : "transparent")
                             border.color: isActive ? root.theme.accentPrimary : "transparent"
                             border.width: isActive ? 1 : 0
 
@@ -388,7 +381,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: editModBtn.modelData.label
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: editModBtn.isActive
                                 color: editModBtn.isActive ? root.theme.accentPrimary : root.theme.textPrimary
                                 opacity: editModBtn.isActive || editModHover.hovered ? 1.0 : 0.75
@@ -420,7 +413,7 @@ Rectangle {
             Text {
                 text: "Key:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -431,8 +424,8 @@ Rectangle {
                 Layout.preferredWidth: 190
                 height: 32
                 radius: 7
-                color: root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.05)
-                border.color: keyEditInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                color: root.theme.bgSurface
+                border.color: keyEditInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: keyEditInput.activeFocus ? 2 : 1
 
                 TextInput {
@@ -443,7 +436,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.editKey
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.bold: true
                     color: root.theme.textPrimary
                     clip: true
@@ -460,10 +453,10 @@ Rectangle {
                 radius: 7
                 color: root.isCapturingKey
                     ? root.theme.accentPrimary
-                    : (recHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase)
+                    : (recHover.hovered ? root.theme.bgHover : root.theme.bgBase)
                 border.color: root.isCapturingKey
                     ? root.theme.accentPrimary
-                    : (recHover.hovered ? root.theme.textSecondary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
+                    : (recHover.hovered ? root.theme.textSecondary : root.theme.bgBorder)
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -476,7 +469,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: root.isCapturingKey ? "Listening... (Esc cancels)" : "Record Key"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.isCapturingKey ? root.theme.bgBase : (recHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
                 }
@@ -503,7 +496,7 @@ Rectangle {
                 Text {
                     text: "New:"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.textSecondary
                 }
 
@@ -514,7 +507,7 @@ Rectangle {
                         implicitWidth: prevPillText.implicitWidth + 12
                         height: 24
                         radius: 5
-                        color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15)
+                        color: root.theme.bgSelected
                         border.color: root.theme.accentPrimary
                         border.width: 1
 
@@ -523,7 +516,7 @@ Rectangle {
                             anchors.centerIn: parent
                             text: modelData
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -545,7 +538,7 @@ Rectangle {
                 height: 30
                 radius: 7
                 color: delHover.hovered ? Qt.rgba(0.9, 0.2, 0.2, 0.15) : root.theme.bgBase
-                border.color: delHover.hovered ? Qt.rgba(0.9, 0.2, 0.2, 0.5) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                border.color: delHover.hovered ? Qt.rgba(0.9, 0.2, 0.2, 0.5) : root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -558,7 +551,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "Unbind"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: delHover.hovered ? "#ff5555" : root.theme.textSecondary
                 }
@@ -577,8 +570,8 @@ Rectangle {
                 implicitWidth: cancelText.implicitWidth + 24
                 height: 30
                 radius: 7
-                color: cancelHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : root.theme.bgBase
-                border.color: cancelHover.hovered ? root.theme.textSecondary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                color: cancelHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                border.color: cancelHover.hovered ? root.theme.textSecondary : root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -591,7 +584,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "Cancel"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: cancelHover.hovered ? root.theme.textPrimary : root.theme.textSecondary
                 }
@@ -616,7 +609,7 @@ Rectangle {
                 readonly property bool canSave: root.editKey.trim().length > 0
                 color: canSave
                     ? (saveHover.hovered ? Qt.lighter(root.theme.accentPrimary, 1.1) : root.theme.accentPrimary)
-                    : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
+                    : root.theme.bgSelected
                 opacity: canSave ? 1.0 : 0.5
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -629,7 +622,7 @@ Rectangle {
                     anchors.centerIn: parent
                     text: "Save & Apply"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: parent.canSave ? root.theme.bgBase : root.theme.textMuted
                 }
@@ -663,7 +656,7 @@ Rectangle {
                 Text {
                     text: "Are you sure you want to remove this keybind?"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: "#ff6b6b"
                     Layout.alignment: Qt.AlignVCenter
@@ -676,8 +669,8 @@ Rectangle {
                     implicitWidth: cancelPromptText.implicitWidth + 20
                     height: 26
                     radius: 6
-                    color: confCancelHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.12)) : root.theme.bgBase
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+                    color: confCancelHover.hovered ? root.theme.bgHover : root.theme.bgBase
+                    border.color: root.theme.bgBorder
                     border.width: 1
 
                     Behavior on color { ColorAnimation { duration: 140 } }
@@ -689,7 +682,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Cancel"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -717,7 +710,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Yes, Unbind"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: "#ffffff"
                     }

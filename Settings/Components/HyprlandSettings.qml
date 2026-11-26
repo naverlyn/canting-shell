@@ -298,13 +298,9 @@ Item {
     property bool miscMiddleClickPaste: false
     property int miscNoHardwareCursors: 2
 
-    Connections {
-        target: Style
-        function onToast(msg) { root.showToast(msg); }
-    }
 
     function showToast(msg, isWarn) {
-        toastBanner.show(msg, isWarn);
+        Style.notify(msg, isWarn);
     }
 
     /* Helper: Set variable via manage_hyprland.py */
@@ -444,10 +440,4 @@ Item {
         }
 }
 
-    // Feedback Toast
-    ToastBanner {
-        id: toastBanner
-        theme: root.theme
-        font: root.font
-    }
 }

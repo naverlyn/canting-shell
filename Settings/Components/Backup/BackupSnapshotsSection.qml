@@ -72,7 +72,7 @@ ColumnLayout {
                 Text {
                     text: "Show:"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.textMuted
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -91,7 +91,7 @@ ColumnLayout {
                         radius: 12
                         Layout.alignment: Qt.AlignVCenter
                         color: active ? root.theme.bgSelected : "transparent"
-                        border.color: active ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                        border.color: active ? (root.theme.accentPrimary ?? "#7aa2f7") : root.theme.bgBorder
                         border.width: 1
 
                         Text {
@@ -99,7 +99,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: modelData.label + " (" + modelData.count + ")"
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             font.bold: active
                             color: active ? root.theme.accentPrimary : root.theme.textSecondary
                         }
@@ -141,7 +141,7 @@ ColumnLayout {
                             : (isConfirmDelete ? Style.withAlpha(root.theme.accentRed ?? "#f7768e", 0.10) : root.theme.bgBase)
                         border.color: isSelectedForRestore
                             ? (root.theme.accentPrimary ?? "#7aa2f7")
-                            : (isConfirmDelete ? (root.theme.accentRed ?? "#f7768e") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)))
+                            : (isConfirmDelete ? (root.theme.accentRed ?? "#f7768e") : root.theme.bgBorder)
                         border.width: 1
 
                         Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
@@ -166,7 +166,7 @@ ColumnLayout {
                                     horizontalAlignment: Text.AlignHCenter
                                     text: snapItemCard.isSafetyBackup ? "󰌢" : (snapItemCard.isImported ? "󰋺" : "󰁯")
                                     font.family: root.font
-                                    font.pixelSize: 16
+                                    font.pixelSize: Style.px(16)
                                     color: snapItemCard.isSafetyBackup
                                         ? (root.theme.accentOrange ?? "#ff9e64")
                                         : (snapItemCard.isImported ? (root.theme.accentGreen ?? "#9ece6a") : (root.theme.accentPrimary ?? "#7aa2f7"))
@@ -185,7 +185,7 @@ ColumnLayout {
                                         Text {
                                             text: snapItemCard.modelData.name || snapItemCard.modelData.id
                                             font.family: root.font
-                                            font.pixelSize: 13
+                                            font.pixelSize: Style.px(13)
                                             font.bold: true
                                             color: root.theme.textPrimary
                                             elide: Text.ElideRight
@@ -215,7 +215,7 @@ ColumnLayout {
                                                 anchors.centerIn: parent
                                                 text: snapItemCard.isSafetyBackup ? "Safety" : (snapItemCard.isImported ? "Imported" : "Manual")
                                                 font.family: root.font
-                                                font.pixelSize: 9
+                                                font.pixelSize: Style.px(9)
                                                 font.bold: true
                                                 color: snapItemCard.isSafetyBackup
                                                     ? (root.theme.accentOrange ?? "#ff9e64")
@@ -234,23 +234,23 @@ ColumnLayout {
                                         Text {
                                             text: snapItemCard.modelData.dateFormatted || ""
                                             font.family: root.font
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             color: root.theme.textMuted
                                         }
-                                        Text { text: "•"; font.family: root.font; font.pixelSize: 10; color: root.theme.textMuted }
+                                        Text { text: "•"; font.family: root.font; font.pixelSize: Style.px(10); color: root.theme.textMuted }
                                         Text {
                                             text: snapItemCard.modelData.sizeFormatted || ""
                                             font.family: root.font
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             color: root.theme.textMuted
                                         }
-                                        Text { text: "•"; font.family: root.font; font.pixelSize: 10; color: root.theme.textMuted }
+                                        Text { text: "•"; font.family: root.font; font.pixelSize: Style.px(10); color: root.theme.textMuted }
                                         Text {
                                             text: snapItemCard.availMods.length === root.moduleDefs.length
                                                 ? "All components"
                                                 : (snapItemCard.availMods.length + " component" + (snapItemCard.availMods.length === 1 ? "" : "s"))
                                             font.family: root.font
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             color: root.theme.textMuted
                                         }
                                     }
@@ -260,7 +260,7 @@ ColumnLayout {
                                         visible: Boolean(snapItemCard.modelData.description)
                                         text: snapItemCard.modelData.description || ""
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         color: root.theme.textSecondary
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
@@ -322,7 +322,7 @@ ColumnLayout {
                                         Text {
                                             text: "Select components to restore"
                                             font.family: root.font
-                                            font.pixelSize: 11
+                                            font.pixelSize: Style.px(11)
                                             font.bold: true
                                             color: root.theme.accentPrimary ?? "#7aa2f7"
                                             Layout.fillWidth: true
@@ -333,7 +333,7 @@ ColumnLayout {
                                             readonly property bool allChecked: root.restoreSelectedModules.length === snapItemCard.availMods.length
                                             text: allChecked ? "Select None" : "Select All"
                                             font.family: root.font
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             color: root.theme.accentPrimary ?? "#7aa2f7"
                                             MouseArea {
                                                 anchors.fill: parent
@@ -362,7 +362,7 @@ ColumnLayout {
                                                 height: 26
                                                 radius: 13
                                                 color: checked ? Style.withAlpha(root.theme.accentPrimary ?? "#7aa2f7", 0.22) : root.theme.bgBase
-                                                border.color: checked ? (root.theme.accentPrimary ?? "#7aa2f7") : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                                                border.color: checked ? (root.theme.accentPrimary ?? "#7aa2f7") : root.theme.bgBorder
                                                 border.width: 1
 
                                                 RowLayout {
@@ -372,13 +372,13 @@ ColumnLayout {
                                                     Text {
                                                         text: checked ? "󰄲" : "󰄱"
                                                         font.family: root.font
-                                                        font.pixelSize: 11
+                                                        font.pixelSize: Style.px(11)
                                                         color: checked ? root.theme.accentPrimary : root.theme.textMuted
                                                     }
                                                     Text {
                                                         text: root.moduleIcon(modelData) + " " + root.moduleLabel(modelData)
                                                         font.family: root.font
-                                                        font.pixelSize: 10
+                                                        font.pixelSize: Style.px(10)
                                                         font.bold: true
                                                         color: root.theme.textPrimary
                                                     }
@@ -400,7 +400,7 @@ ColumnLayout {
                                         Text {
                                             text: "󰌢 Your current setup is backed up automatically before restoring."
                                             font.family: root.font
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             color: root.theme.textMuted
                                             Layout.fillWidth: true
                                             wrapMode: Text.WordWrap
@@ -447,7 +447,7 @@ ColumnLayout {
                                     Text {
                                         text: "Delete '" + (snapItemCard.modelData.name || snapItemCard.modelData.id) + "' permanently?"
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: true
                                         color: root.theme.accentRed ?? "#f7768e"
                                         Layout.fillWidth: true
@@ -480,7 +480,7 @@ ColumnLayout {
                     height: 84
                     radius: 10
                     color: root.theme.bgBase
-                    border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                    border.color: root.theme.bgBorder
                     border.width: 1
 
                     ColumnLayout {
@@ -490,7 +490,7 @@ ColumnLayout {
                             Layout.alignment: Qt.AlignHCenter
                             text: root.activeFilter === "safety" ? "󰌢" : "󰁯"
                             font.family: root.font
-                            font.pixelSize: 20
+                            font.pixelSize: Style.px(20)
                             color: root.theme.textMuted
                         }
                         Text {
@@ -501,7 +501,7 @@ ColumnLayout {
                                     ? "No safety backups yet — they are created automatically before any restore or reset."
                                     : "No manual snapshots match this filter.")
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textMuted
                         }
                     }

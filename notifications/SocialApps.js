@@ -167,12 +167,18 @@ function cleanBody(body, app) {
 }
 
 function formatAppName(originalName, app) {
-    if (!app) return originalName || "Notification";
-    var orig = (originalName || "").toLowerCase();
-    if (!originalName || orig === "notification" || orig === "brave" || orig === "chromium" || orig === "chrome" || orig === "firefox") {
+    var cleanOrig = String(originalName || "").trim();
+    var orig = cleanOrig.toLowerCase();
+    if (!app) {
+        if (orig === "" || orig === "notify-send" || orig === "notification") {
+            return "System";
+        }
+        return cleanOrig;
+    }
+    if (orig === "" || orig === "notification" || orig === "notify-send" || orig === "brave" || orig === "chromium" || orig === "chrome" || orig === "firefox") {
         return app.name + " Web";
     }
-    return originalName;
+    return cleanOrig;
 }
 
 function getFocusCommand(app) {

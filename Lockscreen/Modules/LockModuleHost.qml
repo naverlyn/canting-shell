@@ -1,10 +1,11 @@
 import QtQuick
 import ".."
+import "../../ThemeSwitcher"
 
 Item {
     id: hostRoot
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: (hostRoot.moduleData && hostRoot.moduleData.fontFamily && hostRoot.moduleData.fontFamily !== "$font" && hostRoot.moduleData.fontFamily !== "")
         ? hostRoot.moduleData.fontFamily
         : ((hostRoot.theme && hostRoot.theme.lockscreenFont)
@@ -22,6 +23,7 @@ Item {
     Loader {
         id: loader
         anchors.fill: parent
+        active: hostRoot.visible && Boolean(hostRoot.moduleData && hostRoot.moduleData.enabled !== false && (hostRoot.previewMode || hostRoot.modType !== "auth"))
 
         sourceComponent: {
             switch(hostRoot.modType) {

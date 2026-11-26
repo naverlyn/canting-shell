@@ -14,6 +14,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import "../../utils/ColorUtils.js" as ColorUtils
+import "./Common"
 
 Item {
     id: root
@@ -86,7 +87,7 @@ Item {
             Text {
                 text: root.currentOption ? root.currentOption.name : (root.currentValue || root.placeholder)
                 font.family: root.font
-                font.pixelSize: 12
+                font.pixelSize: Style.px(12)
                 font.bold: true
                 color: root.theme.textPrimary
                 elide: Text.ElideRight
@@ -98,7 +99,7 @@ Item {
             Text {
                 text: "󰅀"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 color: root.isOpen ? root.theme.accentPrimary : root.theme.textSecondary
                 rotation: root.isOpen ? 180 : 0
                 Layout.alignment: Qt.AlignVCenter
@@ -192,7 +193,7 @@ Item {
                         Text {
                             text: modelData.name || modelData.desktop
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: itemDelegate.isSelected
                             color: itemDelegate.isSelected 
                                 ? root.theme.accentPrimary 
@@ -204,7 +205,7 @@ Item {
                         Text {
                             text: itemDelegate.itemDesc
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             color: root.theme.textMuted
                             elide: Text.ElideRight
                             Layout.fillWidth: true

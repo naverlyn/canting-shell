@@ -41,8 +41,12 @@ ColumnLayout {
             }
             Text {
                 text: root.previewMode === "spotlight"
-                    ? (AppLauncherConfig.spotlightWidth + " × " + AppLauncherConfig.spotlightHeight + " px • Spotlight Runner")
-                    : (AppLauncherConfig.gridColumns + " Columns • " + AppLauncherConfig.gridCellSize + " px Cell • App Grid")
+                    ? (AppLauncherConfig.spotlightWidth + " × " + AppLauncherConfig.spotlightHeight + " px • "
+                        + (AppLauncherConfig.spotlightPosition.charAt(0).toUpperCase() + AppLauncherConfig.spotlightPosition.slice(1))
+                        + " • Spotlight Runner")
+                    : (AppLauncherConfig.appMenuMode === "list"
+                        ? "List Mode • App Menu"
+                        : (AppLauncherConfig.gridColumns + " Columns • " + AppLauncherConfig.gridCellSize + " px Cell • App Menu"))
                 font.family: Style.font
                 font.pixelSize: Style.px(11)
                 font.bold: false
@@ -107,14 +111,14 @@ ColumnLayout {
                                     Text {
                                         text: "󰍉"
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         color: root.previewMode === "spotlight" ? root.theme.bgBase : root.theme.textMuted
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     Text {
                                         text: "Spotlight Runner"
                                         font.family: root.font
-                                        font.pixelSize: 10
+                                        font.pixelSize: Style.px(10)
                                         font.bold: root.previewMode === "spotlight"
                                         color: root.previewMode === "spotlight" ? root.theme.bgBase : root.theme.textSecondary
                                         anchors.verticalCenter: parent.verticalCenter
@@ -141,14 +145,14 @@ ColumnLayout {
                                     Text {
                                         text: "󰕮"
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         color: root.previewMode === "grid" ? root.theme.bgBase : root.theme.textMuted
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     Text {
-                                        text: "App Grid Menu"
+                                        text: "App Menu"
                                         font.family: root.font
-                                        font.pixelSize: 10
+                                        font.pixelSize: Style.px(10)
                                         font.bold: root.previewMode === "grid"
                                         color: root.previewMode === "grid" ? root.theme.bgBase : root.theme.textSecondary
                                         anchors.verticalCenter: parent.verticalCenter
@@ -183,7 +187,7 @@ ColumnLayout {
                         height: 154
                         radius: 8
                         color: Qt.darker(root.theme.bgBase, 1.25)
-                        border.color: Qt.rgba(1, 1, 1, 0.06)
+                        border.color: Style.theme.bgBorder
                         border.width: 1
 
                         // A. SPOTLIGHT RUNNER PREVIEW
@@ -192,13 +196,19 @@ ColumnLayout {
                             visible: root.previewMode === "spotlight"
                             readonly property real scaleRatio: 120 / 620
                             width: Math.max(180, Math.min(parent.width - 24, Math.round(AppLauncherConfig.spotlightWidth * scaleRatio)))
-                            height: Math.max(86, Math.min(136, Math.round(AppLauncherConfig.spotlightHeight * scaleRatio)))
-                            anchors.centerIn: parent
+                            height: Math.max(86, Math.min(132, Math.round(AppLauncherConfig.spotlightHeight * scaleRatio)))
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            y: AppLauncherConfig.spotlightPosition === "top"
+                                ? 10
+                                : (AppLauncherConfig.spotlightPosition === "bottom"
+                                    ? (parent.height - height - 10)
+                                    : Math.round((parent.height - height) / 2))
                             radius: 10
                             color: root.theme.bgSurface
                             border.color: root.theme.accentPrimary
                             border.width: 1.5
 
+                            Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                             Behavior on width { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
                             Behavior on height { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
 
@@ -225,7 +235,7 @@ ColumnLayout {
                                         Text {
                                             text: AppLauncherConfig.defaultMode === "command" ? "$" : "󰍉"
                                             font.family: root.font
-                                            font.pixelSize: 9
+                                            font.pixelSize: Style.px(9)
                                             font.bold: true
                                             color: root.theme.accentPrimary
                                         }
@@ -343,11 +353,13 @@ ColumnLayout {
                             }
                         }
 
-                        // B. APP GRID MENU PREVIEW
+                        // B. APP MENU PREVIEW
                         Rectangle {
                             id: mockGridBox
                             visible: root.previewMode === "grid"
-                            width: Math.min(parent.width - 24, Math.max(170, AppLauncherConfig.gridColumns * (AppLauncherConfig.gridCellSize > 72 ? 30 : 25) + 32))
+                            width: AppLauncherConfig.appMenuMode === "list"
+                                ? Math.min(parent.width - 24, 175)
+                                : Math.min(parent.width - 24, Math.max(170, AppLauncherConfig.gridColumns * (AppLauncherConfig.gridCellSize > 72 ? 30 : 25) + 32))
                             height: Math.min(136, 116)
                             anchors.centerIn: parent
                             radius: 10
@@ -380,7 +392,7 @@ ColumnLayout {
                                         Text {
                                             text: "󰍉"
                                             font.family: root.font
-                                            font.pixelSize: 9
+                                            font.pixelSize: Style.px(9)
                                             color: root.theme.accentPrimary
                                         }
 
@@ -396,6 +408,7 @@ ColumnLayout {
 
                                 // Mock App Grid cells
                                 RowLayout {
+                                    visible: AppLauncherConfig.appMenuMode !== "list"
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     spacing: 4
@@ -431,6 +444,45 @@ ColumnLayout {
                                         }
                                     }
                                 }
+
+                                // Mock App List rows
+                                ColumnLayout {
+                                    visible: AppLauncherConfig.appMenuMode === "list"
+                                    Layout.fillWidth: true
+                                    Layout.fillHeight: true
+                                    spacing: 3
+
+                                    Repeater {
+                                        model: 4
+                                        delegate: Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            radius: 4
+                                            color: index === 0 ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(1, 1, 1, 0.03)
+
+                                            RowLayout {
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 5
+                                                anchors.rightMargin: 5
+                                                spacing: 5
+                                                Rectangle {
+                                                    width: 10
+                                                    height: 10
+                                                    radius: 3
+                                                    color: index === 0 ? root.theme.accentPrimary : root.theme.textMuted
+                                                    opacity: 0.8
+                                                }
+                                                Rectangle {
+                                                    Layout.fillWidth: true
+                                                    height: 3
+                                                    radius: 1.5
+                                                    color: root.theme.textMuted
+                                                    opacity: index === 0 ? 0.8 : 0.45
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -439,8 +491,38 @@ ColumnLayout {
         }
     }
 
+    readonly property string activeMode: root.previewMode || "spotlight"
+    onActiveModeChanged: modeSectionAnim.restart()
+
+    ParallelAnimation {
+        id: modeSectionAnim
+        NumberAnimation {
+            target: modeSectionContainer
+            property: "opacity"
+            from: 0.35
+            to: 1.0
+            duration: 180
+            easing.type: Easing.OutCubic
+        }
+        NumberAnimation {
+            target: modeSectionTranslate
+            property: "y"
+            from: 8
+            to: 0
+            duration: 180
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    ColumnLayout {
+        id: modeSectionContainer
+        Layout.fillWidth: true
+        spacing: 16
+        transform: Translate { id: modeSectionTranslate; y: 0 }
+
     // Spotlight Window Sizing Section
     ColumnLayout {
+        visible: root.previewMode === "spotlight"
         Layout.fillWidth: true
         spacing: 8
 
@@ -450,7 +532,7 @@ ColumnLayout {
             Layout.rightMargin: 4
             spacing: 8
             Text {
-                text: "Spotlight Runner Dimensions (Center Popup)"
+                text: "Spotlight Runner Placement & Dimensions"
                 font.family: Style.font
                 font.pixelSize: Style.px(13)
                 font.bold: Style.boldHeadings
@@ -482,6 +564,119 @@ ColumnLayout {
                     margins: 8
                 }
                 spacing: 0
+
+                // Screen Position Segmented Row (Top / Center / Bottom)
+                Item {
+                    Layout.fillWidth: true
+                    height: 44
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 12
+
+                        Text {
+                            text: "Screen Position"
+                            font.family: Style.font
+                            font.pixelSize: Style.px(13)
+                            font.bold: Style.boldHeadings
+                            font.letterSpacing: Style.letterSpacing
+                            font.hintingPreference: Style.fontHintingEnum
+                            antialiasing: Style.fontAntialiasing
+                            renderType: Style.fontRenderTypeEnum
+                            color: Style.theme.textPrimary
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+
+                        Rectangle {
+                            id: posSegTrack
+                            Layout.preferredWidth: 380
+                            implicitWidth: 380
+                            height: 32
+                            radius: 7
+                            color: Style.theme.bgBase
+                            border.color: Style.theme.bgBorder
+                            border.width: 1
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+
+                            readonly property var posModel: [
+                                { id: "top",    label: "Top" },
+                                { id: "center", label: "Center" },
+                                { id: "bottom", label: "Bottom" }
+                            ]
+                            readonly property int activePosIdx: {
+                                const p = AppLauncherConfig.spotlightPosition || "center";
+                                if (p === "top") return 0;
+                                if (p === "bottom") return 2;
+                                return 1;
+                            }
+                            readonly property real cellWidth: (width - 6 - (posModel.length - 1) * 3) / posModel.length
+
+                            Rectangle {
+                                y: 3
+                                height: parent.height - 6
+                                width: posSegTrack.cellWidth
+                                x: 3 + posSegTrack.activePosIdx * (posSegTrack.cellWidth + 3)
+                                radius: 5
+                                color: Style.theme.bgSelected
+                                border.color: Style.theme.accentPrimary
+                                border.width: 1
+
+                                Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                            }
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 3
+                                spacing: 3
+
+                                Repeater {
+                                    model: posSegTrack.posModel
+                                    delegate: Rectangle {
+                                        id: posSegBtn
+                                        required property var modelData
+                                        required property int index
+                                        readonly property bool isSel: posSegTrack.activePosIdx === index
+
+                                        Layout.fillWidth: true
+                                        Layout.fillHeight: true
+                                        radius: 5
+                                        color: !isSel && posSegHov.hovered ? Style.theme.bgHover : "transparent"
+                                        Behavior on color { ColorAnimation { duration: 140 } }
+
+                                        HoverHandler { id: posSegHov }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: posSegBtn.modelData.label
+                                            font.family: Style.font
+                                            font.pixelSize: Style.px(11)
+                                            font.bold: posSegBtn.isSel
+                                            color: posSegBtn.isSel ? Style.theme.accentPrimary : Style.theme.textPrimary
+                                            opacity: posSegBtn.isSel || posSegHov.hovered ? 1.0 : 0.75
+                                            Behavior on color { ColorAnimation { duration: 140 } }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                AppLauncherConfig.setSpotlightPosition(posSegBtn.modelData.id);
+                                                root.previewMode = "spotlight";
+                                                root.showToast("Spotlight position set to " + posSegBtn.modelData.label);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                RowDivider {}
+
                 SettingSliderRow {
                     title: "Spotlight Width"
                     value: AppLauncherConfig.spotlightWidth
@@ -537,7 +732,7 @@ ColumnLayout {
                             Text {
                                 text: "Default Opening Mode"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -568,8 +763,9 @@ ColumnLayout {
         }
     }
 
-    // AppGrid Menu Sizing Section
+    // App Menu Sizing Section
     ColumnLayout {
+        visible: root.previewMode === "grid"
         Layout.fillWidth: true
         spacing: 8
 
@@ -579,7 +775,7 @@ ColumnLayout {
             Layout.rightMargin: 4
             spacing: 8
             Text {
-                text: "App Grid Menu Dimensions (Bar Popup)"
+                text: "App Menu Layout (Bar Popup)"
                 font.family: Style.font
                 font.pixelSize: Style.px(13)
                 font.bold: Style.boldHeadings
@@ -611,7 +807,58 @@ ColumnLayout {
                     margins: 8
                 }
                 spacing: 0
+
+                // Display Mode Selector (Grid vs List)
+                Item {
+                    Layout.fillWidth: true
+                    height: 52
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 12
+                        anchors.rightMargin: 12
+                        spacing: 12
+
+                        ColumnLayout {
+                            spacing: 2
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+
+                            Text {
+                                text: "Display Mode"
+                                font.family: root.font
+                                font.pixelSize: Style.px(13)
+                                font.bold: true
+                                color: root.theme.textPrimary
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        AppDropdown {
+                            theme: root.theme
+                            font: root.font
+                            Layout.preferredWidth: 380
+                            implicitWidth: 380
+                            menuWidth: 380
+                            Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
+                            options: [
+                                { desktop: "grid", name: "Grid Mode", desc: "" },
+                                { desktop: "list", name: "List Mode", desc: "" }
+                            ]
+                            currentValue: AppLauncherConfig.appMenuMode === "list" ? "list" : "grid"
+                            onSelected: (val, opt) => {
+                                AppLauncherConfig.setAppMenuMode(val);
+                                root.showToast("App Menu set to " + (opt ? opt.name : val));
+                            }
+                        }
+                    }
+                }
+
+                RowDivider { visible: AppLauncherConfig.appMenuMode !== "list" }
+
                 SettingSliderRow {
+                    visible: AppLauncherConfig.appMenuMode !== "list"
                     title: "Grid Columns"
                     value: AppLauncherConfig.gridColumns
                     minVal: 3
@@ -627,9 +874,10 @@ ColumnLayout {
                     onValueModified: (val) => AppLauncherConfig.setGridColumns(val)
                 }
 
-                RowDivider {}
+                RowDivider { visible: AppLauncherConfig.appMenuMode !== "list" }
 
                 SettingSliderRow {
+                    visible: AppLauncherConfig.appMenuMode !== "list"
                     title: "Cell Size"
                     value: AppLauncherConfig.gridCellSize
                     minVal: 72
@@ -645,5 +893,6 @@ ColumnLayout {
                 }
             }
         }
+    }
     }
 }

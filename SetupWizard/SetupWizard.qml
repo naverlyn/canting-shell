@@ -2,6 +2,7 @@ import Quickshell
 import Quickshell.Io
 import QtQuick
 import "Components"
+import "../ThemeSwitcher"
 
 Scope {
     id: root
@@ -108,9 +109,21 @@ Scope {
         running: false
     }
 
+    readonly property string setupDonePath: Quickshell.shellPath("configs/.setup_done")
+
+    FileView {
+        id: setupDoneFile
+        path: root.setupDonePath
+        watchChanges: false
+    }
+
     Component.onCompleted: {
-        statusProc.openIfNotDone = true;
-        statusProc.running = true;
+        // Skip spawning python3 + fc-list on every shell boot once initial setup is done
+        const marker = setupDoneFile.text();
+        if (marker === null || marker === undefined) {
+            statusProc.openIfNotDone = true;
+            statusProc.running = true;
+        }
     }
 
     Loader {

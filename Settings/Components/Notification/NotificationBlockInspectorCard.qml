@@ -129,7 +129,7 @@ ColumnLayout {
                         Text {
                             text: tabPill.modelData.label
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: tabPill.isSel
                             color: tabPill.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                             elide: Text.ElideRight

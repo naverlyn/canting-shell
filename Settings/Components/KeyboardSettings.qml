@@ -38,7 +38,7 @@ Item {
     readonly property string scriptPath: Qt.resolvedUrl("../scripts/manage_keybind.py").toString().replace(/^file:\/\//, "")
 
     function showToast(msg, isWarn) {
-        toastBanner.show(msg, isWarn);
+        Style.notify(msg, isWarn);
     }
 
     /* Keybindings State */
@@ -634,10 +634,4 @@ Item {
         }
     }
     /* Non-intrusive bottom feedback toast */
-    ToastBanner {
-        id: toastBanner
-        theme: root.theme
-        font: root.font
-        durationMs: 2600
-    }
 }

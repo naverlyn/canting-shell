@@ -99,7 +99,7 @@ ColumnLayout {
                         Text {
                             text: "Script / Shell Command"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -129,7 +129,7 @@ ColumnLayout {
                                 anchors.rightMargin: 10
                                 verticalAlignment: TextInput.AlignVCenter
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textPrimary
                                 selectByMouse: true
                                 text: BarConfig.customScriptCommand
@@ -148,7 +148,7 @@ ColumnLayout {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "e.g. uptime -p"
                                     font.family: root.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     color: root.theme.textMuted
                                 }
                             }
@@ -184,7 +184,7 @@ ColumnLayout {
                         Text {
                             text: "Left-Click Command"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -214,7 +214,7 @@ ColumnLayout {
                                 anchors.rightMargin: 10
                                 verticalAlignment: TextInput.AlignVCenter
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textPrimary
                                 selectByMouse: true
                                 text: BarConfig.customScriptOnClick
@@ -233,7 +233,7 @@ ColumnLayout {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "On-click cmd (optional)..."
                                     font.family: root.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     color: root.theme.textMuted
                                 }
                             }
@@ -269,7 +269,7 @@ ColumnLayout {
                         Text {
                             text: "Icon Source"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -320,7 +320,7 @@ ColumnLayout {
                         Text {
                             text: "Custom Glyph or Label"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -348,7 +348,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: parent.glyphVal
                                 font.family: root.font
-                                font.pixelSize: 14
+                                font.pixelSize: Style.px(14)
                                 color: root.theme.accentPrimary
                             }
                         }
@@ -373,7 +373,7 @@ ColumnLayout {
                                 horizontalAlignment: TextInput.AlignHCenter
                                 verticalAlignment: TextInput.AlignVCenter
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 color: root.theme.textPrimary
                                 selectByMouse: true
                                 text: self.isImageActive ? "" : (BarConfig.customScriptIcon || "󰆍")
@@ -384,7 +384,7 @@ ColumnLayout {
                                     verticalAlignment: Text.AlignVCenter
                                     text: "Glyph / text"
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     color: root.theme.textMuted
                                     visible: csIconInput.text === "" && !csIconInput.activeFocus
                                 }
@@ -459,7 +459,7 @@ ColumnLayout {
                         Text {
                             text: "Custom PNG Image"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -504,7 +504,7 @@ ColumnLayout {
                                 Text {
                                     text: self.imageFileName
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: true
                                     color: root.theme.accentPrimary
                                     elide: Text.ElideMiddle
@@ -556,7 +556,7 @@ ColumnLayout {
                         Text {
                             text: "Execution Poll Interval"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -620,7 +620,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: csIntBtn.modelData.label
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: csIntBtn.isSel
                                         color: csIntBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                     }

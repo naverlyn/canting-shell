@@ -104,7 +104,7 @@ Rectangle {
                 Text {
                     text: root.extractFilename(cardRoot.activeDisplayWallpaper)
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                     elide: Text.ElideRight
@@ -114,7 +114,7 @@ Rectangle {
                 Text {
                     text: cardRoot.activeDisplayWallpaper || "No background set"
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: root.theme.textSecondary
                     elide: Text.ElideMiddle
                     Layout.fillWidth: true
@@ -132,7 +132,7 @@ Rectangle {
                         return syncDesc + " · Mode: " + modeLabel + " · Filter: " + (WallpaperService.filterMode || "Lanczos3");
                     }
                     font.family: root.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: WallpaperService.generatingTheme ? root.theme.accentPrimary : root.theme.textMuted
                 }
             }
@@ -162,7 +162,7 @@ Rectangle {
                             anchors.centerIn: parent
                             text: "Random"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -189,7 +189,7 @@ Rectangle {
                             anchors.centerIn: parent
                             text: "Rescan"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textSecondary
                         }
 
@@ -228,7 +228,7 @@ Rectangle {
                             Text {
                                 text: "Sync Theme"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: root.theme.textPrimary
                                 Layout.alignment: Qt.AlignRight
@@ -237,7 +237,7 @@ Rectangle {
                             Text {
                                 text: WallpaperService.autoSyncPalette ? "Active palette" : "Disabled"
                                 font.family: root.font
-                                font.pixelSize: 9
+                                font.pixelSize: Style.px(9)
                                 color: WallpaperService.autoSyncPalette ? root.theme.accentPrimary : root.theme.textSecondary
                                 Layout.alignment: Qt.AlignRight
                             }
@@ -292,7 +292,7 @@ Rectangle {
                 Text {
                     text: "Display:"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.theme.textSecondary
                 }
@@ -361,7 +361,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                     text: dispSegBtn.modelData.label
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: dispSegBtn.isSel
                                     color: dispSegBtn.isSel ? root.theme.textPrimary : root.theme.textSecondary
                                 }
@@ -388,7 +388,7 @@ Rectangle {
                 Text {
                     text: "Display:"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.theme.textSecondary
                 }
@@ -406,7 +406,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Primary · " + WallpaperService.displayAName
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.accentPrimary
                     }
@@ -484,7 +484,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                     text: typeSegBtn.modelData.label
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: typeSegBtn.isSel
                                     color: typeSegBtn.isSel ? root.theme.textPrimary : root.theme.textSecondary
                                 }
@@ -528,14 +528,14 @@ Rectangle {
                         Text {
                             text: "󰈲"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             color: filterPopup.opened ? root.theme.accentPrimary : root.theme.textSecondary
                         }
 
                         Text {
                             text: WallpaperService.filterMode || "Lanczos3"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: filterPopup.opened ? root.theme.accentPrimary : root.theme.textPrimary
                         }
@@ -543,7 +543,7 @@ Rectangle {
                         Text {
                             text: "󰅀"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: filterPopup.opened ? root.theme.accentPrimary : root.theme.textSecondary
                             rotation: filterPopup.opened ? 180 : 0
                             Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
@@ -590,7 +590,7 @@ Rectangle {
                             Text {
                                 text: "Scaling Filter (awww)"
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: true
                                 color: root.theme.textMuted
                                 Layout.leftMargin: 6
@@ -634,7 +634,7 @@ Rectangle {
                                             Text {
                                                 text: filterItemDelegate.modelData.label
                                                 font.family: root.font
-                                                font.pixelSize: 11
+                                                font.pixelSize: Style.px(11)
                                                 font.bold: filterItemDelegate.isSelected
                                                 color: filterItemDelegate.isSelected
                                                     ? root.theme.accentPrimary
@@ -644,7 +644,7 @@ Rectangle {
                                             Text {
                                                 text: filterItemDelegate.modelData.desc
                                                 font.family: root.font
-                                                font.pixelSize: 9
+                                                font.pixelSize: Style.px(9)
                                                 color: root.theme.textSecondary
                                             }
                                         }
@@ -653,7 +653,7 @@ Rectangle {
                                             visible: filterItemDelegate.isSelected
                                             text: "󰄬"
                                             font.family: root.font
-                                            font.pixelSize: 12
+                                            font.pixelSize: Style.px(12)
                                             color: root.theme.accentPrimary
                                         }
                                     }
@@ -699,7 +699,7 @@ Rectangle {
                         Text {
                             text: "󰄛"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             color: effectPopup.opened
                                 ? root.theme.accentPrimary
                                 : ((WallpaperService.effectMode || "none") !== "none" ? root.theme.accentOrange : root.theme.textSecondary)
@@ -715,7 +715,7 @@ Rectangle {
                                 return "No Effects";
                             }
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: (WallpaperService.effectMode || "none") !== "none"
                             color: effectPopup.opened
                                 ? root.theme.accentPrimary
@@ -725,7 +725,7 @@ Rectangle {
                         Text {
                             text: "󰅀"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: effectPopup.opened ? root.theme.accentPrimary : root.theme.textSecondary
                             rotation: effectPopup.opened ? 180 : 0
                             Behavior on rotation { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
@@ -772,7 +772,7 @@ Rectangle {
                             Text {
                                 text: "Wallpaper Effects (ImageMagick)"
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: true
                                 color: root.theme.textMuted
                                 Layout.leftMargin: 6
@@ -820,7 +820,7 @@ Rectangle {
                                                     Text {
                                                         text: effItemDelegate.modelData.label
                                                         font.family: root.font
-                                                        font.pixelSize: 11
+                                                        font.pixelSize: Style.px(11)
                                                         font.bold: effItemDelegate.isSelected
                                                         color: effItemDelegate.isSelected
                                                             ? root.theme.accentPrimary
@@ -830,7 +830,7 @@ Rectangle {
                                                     Text {
                                                         text: effItemDelegate.modelData.desc
                                                         font.family: root.font
-                                                        font.pixelSize: 9
+                                                        font.pixelSize: Style.px(9)
                                                         color: root.theme.textSecondary
                                                     }
                                                 }
@@ -839,7 +839,7 @@ Rectangle {
                                                     visible: effItemDelegate.isSelected
                                                     text: "󰄬"
                                                     font.family: root.font
-                                                    font.pixelSize: 12
+                                                    font.pixelSize: Style.px(12)
                                                     color: root.theme.accentPrimary
                                                 }
                                             }

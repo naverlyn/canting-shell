@@ -502,8 +502,27 @@ Singleton {
         ConfigUtils.resetDefaults(root);
     }
 
+    property bool _savePending: false
+
+    Timer {
+        id: saveDebounceTimer
+        interval: 150
+        repeat: false
+        onTriggered: root._flushSaveConfig()
+    }
+
     function saveConfig() {
         if (!root._loaded) return;
+        saveDebounceTimer.restart();
+    }
+
+    function _flushSaveConfig() {
+        if (!root._loaded) return;
+        if (saveProcess.running) {
+            root._savePending = true;
+            return;
+        }
+        root._savePending = false;
         const jsonStr = JSON.stringify(ConfigUtils.buildConfigData(root), null, 2);
         root._lastSavedJson = jsonStr;
         saveProcess.command = [
@@ -549,9 +568,16 @@ Singleton {
         id: saveProcess
         command: []
         running: false
+        onExited: {
+            if (root._savePending) {
+                root._savePending = false;
+                root._flushSaveConfig();
+            }
+        }
     }
 
     Component.onCompleted: {
+        Quickshell.execDetached(["sh", "-c", "rm -rf /tmp/qs_notif_cache 2>/dev/null || true"]);
         if (!configFile.text()) {
             root._loaded = true;
         }
@@ -650,6 +676,49 @@ Singleton {
         }
     }
 
+    function _extractLocalImagePath(raw) {
+        const s = String(raw || "").trim();
+        if (s === "" || s === "__sample__" || s.indexOf("image://qsimage/") !== -1) return "";
+        if (s.startsWith("image://icon//")) return s.slice(13);
+        if (s.startsWith("file://")) return s.slice(7);
+        if (s.startsWith("/")) return s;
+        return "";
+    }
+
+    function _cacheNotifImage(rawImg, rawAppIcon, keyId) {
+        let localPath = root._extractLocalImagePath(rawImg);
+        if (!localPath) {
+            // Some browsers/apps pass contact avatars as a temporary /tmp/ path in appIcon
+            const iconPath = root._extractLocalImagePath(rawAppIcon);
+            if (iconPath && (iconPath.indexOf("/tmp/") !== -1 || iconPath.indexOf("scoped_dir") !== -1)) {
+                localPath = iconPath;
+            }
+        }
+        if (!localPath) return "";
+        const safeId = String(keyId || root._seqCounter).replace(/[^a-zA-Z0-9_-]/g, "_");
+        const dstPath = "/tmp/qs_notif_cache/img_" + safeId + ".png";
+        Quickshell.execDetached([
+            "sh", "-c",
+            "mkdir -p /tmp/qs_notif_cache && [ -s \"$1\" ] && cp -f \"$1\" \"$2.tmp\" 2>/dev/null && mv -f \"$2.tmp\" \"$2\" 2>/dev/null || true",
+            "sh", localPath, dstPath
+        ]);
+        return "file://" + dstPath;
+    }
+
+    function _unlinkCachedImages(entries) {
+        if (!Array.isArray(entries) || entries.length === 0) return;
+        const paths = [];
+        for (let i = 0; i < entries.length; i++) {
+            const c = entries[i] && entries[i].cachedImage ? String(entries[i].cachedImage) : "";
+            if (c.startsWith("file:///tmp/qs_notif_cache/")) {
+                paths.push(c.slice(7));
+            }
+        }
+        if (paths.length > 0) {
+            Quickshell.execDetached(["rm", "-f", ...paths]);
+        }
+    }
+
     function recordToHistory(notifData) {
         if (!notifData) return;
         const nId = String(notifData.notifId || ("item_" + notifData.seqId));
@@ -661,6 +730,9 @@ Singleton {
         const displayAppName = String(notifData.displayAppName || SocialApps.formatAppName(appName, sApp) || appName || "Notification");
         const displayBody = String(notifData.displayBody || SocialApps.cleanBody(body, sApp) || body);
         const now = notifData.createdAt || new Date();
+        const rawImg = String(notifData.image || "");
+        const localImgPath = root._extractLocalImagePath(rawImg) || root._extractLocalImagePath(appIcon);
+        const cachedImg = root._cacheNotifImage(rawImg, appIcon, nId);
 
         const item = {
             notifId: nId,
@@ -672,7 +744,9 @@ Singleton {
             summary: summary,
             body: body,
             displayBody: displayBody,
-            image: String(notifData.image || ""),
+            image: rawImg,
+            imageFilePath: localImgPath,
+            cachedImage: cachedImg,
             urgency: notifData.urgency !== undefined ? notifData.urgency : NotificationUrgency.Normal,
             createdAt: now,
             timeStr: Qt.formatTime(now, "hh:mm"),
@@ -680,23 +754,45 @@ Singleton {
             actions: (notifData.actions || []).filter(function(a) {
                 return a && a.identifier !== "default" && (a.label || a.text);
             }).map(function(a) {
-                return { label: String(a.label || a.text || ""), identifier: String(a.identifier || "") };
+                return {
+                    label: String(a.label || a.text || ""),
+                    identifier: String(a.identifier || ""),
+                    customCmd: String(a.customCmd || "")
+                };
             })
         };
 
         const filtered = (root.history || []).filter(function(h) {
             return h && h.notifId !== nId;
         });
-        root.history = [item, ...filtered].slice(0, 50);
+        const combined = [item, ...filtered];
+        if (combined.length > 50) {
+            root._unlinkCachedImages(combined.slice(50));
+        }
+        root.history = combined.slice(0, 50);
         root._pruneRetained();
     }
 
+    // Retained NotificationData instances whose toast timed out but whose D-Bus notification is still open.
     property var _retained: ({})
 
     function _retain(notifData) {
         if (!notifData || notifData.closed) return;
         const key = String(notifData.notifId || "");
-        if (key === "") return;
+        if (key === "") {
+            notifData.dismiss();
+            return;
+        }
+        const prev = root._retained[key];
+        if (prev && prev !== notifData && !prev.closed) {
+            prev.closed = true;
+            prev.destroy();
+        }
+        const inHist = (root.history || []).some(function(h) { return h && String(h.notifId) === key; });
+        if (!inHist) {
+            notifData.dismiss();
+            return;
+        }
         root._retained[key] = notifData;
     }
 
@@ -732,12 +828,28 @@ Singleton {
         }
     }
 
+    function openHistoryItem(notifId) {
+        const live = root._findLive(notifId);
+        if (live) {
+            live.activate();
+            return;
+        }
+        root.focusHistoryApp(notifId);
+    }
+
     function dismissHistoryItem(notifId) {
         if (!notifId) return;
         const targetId = String(notifId);
+        const removed = [];
         root.history = (root.history || []).filter(function(h) {
-            return h && String(h.notifId) !== targetId;
+            if (!h) return false;
+            if (String(h.notifId) === targetId) {
+                removed.push(h);
+                return false;
+            }
+            return true;
         });
+        root._unlinkCachedImages(removed);
         const live = root._findLive(targetId);
         if (live) live.dismiss();
         root._pruneRetained();
@@ -746,18 +858,99 @@ Singleton {
     function dismissHistoryByApp(appName) {
         if (!appName) return;
         const target = String(appName);
+        const removed = [];
         root.history = (root.history || []).filter(function(h) {
-            const name = String((h && (h.displayAppName || h.appName)) || "");
-            return name !== target;
+            const name = h ? SocialApps.formatAppName(h.displayAppName || h.appName || "", h.socialApp) : "";
+            if (name === target) {
+                if (h) removed.push(h);
+                return false;
+            }
+            return true;
         });
+        root._unlinkCachedImages(removed);
+        const liveMatches = (root.notifications || []).filter(function(n) {
+            if (!n || n.closed) return false;
+            const nName = SocialApps.formatAppName(n.displayAppName || n.appName || "", n.socialApp);
+            return nName === target;
+        });
+        for (let i = 0; i < liveMatches.length; i++) {
+            liveMatches[i].dismiss();
+        }
         root._pruneRetained();
+    }
+
+    function focusHistoryApp(notifId) {
+        if (!notifId) return;
+        const targetId = String(notifId);
+        const entry = (root.history || []).find(function(h) {
+            return h && String(h.notifId) === targetId;
+        });
+        if (!entry) return;
+        if (entry.socialApp) {
+            const cmd = SocialApps.getFocusCommand(entry.socialApp);
+            if (cmd) {
+                Quickshell.execDetached(["sh", "-c", cmd]);
+                return;
+            }
+        }
+        const app = String(entry.appName || "").toLowerCase().trim();
+        if (app !== "" && app !== "notification" && app !== "notify-send") {
+            Quickshell.execDetached(["hyprctl", "dispatch", "focuswindow", "class:^(" + app + ")$"]);
+        }
     }
 
     function invokeHistoryAction(notifId, identifier) {
         if (!notifId || !identifier) return;
-        const live = root._findLive(notifId);
+        const targetId = String(notifId);
+        const live = root._findLive(targetId);
+        const entry = (root.history || []).find(function(h) {
+            return h && String(h.notifId) === targetId;
+        });
+
+        // Screenshot notifications come from short-lived notify-send -A processes; handle Open/Delete
+        // directly on the exact attached file once the toast has expired or was already acted on.
+        if (entry && (!live || live.expired)) {
+            const appLower = String(entry.appName || "").toLowerCase();
+            const sumLower = String(entry.summary || "").toLowerCase();
+            const rawPath = String(entry.imageFilePath || "");
+            const exactFile = (rawPath !== "" && rawPath.indexOf("/icons/") === -1) ? rawPath : "";
+            if (exactFile !== "" && (appLower === "screenshot" || sumLower.indexOf("screenshot") !== -1)) {
+                let shotLabel = "";
+                const shotActs = entry.actions || [];
+                for (let s = 0; s < shotActs.length; s++) {
+                    if (shotActs[s] && shotActs[s].identifier === identifier) {
+                        shotLabel = String(shotActs[s].label || "").toLowerCase();
+                    }
+                }
+                const isSwappy = String(entry.body || "").toLowerCase().indexOf("swappy") !== -1;
+                if (identifier === "action1" || shotLabel === "open") {
+                    Quickshell.execDetached(isSwappy ? ["swappy", "-f", exactFile] : ["xdg-open", exactFile]);
+                    if (live) live.dismiss();
+                    return;
+                }
+                if (identifier === "action2" || shotLabel === "delete") {
+                    Quickshell.execDetached(["rm", "-f", exactFile]);
+                    root.dismissHistoryItem(targetId);
+                    return;
+                }
+            }
+        }
+
         if (live) {
             live.invokeAction(identifier);
+            return;
+        }
+        // Fallback when the app already closed the notification: run customCmd or focus the app
+        if (!entry) return;
+        const acts = entry.actions || [];
+        for (let j = 0; j < acts.length; j++) {
+            if (acts[j] && acts[j].identifier === identifier && acts[j].customCmd) {
+                Quickshell.execDetached(["sh", "-c", String(acts[j].customCmd)]);
+                return;
+            }
+        }
+        if (identifier === "reply" || identifier === "default" || identifier === "open") {
+            root.focusHistoryApp(targetId);
         }
     }
 
@@ -765,6 +958,7 @@ Singleton {
         root.history = [];
         root.dismissAll();
         root._pruneRetained();
+        Quickshell.execDetached(["sh", "-c", "rm -rf /tmp/qs_notif_cache 2>/dev/null || true"]);
     }
 
     function _remove(notifData) {
@@ -785,6 +979,9 @@ Singleton {
         });
         root.notifications = [notifData, ...rest];
         root.recordToHistory(notifData);
+        while (root.notifications.length > root.maxVisibleToasts) {
+            root.notifications[root.notifications.length - 1].expire();
+        }
     }
 
     function dismiss(notifData) {
@@ -795,10 +992,20 @@ Singleton {
         const toRemove = [...root.notifications];
         root.notifications = [];
         for (const n of toRemove) {
-            if (!n.closed) {
+            if (n && !n.closed) {
                 n.closed = true;
                 if (n.notification) try { n.notification.dismiss(); } catch(e) {}
                 n.destroy();
+            }
+        }
+        const retainedKeys = Object.keys(root._retained || {});
+        for (let k = 0; k < retainedKeys.length; k++) {
+            const r = root._retained[retainedKeys[k]];
+            delete root._retained[retainedKeys[k]];
+            if (r && !r.closed) {
+                r.closed = true;
+                if (r.notification) try { r.notification.dismiss(); } catch(e) {}
+                r.destroy();
             }
         }
     }

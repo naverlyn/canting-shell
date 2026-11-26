@@ -17,7 +17,7 @@ ColumnLayout {
     Text {
         text: "Keyboard"
         font.family: root.font
-        font.pixelSize: 20
+        font.pixelSize: Style.px(20)
         font.bold: true
         color: root.theme.textPrimary
         Layout.fillWidth: true
@@ -48,7 +48,7 @@ ColumnLayout {
             Text {
                 text: "Hyprland Keybindings"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textSecondary
             }
@@ -56,7 +56,7 @@ ColumnLayout {
             Text {
                 text: "(" + root.rawBinds.length + ")"
                 font.family: root.font
-                font.pixelSize: 12
+                font.pixelSize: Style.px(12)
                 color: root.theme.textSecondary
                 opacity: 0.7
             }
@@ -69,9 +69,9 @@ ColumnLayout {
                 height: 30
                 radius: 7
                 color: addBtnHover.hovered
-                    ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08))
-                    : (root.isAddingKeybind ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.04)))
-                border.color: root.isAddingKeybind || addBtnHover.hovered ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                    ? root.theme.bgHover
+                    : (root.isAddingKeybind ? root.theme.bgSelected : root.theme.bgSurface)
+                border.color: root.isAddingKeybind || addBtnHover.hovered ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -84,7 +84,7 @@ ColumnLayout {
                     anchors.centerIn: parent
                     text: root.isAddingKeybind ? "Close Form" : "Add Keybind"
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.bold: true
                     color: root.isAddingKeybind || addBtnHover.hovered ? root.theme.accentPrimary : root.theme.textPrimary
                 }
@@ -108,7 +108,7 @@ ColumnLayout {
             implicitHeight: shortcutsCol.implicitHeight + 16
             radius: 12
             color: root.theme.bgSurface
-            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            border.color: root.theme.bgBorder
             border.width: 1
 
             ColumnLayout {
@@ -135,8 +135,8 @@ ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 4
                         radius: 8
-                        color: root.theme.bgBase ?? Qt.rgba(0, 0, 0, 0.2)
-                        border.color: searchInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                        color: root.theme.bgBase
+                        border.color: searchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                         border.width: searchInput.activeFocus ? 2 : 1
 
                         RowLayout {
@@ -148,7 +148,7 @@ ColumnLayout {
                             Text {
                                 text: "󰍉"
                                 font.family: root.font
-                                font.pixelSize: 14
+                                font.pixelSize: Style.px(14)
                                 color: root.theme.textSecondary
                                 Layout.alignment: Qt.AlignVCenter
                             }
@@ -157,7 +157,7 @@ ColumnLayout {
                                 id: searchInput
                                 Layout.fillWidth: true
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 color: root.theme.textPrimary
                                 clip: true
                                 selectByMouse: true
@@ -166,7 +166,7 @@ ColumnLayout {
                                 Text {
                                     text: "Search shortcuts (e.g. kitty, workspace, toggle)..."
                                     font.family: root.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                     color: root.theme.textSecondary
                                     visible: !searchInput.text && !searchInput.activeFocus
                                     anchors.verticalCenter: parent.verticalCenter
@@ -176,7 +176,7 @@ ColumnLayout {
                             Text {
                                 text: "✕"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 color: clearSearchMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary
                                 visible: searchInput.text.length > 0
 
@@ -196,14 +196,7 @@ ColumnLayout {
                     }
                 }
 
-                /* Divider */
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 12
-                    Layout.rightMargin: 12
-                    height: 1
-                    color: Qt.rgba(1, 1, 1, 0.05)
-                }
+                RowDivider {}
 
                 /* Shortcuts Repeater */
                 Repeater {
@@ -224,7 +217,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: "No matching shortcuts found"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         color: root.theme.textSecondary
                     }
                 }
@@ -239,7 +232,7 @@ ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 4
                         radius: 8
-                        color: showAllMouse.containsMouse ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                        color: showAllMouse.containsMouse ? root.theme.bgSelected : "transparent"
 
                         Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -250,7 +243,7 @@ ColumnLayout {
                             Text {
                                 text: "Show all " + root.rawBinds.length + " shortcuts"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 font.bold: true
                                 color: root.theme.accentPrimary
                             }
@@ -258,7 +251,7 @@ ColumnLayout {
                             Text {
                                 text: "󰅀"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 color: root.theme.accentPrimary
                             }
                         }

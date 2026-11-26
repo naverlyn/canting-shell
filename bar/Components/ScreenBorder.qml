@@ -78,7 +78,8 @@ Item {
       const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
       const effectiveFloating = (!isPrim && bTarget === "all" && b.secondaryFloating !== undefined) ? Boolean(b.secondaryFloating) : Boolean(b.floating);
       const effectiveDashed = (!isPrim && bTarget === "all" && b.secondaryDashed !== undefined) ? Boolean(b.secondaryDashed) : Boolean(b.dashed);
-      if (effectivePos === pos && !effectiveFloating && !effectiveDashed) {
+      const effectiveDI = ((!isPrim && bTarget === "all" && b.secondaryDynamicIsland !== undefined) ? Boolean(b.secondaryDynamicIsland) : Boolean(b.dynamicIsland)) && effectivePos === "top";
+      if (effectivePos === pos && !effectiveFloating && !effectiveDashed && !effectiveDI) {
         match = b;
         break;
       }

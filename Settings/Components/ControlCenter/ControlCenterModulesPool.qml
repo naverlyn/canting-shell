@@ -42,7 +42,7 @@ Rectangle {
             Text {
                 text: "Available Modules"
                 font.family: hostRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: modulesPool.isPoolDropTarget ? hostRoot.theme.accentRed : hostRoot.theme.accentPrimary
             }
@@ -50,7 +50,7 @@ Rectangle {
             Text {
                 text: "(" + modulesPool.totalAvailCount + " available)"
                 font.family: hostRoot.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: hostRoot.theme.textMuted
             }
 
@@ -63,7 +63,7 @@ Rectangle {
                         ? "Drag a module into Panel 1, Panel 2, or Panel 3 above, or click to add"
                         : "All 10 modules are placed in Panels 1–3 (drag here or click ✕ to remove)")
                 font.family: hostRoot.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 font.bold: modulesPool.isPoolDropTarget
                 color: modulesPool.isPoolDropTarget ? hostRoot.theme.accentRed : hostRoot.theme.textMuted
             }
@@ -113,7 +113,7 @@ Rectangle {
                             horizontalAlignment: Text.AlignHCenter
                             text: secPoolChip.modelData.icon || ""
                             font.family: hostRoot.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             color: hostRoot.theme.accentPrimary
                         }
 
@@ -121,7 +121,7 @@ Rectangle {
                             anchors.verticalCenter: parent.verticalCenter
                             text: secPoolChip.modelData.label
                             font.family: hostRoot.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: hostRoot.theme.textPrimary
                         }

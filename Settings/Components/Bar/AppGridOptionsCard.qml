@@ -127,7 +127,7 @@ ColumnLayout {
                 Text {
                     text: "Icon Source"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -181,7 +181,7 @@ ColumnLayout {
                 Text {
                     text: "Icon Preset"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -222,14 +222,14 @@ ColumnLayout {
                         Text {
                             text: presetRow.activePreset ? presetRow.activePreset.icon : "󰀻"
                             font.family: root.font
-                            font.pixelSize: 14
+                            font.pixelSize: Style.px(14)
                             color: presetRow.activePreset ? root.theme.accentPrimary : root.theme.textMuted
                         }
 
                         Text {
                             text: presetRow.activePreset ? presetRow.activePreset.label : "Choose preset..."
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: presetRow.activePreset !== null
                             color: presetRow.activePreset ? root.theme.textPrimary : root.theme.textSecondary
                             Layout.fillWidth: true
@@ -239,7 +239,7 @@ ColumnLayout {
                         Text {
                             text: "󰅀"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             color: presetPopup.visible ? root.theme.accentPrimary : root.theme.textSecondary
                             rotation: presetPopup.visible ? 180 : 0
                             Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -315,14 +315,14 @@ ColumnLayout {
                                         Text {
                                             text: presetItem.modelData.icon
                                             font.family: root.font
-                                            font.pixelSize: 14
+                                            font.pixelSize: Style.px(14)
                                             color: presetItem.isSelected ? root.theme.accentPrimary : root.theme.textPrimary
                                         }
 
                                         Text {
                                             text: presetItem.modelData.label
                                             font.family: root.font
-                                            font.pixelSize: 12
+                                            font.pixelSize: Style.px(12)
                                             font.bold: presetItem.isSelected
                                             color: presetItem.isSelected ? root.theme.accentPrimary : root.theme.textPrimary
                                             Layout.fillWidth: true
@@ -332,7 +332,7 @@ ColumnLayout {
                                             visible: presetItem.isSelected
                                             text: "✓"
                                             font.family: root.font
-                                            font.pixelSize: 11
+                                            font.pixelSize: Style.px(11)
                                             color: root.theme.accentPrimary
                                         }
                                     }
@@ -391,7 +391,7 @@ ColumnLayout {
                 Text {
                     text: "Custom Glyph or Label"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -419,7 +419,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         text: parent.glyphVal
                         font.family: root.font
-                        font.pixelSize: 14
+                        font.pixelSize: Style.px(14)
                         color: root.theme.accentPrimary
                     }
                 }
@@ -442,7 +442,7 @@ ColumnLayout {
                         horizontalAlignment: TextInput.AlignHCenter
                         verticalAlignment: TextInput.AlignVCenter
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         color: root.theme.textPrimary
                         selectByMouse: true
                         text: BarConfig.isAppGridImage(BarConfig.appGridIcon) ? "" : (BarConfig.appGridIcon || "󰀻")
@@ -453,7 +453,7 @@ ColumnLayout {
                             verticalAlignment: Text.AlignVCenter
                             text: "Glyph / text"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textMuted
                             visible: appGridIconInput.text === "" && !appGridIconInput.activeFocus
                         }
@@ -533,7 +533,7 @@ ColumnLayout {
                 Text {
                     text: "Custom PNG Image"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -579,7 +579,7 @@ ColumnLayout {
                         Text {
                             text: pngRow.fileName
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: root.theme.accentPrimary
                             elide: Text.ElideMiddle

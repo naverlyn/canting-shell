@@ -47,7 +47,8 @@ if command -v canberra-gtk-play >/dev/null 2>&1; then
     canberra-gtk-play -i camera-shutter >/dev/null 2>&1 &
 fi
 
-notify_args=(-t 10000 -a "Screenshot" -A "action1=Open" -A "action2=Delete" -h "string:x-canonical-private-synchronous:shot-notify" -i "camera-photo")
+printf '%s' "$file" > /tmp/qs_last_screenshot_path
+notify_args=(-t 10000 -a "Screenshot" -A "action1=Open" -A "action2=Delete" -h "string:x-canonical-private-synchronous:shot-notify" -i "$file")
 
 if [ "$swappy_flag" = "1" ]; then
     resp="$(timeout 10 notify-send "${notify_args[@]}" "Screenshot" "Captured (Swappy)")" || resp=""

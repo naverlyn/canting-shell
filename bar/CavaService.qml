@@ -2,6 +2,7 @@ pragma Singleton
 
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.Mpris
 import QtQuick
 
 Singleton {
@@ -12,22 +13,37 @@ Singleton {
   property var values: [0, 0, 0, 0, 0, 0, 0, 0]
   property bool hasAudio: false
   property string glyphText: "        "
+  property int externalConsumers: 0
 
   // Unicode block characters representing 8 increasing levels of audio
   readonly property var glyphLevels: [" ", " ", "▂", "▃", "▄", "▅", "▆", "▇", "█"]
 
-  // Active check: only run cava when it is enabled and placed in at least one bar
+  readonly property bool isMediaPlaying: {
+    const players = (Mpris && Mpris.players) ? Mpris.players.values : null;
+    if (!players) return false;
+    for (let i = 0; i < players.length; i++) {
+      if (players[i] && players[i].isPlaying) return true;
+    }
+    return false;
+  }
+
+  // Run cava only when visible/needed: bar widget active, ControlCenter CavaCard open, or Dynamic Island with active media
   readonly property bool shouldRun: {
     void BarConfig.panelsRevision;
     void BarConfig.bars;
     void BarConfig.hasSecondaryScreen;
-    return Boolean(BarConfig.showCava) && BarConfig.isWidgetInAnyBar("cava");
+    if (root.externalConsumers > 0) return true;
+    if (!BarConfig.barVisible) return false;
+    const inBar = Boolean(BarConfig.showCava) && BarConfig.isWidgetInAnyBar("cava");
+    if (inBar) return true;
+    return Boolean(BarConfig.hasDynamicIslandMediaActive) && root.isMediaPlaying;
   }
 
   onShouldRunChanged: {
     if (root.shouldRun) {
       root.restart();
     } else {
+      restartTimer.stop();
       cavaProc.running = false;
       root.hasAudio = false;
     }
@@ -82,16 +98,13 @@ Singleton {
     }
   }
 
-  // Restart process when parameters change
+  // Restart process only when cava CLI parameters change (shouldRun changes are handled by onShouldRunChanged)
   Connections {
     target: BarConfig
-    function onCavaBarsChanged() { root.restart(); }
-    function onCavaModeChanged() { root.restart(); }
-    function onCavaFramerateChanged() { root.restart(); }
-    function onCavaStereoChanged() { root.restart(); }
-    function onShowCavaChanged() { root.restart(); }
-    function onBarsChanged() { root.restart(); }
-    function onPanelsRevisionChanged() { root.restart(); }
+    function onCavaBarsChanged() { if (root.shouldRun) root.restart(); }
+    function onCavaModeChanged() { if (root.shouldRun) root.restart(); }
+    function onCavaFramerateChanged() { if (root.shouldRun) root.restart(); }
+    function onCavaStereoChanged() { if (root.shouldRun) root.restart(); }
   }
 
   function restart() {
@@ -118,4 +131,3 @@ Singleton {
     }
   }
 }
-

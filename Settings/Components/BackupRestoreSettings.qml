@@ -14,6 +14,7 @@ import Quickshell
 import Quickshell.Io
 import "Common"
 import "Backup"
+import "./Common"
 
 Item {
     id: root
@@ -116,7 +117,7 @@ Item {
     }
 
     function showToast(msg, isWarn) {
-        toastBanner.show(msg, isWarn);
+        Style.notify(msg, isWarn);
     }
 
     function openFilePicker() {
@@ -270,7 +271,7 @@ Item {
             contentItem: Rectangle {
                 implicitWidth: 4
                 radius: 2
-                color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15)
+                color: root.theme.bgBorder
             }
         }
 
@@ -291,7 +292,7 @@ Item {
                     Text {
                         text: "Backup & Restore"
                         font.family: root.font
-                        font.pixelSize: 20
+                        font.pixelSize: Style.px(20)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -357,7 +358,7 @@ Item {
                             anchors.centerIn: parent
                             text: "󰑓"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             color: headerRefreshHover.hovered ? Style.theme.accentPrimary : Style.theme.textSecondary
                             Behavior on color { ColorAnimation { duration: 140 } }
                         }
@@ -379,10 +380,4 @@ Item {
         }
     }
 
-    ToastBanner {
-        id: toastBanner
-        theme: root.theme
-        font: root.font
-        durationMs: 3400
-    }
 }

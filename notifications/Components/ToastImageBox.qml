@@ -26,14 +26,14 @@ Rectangle {
         radius: NotificationService.imageRadius
         antialiasing: true
         visible: false
-        layer.enabled: true
+        layer.enabled: thumbImg.status === Image.Ready
         layer.smooth: true
         layer.textureSize: Qt.size(Math.max(2, Math.round(width * 2)), Math.max(2, Math.round(height * 2)))
     }
 
     Item {
         anchors.fill: parent
-        layer.enabled: true
+        layer.enabled: thumbImg.status === Image.Ready
         layer.smooth: true
         layer.effect: MultiEffect {
             maskEnabled: true

@@ -5,11 +5,12 @@ import Quickshell.Io
 import Quickshell.Wayland
 import "../../bar"
 import ".."
+import "../../ThemeSwitcher"
 
 PanelWindow {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
 
     property bool wifiEnabled: WifiService.wifiEnabled

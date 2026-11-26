@@ -65,7 +65,7 @@ Rectangle {
                     Text {
                         text: root.extractFilename(root.previewPath)
                         font.family: root.font
-                        font.pixelSize: 14
+                        font.pixelSize: Style.px(14)
                         font.bold: true
                         color: root.theme.textPrimary
                         elide: Text.ElideRight
@@ -75,7 +75,7 @@ Rectangle {
                     Text {
                         text: root.previewPath
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: Qt.rgba(1, 1, 1, 0.6)
                         elide: Text.ElideMiddle
                         Layout.fillWidth: true
@@ -107,7 +107,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Close"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: root.theme.textPrimary
                     }
 
@@ -125,7 +125,7 @@ Rectangle {
                     implicitWidth: dispAText.implicitWidth + 24
                     height: 34
                     radius: 8
-                    color: dispAHov.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.15)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.08))
+                    color: dispAHov.hovered ? root.theme.bgHover : root.theme.bgSurface
                     border.color: root.theme.accentPrimary
                     border.width: 1
                     scale: dispAHov.hovered ? 1.03 : 1.0
@@ -141,7 +141,7 @@ Rectangle {
                             ? "Set Primary (" + WallpaperService.displayAName + ")"
                             : "Set Wallpaper"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -162,7 +162,7 @@ Rectangle {
                     implicitWidth: dispBText.implicitWidth + 24
                     height: 34
                     radius: 8
-                    color: dispBHov.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.15)) : (root.theme.bgSurface ?? Qt.rgba(1, 1, 1, 0.08))
+                    color: dispBHov.hovered ? root.theme.bgHover : root.theme.bgSurface
                     border.color: root.theme.accentCyan ?? root.theme.accentPrimary
                     border.width: 1
                     scale: dispBHov.hovered ? 1.03 : 1.0
@@ -176,7 +176,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Set Secondary (" + WallpaperService.displayBName + ")"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -209,7 +209,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Apply to All Displays"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.bgBase
                     }

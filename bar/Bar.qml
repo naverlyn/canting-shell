@@ -12,12 +12,14 @@ import Quickshell.Services.Notifications
 import QtQuick.Effects
 import "../ControlCenter"
 import "./Components"
+import "./DynamicIsland"
 import "./Widgets"
 import "../utils/ColorUtils.js" as ColorUtils
+import "../ThemeSwitcher"
 
 Scope {
   id: root
-  property var theme: DefaultTheme {}
+  property var theme: Theme
   property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
   property bool barVisible: true
   property var activePopupData: null
@@ -42,7 +44,8 @@ Scope {
     const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
     const effectiveFloating = (!isPrim && bTarget === "all" && b.secondaryFloating !== undefined) ? Boolean(b.secondaryFloating) : Boolean(b.floating);
     const effectiveDashed = (!isPrim && bTarget === "all" && b.secondaryDashed !== undefined) ? Boolean(b.secondaryDashed) : Boolean(b.dashed);
-    return { pos: effectivePos, floating: effectiveFloating || effectiveDashed, height: b.barHeight || 32 };
+    const effectiveDI = ((!isPrim && bTarget === "all" && b.secondaryDynamicIsland !== undefined) ? Boolean(b.secondaryDynamicIsland) : Boolean(b.dynamicIsland)) && effectivePos === "top";
+    return { pos: effectivePos, floating: effectiveFloating || effectiveDashed || effectiveDI, height: b.barHeight || 32 };
   }
 
   function isFloatingBarActive(pos, currentBarId, screenIdx) {
@@ -57,7 +60,7 @@ Scope {
         if (info && info.pos === pos && info.floating) return true;
         continue;
       }
-      if ((b.position || "top") === pos && (Boolean(b.floating) || Boolean(b.dashed))) return true;
+      if ((b.position || "top") === pos && (Boolean(b.floating) || Boolean(b.dashed) || (Boolean(b.dynamicIsland) && (b.position || "top") === "top"))) return true;
     }
     return false;
   }
@@ -76,7 +79,7 @@ Scope {
         }
         continue;
       }
-      if ((b.position || "top") === pos && !Boolean(b.floating) && !Boolean(b.dashed)) {
+      if ((b.position || "top") === pos && !Boolean(b.floating) && !Boolean(b.dashed) && !(Boolean(b.dynamicIsland) && (b.position || "top") === "top")) {
         return true;
       }
     }
@@ -91,21 +94,14 @@ Scope {
       const bid = (b.id !== undefined && b.id !== null) ? String(b.id) : ("bar_" + (i + 1));
       if (currentBarId && bid === currentBarId) continue;
       if (screenIdx !== undefined) {
-        const isPrim = (screenIdx === 0);
-        const scr = (Quickshell.screens && Quickshell.screens.length > screenIdx) ? Quickshell.screens[screenIdx] : null;
-        const scrName = (scr && scr.name) ? String(scr.name) : ("screen_" + screenIdx);
-        const bTarget = b.displayTarget || (b.allMonitors ? "all" : "primary");
-        if (bTarget === "primary" && !isPrim) continue;
-        if (bTarget === "secondary" && isPrim) continue;
-        if (bTarget !== "all" && bTarget !== "primary" && bTarget !== "secondary" && bTarget !== scrName) continue;
-        const effectivePos = (!isPrim && bTarget === "all" && b.secondaryPosition) ? b.secondaryPosition : (b.position || "top");
-        const effectiveFloating = (!isPrim && bTarget === "all" && b.secondaryFloating !== undefined) ? Boolean(b.secondaryFloating) : Boolean(b.floating);
-        if (effectivePos === pos && !effectiveFloating) {
-          return b.barHeight || 32;
+        const info = _barMatchesScreen(b, screenIdx);
+        if (info && info.pos === pos && !info.floating) {
+          return info.height;
         }
         continue;
       }
-      if ((b.position || "top") === pos && !Boolean(b.floating)) {
+      const p = b.position || "top";
+      if (p === pos && !Boolean(b.floating) && !Boolean(b.dashed) && !(Boolean(b.dynamicIsland) && p === "top")) {
         return b.barHeight || 32;
       }
     }
@@ -177,17 +173,6 @@ Scope {
     }
   }
 
-  Process {
-    id: weatherProcess
-    running: false
-    onRunningChanged: {
-      if (running) {
-        SystemInfo.refreshWeather();
-        running = false;
-      }
-    }
-  }
-
   Variants {
     model: BarConfig.barIds
 
@@ -211,6 +196,7 @@ Scope {
       readonly property int barThickness: barCfg.barHeight || 32
       readonly property bool isFloating: Boolean(barCfg.floating)
       readonly property bool isDashed: Boolean(barCfg.dashed)
+      readonly property bool isDynamicIsland: Boolean(barCfg.dynamicIsland) && barPos === "top"
       readonly property real barAlpha: (barCfg.barOpacity !== undefined && barCfg.barOpacity !== null) ? Number(barCfg.barOpacity) : BarConfig.barOpacity
       readonly property int pillRadius: (barCfg.pillRadius !== undefined) ? Number(barCfg.pillRadius) : BarConfig.pillRadius
       readonly property int barRadius: (barCfg.barRadius !== undefined) ? Number(barCfg.barRadius) : BarConfig.barRadius
@@ -233,6 +219,32 @@ Scope {
       readonly property string secondaryMode: (barCfg.secondaryMode !== undefined && String(barCfg.secondaryMode).trim() !== "") ? String(barCfg.secondaryMode).trim() : (barCfg.blankOnSecondary ? "blank" : "custom")
       readonly property bool blankOnSecondary: (barCfg.blankOnSecondary !== undefined) ? Boolean(barCfg.blankOnSecondary) : (secondaryMode === "blank")
       readonly property var secondaryPanels: (barCfg.secondaryPanels && barCfg.secondaryPanels.length > 0) ? barCfg.secondaryPanels : BarConfig.defaultSecondaryPanels
+
+      // Cached O(1) widget -> color spec map for this bar (recomputed only when removedWidgets or barCfg changes)
+      readonly property var widgetColorSpecsMap: {
+        const bId = (barCfg && barCfg.id) ? String(barCfg.id) : "bar_1";
+        const prefix = "@color:" + bId + ":";
+        const map = {};
+        if (barCfg && barCfg.widgetColors) {
+          const keys = Object.keys(barCfg.widgetColors);
+          for (let k = 0; k < keys.length; k++) {
+            const v = barCfg.widgetColors[keys[k]];
+            if (v) map[keys[k]] = String(v).trim();
+          }
+        }
+        const rem = BarConfig.removedWidgets || [];
+        for (let i = 0; i < rem.length; i++) {
+          const item = String(rem[i]);
+          if (item.indexOf(prefix) === 0) {
+            const rest = item.substring(prefix.length);
+            const eq = rest.indexOf("=");
+            if (eq > 0) {
+              map[rest.substring(0, eq)] = rest.substring(eq + 1).trim();
+            }
+          }
+        }
+        return map;
+      }
 
 
 
@@ -310,8 +322,6 @@ Scope {
             ? Math.max(0, barWindow.screen.height - barWindow.height)
             : 0
 
-          readonly property bool hasEffectiveInnerCorners: false
-
           readonly property string target: barInstanceScope.displayTarget
           readonly property string secMode: barInstanceScope.secondaryMode
           readonly property bool blankSec: barInstanceScope.blankOnSecondary
@@ -347,12 +357,54 @@ Scope {
             ? barInstanceScope.barCfg.secondaryPosition
             : barInstanceScope.barPos
           readonly property bool windowIsVert: windowBarPos === "left" || windowBarPos === "right"
-          readonly property bool windowIsDashed: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryDashed !== undefined)
+          readonly property bool windowIsDynamicIsland: ((isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryDynamicIsland !== undefined)
+            ? Boolean(barInstanceScope.barCfg.secondaryDynamicIsland)
+            : barInstanceScope.isDynamicIsland) && windowBarPos === "top"
+          readonly property bool windowIsDashed: ((isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryDashed !== undefined)
             ? Boolean(barInstanceScope.barCfg.secondaryDashed)
-            : barInstanceScope.isDashed
+            : barInstanceScope.isDashed) || windowIsDynamicIsland
           readonly property bool windowIsFloating: ((isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryFloating !== undefined)
             ? Boolean(barInstanceScope.barCfg.secondaryFloating)
             : barInstanceScope.isFloating) || windowIsDashed
+          readonly property string islandPosition: (barInstanceScope.barCfg && barInstanceScope.barCfg.islandPosition)
+            ? String(barInstanceScope.barCfg.islandPosition)
+            : BarConfig.islandPosition
+          readonly property int islandPanelIndex: {
+            if (!windowIsDynamicIsland) return -1;
+            const n = effectivePanels ? effectivePanels.length : 0;
+            if (n <= 0) return -1;
+            if (islandPosition === "left") return 0;
+            if (islandPosition === "right") return n - 1;
+            return n >= 3 ? Math.floor(n / 2) : -1;
+          }
+          readonly property real dynamicIslandCompactWidth: (dynamicIslandLoader && dynamicIslandLoader.item) ? dynamicIslandLoader.item.compactWidthOut : 140
+          readonly property bool barDropShadowEnabled: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadow !== undefined)
+            ? Boolean(barInstanceScope.barCfg.barDropShadow)
+            : Boolean(windowIsDynamicIsland)
+          readonly property string barDropShadowTarget: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadowTarget)
+            ? String(barInstanceScope.barCfg.barDropShadowTarget)
+            : BarConfig.barDropShadowTarget
+          readonly property int barDropShadowBlur: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadowBlur !== undefined)
+            ? Math.max(4, Math.min(36, Number(barInstanceScope.barCfg.barDropShadowBlur)))
+            : BarConfig.barDropShadowBlur
+          readonly property real barDropShadowOpacity: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadowOpacity !== undefined)
+            ? Math.max(0.05, Math.min(0.85, Number(barInstanceScope.barCfg.barDropShadowOpacity)))
+            : BarConfig.barDropShadowOpacity
+          readonly property int barDropShadowOffsetY: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadowOffsetY !== undefined)
+            ? Math.max(0, Math.min(16, Number(barInstanceScope.barCfg.barDropShadowOffsetY)))
+            : BarConfig.barDropShadowOffsetY
+          readonly property string barDropShadowColorMode: (barInstanceScope.barCfg && barInstanceScope.barCfg.barDropShadowColorMode)
+            ? String(barInstanceScope.barCfg.barDropShadowColorMode)
+            : BarConfig.barDropShadowColorMode
+          readonly property bool sideBarShadowActive: barDropShadowEnabled && windowIsFloating && (!windowIsDynamicIsland || barDropShadowTarget === "all")
+          readonly property color resolvedBarShadowColor: {
+            const base = (barDropShadowColorMode === "accent") ? root.theme.accentPrimary : Qt.rgba(0, 0, 0, 1);
+            return Qt.rgba(base.r, base.g, base.b, barDropShadowOpacity);
+          }
+          readonly property int shadowPadBottom: (!windowIsVert && windowBarPos === "top" && sideBarShadowActive)
+            ? (barDropShadowBlur + barDropShadowOffsetY + 10)
+            : 0
+          readonly property int visualBarThickness: barInstanceScope.barThickness
           readonly property string windowBarColorSpec: (isSecondaryScreen && target === "all" && barInstanceScope.barCfg.secondaryBarColor !== undefined)
             ? String(barInstanceScope.barCfg.secondaryBarColor)
             : barInstanceScope.barColorSpec
@@ -431,12 +483,49 @@ Scope {
             }
           }
 
-          implicitHeight: barWindow.windowIsVert ? 0 : barInstanceScope.barThickness
+          implicitHeight: barWindow.windowIsVert ? 0 : (barInstanceScope.barThickness + barWindow.shadowPadBottom)
           implicitWidth: barWindow.windowIsVert ? barInstanceScope.barThickness : 0
           color: "transparent"
 
-          property string lastPos: barWindow.windowBarPos
-          onLastPosChanged: barPosSwitchAnim.restart()
+          Item {
+            id: barInputMask
+            x: 0
+            y: 0
+            width: barWindow.width
+            height: barWindow.windowIsVert ? barWindow.height : barInstanceScope.barThickness
+          }
+
+          Item {
+            id: islandMaskHole
+            readonly property var islWin: dynamicIslandLoader.item
+            x: islWin ? islWin.islandX : 0
+            y: 0
+            width: islWin ? islWin.islandW : 0
+            height: barWindow.height
+          }
+
+          mask: Region {
+            item: barInputMask
+            Region {
+              item: (barWindow.windowIsDynamicIsland && dynamicIslandLoader.item) ? islandMaskHole : null
+              intersection: Intersection.Subtract
+            }
+          }
+
+          Loader {
+            id: dynamicIslandLoader
+            active: barWindow.windowIsDynamicIsland && barWindow.visible && !barWindow.isBlankBar
+            sourceComponent: Component {
+              DynamicIslandWindow {
+                hostRoot: root
+                hostWindow: barWindow
+                hostContainer: barContentContainer
+                hostScope: barInstanceScope
+                screenModel: barWindow.modelData
+              }
+            }
+          }
+
           property int panelItemsRev: 0
           property int knownPanelCount: 0
           Component.onCompleted: barPosSwitchAnim.restart()
@@ -479,27 +568,11 @@ Scope {
 
           Rectangle {
             id: barBackground
-            anchors.fill: parent
-            anchors.topMargin: barWindow.windowIsFloating
-              ? 0
-              : (barWindow.windowIsVert
-                ? 0
-                : ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "bottom") ? barInstanceScope.innerCornerRadius : 0))
-            anchors.bottomMargin: barWindow.windowIsFloating
-              ? 0
-              : (barWindow.windowIsVert
-                ? 0
-                : ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "top") ? barInstanceScope.innerCornerRadius : 0))
-            anchors.leftMargin: barWindow.windowIsFloating
-              ? 0
-              : (barWindow.windowIsVert
-                ? ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "right") ? barInstanceScope.innerCornerRadius : 0)
-                : 0)
-            anchors.rightMargin: barWindow.windowIsFloating
-              ? 0
-              : (barWindow.windowIsVert
-                ? ((barWindow.hasEffectiveInnerCorners && barWindow.windowBarPos === "left") ? barInstanceScope.innerCornerRadius : 0)
-                : 0)
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: barWindow.windowIsVert ? parent.bottom : undefined
+            height: barWindow.windowIsVert ? parent.height : barInstanceScope.barThickness
             radius: barWindow.windowIsFloating
               ? Math.min(Math.max(0, barInstanceScope.barRadius), Math.floor(Math.min(width, height) / 2))
               : 0
@@ -509,12 +582,18 @@ Scope {
             transform: Translate { id: barSlideTransform; x: 0; y: 0 }
 
             Behavior on radius { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on anchors.topMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on anchors.bottomMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on anchors.leftMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-            Behavior on anchors.rightMargin { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
             Behavior on color { ColorAnimation { duration: 200 } }
             Behavior on border.color { ColorAnimation { duration: 200 } }
+
+            layer.enabled: barWindow.sideBarShadowActive && !barWindow.windowIsDashed
+            layer.effect: MultiEffect {
+              shadowEnabled: true
+              shadowBlur: Math.max(0.08, Math.min(1.0, barWindow.barDropShadowBlur / 32.0))
+              shadowColor: barWindow.resolvedBarShadowColor
+              shadowVerticalOffset: barWindow.barDropShadowOffsetY
+              shadowHorizontalOffset: 0
+              autoPaddingEnabled: true
+            }
           }
 
           // Split Island backgrounds for Dashed bar style (morphs smoothly to/from Floating)
@@ -536,6 +615,7 @@ Scope {
               // itemAt() is not reactive: re-resolve whenever the panel Grids are rebuilt,
               // otherwise the island keeps a stale (destroyed) reference and disappears.
               readonly property var secGrid: { void barWindow.panelItemsRev; return panelsOuterRepeater.itemAt(index); }
+              readonly property bool isDynamicIslandSlot: barWindow.windowIsDynamicIsland && index === barWindow.islandPanelIndex
               readonly property bool hasContent: secGrid && secGrid.width > 0 && secGrid.height > 0
               readonly property real targetX: barWindow.windowIsDashed
                 ? (secGrid ? (barContentContainer.isVert ? barBackground.x : (barContentContainer.x + secGrid.x - 10)) : barBackground.x)
@@ -550,7 +630,7 @@ Scope {
                 ? (secGrid ? (barContentContainer.isVert ? (secGrid.height + 16) : barBackground.height) : 0)
                 : barBackground.height
 
-              visible: hasContent && !barWindow.isBlankBar && barInstanceScope.barThickness >= 18 && (barWindow.windowIsDashed || barWindow.dashMorphActive || opacity > 0.01)
+              visible: !isDynamicIslandSlot && hasContent && !barWindow.isBlankBar && barInstanceScope.barThickness >= 18 && (barWindow.windowIsDashed || barWindow.dashMorphActive || opacity > 0.01)
               x: targetX
               y: targetY
               width: targetW
@@ -575,6 +655,16 @@ Scope {
               // No opacity fade: islands start fully overlaying the docked bar and morph apart
               // (or together) while the bar background cross-fades, so there is no see-through dip.
               Behavior on color { ColorAnimation { duration: 180 } }
+
+              layer.enabled: barWindow.sideBarShadowActive && barWindow.windowIsDashed
+              layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowBlur: Math.max(0.08, Math.min(1.0, barWindow.barDropShadowBlur / 32.0))
+                shadowColor: barWindow.resolvedBarShadowColor
+                shadowVerticalOffset: barWindow.barDropShadowOffsetY
+                shadowHorizontalOffset: 0
+                autoPaddingEnabled: true
+              }
             }
           }
 
@@ -670,22 +760,8 @@ Scope {
             }
 
             function wSpec(widgetId) {
-              _trackThemeDeps();
-              try {
-                const bId = (barInstanceScope.barCfg && barInstanceScope.barCfg.id) ? String(barInstanceScope.barCfg.id) : "bar_1";
-                const prefix = "@color:" + bId + ":" + widgetId + "=";
-                const rem = BarConfig.removedWidgets || [];
-                for (let i = 0; i < rem.length; i++) {
-                  const item = String(rem[i]);
-                  if (item.indexOf(prefix) === 0) {
-                    return item.substring(prefix.length).trim();
-                  }
-                }
-                if (barInstanceScope.barCfg && barInstanceScope.barCfg.widgetColors && barInstanceScope.barCfg.widgetColors[widgetId]) {
-                  return String(barInstanceScope.barCfg.widgetColors[widgetId]).trim();
-                }
-              } catch (e) {}
-              return "";
+              const map = barInstanceScope.widgetColorSpecsMap;
+              return (widgetId && map && map[widgetId]) ? map[widgetId] : "";
             }
 
             function resolveWidgetThemeSpec(spec) {
@@ -788,10 +864,14 @@ Scope {
                 }
                 Component.onCompleted: {
                   panelSectionGrid.x = targetX; panelSectionGrid.y = targetY;
-                  Qt.callLater(() => { panelSectionGrid.posReady = true; });
+                  Qt.callLater(() => { if (panelSectionGrid) panelSectionGrid.posReady = true; });
                   if (index >= barWindow.knownPanelCount && barWindow.knownPanelCount > 0)
                     panelEnterAnim.start();
-                  Qt.callLater(() => { barWindow.knownPanelCount = barWindow.effectivePanels.length; });
+                  Qt.callLater(() => {
+                    if (barWindow && barWindow.effectivePanels) {
+                      barWindow.knownPanelCount = barWindow.effectivePanels.length;
+                    }
+                  });
                 }
 
                 // Slide to new position only on big jumps (module moved / panel added);
@@ -814,69 +894,50 @@ Scope {
                 onTargetXChanged: moveTo(xSlide, "x", targetX)
                 onTargetYChanged: moveTo(ySlide, "y", targetY)
                 readonly property int totalPanels: barWindow.effectivePanels.length
+                readonly property bool isDynamicIslandSlot: barWindow.windowIsDynamicIsland && index === barWindow.islandPanelIndex
+                visible: !isDynamicIslandSlot
                 columns: barContentContainer.isVert ? 1 : Math.max(1, sectionWidgetRepeater.count)
                 spacing: barContentContainer.isVert ? 6 : 8
                 horizontalItemAlignment: Grid.AlignHCenter
                 verticalItemAlignment: Grid.AlignVCenter
 
                 height: barContentContainer.isVert ? implicitHeight : barContentContainer.height
-                width: barContentContainer.isVert ? barContentContainer.width : implicitWidth
+                width: barContentContainer.isVert ? barContentContainer.width : (isDynamicIslandSlot ? barWindow.dynamicIslandCompactWidth : implicitWidth)
 
-                readonly property real targetX: {
-                  if (barContentContainer.isVert) return 0;
+                function _calcAxisPos(isVertAxis) {
+                  if (barContentContainer.isVert !== isVertAxis) return 0;
+                  const containerSpan = isVertAxis ? barContentContainer.height : barContentContainer.width;
+                  const selfSpan = isVertAxis ? height : width;
                   if (totalPanels <= 1 || index === 0) return 0;
-                  if (index === totalPanels - 1) return Math.max(0, barContentContainer.width - width);
-                  const gap = 8;
+                  if (index === totalPanels - 1) return Math.max(0, containerSpan - selfSpan);
+                  const gap = isVertAxis ? 6 : 8;
                   const frac = index / (totalPanels - 1);
-                  const idealX = (barContentContainer.width * frac) - (width / 2);
-                  let minX = 0;
+                  const ideal = (containerSpan * frac) - (selfSpan / 2);
+                  let minPos = 0;
                   const prev = panelsOuterRepeater.itemAt(index - 1);
                   if (prev) {
-                    minX = prev.x + prev.width + (prev.width > 0 ? gap : 0);
+                    const pPos = isVertAxis ? prev.y : prev.x;
+                    const pSpan = isVertAxis ? prev.height : prev.width;
+                    minPos = pPos + pSpan + (pSpan > 0 ? gap : 0);
                   }
-                  let maxX = Math.max(0, barContentContainer.width - width);
+                  let maxPos = Math.max(0, containerSpan - selfSpan);
                   const last = panelsOuterRepeater.itemAt(totalPanels - 1);
                   if (last) {
-                    let tailW = last.width + (last.width > 0 ? gap : 0);
+                    const lSpan = isVertAxis ? last.height : last.width;
+                    let tail = lSpan + (lSpan > 0 ? gap : 0);
                     for (let k = index + 1; k < totalPanels - 1; k++) {
                       const mid = panelsOuterRepeater.itemAt(k);
-                      if (mid && mid.width > 0) tailW += mid.width + gap;
+                      const mSpan = mid ? (isVertAxis ? mid.height : mid.width) : 0;
+                      if (mSpan > 0) tail += mSpan + gap;
                     }
-                    maxX = barContentContainer.width - tailW - width;
+                    maxPos = containerSpan - tail - selfSpan;
                   }
-                  if (minX <= maxX) {
-                    return Math.max(minX, Math.min(maxX, idealX));
-                  }
-                  return Math.max(0, Math.min(barContentContainer.width - width, minX));
+                  if (minPos <= maxPos) return Math.max(minPos, Math.min(maxPos, ideal));
+                  return Math.max(0, Math.min(containerSpan - selfSpan, minPos));
                 }
 
-                readonly property real targetY: {
-                  if (!barContentContainer.isVert) return 0;
-                  if (totalPanels <= 1 || index === 0) return 0;
-                  if (index === totalPanels - 1) return Math.max(0, barContentContainer.height - height);
-                  const gap = 6;
-                  const frac = index / (totalPanels - 1);
-                  const idealY = (barContentContainer.height * frac) - (height / 2);
-                  let minY = 0;
-                  const prev = panelsOuterRepeater.itemAt(index - 1);
-                  if (prev) {
-                    minY = prev.y + prev.height + (prev.height > 0 ? gap : 0);
-                  }
-                  let maxY = Math.max(0, barContentContainer.height - height);
-                  const last = panelsOuterRepeater.itemAt(totalPanels - 1);
-                  if (last) {
-                    let tailH = last.height + (last.height > 0 ? gap : 0);
-                    for (let k = index + 1; k < totalPanels - 1; k++) {
-                      const mid = panelsOuterRepeater.itemAt(k);
-                      if (mid && mid.height > 0) tailH += mid.height + gap;
-                    }
-                    maxY = barContentContainer.height - tailH - height;
-                  }
-                  if (minY <= maxY) {
-                    return Math.max(minY, Math.min(maxY, idealY));
-                  }
-                  return Math.max(0, Math.min(barContentContainer.height - height, minY));
-                }
+                readonly property real targetX: _calcAxisPos(false)
+                readonly property real targetY: _calcAxisPos(true)
 
                 Repeater {
                   id: sectionWidgetRepeater
@@ -885,7 +946,7 @@ Scope {
                     id: panelWidgetLoader
                     required property string modelData
                     readonly property string barId: (barInstanceScope.barCfg && barInstanceScope.barCfg.id) ? String(barInstanceScope.barCfg.id) : "bar_1"
-                    active: !barWindow.isBlankBar && BarConfig.isWidgetVisible(modelData, barId)
+                    active: !barWindow.isBlankBar && !panelSectionGrid.isDynamicIslandSlot && BarConfig.isWidgetVisible(modelData, barId)
                     sourceComponent: widgetRegistry.getWidgetComponent(modelData)
                     visible: active && sourceComponent !== null
                     width: visible ? (barContentContainer.isVert ? barContentContainer.width : (item ? (item.implicitWidth > 0 ? item.implicitWidth : item.width) : 0)) : 0

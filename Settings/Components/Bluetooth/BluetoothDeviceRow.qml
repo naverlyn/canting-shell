@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../Common"
 
 Rectangle {
     id: deviceRow
@@ -68,7 +69,7 @@ Rectangle {
                 Text {
                     text: deviceRow.isConnected ? "󰂱" : "󰂯"
                     font.family: deviceRow.font
-                    font.pixelSize: 17
+                    font.pixelSize: Style.px(17)
                     color: deviceRow.isConnected ? deviceRow.theme.accentPrimary : deviceRow.theme.textPrimary
                     Layout.preferredWidth: 22
                     horizontalAlignment: Text.AlignHCenter
@@ -81,7 +82,7 @@ Rectangle {
                     Text {
                         text: deviceRow.deviceData.name
                         font.family: deviceRow.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         font.bold: deviceRow.isConnected || deviceRow.isExpanded
                         color: deviceRow.theme.textPrimary
                         elide: Text.ElideRight
@@ -96,7 +97,7 @@ Rectangle {
                             return "Available";
                         }
                         font.family: deviceRow.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: deviceRow.isConnected ? deviceRow.theme.accentPrimary : deviceRow.theme.textSecondary
                         elide: Text.ElideRight
                         Layout.fillWidth: true
@@ -106,7 +107,7 @@ Rectangle {
                 Text {
                     text: deviceRow.deviceData.mac
                     font.family: deviceRow.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: deviceRow.theme.textMuted
                 }
             }
@@ -155,13 +156,13 @@ Rectangle {
                         text: "MAC Address"
                         color: deviceRow.theme.textMuted
                         font.family: deviceRow.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                     }
                     Text {
                         text: deviceRow.deviceData.mac || "—"
                         color: deviceRow.theme.textPrimary
                         font.family: deviceRow.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
@@ -170,13 +171,13 @@ Rectangle {
                         text: "Status"
                         color: deviceRow.theme.textMuted
                         font.family: deviceRow.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                     }
                     Text {
                         text: deviceRow.isConnected ? "Connected" : "Paired (Not connected)"
                         color: deviceRow.isConnected ? deviceRow.theme.accentPrimary : deviceRow.theme.textPrimary
                         font.family: deviceRow.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
@@ -206,7 +207,7 @@ Rectangle {
                         text: "Forget"
                         color: forgetMouse.containsMouse ? deviceRow.theme.accentRed : deviceRow.theme.textSecondary
                         font.family: deviceRow.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                     }
 
                     MouseArea {
@@ -238,7 +239,7 @@ Rectangle {
                         text: "Cancel"
                         color: deviceRow.theme.textPrimary
                         font.family: deviceRow.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                     }
 
                     MouseArea {
@@ -267,7 +268,7 @@ Rectangle {
                         text: deviceRow.busy ? "Connecting..." : "Connect"
                         color: deviceRow.theme.bgBase
                         font.family: deviceRow.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                     }
 
@@ -302,7 +303,7 @@ Rectangle {
                             ? deviceRow.theme.bgBase
                             : deviceRow.theme.accentRed
                         font.family: deviceRow.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         Behavior on color { ColorAnimation { duration: 140 } }
                     }

@@ -32,7 +32,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 text: "Lock Screen"
                 font.family: root.font
-                font.pixelSize: 20
+                font.pixelSize: Style.px(20)
                 font.bold: true
                 color: root.theme.textPrimary
                 elide: Text.ElideRight
@@ -71,7 +71,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: "Backup & Restore"
                 font.family: root.font
-                font.pixelSize: 12
+                font.pixelSize: Style.px(12)
                 font.bold: true
                 color: root.theme.textPrimary
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -109,7 +109,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: "Restore Defaults"
                 font.family: root.font
-                font.pixelSize: 12
+                font.pixelSize: Style.px(12)
                 font.bold: true
                 color: root.theme.textPrimary
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -119,7 +119,7 @@ ColumnLayout {
                 id: restoreMouse
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.restoreProcRef.running = true
+                onClicked: root.restoreDefaults()
             }
         }
 
@@ -147,7 +147,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: "Test Lock"
                 font.family: root.font
-                font.pixelSize: 12
+                font.pixelSize: Style.px(12)
                 font.bold: true
                 color: root.theme.textPrimary
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -182,7 +182,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Lock Screen Modules & Building Blocks"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textSecondary
                     elide: Text.ElideRight
@@ -191,7 +191,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     text: "Drag any building block into the live preview stage below to place it, or click to add"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.textMuted
                     elide: Text.ElideRight
                 }
@@ -339,7 +339,7 @@ ColumnLayout {
                 Text {
                     text: "Configured Modules (" + (LockscreenConfig.modules ? LockscreenConfig.modules.length : 0) + ")"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textSecondary
                 }
@@ -391,7 +391,7 @@ ColumnLayout {
         Text {
             text: "Background & Visual Filters"
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             font.bold: true
             color: root.theme.textSecondary
             Layout.leftMargin: 4
@@ -486,7 +486,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: wpSegBtn.modelData.label
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: wpSegBtn.isSel
                                         color: wpSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                         opacity: wpSegBtn.isSel || wpSegHover.hovered ? 1.0 : 0.75
@@ -517,7 +517,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 0
 
-                    RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+                    RowDivider { sideMargin: 16 }
 
                     PreferenceRow {
                         title: "Custom Wallpaper"
@@ -544,7 +544,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: root.backgroundCustomPath !== "" ? "Change Wallpaper..." : "Choose Wallpaper..."
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 font.bold: true
                                 color: root.theme.textPrimary
                                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -562,79 +562,79 @@ ColumnLayout {
                     }
                 }
 
-                RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+                RowDivider { sideMargin: 16 }
 
                 // Blur Passes Slider
-                PreferenceSlider {
+                SettingSliderRow {
                     title: "Blur Passes"
                     minVal: 0
                     maxVal: 5
                     unit: ""
-                    currentVal: root.blurPasses
-                    onValueChanged: (val) => {
+                    value: root.blurPasses
+                    onValueModified: (val) => {
                         root.blurPasses = val;
                         root.scheduleSave();
                     }
                 }
 
-                RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+                RowDivider {}
 
                 // Blur Size Slider
-                PreferenceSlider {
+                SettingSliderRow {
                     title: "Blur Radius"
                     minVal: 1
                     maxVal: 10
                     unit: ""
-                    currentVal: root.blurSize
-                    onValueChanged: (val) => {
+                    value: root.blurSize
+                    onValueModified: (val) => {
                         root.blurSize = val;
                         root.scheduleSave();
                     }
                 }
 
-                RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+                RowDivider {}
 
                 // Brightness Slider
-                PreferenceSlider {
+                SettingSliderRow {
                     title: "Brightness"
                     minVal: 0.1
                     maxVal: 2.0
                     decimalPlaces: 2
                     unit: ""
-                    currentVal: root.brightness
-                    onValueChanged: (val) => {
+                    value: root.brightness
+                    onValueModified: (val) => {
                         root.brightness = val;
                         root.scheduleSave();
                     }
                 }
 
-                RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+                RowDivider {}
 
                 // Contrast Slider
-                PreferenceSlider {
+                SettingSliderRow {
                     title: "Contrast"
                     minVal: 0.1
                     maxVal: 2.0
                     decimalPlaces: 2
                     unit: ""
-                    currentVal: root.contrast
-                    onValueChanged: (val) => {
+                    value: root.contrast
+                    onValueModified: (val) => {
                         root.contrast = val;
                         root.scheduleSave();
                     }
                 }
 
-                RowDivider { sideMargin: 16; color: Qt.rgba(1, 1, 1, 0.05) }
+                RowDivider {}
 
                 // Vibrancy Slider
-                PreferenceSlider {
+                SettingSliderRow {
                     title: "Vibrancy"
                     minVal: 0.0
                     maxVal: 1.0
                     decimalPlaces: 2
                     unit: ""
-                    currentVal: root.vibrancy
-                    onValueChanged: (val) => {
+                    value: root.vibrancy
+                    onValueModified: (val) => {
                         root.vibrancy = val;
                         root.scheduleSave();
                     }

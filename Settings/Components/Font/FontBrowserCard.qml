@@ -189,7 +189,7 @@ ColumnLayout {
             // Virtualized Font ListView
             Rectangle {
                 Layout.fillWidth: true
-                height: 310
+                height: Math.max(460, root.height - 210)
                 radius: 10
                 color: root.theme.bgBase
                 border.color: root.theme.bgBorder
@@ -212,7 +212,7 @@ ColumnLayout {
                         contentItem: Rectangle {
                             implicitWidth: 4
                             radius: 2
-                            color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.2)
+                            color: root.theme.bgBorder
                         }
                     }
 
@@ -227,7 +227,7 @@ ColumnLayout {
                         readonly property bool isSelected: isUiActive || isLockActive
 
                         width: ListView.view.width - 8
-                        height: 52
+                        height: 58
                         radius: 8
                         color: isSelected
                             ? Style.withAlpha(root.theme.accentPrimary, 0.12)
@@ -278,7 +278,7 @@ ColumnLayout {
                                     Text {
                                         text: fontRow.fam
                                         font.family: Style.font
-                                        font.pixelSize: Style.px(12)
+                                        font.pixelSize: Style.px(13)
                                         font.bold: true
                                         color: root.theme.textPrimary
                                         elide: Text.ElideRight
@@ -371,7 +371,7 @@ ColumnLayout {
                                     ? root.customSpecimenText
                                     : "AaBbCc 0123  󰣇 󰖩 󰕾 — The quick brown fox"
                                 font.family: fontRow.fam
-                                font.pixelSize: Style.px(14)
+                                font.pixelSize: Style.px(15)
                                 font.weight: Style.fontWeightEnum
                                 font.letterSpacing: Style.letterSpacing
                                 color: rowMouse.containsMouse ? root.theme.textPrimary : root.theme.textSecondary
@@ -382,9 +382,9 @@ ColumnLayout {
                                 spacing: 6
 
                                 Rectangle {
-                                    height: 26
+                                    height: 28
                                     radius: 6
-                                    implicitWidth: Math.max(66, setUiTxt.implicitWidth + 16)
+                                    implicitWidth: Math.max(70, setUiTxt.implicitWidth + 16)
                                     color: fontRow.isUiActive
                                         ? root.theme.bgSelected
                                         : (setUiMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
@@ -403,7 +403,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: fontRow.isUiActive ? "UI" : "Set UI"
                                         font.family: Style.font
-                                        font.pixelSize: 10
+                                        font.pixelSize: Style.px(11)
                                         font.bold: true
                                         color: fontRow.isUiActive || setUiMouse.containsMouse
                                             ? root.theme.accentPrimary
@@ -421,9 +421,9 @@ ColumnLayout {
                                 }
 
                                 Rectangle {
-                                    height: 26
+                                    height: 28
                                     radius: 6
-                                    implicitWidth: Math.max(66, setLockTxt.implicitWidth + 16)
+                                    implicitWidth: Math.max(70, setLockTxt.implicitWidth + 16)
                                     color: fontRow.isLockActive
                                         ? Style.withAlpha(root.theme.accentCyan, 0.16)
                                         : (setLockMouse.containsMouse ? root.theme.bgHover : root.theme.bgBase)
@@ -442,7 +442,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: fontRow.isLockActive ? "Lock" : "Set Lock"
                                         font.family: Style.font
-                                        font.pixelSize: 10
+                                        font.pixelSize: Style.px(11)
                                         font.bold: true
                                         color: fontRow.isLockActive || setLockMouse.containsMouse
                                             ? root.theme.accentCyan

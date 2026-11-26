@@ -1,14 +1,8 @@
 import Quickshell
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Hyprland
-import Quickshell.Widgets
 import QtQuick.Controls
-import Quickshell.Services.SystemTray
-import Quickshell.Io
-import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
-import QtQuick.Effects
 import "../Components"
 import ".."
 
@@ -115,7 +109,7 @@ Rectangle {
       }
     }
     Component.onDestruction: {
-      if (hostContainer.activeInfoProvider === volProvider) hostContainer.activeInfoProvider = null;
+      if (hostContainer && hostContainer.activeInfoProvider === volProvider) hostContainer.activeInfoProvider = null;
     }
 
     property Component contentComponent: Component {

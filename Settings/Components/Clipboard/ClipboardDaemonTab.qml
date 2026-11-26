@@ -75,7 +75,7 @@ ColumnLayout {
                                 Text {
                                     text: root.daemonRunning ? "Watcher Daemon is Active" : "Watcher Daemon is Stopped"
                                     font.family: root.font
-                                    font.pixelSize: 13
+                                    font.pixelSize: Style.px(13)
                                     font.bold: true
                                     color: root.theme.textPrimary
                                 }
@@ -93,7 +93,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: root.daemonRunning ? "RUNNING" : "INACTIVE"
                                         font.family: "JetBrains Mono, monospace"
-                                        font.pixelSize: 9
+                                        font.pixelSize: Style.px(9)
                                         font.bold: true
                                         color: root.daemonRunning
                                             ? (root.theme.accentGreen)
@@ -105,7 +105,7 @@ ColumnLayout {
                             Text {
                                 text: "wl-paste --watch cliphist store tracks clipboard changes in real time"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textSecondary
                             }
                         }
@@ -160,19 +160,19 @@ ColumnLayout {
                             Text {
                                 text: "󰅌"
                                 font.family: root.font
-                                font.pixelSize: 14
+                                font.pixelSize: Style.px(14)
                                 color: root.theme.accentPrimary
                             }
                             Text {
                                 text: "Total Clips:"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 color: root.theme.textSecondary
                             }
                             Text {
                                 text: String(root.totalStoredItems)
                                 font.family: "JetBrains Mono, monospace"
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -184,19 +184,19 @@ ColumnLayout {
                             Text {
                                 text: "󰋊"
                                 font.family: root.font
-                                font.pixelSize: 14
+                                font.pixelSize: Style.px(14)
                                 color: root.theme.accentCyan
                             }
                             Text {
                                 text: "Database Size:"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 color: root.theme.textSecondary
                             }
                             Text {
                                 text: root.dbSizeFormatted
                                 font.family: "JetBrains Mono, monospace"
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -208,19 +208,19 @@ ColumnLayout {
                             Text {
                                 text: "󰋩"
                                 font.family: root.font
-                                font.pixelSize: 14
+                                font.pixelSize: Style.px(14)
                                 color: root.theme.accentGreen
                             }
                             Text {
                                 text: "Cached Thumbs:"
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 color: root.theme.textSecondary
                             }
                             Text {
                                 text: String(root.thumbsCount)
                                 font.family: "JetBrains Mono, monospace"
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -302,7 +302,7 @@ ColumnLayout {
                             Text {
                                 text: "Global Keybind (Hyprland)"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -310,7 +310,7 @@ ColumnLayout {
                             Text {
                                 text: "Toggles the Quickshell clipboard window overlay"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textSecondary
                             }
                         }
@@ -321,8 +321,8 @@ ColumnLayout {
                             implicitWidth: keyTxt.implicitWidth + 16
                             height: 26
                             radius: 6
-                            color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
-                            border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.12)
+                            color: root.theme.bgBase
+                            border.color: root.theme.bgBorder
                             border.width: 1
                             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
@@ -331,7 +331,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: "SUPER + V"
                                 font.family: "JetBrains Mono, monospace"
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: root.theme.accentPrimary
                             }
@@ -359,7 +359,7 @@ ColumnLayout {
                             Text {
                                 text: "CLI Toggle Command"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -367,7 +367,7 @@ ColumnLayout {
                             Text {
                                 text: "Programmatic IPC call to toggle the clipboard UI"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textSecondary
                             }
                         }
@@ -382,8 +382,8 @@ ColumnLayout {
                                 implicitWidth: cliTxt.implicitWidth + 16
                                 height: 26
                                 radius: 6
-                                color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
-                                border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.12)
+                                color: root.theme.bgBase
+                                border.color: root.theme.bgBorder
                                 border.width: 1
 
                                 Text {
@@ -391,7 +391,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: "qs ipc call clipboard toggle"
                                     font.family: "JetBrains Mono, monospace"
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: true
                                     color: root.theme.accentCyan
                                 }

@@ -65,7 +65,7 @@ Rectangle {
                 Text {
                     text: zonePanel.zoneTitle
                     font.family: hostRoot.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: hostRoot.theme.accentPrimary
                 }
@@ -81,7 +81,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "(" + zonePanel.itemCount + (zonePanel.itemCount === 1 ? " block)" : " blocks)")
                         font.family: hostRoot.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: hostRoot.theme.textMuted
                     }
                 }
@@ -165,7 +165,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: "Zone Empty"
                     font.family: hostRoot.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: hostRoot.theme.textMuted
                 }
@@ -174,7 +174,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: "Drag any building block here or click +"
                     font.family: hostRoot.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: hostRoot.theme.textMuted
                 }
             }

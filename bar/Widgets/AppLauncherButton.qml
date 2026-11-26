@@ -1,14 +1,8 @@
 import Quickshell
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Hyprland
-import Quickshell.Widgets
 import QtQuick.Controls
-import Quickshell.Services.SystemTray
 import Quickshell.Io
-import Quickshell.Services.Mpris
-import Quickshell.Services.Pipewire
-import QtQuick.Effects
 import "../Components"
 import ".."
 
@@ -90,10 +84,9 @@ Rectangle {
       const baseEdge = hostContainer.barEdgeOffset !== undefined
         ? hostContainer.barEdgeOffset
         : ((hostContainer.isFloating ? 6 : 0) + hostScope.barThickness);
-      const clearance = hostContainer.isVert ? (baseEdge + 16) : (baseEdge + 8);
       appGridProc.command = [
         "qs", "ipc", "call", "appgrid", "toggleAt",
-        hostContainer.barPos, String(normX), String(normY), String(clearance)
+        hostContainer.barPos, String(normX), String(normY), String(baseEdge)
       ];
       appGridProc.running = true;
     }

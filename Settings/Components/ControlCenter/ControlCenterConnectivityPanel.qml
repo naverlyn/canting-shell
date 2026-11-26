@@ -52,7 +52,7 @@ Rectangle {
                 Text {
                     text: "Connectivity (2x2)"
                     font.family: hostRoot.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: connPanel.isMaxedOut ? hostRoot.theme.accentRed : hostRoot.theme.accentPrimary
                 }
@@ -70,7 +70,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: connPanel.isMaxedOut ? "MAX (4/4)" : ("(" + connPanel.itemCount + "/4)")
                         font.family: hostRoot.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         font.bold: connPanel.isMaxedOut
                         color: connPanel.isMaxedOut ? hostRoot.theme.accentRed : hostRoot.theme.textMuted
                     }
@@ -145,7 +145,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: "Empty Connectivity (2x2)"
                     font.family: hostRoot.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: hostRoot.theme.textMuted
                 }
@@ -154,7 +154,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: "Drag up to 4 quick tiles here"
                     font.family: hostRoot.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: hostRoot.theme.textMuted
                 }
             }

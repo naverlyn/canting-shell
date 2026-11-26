@@ -28,7 +28,7 @@ import QtQuick.Layouts
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
                         width: 1
-                        color: hostApp.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        color: hostApp.theme.bgBorder
                     }
 
                     // Interactive horizontal splitter to resize sidebar
@@ -92,7 +92,7 @@ import QtQuick.Layouts
                             Text {
                                 text: "󰓅"
                                 font.family: hostApp.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 color: hostApp.theme.textMuted
                                 Layout.alignment: Qt.AlignVCenter
                                 horizontalAlignment: Text.AlignHCenter
@@ -115,7 +115,7 @@ import QtQuick.Layouts
                                 contentItem: Rectangle {
                                     implicitWidth: 3
                                     radius: 2
-                                    color: hostApp.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15)
+                                    color: hostApp.theme.bgBorder
                                 }
                             }
 
@@ -145,10 +145,10 @@ import QtQuick.Layouts
                                                 anchors.bottomMargin: 3
                                                 text: secCol.modelData.category
                                                 font.family: hostApp.font
-                                                font.pixelSize: 10
+                                                font.pixelSize: Style.px(10)
                                                 font.bold: true
                                                 font.capitalization: Font.AllUppercase
-                                                color: hostApp.theme.textMuted ?? Qt.rgba(1,1,1,0.4)
+                                                color: hostApp.theme.textMuted
                                             }
                                         }
 
@@ -165,7 +165,7 @@ import QtQuick.Layouts
                                                 radius: 7
                                                 color: hostApp.currentTab === itemRect.modelData.pageIndex
                                                     ? hostApp.theme.bgSelected
-                                                    : (tabMouse.containsMouse ? (hostApp.theme.bgHover ?? Qt.rgba(1,1,1,0.05)) : "transparent")
+                                                    : (tabMouse.containsMouse ? hostApp.theme.bgHover : "transparent")
 
                                                 Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -184,7 +184,7 @@ import QtQuick.Layouts
                                                             anchors.centerIn: parent
                                                             text: itemRect.modelData.icon
                                                             font.family: hostApp.font
-                                                            font.pixelSize: 14
+                                                            font.pixelSize: Style.px(14)
                                                             color: hostApp.currentTab === itemRect.modelData.pageIndex
                                                                 ? hostApp.theme.accentPrimary
                                                                 : hostApp.theme.textSecondary

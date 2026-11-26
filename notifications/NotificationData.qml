@@ -24,6 +24,9 @@ QtObject {
     property date   createdAt: new Date()
 
     property bool hovered: false
+
+    // Toast timed out (hidden from popup/island) while the underlying D-Bus notification stays
+    // open so history actions (Reply, Open, Delete, Settings, Call Answer/Decline, etc.) work.
     property bool expired: false
 
     readonly property int defaultTimeout: NotificationService.defaultTimeout > 0 ? NotificationService.defaultTimeout : 5000
@@ -111,6 +114,7 @@ QtObject {
         }
     }
 
+    // Hide the toast on timeout/overflow without closing the real D-Bus notification.
     function expire() {
         if (closed || expired) return;
         if (!notification) {
@@ -156,7 +160,9 @@ QtObject {
             if (expireTimeout <= 0) expireTimeout = defaultTimeout;
             return;
         }
-        notifId   = String(notification.id || "");
+        notifId   = (notification.id !== undefined && notification.id !== null && String(notification.id) !== "")
+            ? String(notification.id)
+            : ("seq_" + seqId);
         summary   = notification.summary   || "";
         body      = notification.body      || "";
         appIcon   = notification.appIcon   || "";
@@ -210,7 +216,7 @@ QtObject {
             return;
         }
         focusAppWindow();
-        dismiss();
+        expire();
     }
 
     function invokeAction(identifier) {

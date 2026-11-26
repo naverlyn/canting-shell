@@ -18,6 +18,7 @@ import Quickshell
 import Quickshell.Io
 import "Common"
 import "Font"
+import "./Common"
 
 Item {
     id: root
@@ -47,15 +48,9 @@ Item {
     property bool fontsLoading: false
 
     function showToast(msg, isWarn) {
-        toastBanner.show(msg, isWarn);
+        Style.notify(msg, isWarn);
     }
 
-    Connections {
-        target: Style
-        function onToast(msg) {
-            root.showToast(msg);
-        }
-    }
 
     readonly property bool isCustomized: {
         if (!root.theme) return false;
@@ -289,7 +284,7 @@ Item {
     Flickable {
         id: pageFlick
         anchors.fill: parent
-        contentHeight: mainCol.implicitHeight + 36
+        contentHeight: mainCol.implicitHeight + (root.currentSubTab === 1 ? 6 : 36)
         clip: true
         boundsBehavior: Flickable.StopAtBounds
 
@@ -299,7 +294,7 @@ Item {
             contentItem: Rectangle {
                 implicitWidth: 4
                 radius: 2
-                color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15)
+                color: root.theme.bgBorder
             }
         }
 
@@ -381,9 +376,17 @@ Item {
             }
 
             // 2. Sub-Tab Selector (Preview & Pairings / Font Browser / Scale & Rendering)
-            FontSubTabSelector {
-                root: root
-                onTabSwitched: fontSubTabContentAnim.restart()
+            SubTabBar {
+                currentIndex: root.currentSubTab
+                tabs: [
+                    { idx: 0, icon: "󰛖", label: "Preview & Pairings" },
+                    { idx: 1, icon: "󰍉", label: "Font Browser" },
+                    { idx: 2, icon: "󰒓", label: "Scale & Rendering" }
+                ]
+                onTabSelected: (idx) => {
+                    root.currentSubTab = idx;
+                    fontSubTabContentAnim.restart();
+                }
             }
 
             ParallelAnimation {
@@ -434,11 +437,4 @@ Item {
         }
     }
 
-    // Floating Bottom Toast Pill
-    ToastBanner {
-        id: toastBanner
-        theme: root.theme
-        font: Style.font
-        durationMs: 2600
-    }
 }

@@ -52,7 +52,7 @@ Rectangle {
                 Text {
                     text: "Quick Tiles 2"
                     font.family: hostRoot.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: hostRoot.theme.accentPrimary
                 }
@@ -68,7 +68,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "(" + quick2Panel.itemCount + " tiles)"
                         font.family: hostRoot.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: hostRoot.theme.textMuted
                     }
                 }
@@ -144,7 +144,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: "No Quick Tiles 2"
                     font.family: hostRoot.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: hostRoot.theme.textMuted
                 }
@@ -153,7 +153,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: "Drag any quick tile here or click +"
                     font.family: hostRoot.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: hostRoot.theme.textMuted
                 }
             }

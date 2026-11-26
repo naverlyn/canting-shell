@@ -134,13 +134,6 @@ Item {
   }
 
   Timer {
-    interval: 600
-    repeat: false
-    running: provider.script !== ""
-    onTriggered: if (!proc.running && provider.script) proc.running = true
-  }
-
-  Timer {
     interval: 2000
     repeat: true
     running: provider.isDetailsActive && (provider.barItem ? provider.barItem.activeInfoProvider === provider : true)

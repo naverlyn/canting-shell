@@ -18,7 +18,7 @@ Rectangle {
     radius: 8
     color: rowMouse.pressed
         ? Style.withAlpha(theme.accentPrimary, 0.14)
-        : (rowHover.hovered ? (theme.bgHover ?? Qt.rgba(1, 1, 1, 0.04)) : "transparent")
+        : (rowHover.hovered ? theme.bgHover : "transparent")
 
     Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -34,7 +34,7 @@ Rectangle {
             visible: infoRow.iconText !== ""
             text: infoRow.iconText
             font.family: infoRow.font
-            font.pixelSize: 14
+            font.pixelSize: Style.px(14)
             color: rowHover.hovered ? infoRow.theme.accentPrimary : infoRow.theme.textSecondary
             Layout.preferredWidth: 16
             horizontalAlignment: Text.AlignHCenter

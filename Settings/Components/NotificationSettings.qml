@@ -57,7 +57,7 @@ Item {
     property int dragHoverItemIndex: -1
 
     function showToast(msg, isWarn) {
-        toastBanner.show(msg, isWarn);
+        Style.notify(msg, isWarn);
     }
 
     function withAlpha(col, alpha) {
@@ -234,7 +234,7 @@ Item {
             contentItem: Rectangle {
                 implicitWidth: 4
                 radius: 2
-                color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15)
+                color: root.theme.bgBorder
             }
         }
 
@@ -252,7 +252,7 @@ Item {
                     Text {
                         text: "Notification Settings"
                         font.family: root.font
-                        font.pixelSize: 20
+                        font.pixelSize: Style.px(20)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -308,8 +308,16 @@ Item {
                 }
             }
 
-            NotificationSubTabSelector {
-                root: root
+            SubTabBar {
+                currentIndex: root.currentSubTab
+                tabs: [
+                    { idx: 0, icon: "󰕮", label: "Layout & Building Blocks" },
+                    { idx: 1, icon: "󰒓", label: "Placement & General" }
+                ]
+                onTabSelected: (idx) => {
+                    root.currentSubTab = idx;
+                    root.subTabContentAnimation.restart();
+                }
             }
 
             ColumnLayout {
@@ -366,10 +374,4 @@ Item {
         root: root
     }
 
-    ToastBanner {
-        id: toastBanner
-        theme: root.theme
-        font: root.font
-        durationMs: 2800
-    }
 }

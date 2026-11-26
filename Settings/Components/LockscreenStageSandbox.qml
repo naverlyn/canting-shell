@@ -23,11 +23,12 @@ import "../../Lockscreen"
 import "Lockscreen"
 import "../../Lockscreen/Modules"
 import "LockscreenEditor"
+import "../../ThemeSwitcher"
 
 Rectangle {
     id: stageRoot
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
     property var textBlocks: []
     property int selectedIndex: -1

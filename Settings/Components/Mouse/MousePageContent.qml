@@ -17,7 +17,7 @@ ColumnLayout {
     Text {
         text: "Mouse & Touchpad"
         font.family: root.font
-        font.pixelSize: 20
+        font.pixelSize: Style.px(20)
         font.bold: true
         color: root.theme.textPrimary
         Layout.fillWidth: true
@@ -31,7 +31,7 @@ ColumnLayout {
         Text {
             text: "Mouse"
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             font.bold: true
             color: root.theme.textSecondary
             Layout.leftMargin: 4
@@ -42,7 +42,7 @@ ColumnLayout {
             implicitHeight: mouseCol.implicitHeight + 16
             radius: 12
             color: root.theme.bgSurface
-            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            border.color: root.theme.bgBorder
             border.width: 1
 
             ColumnLayout {
@@ -73,7 +73,7 @@ ColumnLayout {
                             Text {
                                 text: "Left-Handed Mode"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -87,7 +87,7 @@ ColumnLayout {
                             width: 44
                             height: 24
                             radius: 12
-                            color: root.leftHanded ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
+                            color: root.leftHanded ? root.theme.accentPrimary : root.theme.bgSelected
                             Layout.alignment: Qt.AlignVCenter
 
                             Behavior on color { ColorAnimation { duration: 160 } }
@@ -115,14 +115,7 @@ ColumnLayout {
                     }
                 }
 
-                /* Row Divider */
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 12
-                    Layout.rightMargin: 12
-                    height: 1
-                    color: Qt.rgba(1, 1, 1, 0.05)
-                }
+                RowDivider {}
 
                 /* Mouse Speed Row */
                 Item {
@@ -138,7 +131,7 @@ ColumnLayout {
                         Text {
                             text: "Mouse Speed"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                             Layout.preferredWidth: 120
@@ -152,7 +145,7 @@ ColumnLayout {
                             height: 7
                             radius: 3.5
                             color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.14)
-                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                            border.color: root.theme.bgBorder
                             border.width: 1
                             Layout.alignment: Qt.AlignVCenter
 
@@ -235,7 +228,7 @@ ColumnLayout {
                         Text {
                             text: (root.pointerSensitivity > 0 ? "+" : "") + root.pointerSensitivity.toFixed(2)
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textSecondary
                             Layout.preferredWidth: 38
                             horizontalAlignment: Text.AlignRight
@@ -243,71 +236,15 @@ ColumnLayout {
                     }
                 }
 
-                /* Row Divider */
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 12
-                    Layout.rightMargin: 12
-                    height: 1
-                    color: Qt.rgba(1, 1, 1, 0.05)
-                }
+                RowDivider {}
 
                 /* Natural Scrolling Row */
-                Item {
-                    Layout.fillWidth: true
-                    height: 40
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 12
-
-                        ColumnLayout {
-                            spacing: 2
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Text {
-                                text: "Natural Scrolling"
-                                font.family: root.font
-                                font.pixelSize: 13
-                                font.bold: true
-                                color: root.theme.textPrimary
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        /* Toggle Switch (matching media_1791696732618_a22a3e76.png) */
-                        Rectangle {
-                            width: 44
-                            height: 24
-                            radius: 12
-                            color: root.naturalScroll ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Behavior on color { ColorAnimation { duration: 160 } }
-
-                            Rectangle {
-                                width: 18
-                                height: 18
-                                radius: 9
-                                anchors.verticalCenter: parent.verticalCenter
-                                x: root.naturalScroll ? parent.width - width - 3 : 3
-                                color: root.naturalScroll ? "#ffffff" : root.theme.textPrimary
-
-                                Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.naturalScroll = !root.naturalScroll;
-                                    root.applyHyprKeyword("input:natural_scroll", root.naturalScroll ? "true" : "false");
-                                }
-                            }
-                        }
+                SettingToggleRow {
+                    title: "Natural Scrolling"
+                    checked: root.naturalScroll
+                    onToggled: (val) => {
+                        root.naturalScroll = val;
+                        root.applyHyprKeyword("input:natural_scroll", val ? "true" : "false");
                     }
                 }
             }
@@ -321,10 +258,10 @@ ColumnLayout {
 
         Text {
             text: "Touchpad"
-            font.family: root.font
-            font.pixelSize: 13
-            font.bold: true
-            color: root.theme.textSecondary
+            font.family: Style.font
+            font.pixelSize: Style.px(13)
+            font.bold: Style.boldHeadings
+            color: Style.theme.textSecondary
             Layout.leftMargin: 4
         }
 
@@ -332,8 +269,8 @@ ColumnLayout {
             Layout.fillWidth: true
             implicitHeight: touchpadCol.implicitHeight + 16
             radius: 12
-            color: root.theme.bgSurface
-            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+            color: Style.theme.bgSurface
+            border.color: Style.theme.bgBorder
             border.width: 1
 
             ColumnLayout {
@@ -347,272 +284,48 @@ ColumnLayout {
                 spacing: 0
 
                 /* Row 1: Touchpad Master Enable/Disable */
-                Item {
-                    Layout.fillWidth: true
-                    height: 40
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 12
-
-                        ColumnLayout {
-                            spacing: 2
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Text {
-                                text: "Touchpad"
-                                font.family: root.font
-                                font.pixelSize: 13
-                                font.bold: true
-                                color: root.theme.textPrimary
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        /* Toggle Switch (matching media_1791696732618_a22a3e76.png) */
-                        Rectangle {
-                            id: touchpadMasterSwitch
-                            width: 44
-                            height: 24
-                            radius: 12
-                            color: root.touchpadEnabled ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Behavior on color { ColorAnimation { duration: 160 } }
-
-                            Rectangle {
-                                width: 18
-                                height: 18
-                                radius: 9
-                                anchors.verticalCenter: parent.verticalCenter
-                                x: root.touchpadEnabled ? parent.width - width - 3 : 3
-                                color: root.touchpadEnabled ? "#ffffff" : root.theme.textPrimary
-
-                                Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: root.setTouchpadState(!root.touchpadEnabled)
-                            }
-                        }
-                    }
+                SettingToggleRow {
+                    title: "Touchpad"
+                    checked: root.touchpadEnabled
+                    onToggled: (val) => root.setTouchpadState(val)
                 }
 
-                /* Row Divider */
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 12
-                    Layout.rightMargin: 12
-                    height: 1
-                    color: Qt.rgba(1, 1, 1, 0.05)
-                }
+                RowDivider {}
 
                 /* Row 2: Touchpad Natural Scrolling */
-                Item {
-                    Layout.fillWidth: true
-                    height: 40
-                    opacity: root.touchpadEnabled ? 1.0 : 0.4
-                    enabled: root.touchpadEnabled
-                    Behavior on opacity { NumberAnimation { duration: 160 } }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 12
-
-                        ColumnLayout {
-                            spacing: 2
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Text {
-                                text: "Natural Scrolling"
-                                font.family: root.font
-                                font.pixelSize: 13
-                                font.bold: true
-                                color: root.theme.textPrimary
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        /* Toggle Switch (matching media_1791696732618_a22a3e76.png) */
-                        Rectangle {
-                            width: 44
-                            height: 24
-                            radius: 12
-                            color: root.touchpadNaturalScroll ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Behavior on color { ColorAnimation { duration: 160 } }
-
-                            Rectangle {
-                                width: 18
-                                height: 18
-                                radius: 9
-                                anchors.verticalCenter: parent.verticalCenter
-                                x: root.touchpadNaturalScroll ? parent.width - width - 3 : 3
-                                color: root.touchpadNaturalScroll ? "#ffffff" : root.theme.textPrimary
-
-                                Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.touchpadNaturalScroll = !root.touchpadNaturalScroll;
-                                    root.applyHyprKeyword("input:touchpad:natural_scroll", root.touchpadNaturalScroll ? "true" : "false");
-                                }
-                            }
-                        }
+                SettingToggleRow {
+                    title: "Natural Scrolling"
+                    rowEnabled: root.touchpadEnabled
+                    checked: root.touchpadNaturalScroll
+                    onToggled: (val) => {
+                        root.touchpadNaturalScroll = val;
+                        root.applyHyprKeyword("input:touchpad:natural_scroll", val ? "true" : "false");
                     }
                 }
 
-                /* Row Divider */
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 12
-                    Layout.rightMargin: 12
-                    height: 1
-                    color: Qt.rgba(1, 1, 1, 0.05)
-                }
+                RowDivider {}
 
                 /* Row 3: Tap to Click */
-                Item {
-                    Layout.fillWidth: true
-                    height: 40
-                    opacity: root.touchpadEnabled ? 1.0 : 0.4
-                    enabled: root.touchpadEnabled
-                    Behavior on opacity { NumberAnimation { duration: 160 } }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 12
-
-                        ColumnLayout {
-                            spacing: 2
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Text {
-                                text: "Tap to Click"
-                                font.family: root.font
-                                font.pixelSize: 13
-                                font.bold: true
-                                color: root.theme.textPrimary
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        /* Toggle Switch (matching media_1791696732618_a22a3e76.png) */
-                        Rectangle {
-                            width: 44
-                            height: 24
-                            radius: 12
-                            color: root.tapToClick ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Behavior on color { ColorAnimation { duration: 160 } }
-
-                            Rectangle {
-                                width: 18
-                                height: 18
-                                radius: 9
-                                anchors.verticalCenter: parent.verticalCenter
-                                x: root.tapToClick ? parent.width - width - 3 : 3
-                                color: root.tapToClick ? "#ffffff" : root.theme.textPrimary
-
-                                Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.tapToClick = !root.tapToClick;
-                                    root.applyHyprKeyword("input:touchpad:tap-to-click", root.tapToClick ? "true" : "false");
-                                }
-                            }
-                        }
+                SettingToggleRow {
+                    title: "Tap to Click"
+                    rowEnabled: root.touchpadEnabled
+                    checked: root.tapToClick
+                    onToggled: (val) => {
+                        root.tapToClick = val;
+                        root.applyHyprKeyword("input:touchpad:tap-to-click", val ? "true" : "false");
                     }
                 }
 
-                /* Row Divider */
-                Rectangle {
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 12
-                    Layout.rightMargin: 12
-                    height: 1
-                    color: Qt.rgba(1, 1, 1, 0.05)
-                }
+                RowDivider {}
 
                 /* Row 4: Disable while typing */
-                Item {
-                    Layout.fillWidth: true
-                    height: 40
-                    opacity: root.touchpadEnabled ? 1.0 : 0.4
-                    enabled: root.touchpadEnabled
-                    Behavior on opacity { NumberAnimation { duration: 160 } }
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        spacing: 12
-
-                        ColumnLayout {
-                            spacing: 2
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Text {
-                                text: "Disable While Typing"
-                                font.family: root.font
-                                font.pixelSize: 13
-                                font.bold: true
-                                color: root.theme.textPrimary
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        /* Toggle Switch (matching media_1791696732618_a22a3e76.png) */
-                        Rectangle {
-                            width: 44
-                            height: 24
-                            radius: 12
-                            color: root.disableWhileTyping ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
-                            Layout.alignment: Qt.AlignVCenter
-
-                            Behavior on color { ColorAnimation { duration: 160 } }
-
-                            Rectangle {
-                                width: 18
-                                height: 18
-                                radius: 9
-                                anchors.verticalCenter: parent.verticalCenter
-                                x: root.disableWhileTyping ? parent.width - width - 3 : 3
-                                color: root.disableWhileTyping ? "#ffffff" : root.theme.textPrimary
-
-                                Behavior on x { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: {
-                                    root.disableWhileTyping = !root.disableWhileTyping;
-                                    root.applyHyprKeyword("input:touchpad:disable_while_typing", root.disableWhileTyping ? "true" : "false");
-                                }
-                            }
-                        }
+                SettingToggleRow {
+                    title: "Disable While Typing"
+                    rowEnabled: root.touchpadEnabled
+                    checked: root.disableWhileTyping
+                    onToggled: (val) => {
+                        root.disableWhileTyping = val;
+                        root.applyHyprKeyword("input:touchpad:disable_while_typing", val ? "true" : "false");
                     }
                 }
             }

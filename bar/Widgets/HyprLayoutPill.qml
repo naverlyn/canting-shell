@@ -200,7 +200,7 @@ Rectangle {
       }
     }
     Component.onDestruction: {
-      if (hostContainer.activeInfoProvider === hyprProvider) hostContainer.activeInfoProvider = null;
+      if (hostContainer && hostContainer.activeInfoProvider === hyprProvider) hostContainer.activeInfoProvider = null;
     }
 
     property Component contentComponent: Component {

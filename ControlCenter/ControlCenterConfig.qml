@@ -877,9 +877,27 @@ Singleton {
 
     property bool _loaded: false
     property string _lastSavedJson: ""
+    property bool _savePending: false
+
+    Timer {
+        id: saveDebounceTimer
+        interval: 150
+        repeat: false
+        onTriggered: root._flushSaveConfig()
+    }
 
     function saveConfig() {
         if (!root._loaded) return;
+        saveDebounceTimer.restart();
+    }
+
+    function _flushSaveConfig() {
+        if (!root._loaded) return;
+        if (saveProcess.running) {
+            root._savePending = true;
+            return;
+        }
+        root._savePending = false;
         const jsonStr = JSON.stringify(ConfigUtils.buildConfigData(root), null, 2);
         root._lastSavedJson = jsonStr;
         saveProcess.command = [
@@ -928,6 +946,12 @@ Singleton {
     Process {
         id: saveProcess
         running: false
+        onExited: {
+            if (root._savePending) {
+                root._savePending = false;
+                root._flushSaveConfig();
+            }
+        }
     }
 
     Component.onCompleted: {

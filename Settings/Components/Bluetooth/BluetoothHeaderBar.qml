@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../Common"
 
 RowLayout {
     id: headerBar
@@ -17,7 +18,7 @@ RowLayout {
     Text {
         text: "Bluetooth"
         font.family: headerBar.font
-        font.pixelSize: 20
+        font.pixelSize: Style.px(20)
         font.bold: true
         color: headerBar.theme.textPrimary
         Layout.fillWidth: true
@@ -28,7 +29,7 @@ RowLayout {
         visible: !headerBar.btAvailable
         text: "Unavailable"
         font.family: headerBar.font
-        font.pixelSize: 12
+        font.pixelSize: Style.px(12)
         color: headerBar.theme.textMuted
         Layout.alignment: Qt.AlignVCenter
     }

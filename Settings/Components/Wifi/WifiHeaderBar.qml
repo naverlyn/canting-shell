@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../Common"
 
 RowLayout {
     id: headerBar
@@ -16,7 +17,7 @@ RowLayout {
     Text {
         text: "Wi-Fi"
         font.family: headerBar.font
-        font.pixelSize: 20
+        font.pixelSize: Style.px(20)
         font.bold: true
         color: headerBar.theme.textPrimary
         Layout.fillWidth: true

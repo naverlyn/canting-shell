@@ -15,7 +15,7 @@ RowLayout {
     Text {
         text: "Modifiers:"
         font.family: root.font
-        font.pixelSize: 11
+        font.pixelSize: Style.px(11)
         font.bold: true
         color: root.theme.textSecondary
         Layout.preferredWidth: 70
@@ -27,7 +27,7 @@ RowLayout {
         height: 32
         radius: 7
         color: root.theme.bgBase
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
         Layout.alignment: Qt.AlignVCenter
 
@@ -58,7 +58,7 @@ RowLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     radius: 5
-                    color: isActive ? root.theme.bgSelected : (addModHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                    color: isActive ? root.theme.bgSelected : (addModHover.hovered ? root.theme.bgHover : "transparent")
                     border.color: isActive ? root.theme.accentPrimary : "transparent"
                     border.width: isActive ? 1 : 0
 
@@ -71,7 +71,7 @@ RowLayout {
                         anchors.centerIn: parent
                         text: addModBtn.modelData.label
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: addModBtn.isActive
                         color: addModBtn.isActive ? root.theme.accentPrimary : root.theme.textPrimary
                         opacity: addModBtn.isActive || addModHover.hovered ? 1.0 : 0.75

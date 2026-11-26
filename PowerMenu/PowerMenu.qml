@@ -1,14 +1,13 @@
 import Quickshell
 import Quickshell.Io
 import QtQuick
-import "../ThemeSwitcher" as TS
+import "../ThemeSwitcher"
 import "Components"
 
 Scope {
     id: root
 
-    TS.DefaultTheme { id: defaultTheme }
-    property var theme: defaultTheme
+    property var theme: Theme
     property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
 
     property bool panelVisible: false
@@ -82,7 +81,7 @@ Scope {
     ]
 
     function accentFor(action) {
-        const t = root.theme || defaultTheme;
+        const t = root.theme || Theme;
         if (!action) return t.accentPrimary;
         const val = t[action.accentKey];
         return val !== undefined ? val : t.accentPrimary;
@@ -203,7 +202,7 @@ Scope {
     Loader {
         active: root.panelVisible
         sourceComponent: PowerMenuOverlay {
-            theme: root.theme || defaultTheme
+            theme: root.theme || Theme
             font: root.font
             actions: root.actions
             selectedIndex: root.selectedIndex

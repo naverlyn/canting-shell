@@ -17,7 +17,7 @@ Rectangle {
     color: root.theme.bgSurface
     border.color: WallpaperService.isConfigured(WallpaperService.browsePath)
         ? (root.theme.accentGreen ?? root.theme.accentPrimary)
-        : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+        : root.theme.bgBorder
     border.width: 1
 
     Behavior on border.color { ColorAnimation { duration: 150 } }
@@ -58,7 +58,7 @@ Rectangle {
                                 height: 20
                                 width: crumbLabel.implicitWidth + 8
                                 radius: 4
-                                color: crumbMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.1)) : "transparent"
+                                color: crumbMouse.containsMouse ? root.theme.bgHover : "transparent"
                                 scale: crumbMouse.containsMouse ? 1.05 : 1.0
 
                                 Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutQuad } }
@@ -71,7 +71,7 @@ Rectangle {
                                     color: index === WallpaperService.getBreadcrumbs(WallpaperService.browsePath).length - 1
                                         ? root.theme.accentPrimary
                                         : root.theme.textPrimary
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                     font.family: root.font
                                     font.bold: index === WallpaperService.getBreadcrumbs(WallpaperService.browsePath).length - 1
                                 }
@@ -88,7 +88,7 @@ Rectangle {
                             Text {
                                 text: "/"
                                 color: root.theme.textMuted
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.family: root.font
                                 anchors.verticalCenter: parent.verticalCenter
                                 visible: index < WallpaperService.getBreadcrumbs(WallpaperService.browsePath).length - 1
@@ -104,7 +104,7 @@ Rectangle {
                     ? "Scanning images..."
                     : (WallpaperService.browseImageCount + " images in this folder")
                 color: root.theme.textSecondary
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 font.family: root.font
             }
         }
@@ -137,7 +137,7 @@ Rectangle {
                 color: parent.isAdded
                     ? (currRemoveHover.containsMouse ? root.theme.bgBase : root.theme.textPrimary)
                     : root.theme.bgBase
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.family: root.font
                 font.bold: true
             }

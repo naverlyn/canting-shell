@@ -10,7 +10,7 @@ Rectangle {
     width: 44
     height: 24
     radius: 12
-    color: sw.checked ? (Style.theme.accentPrimary ?? "#7aa2f7") : (Style.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
+    color: sw.checked ? (Style.theme.accentPrimary ?? "#7aa2f7") : Style.theme.bgSelected
     Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
 
     Behavior on color { ColorAnimation { duration: 160 } }

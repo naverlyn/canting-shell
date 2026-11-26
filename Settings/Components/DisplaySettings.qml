@@ -107,7 +107,7 @@ Item {
     property bool allowTearing: false
 
     function showStatus(msg) {
-        toastBanner.show(msg, false);
+        Style.notify(msg, false);
     }
 
     function closeAllDropdowns() {
@@ -615,7 +615,7 @@ Item {
             contentItem: Rectangle {
                 implicitWidth: 4
                 radius: 2
-                color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.15)
+                color: root.theme.bgBorder
             }
         }
 
@@ -632,7 +632,7 @@ Item {
                 Text {
                     text: "Displays"
                     font.family: root.font
-                    font.pixelSize: 20
+                    font.pixelSize: Style.px(20)
                     font.bold: true
                     color: root.theme.textPrimary
                     Layout.alignment: Qt.AlignVCenter
@@ -656,7 +656,7 @@ Item {
                             ? "1 Display"
                             : (root.activeMonitorCount + " / " + root.editState.length + " Active")
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.accentPrimary
                     }
@@ -705,10 +705,4 @@ Item {
         }
     }
 
-    ToastBanner {
-        id: toastBanner
-        theme: root.theme
-        font: root.font
-        durationMs: 2600
-    }
 }

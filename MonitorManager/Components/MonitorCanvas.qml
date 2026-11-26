@@ -122,6 +122,7 @@ Item {
     horizontalAlignment: Image.AlignHCenter
     verticalAlignment: Image.AlignVCenter
     smooth: false
+    cache: false
     visible: source !== ""
   }
 
@@ -532,6 +533,5 @@ Item {
     }
 
     canvas.monitorsArranged(updated);
-    canvas.monitorMoved(index, Math.round(updated[index].x), Math.round(updated[index].y));
   }
 }

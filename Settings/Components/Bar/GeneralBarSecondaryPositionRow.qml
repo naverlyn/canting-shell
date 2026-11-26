@@ -28,7 +28,7 @@ Item {
             Text {
                 text: "Secondary Bar Position"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
             }
@@ -43,13 +43,16 @@ Item {
             implicitWidth: 380
             menuWidth: 380
             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-            options: [
-                { desktop: "top",    name: "Top",    desc: "" },
-                { desktop: "bottom", name: "Bottom", desc: "" },
-                { desktop: "left",   name: "Left",   desc: "" },
-                { desktop: "right",  name: "Right",  desc: "" }
-            ]
-            currentValue: BarConfig.currentBar ? (BarConfig.currentBar.secondaryPosition || BarConfig.currentBar.position || "top") : (BarConfig.secondaryPosition || BarConfig.position || "top")
+            readonly property bool isSecDI: BarConfig.currentBar ? Boolean(BarConfig.currentBar.secondaryDynamicIsland) : Boolean(BarConfig.secondaryDynamicIsland)
+            options: isSecDI
+                ? [{ desktop: "top", name: "Top (Dynamic Island Exclusive)", desc: "" }]
+                : [
+                    { desktop: "top",    name: "Top",    desc: "" },
+                    { desktop: "bottom", name: "Bottom", desc: "" },
+                    { desktop: "left",   name: "Left",   desc: "" },
+                    { desktop: "right",  name: "Right",  desc: "" }
+                ]
+            currentValue: isSecDI ? "top" : (BarConfig.currentBar ? (BarConfig.currentBar.secondaryPosition || BarConfig.currentBar.position || "top") : (BarConfig.secondaryPosition || BarConfig.position || "top"))
             onSelected: (val) => BarConfig.updateBarProp("secondaryPosition", val)
         }
     }

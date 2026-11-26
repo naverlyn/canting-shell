@@ -82,7 +82,7 @@ ColumnLayout {
                         height: 36
                         radius: 7
                         color: root.theme.bgBase
-                        border.color: appSearchInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                        border.color: appSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                         border.width: 1
 
                         RowLayout {
@@ -94,7 +94,7 @@ ColumnLayout {
                             Text {
                                 text: "󰍉"
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 color: appSearchInput.activeFocus ? root.theme.accentPrimary : root.theme.textMuted
                             }
 
@@ -102,7 +102,7 @@ ColumnLayout {
                                 id: appSearchInput
                                 Layout.fillWidth: true
                                 font.family: root.font
-                                font.pixelSize: 12
+                                font.pixelSize: Style.px(12)
                                 color: root.theme.textPrimary
                                 clip: true
                                 selectByMouse: true
@@ -114,7 +114,7 @@ ColumnLayout {
                                     visible: !parent.text && !parent.activeFocus
                                     text: "Filter applications by name, class, or generic tag..."
                                     font.family: root.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                     color: root.theme.textMuted
                                 }
                             }
@@ -130,7 +130,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: "✕"
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     color: root.theme.textSecondary
                                 }
 
@@ -152,7 +152,7 @@ ColumnLayout {
                         height: 36
                         radius: 7
                         color: root.theme.bgBase
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        border.color: root.theme.bgBorder
                         border.width: 1
 
                         readonly property var filterModes: ["all", "favorites", "hidden"]
@@ -193,7 +193,7 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     radius: 5
-                                    color: !isSel && filterSegHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                    color: !isSel && filterSegHover.hovered ? root.theme.bgHover : "transparent"
                                     Behavior on color { ColorAnimation { duration: 140 } }
 
                                     HoverHandler { id: filterSegHover }
@@ -208,7 +208,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: filterSegBtn.modelData.label
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: filterSegBtn.isSel
                                         color: filterSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                         opacity: filterSegBtn.isSel || filterSegHover.hovered ? 1.0 : 0.75
@@ -263,7 +263,7 @@ ColumnLayout {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: "󰀻"
                                     font.family: root.font
-                                    font.pixelSize: 32
+                                    font.pixelSize: Style.px(32)
                                     color: root.theme.textMuted
                                 }
 
@@ -271,7 +271,7 @@ ColumnLayout {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: root.appSearchQuery ? "No applications found" : "No applications in this category"
                                     font.family: root.font
-                                    font.pixelSize: 13
+                                    font.pixelSize: Style.px(13)
                                     font.bold: true
                                     color: root.theme.textSecondary
                                 }
@@ -333,7 +333,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: "󰀻"
                                         font.family: root.font
-                                        font.pixelSize: 16
+                                        font.pixelSize: Style.px(16)
                                         color: root.theme.accentPrimary
                                         visible: appIconBox.resolvedIcon === ""
                                     }
@@ -351,7 +351,7 @@ ColumnLayout {
                                         Text {
                                             text: (appRowItem.modelData && appRowItem.modelData.name) ? appRowItem.modelData.name : "Unknown Application"
                                             font.family: root.font
-                                            font.pixelSize: 13
+                                            font.pixelSize: Style.px(13)
                                             font.bold: true
                                             color: isHid ? root.theme.textMuted : root.theme.textPrimary
                                         }
@@ -367,7 +367,7 @@ ColumnLayout {
                                                 anchors.centerIn: parent
                                                 text: "󰓎"
                                                 font.family: root.font
-                                                font.pixelSize: 10
+                                                font.pixelSize: Style.px(10)
                                                 color: root.theme.accentOrange
                                             }
                                         }
@@ -384,7 +384,7 @@ ColumnLayout {
                                                 anchors.centerIn: parent
                                                 text: "Hidden"
                                                 font.family: root.font
-                                                font.pixelSize: 9
+                                                font.pixelSize: Style.px(9)
                                                 font.bold: true
                                                 color: root.theme.accentRed
                                             }
@@ -398,7 +398,7 @@ ColumnLayout {
                                             return sub;
                                         }
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         color: root.theme.textMuted
                                         elide: Text.ElideRight
                                         Layout.fillWidth: true
@@ -439,7 +439,7 @@ ColumnLayout {
                                             anchors.centerIn: parent
                                             text: appRowItem.isFav ? "󰓎" : "󰤱"
                                             font.family: root.font
-                                            font.pixelSize: 14
+                                            font.pixelSize: Style.px(14)
                                             color: appRowItem.isFav ? root.theme.accentOrange : (favHover.hovered ? root.theme.textPrimary : root.theme.textMuted)
                                         }
                                     }
@@ -473,7 +473,7 @@ ColumnLayout {
                                             anchors.centerIn: parent
                                             text: appRowItem.isHid ? "󰈈" : "󰈉"
                                             font.family: root.font
-                                            font.pixelSize: 14
+                                            font.pixelSize: Style.px(14)
                                             color: appRowItem.isHid ? root.theme.accentRed : (hidHover.hovered ? root.theme.textPrimary : root.theme.textMuted)
                                         }
                                     }

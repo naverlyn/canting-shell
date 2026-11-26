@@ -5,11 +5,12 @@ import Quickshell.Io
 import "../../bar"
 import ".."
 import "../../utils/ColorUtils.js" as ColorUtils
+import "../../ThemeSwitcher"
 
 Rectangle {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "JetBrainsMono Nerd Font"
     property var moduleData: ({})
     property bool previewMode: false

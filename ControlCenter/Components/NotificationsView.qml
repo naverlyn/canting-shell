@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
@@ -7,18 +8,19 @@ import Quickshell.Services.Notifications
 import ".."
 import "../../notifications"
 import "../../notifications/SocialApps.js" as SocialApps
+import "../../ThemeSwitcher"
 
 Column {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
 
     // 1. Live History Array backed by NotificationService (single source of truth)
     readonly property var historyModel: (NotificationService.history || []).map(h => {
-        const rawImg = String(h.image || "");
+        const rawImg = String(h.cachedImage || h.image || "");
         const normImg = rawImg.startsWith("image://icon//") ? ("file://" + rawImg.slice(13)) : rawImg;
-        const imgStr = normImg.indexOf("image://qsimage/") !== -1 ? "" : normImg;
+        const imgStr = (normImg.indexOf("image://qsimage/") !== -1 || normImg === "__sample__") ? "" : normImg;
         const acts = (h.actions || []).map(a => ({
             label: a.label || "",
             invokeFn: function() { NotificationService.invokeHistoryAction(h.notifId, a.identifier); },
@@ -26,7 +28,7 @@ Column {
         }));
         return {
             notifId: h.notifId,
-            notifAppName: h.displayAppName || h.appName || "Notification",
+            notifAppName: SocialApps.formatAppName(h.displayAppName || h.appName || "", h.socialApp),
             notifAppIcon: h.appIcon || "",
             notifImage: imgStr,
             notifSummary: h.summary || "New Notification",
@@ -280,7 +282,7 @@ Column {
                         Rectangle {
                             id: notifDelegate
                             property var notif: notifWrap.modelData
-                            property int currentNotifId: notifWrap.modelData.notifId
+                            property string currentNotifId: String(notifWrap.modelData.notifId || "")
 
                             width: parent.width
                             height: notifCardCol.implicitHeight + 24
@@ -346,51 +348,118 @@ Column {
                                     Layout.fillWidth: true
                                     spacing: 12
 
-                                    // Left: App Icon / Notification Image
+                                    // Left: Contact Profile Picture / Notification Image FIRST, then App Icon / Wave Glyph
                                     Rectangle {
-                                        Layout.preferredWidth: 36
-                                        Layout.preferredHeight: 36
-                                        radius: 6
-                                        color: (appIconImg.status === Image.Ready || notifImg.status === Image.Ready)
+                                        id: ccIconBox
+                                        readonly property bool hasAvatar: notifAvatarImg.status === Image.Ready
+                                        readonly property bool hasAnyIcon: hasAvatar || appIconImg.status === Image.Ready || notifImg.status === Image.Ready || ccGlyphText.text !== ""
+                                        readonly property bool isSocial: SocialApps.detectApp(
+                                            notifDelegate.notif.notifAppName,
+                                            notifDelegate.notif.notifAppIcon,
+                                            notifDelegate.notif.notifSummary,
+                                            notifDelegate.notif.notifBody
+                                        ) !== null
+                                        visible: hasAnyIcon
+                                        Layout.preferredWidth: hasAnyIcon ? 36 : 0
+                                        Layout.preferredHeight: hasAnyIcon ? 36 : 0
+                                        radius: (hasAvatar && isSocial) ? 18 : 8
+                                        color: (hasAvatar || appIconImg.status === Image.Ready || notifImg.status === Image.Ready)
                                             ? "transparent"
                                             : Qt.rgba(1, 1, 1, 0.08)
                                         Layout.alignment: Qt.AlignTop
                                         clip: true
+
+                                        Rectangle {
+                                            id: ccAvatarMask
+                                            anchors.fill: parent
+                                            radius: ccIconBox.isSocial ? (width / 2) : 8
+                                            antialiasing: true
+                                            visible: false
+                                            layer.enabled: ccIconBox.hasAvatar && notifWrap.isVisibleInStack
+                                            layer.smooth: true
+                                            layer.textureSize: Qt.size(72, 72)
+                                        }
+
+                                        Item {
+                                            anchors.fill: parent
+                                            visible: Boolean(notifDelegate.notif.notifImage)
+                                            opacity: ccIconBox.hasAvatar ? 1.0 : 0.0
+                                            layer.enabled: ccIconBox.hasAvatar && notifWrap.isVisibleInStack
+                                            layer.smooth: true
+                                            layer.effect: MultiEffect {
+                                                maskEnabled: true
+                                                maskSource: ccAvatarMask
+                                                maskThresholdMin: 0.35
+                                                maskSpreadAtMin: 0.3
+                                            }
+
+                                            Image {
+                                                id: notifAvatarImg
+                                                anchors.fill: parent
+                                                source: notifDelegate.notif.notifImage ? notifDelegate.notif.notifImage : ""
+                                                sourceSize.width: 72
+                                                sourceSize.height: 72
+                                                cache: false
+                                                asynchronous: true
+                                                fillMode: Image.PreserveAspectCrop
+                                                visible: source !== "" && status === Image.Ready
+                                            }
+                                        }
 
                                         IconImage {
                                             id: appIconImg
                                             anchors.centerIn: parent
                                             implicitSize: 28
                                             source: {
-                                                let icon = notifDelegate.notif.notifAppIcon;
-                                                if (icon && icon !== "") return Quickshell.iconPath(icon, true);
+                                                if (ccIconBox.hasAvatar) return "";
+                                                let icon = String(notifDelegate.notif.notifAppIcon || "").trim();
                                                 let app = (notifDelegate.notif.notifAppName || "").toLowerCase();
                                                 let sum = (notifDelegate.notif.notifSummary || "").toLowerCase();
                                                 let body = (notifDelegate.notif.notifBody || "").toLowerCase();
                                                 let sApp = SocialApps.detectApp(app, icon, sum, body);
-                                                if (sApp && sApp.appIcon) return Quickshell.iconPath(sApp.appIcon, true);
+                                                if (sApp && sApp.appIcon) {
+                                                    let sp = Quickshell.iconPath(sApp.appIcon, true) || "";
+                                                    if (sp && !sp.startsWith("file://") && !sp.startsWith("/")) return sp;
+                                                }
+                                                if (icon && icon !== "" && icon.indexOf("/tmp/") === -1 && icon.indexOf("scoped_dir") === -1) {
+                                                    if (icon.startsWith("image://icon/")) {
+                                                        let validated = Quickshell.iconPath(icon.slice(13), true) || "";
+                                                        if (validated && !validated.startsWith("file://") && !validated.startsWith("/")) return validated;
+                                                    } else if (!icon.startsWith("file://") && !icon.startsWith("/") && !icon.startsWith("image://")) {
+                                                        let validated = Quickshell.iconPath(icon, true) || "";
+                                                        if (validated && !validated.startsWith("file://") && !validated.startsWith("/")) return validated;
+                                                    }
+                                                }
                                                 if (app.includes("brave")) return Quickshell.iconPath("brave-desktop", true);
                                                 if (app.includes("firefox")) return Quickshell.iconPath("firefox", true);
                                                 if (app.includes("spotify")) return Quickshell.iconPath("spotify", true);
                                                 return "";
                                             }
-                                            visible: status === Image.Ready
+                                            visible: !ccIconBox.hasAvatar && source !== "" && status === Image.Ready
                                         }
 
                                         Image {
                                             id: notifImg
                                             anchors.centerIn: parent
                                             width: 28; height: 28
-                                            source: notifDelegate.notif.notifImage ? notifDelegate.notif.notifImage : ""
+                                            source: {
+                                                if (ccIconBox.hasAvatar) return "";
+                                                let icon = String(notifDelegate.notif.notifAppIcon || "").trim();
+                                                if (icon.startsWith("file://")) return icon;
+                                                if (icon.startsWith("/")) return "file://" + icon;
+                                                if (icon.startsWith("image://icon//")) return "file://" + icon.slice(13);
+                                                return "";
+                                            }
                                             sourceSize.width: 56
                                             sourceSize.height: 56
                                             cache: false
                                             asynchronous: true
                                             fillMode: Image.PreserveAspectFit
-                                            visible: status === Image.Ready && appIconImg.status !== Image.Ready
+                                            visible: !ccIconBox.hasAvatar && status === Image.Ready && appIconImg.status !== Image.Ready
                                         }
 
                                         Text {
+                                            id: ccGlyphText
                                             anchors.centerIn: parent
                                             text: {
                                                 let sApp = SocialApps.detectApp(notifDelegate.notif.notifAppName, notifDelegate.notif.notifAppIcon, notifDelegate.notif.notifSummary, notifDelegate.notif.notifBody);
@@ -401,7 +470,7 @@ Column {
                                                 if (name.includes("spotify"))  return "󰓇";
                                                 if (name.includes("gmail") || name.includes("mail")) return "󰊫";
                                                 if (name.includes("terminal") || name.includes("kitty") || name.includes("alacritty")) return "󰞷";
-                                                return "󰂚";
+                                                return "";
                                             }
                                             font.family: root.font
                                             font.pixelSize: 14
@@ -409,7 +478,7 @@ Column {
                                                 let sApp = SocialApps.detectApp(notifDelegate.notif.notifAppName, notifDelegate.notif.notifAppIcon, notifDelegate.notif.notifSummary, notifDelegate.notif.notifBody);
                                                 return sApp ? sApp.color : root.theme.accentPrimary;
                                             }
-                                            visible: appIconImg.status !== Image.Ready && notifImg.status !== Image.Ready
+                                            visible: !ccIconBox.hasAvatar && appIconImg.status !== Image.Ready && notifImg.status !== Image.Ready && text !== ""
                                         }
                                     }
 

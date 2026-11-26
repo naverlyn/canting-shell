@@ -79,7 +79,7 @@ PopupWindow {
       const widgetCenter = widgetRect.x + (widgetRect.width / 2);
       const popupW = sharedPopup.targetCardW;
       const desiredX = Math.round(widgetCenter - (popupW / 2));
-      const scrW = scr ? scr.width : win.width;
+      const scrW = win.width > 0 ? win.width : (scr ? scr.width : 1920);
 
       if (sharedPopup.fluidEnabled && desiredX <= joinThreshold) {
         sharedPopup.joinLeft = true;
@@ -101,7 +101,7 @@ PopupWindow {
       const widgetCenter = widgetRect.y + (widgetRect.height / 2);
       const popupH = sharedPopup.targetCardH;
       const desiredY = Math.round(widgetCenter - (popupH / 2));
-      const scrH = scr ? scr.height : win.height;
+      const scrH = win.height > 0 ? win.height : (scr ? scr.height : 1080);
 
       if (sharedPopup.fluidEnabled && desiredY <= joinThreshold) {
         sharedPopup.joinTop = true;
@@ -209,8 +209,8 @@ PopupWindow {
   color: "transparent"
 
   readonly property int maxPopupExtent: 640
-  implicitWidth: isVert ? maxPopupExtent : (barWindow && barWindow.screen ? barWindow.screen.width : 1920)
-  implicitHeight: !isVert ? maxPopupExtent : (barWindow && barWindow.screen ? barWindow.screen.height : 1080)
+  implicitWidth: isVert ? maxPopupExtent : (barWindow && barWindow.width > 0 ? barWindow.width : (barWindow && barWindow.screen ? barWindow.screen.width : 1920))
+  implicitHeight: !isVert ? maxPopupExtent : (barWindow && barWindow.height > 0 ? barWindow.height : (barWindow && barWindow.screen ? barWindow.screen.height : 1080))
 
   // Only capture pointer events inside the animated morphCard
   mask: Region {
@@ -232,10 +232,11 @@ PopupWindow {
   }
   anchor.onAnchoring: {
     if (!barWindow) return;
+    const barH = (barWindow.visualBarThickness !== undefined && barWindow.visualBarThickness > 0) ? barWindow.visualBarThickness : barWindow.height;
     if (barPosition === "top" || barPosition === "bottom") {
-      anchor.rect = Qt.rect(0, 0, Math.max(1, implicitWidth), Math.max(1, barWindow.height));
+      anchor.rect = Qt.rect(0, 0, Math.max(1, barWindow.width > 0 ? barWindow.width : implicitWidth), Math.max(1, barH));
     } else {
-      anchor.rect = Qt.rect(0, 0, Math.max(1, barWindow.width), Math.max(1, implicitHeight));
+      anchor.rect = Qt.rect(0, 0, Math.max(1, barWindow.width), Math.max(1, barWindow.height > 0 ? barWindow.height : implicitHeight));
     }
     updateTargetPosition();
   }

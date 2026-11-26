@@ -57,11 +57,11 @@ Rectangle {
                         implicitWidth: sModeText.implicitWidth + 16
                         radius: 6
                         color: root.previewMode === sModeItem.id
-                            ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12))
-                            : (sModeHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.05)) : root.theme.bgBase)
+                            ? root.theme.bgSelected
+                            : (sModeHover.hovered ? root.theme.bgHover : root.theme.bgBase)
                         border.color: root.previewMode === sModeItem.id
                             ? root.theme.accentPrimary
-                            : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+                            : root.theme.bgBorder
                         border.width: 1
 
                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -138,7 +138,7 @@ Rectangle {
                 height: 72
                 radius: 6
                 anchors.centerIn: parent
-                color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12)
+                color: root.theme.bgSelected
                 border.color: root.theme.accentPrimary
                 border.width: 1.5
 
@@ -253,7 +253,7 @@ Rectangle {
                     height: 60
                     radius: 6
                     anchors.horizontalCenter: parent.horizontalCenter
-                    color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15)
+                    color: root.theme.bgSelected
                     border.color: root.theme.accentPrimary
                     border.width: 1.5
 
@@ -334,7 +334,7 @@ Rectangle {
                     width: 110
                     height: 60
                     radius: 6
-                    color: root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.12)
+                    color: root.theme.bgSelected
                     border.color: root.theme.accentPrimary
                     border.width: 1.5
 

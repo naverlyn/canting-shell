@@ -16,8 +16,8 @@ ColumnLayout {
         Layout.fillWidth: true
         height: 200
         radius: 8
-        color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
-        border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
+        color: root.theme.bgBase
+        border.color: root.theme.bgBorder
         border.width: 1
         clip: true
 
@@ -29,8 +29,8 @@ ColumnLayout {
             implicitWidth: dimLabel.implicitWidth + 12
             height: 22
             radius: 5
-            color: (root.theme && root.theme.bgSurface) ? root.theme.bgSurface : Qt.rgba(1, 1, 1, 0.08)
-            border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
+            color: root.theme.bgSurface
+            border.color: root.theme.bgBorder
             border.width: 1
             z: 10
 
@@ -69,8 +69,8 @@ ColumnLayout {
                     Layout.fillWidth: true
                     height: 16
                     radius: 4
-                    color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
-                    border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.1)
+                    color: root.theme.bgBase
+                    border.color: root.theme.bgBorder
                     border.width: 1
 
                     RowLayout {
@@ -107,7 +107,7 @@ ColumnLayout {
                             radius: 3
                             color: index === 0
                                 ? (root.theme.accentPrimary)
-                                : ((root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(1, 1, 1, 0.08))
+                                : root.theme.bgBase
                             opacity: index === 0 ? 0.9 : 0.5
                         }
                     }
@@ -125,10 +125,10 @@ ColumnLayout {
                             Layout.fillWidth: true
                             height: 14
                             radius: 3
-                            color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.2)
+                            color: root.theme.bgBase
                             border.color: index === 0
                                 ? (root.theme.accentPrimary)
-                                : ((root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.05))
+                                : root.theme.bgBorder
                             border.width: index === 0 ? 1 : 0.5
 
                             RowLayout {

@@ -270,7 +270,7 @@ ColumnLayout {
                             width: parent.width
                             text: "Wipe Clipboard History"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.accentRed
                             elide: Text.ElideRight
@@ -280,7 +280,7 @@ ColumnLayout {
                             width: parent.width
                             text: "Permanently delete all stored clips in ~/.cache/cliphist/db and thumbnail cache"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textMuted
                             elide: Text.ElideRight
                         }
@@ -316,7 +316,7 @@ ColumnLayout {
                             width: parent.width
                             text: "Reset All Clipboard Settings"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                             elide: Text.ElideRight
@@ -326,7 +326,7 @@ ColumnLayout {
                             width: parent.width
                             text: "Revert dimensions, category filters, and detection toggles to default values"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textMuted
                             elide: Text.ElideRight
                         }

@@ -2,11 +2,13 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import "../../../Lockscreen"
+import "../../../ThemeSwitcher"
+import "../Common"
 
 Item {
     id: modalRoot
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: (modalRoot.theme && modalRoot.theme.fontFamily) ? modalRoot.theme.fontFamily : "Lato Nerd Font"
 
     signal moduleChosen(string modType)
@@ -80,14 +82,14 @@ Item {
                     Text {
                         text: "Add Lock Screen Module"
                         font.family: modalRoot.font
-                        font.pixelSize: 15
+                        font.pixelSize: Style.px(15)
                         font.bold: true
                         color: modalRoot.theme.textPrimary
                     }
                     Text {
                         text: "Select a component to place on your lock screen"
                         font.family: modalRoot.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: modalRoot.theme.textSecondary
                     }
                 }
@@ -106,7 +108,7 @@ Item {
                         anchors.centerIn: parent
                         text: "✕"
                         font.family: modalRoot.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: modalRoot.theme.textSecondary
                     }
 
@@ -164,7 +166,7 @@ Item {
                                     anchors.centerIn: parent
                                     text: itemCard.modelData.icon
                                     font.family: modalRoot.font
-                                    font.pixelSize: 16
+                                    font.pixelSize: Style.px(16)
                                     color: modalRoot.theme.accentPrimary
                                 }
                             }
@@ -176,7 +178,7 @@ Item {
                                 Text {
                                     text: itemCard.modelData.name
                                     font.family: modalRoot.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                     font.bold: true
                                     color: modalRoot.theme.textPrimary
                                 }
@@ -184,7 +186,7 @@ Item {
                                 Text {
                                     text: itemCard.modelData.desc
                                     font.family: modalRoot.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     color: modalRoot.theme.textMuted
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true

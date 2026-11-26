@@ -43,6 +43,7 @@ DEFAULT_CONFIGS = {
     "app_launcher_config.json": {
         "spotlightWidth": 620,
         "spotlightHeight": 480,
+        "spotlightPosition": "center",
         "defaultMode": "apps",
         "sortMode": "frecency",
         "matchGenericName": True,

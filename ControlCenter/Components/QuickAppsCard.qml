@@ -5,11 +5,12 @@ import Quickshell.Io
 import Quickshell.Widgets
 import ".."
 import "../../utils/AppFrecencyUtils.js" as AppFrecencyUtils
+import "../../ThemeSwitcher"
 
 Rectangle {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
 
     signal closeParentRequested()

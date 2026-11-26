@@ -39,7 +39,7 @@ Rectangle {
             Text {
                 text: root.editingRuleName !== "" ? ("Edit Lua Rule: " + root.editingRuleName) : "Create New Lua Window / Layer Rule"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.accentPrimary
             }
@@ -47,7 +47,7 @@ Rectangle {
             Text {
                 text: "Configs/WindowWorkspaces.lua"
                 font.family: root.font
-                font.pixelSize: 10
+                font.pixelSize: Style.px(10)
                 color: root.theme.textMuted
             }
         }
@@ -60,7 +60,7 @@ Rectangle {
             Text {
                 text: "Type:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -73,7 +73,7 @@ Rectangle {
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.color: root.theme.bgBorder
                 border.width: 1
 
                 readonly property int activeIdx: root.formRuleType === "layer_rule" ? 1 : 0
@@ -109,7 +109,7 @@ Rectangle {
                             Layout.fillWidth: true
                             Layout.fillHeight: true
                             radius: 5
-                            color: !isSel && rtHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                            color: !isSel && rtHover.hovered ? root.theme.bgHover : "transparent"
                             Behavior on color { ColorAnimation { duration: 140 } }
 
                             HoverHandler { id: rtHover }
@@ -118,7 +118,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: modelData.label
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: isSel
                                 color: isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                 opacity: isSel || rtHover.hovered ? 1.0 : 0.75
@@ -138,7 +138,7 @@ Rectangle {
             Text {
                 text: "Name:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
             }
@@ -160,7 +160,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.formRuleName
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     selectByMouse: true
@@ -169,7 +169,7 @@ Rectangle {
                     Text {
                         text: "Unique rule identifier (e.g. my-custom-float)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !formNameInput.text && !formNameInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -186,7 +186,7 @@ Rectangle {
             Text {
                 text: "Match:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -210,7 +210,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.formMatchClass
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     selectByMouse: true
@@ -219,7 +219,7 @@ Rectangle {
                     Text {
                         text: "class regex (e.g. ^([Ff]irefox|org.mozilla.firefox)$)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !formClassInput.text && !formClassInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -245,7 +245,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.formMatchNamespace
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     selectByMouse: true
@@ -254,7 +254,7 @@ Rectangle {
                     Text {
                         text: "layer namespace (e.g. rofi, notifications, quickshell:overview)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !formNsInput.text && !formNsInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -272,7 +272,7 @@ Rectangle {
             Text {
                 text: "Filter:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -295,7 +295,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.formMatchTitle
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     selectByMouse: true
@@ -304,7 +304,7 @@ Rectangle {
                     Text {
                         text: "title regex (optional, e.g. ^(Picture-in-Picture|Save File)$)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !formTitleInput.text && !formTitleInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -329,7 +329,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.formMatchTag
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     selectByMouse: true
@@ -338,7 +338,7 @@ Rectangle {
                     Text {
                         text: "match tag (e.g. browser*)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !formTagMatchInput.text && !formTagMatchInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -356,7 +356,7 @@ Rectangle {
             Text {
                 text: "Flags:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -368,7 +368,7 @@ Rectangle {
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.color: root.theme.bgBorder
                 border.width: 1
 
                 RowLayout {
@@ -400,7 +400,7 @@ Rectangle {
                             implicitWidth: flagTxt.implicitWidth + 18
                             Layout.fillHeight: true
                             radius: 5
-                            color: isOn ? root.theme.bgSelected : (flagHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                            color: isOn ? root.theme.bgSelected : (flagHover.hovered ? root.theme.bgHover : "transparent")
                             border.color: isOn ? root.theme.accentPrimary : "transparent"
                             border.width: 1
                             scale: flagMouse.pressed ? 0.96 : 1.0
@@ -416,7 +416,7 @@ Rectangle {
                                 anchors.centerIn: parent
                                 text: modelData.label
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: isOn
                                 color: isOn ? root.theme.accentPrimary : root.theme.textPrimary
                                 opacity: isOn || flagHover.hovered ? 1.0 : 0.75
@@ -454,7 +454,7 @@ Rectangle {
             Text {
                 text: "Values:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -477,7 +477,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.formEffectOpacity
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     selectByMouse: true
@@ -486,7 +486,7 @@ Rectangle {
                     Text {
                         text: "opacity (e.g. 0.9 0.8)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !formOpInput.text && !formOpInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -511,7 +511,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.formEffectSize
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     selectByMouse: true
@@ -520,7 +520,7 @@ Rectangle {
                     Text {
                         text: "size (e.g. (monitor_w*0.7) (monitor_h*0.7))"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !formSizeInput.text && !formSizeInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -545,7 +545,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.formEffectWorkspace
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     selectByMouse: true
@@ -554,7 +554,7 @@ Rectangle {
                     Text {
                         text: "workspace (e.g. 2)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !formWsInput.text && !formWsInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -579,7 +579,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.formEffectTag
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     selectByMouse: true
@@ -588,7 +588,7 @@ Rectangle {
                     Text {
                         text: "assign tag (+browser)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !formAssignTagInput.text && !formAssignTagInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -606,7 +606,7 @@ Rectangle {
             Text {
                 text: "Layer:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 70
@@ -617,14 +617,14 @@ Rectangle {
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.color: root.theme.bgBorder
                 border.width: 1
 
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 3
                     radius: 5
-                    color: root.formLayerBlur ? root.theme.bgSelected : (layerBlurHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent")
+                    color: root.formLayerBlur ? root.theme.bgSelected : (layerBlurHover.hovered ? root.theme.bgHover : "transparent")
                     border.color: root.formLayerBlur ? root.theme.accentPrimary : "transparent"
                     border.width: 1
                     scale: layerBlurMouse.pressed ? 0.96 : 1.0
@@ -639,7 +639,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Blur Layer"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: root.formLayerBlur
                         color: root.formLayerBlur ? root.theme.accentPrimary : root.theme.textPrimary
                         opacity: root.formLayerBlur || layerBlurHover.hovered ? 1.0 : 0.75
@@ -672,7 +672,7 @@ Rectangle {
                     verticalAlignment: TextInput.AlignVCenter
                     text: root.formLayerIgnoreAlpha
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: root.theme.textPrimary
                     clip: true
                     selectByMouse: true
@@ -681,7 +681,7 @@ Rectangle {
                     Text {
                         text: "ignore_alpha (e.g. 0.5)"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                         visible: !formIgnoreAlphaInput.text && !formIgnoreAlphaInput.activeFocus
                         anchors.verticalCenter: parent.verticalCenter
@@ -703,7 +703,7 @@ Rectangle {
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.color: root.theme.bgBorder
                 border.width: 1
 
                 Rectangle {
@@ -726,7 +726,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Delete Rule"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: delRuleHover.hovered ? "#f7768e" : root.theme.textSecondary
                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -748,14 +748,14 @@ Rectangle {
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.color: root.theme.bgBorder
                 border.width: 1
 
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 3
                     radius: 5
-                    color: cancelRuleHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                    color: cancelRuleHover.hovered ? root.theme.bgHover : "transparent"
                     scale: cancelRuleMouse.pressed ? 0.96 : 1.0
 
                     Behavior on color { ColorAnimation { duration: 150 } }
@@ -768,7 +768,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Cancel"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: cancelRuleHover.hovered ? root.theme.textPrimary : root.theme.textSecondary
                         Behavior on color { ColorAnimation { duration: 140 } }
@@ -792,7 +792,7 @@ Rectangle {
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
-                border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                border.color: root.theme.bgBorder
                 border.width: 1
                 opacity: canSave ? 1.0 : 0.45
 
@@ -816,7 +816,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: root.editingRuleName !== "" ? "Save Rule Changes" : "Add Lua Rule"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: parent.parent.canSave ? root.theme.accentPrimary : root.theme.textMuted
                         Behavior on color { ColorAnimation { duration: 140 } }

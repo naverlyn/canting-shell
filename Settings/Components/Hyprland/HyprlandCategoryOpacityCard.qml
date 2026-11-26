@@ -114,7 +114,7 @@ ColumnLayout {
                             Text {
                                 text: catOpDelegate.modelData.title
                                 font.family: root.font
-                                font.pixelSize: 13
+                                font.pixelSize: Style.px(13)
                                 font.bold: true
                                 color: root.theme.textPrimary
                             }
@@ -133,7 +133,7 @@ ColumnLayout {
                             height: 32
                             radius: 7
                             color: root.theme.bgBase
-                            border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                            border.color: root.theme.bgBorder
                             border.width: 1
 
                             Behavior on opacity { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
@@ -175,7 +175,7 @@ ColumnLayout {
                                         Layout.fillWidth: true
                                         Layout.fillHeight: true
                                         radius: 5
-                                        color: !isSel && pHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                        color: !isSel && pHover.hovered ? root.theme.bgHover : "transparent"
                                         Behavior on color { ColorAnimation { duration: 140 } }
 
                                         HoverHandler { id: pHover }
@@ -184,7 +184,7 @@ ColumnLayout {
                                             anchors.centerIn: parent
                                             text: opSegBtn.modelData.label
                                             font.family: root.font
-                                            font.pixelSize: 11
+                                            font.pixelSize: Style.px(11)
                                             font.bold: isSel
                                             color: isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                             opacity: isSel || pHover.hovered ? 1.0 : 0.75
@@ -211,7 +211,7 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
                                     radius: 5
-                                    color: !isSel && opCustHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                                    color: !isSel && opCustHover.hovered ? root.theme.bgHover : "transparent"
                                     Behavior on color { ColorAnimation { duration: 140 } }
 
                                     HoverHandler { id: opCustHover }
@@ -222,7 +222,7 @@ ColumnLayout {
                                             ? (Math.round(catOpDelegate.actVal * 100) + "/" + Math.round(catOpDelegate.inactVal * 100))
                                             : "Custom"
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: opCustomSegBtn.isSel
                                         color: opCustomSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                         opacity: opCustomSegBtn.isSel || opCustHover.hovered ? 1.0 : 0.75
@@ -297,7 +297,7 @@ ColumnLayout {
                             Text {
                                 text: "Active Opacity:"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: root.theme.textSecondary
                             }
@@ -354,7 +354,7 @@ ColumnLayout {
                             Text {
                                 text: Math.round(catOpDelegate.actVal * 100) + "%"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: root.theme.accentPrimary
                                 Layout.preferredWidth: 36
@@ -370,7 +370,7 @@ ColumnLayout {
                             Text {
                                 text: "Inactive Opacity:"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: root.theme.textSecondary
                             }
@@ -427,7 +427,7 @@ ColumnLayout {
                             Text {
                                 text: Math.round(catOpDelegate.inactVal * 100) + "%"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: root.theme.accentPrimary
                                 Layout.preferredWidth: 36

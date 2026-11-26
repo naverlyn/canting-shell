@@ -24,7 +24,7 @@ Rectangle {
             Text {
                 text: "Import Backup Archive (.tar.gz)"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
                 Layout.fillWidth: true
@@ -44,7 +44,7 @@ Rectangle {
                 height: 32
                 radius: 7
                 color: root.theme.bgBase
-                border.color: importInput.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                border.color: importInput.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                 border.width: 1
 
                 TextInput {
@@ -54,7 +54,7 @@ Rectangle {
                     anchors.rightMargin: 10
                     verticalAlignment: TextInput.AlignVCenter
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: root.theme.textPrimary
                     selectByMouse: true
                     text: root.importFilePath
@@ -66,7 +66,7 @@ Rectangle {
                         verticalAlignment: Text.AlignVCenter
                         text: "Choose a .tar.gz archive or paste its path..."
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textMuted
                     }
                 }

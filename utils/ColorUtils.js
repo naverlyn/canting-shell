@@ -63,6 +63,9 @@ const _TOKEN_MAP = {
 
 function withAlpha(col, alpha) {
     if (!col) return Qt.rgba(0, 0, 0, alpha);
+    if (typeof col === "object" && col.r !== undefined) {
+        return Qt.rgba(col.r, col.g, col.b, alpha);
+    }
     const c = Qt.color(col);
     return Qt.rgba(c.r, c.g, c.b, alpha);
 }

@@ -80,7 +80,7 @@ ColumnLayout {
                         Text {
                             text: "Brightness Scroll Step"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -143,7 +143,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: brStepBtn.modelData.label
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: brStepBtn.isSel
                                         color: brStepBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                     }

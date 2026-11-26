@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import ".."
 import "./Appearance"
+import "./Common"
 
 Item {
     id: root
@@ -91,7 +92,7 @@ Item {
         Text {
             text: "Appearance"
             font.family: root.font
-            font.pixelSize: 18
+            font.pixelSize: Style.px(18)
             font.bold: true
             color: root.theme.textPrimary
             Layout.fillWidth: true
@@ -126,7 +127,7 @@ Item {
                         anchors.centerIn: parent
                         text: "󰏘"
                         font.family: root.font
-                        font.pixelSize: 24
+                        font.pixelSize: Style.px(24)
                         color: root.theme.accentPrimary
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
@@ -141,7 +142,7 @@ Item {
                         Text {
                             text: "System Color Scheme"
                             font.family: root.font
-                            font.pixelSize: 14
+                            font.pixelSize: Style.px(14)
                             font.bold: true
                             color: root.theme.textPrimary
                             Behavior on color { ColorAnimation { duration: 150 } }
@@ -162,7 +163,7 @@ Item {
                                 id: badgeText
                                 anchors.centerIn: parent
                                 font.family: root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: true
                                 color: root.theme.accentPrimary
                                 text: root.theme.wallpaperMode
@@ -174,7 +175,7 @@ Item {
 
                     Text {
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: root.theme.textSecondary
                         text: root.hoveredAccentName !== ""
                               ? ("Hovering: " + root.hoveredAccentName + " accent")

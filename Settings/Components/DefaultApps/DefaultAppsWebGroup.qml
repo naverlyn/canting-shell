@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import "../Common"
 
 ColumnLayout {
     id: webGroup
@@ -11,7 +12,7 @@ ColumnLayout {
     Text {
         text: "Web & Productivity"
         font.family: webGroup.root.font
-        font.pixelSize: 13
+        font.pixelSize: Style.px(13)
         font.bold: true
         color: webGroup.root.theme.textSecondary
         Layout.leftMargin: 4
@@ -22,7 +23,7 @@ ColumnLayout {
         implicitHeight: webCol.implicitHeight + 16
         radius: 12
         color: webGroup.root.theme.bgSurface
-        border.color: webGroup.root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: webGroup.root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -52,13 +53,7 @@ ColumnLayout {
                 }
             }
 
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             DefaultAppSelectorRow {
                 theme: webGroup.root.theme
@@ -77,13 +72,7 @@ ColumnLayout {
                 }
             }
 
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 12
-                Layout.rightMargin: 12
-                height: 1
-                color: Qt.rgba(1, 1, 1, 0.05)
-            }
+            RowDivider {}
 
             DefaultAppSelectorRow {
                 theme: webGroup.root.theme

@@ -34,7 +34,7 @@ ColumnLayout {
                 Text {
                     text: "Mirror Display"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -55,7 +55,7 @@ ColumnLayout {
                     ? root.theme.accentPrimary
                     : (mirPillHover.hovered
                         ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.5)
-                        : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
+                        : root.theme.bgBorder)
                 border.width: mirPopup.visible ? 1.5 : 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -74,7 +74,7 @@ ColumnLayout {
                             ? ("Mirroring " + root.selectedMonitor.mirrorOf)
                             : "None (Extend Desktop)"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textPrimary
                         elide: Text.ElideRight
@@ -84,7 +84,7 @@ ColumnLayout {
                     Text {
                         text: "󰅀"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         color: mirPopup.visible ? root.theme.accentPrimary : root.theme.textSecondary
                         rotation: mirPopup.visible ? 180 : 0
                         Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -171,7 +171,7 @@ ColumnLayout {
                                     Text {
                                         text: mirOptItem.modelData.label
                                         font.family: root.font
-                                        font.pixelSize: 12
+                                        font.pixelSize: Style.px(12)
                                         font.bold: mirOptItem.isSelected
                                         color: mirOptItem.isSelected ? root.theme.accentPrimary : root.theme.textPrimary
                                         Layout.fillWidth: true

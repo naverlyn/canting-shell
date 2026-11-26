@@ -69,7 +69,7 @@ ColumnLayout {
                     Text {
                         text: "Targets:"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.textSecondary
                     }
@@ -119,7 +119,7 @@ ColumnLayout {
                             Text {
                                 text: "Bar Background"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: barTargetBtn.isTarget
                                 color: barTargetBtn.isTarget ? root.theme.accentPrimary : root.theme.textPrimary
                             }
@@ -145,7 +145,7 @@ ColumnLayout {
                     Text {
                         text: "Panels:"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         font.bold: true
                         color: root.theme.textSecondary
                     }
@@ -183,7 +183,7 @@ ColumnLayout {
                                 anchors.centerIn: parent
                                 text: BarConfig.getPanelTitle(panelTargetBtn.index)
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: panelTargetBtn.isTarget
                                 color: panelTargetBtn.isTarget ? panelTargetBtn.pCol : root.theme.textPrimary
                             }
@@ -268,7 +268,7 @@ ColumnLayout {
                             Text {
                                 text: colorBlockCard.modelData.icon
                                 font.family: root.font
-                                font.pixelSize: 14
+                                font.pixelSize: Style.px(14)
                                 color: colorBlockCard.resolvedCol
                                 horizontalAlignment: Text.AlignHCenter
                                 Layout.preferredWidth: 18
@@ -283,7 +283,7 @@ ColumnLayout {
                                 Text {
                                     text: colorBlockCard.modelData.name
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: true
                                     color: root.theme.textPrimary
                                     elide: Text.ElideRight
@@ -293,7 +293,7 @@ ColumnLayout {
                                 Text {
                                     text: colorBlockCard.panelBadge + " · " + root.getSpecLabel(colorBlockCard.spec)
                                     font.family: root.font
-                                    font.pixelSize: 9
+                                    font.pixelSize: Style.px(9)
                                     color: colorBlockCard.hasCustom ? colorBlockCard.resolvedCol : root.theme.textMuted
                                     elide: Text.ElideRight
                                     Layout.fillWidth: true

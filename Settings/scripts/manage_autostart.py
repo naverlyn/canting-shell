@@ -93,18 +93,49 @@ def get_xdg_apps():
     return sorted(list(apps.values()), key=lambda x: x["name"].lower())
 
 
+_RUNNING_PROCS_CACHE = None
+
+def _get_running_procs():
+    global _RUNNING_PROCS_CACHE
+    if _RUNNING_PROCS_CACHE is not None:
+        return _RUNNING_PROCS_CACHE
+    names = set()
+    cmdlines = []
+    try:
+        for pid in os.listdir("/proc"):
+            if not pid.isdigit():
+                continue
+            try:
+                with open(f"/proc/{pid}/comm", "r", encoding="utf-8", errors="ignore") as f:
+                    c = f.read().strip()
+                    if c:
+                        names.add(c)
+                with open(f"/proc/{pid}/cmdline", "rb") as f:
+                    raw = f.read().replace(b"\x00", b" ").decode("utf-8", errors="ignore").strip()
+                    if raw:
+                        cmdlines.append(raw)
+            except Exception:
+                continue
+    except Exception:
+        pass
+    _RUNNING_PROCS_CACHE = (names, cmdlines)
+    return _RUNNING_PROCS_CACHE
+
+
 def is_process_running(cmd_str):
     if not cmd_str:
         return False
-    # Extract first binary name
     bin_name = cmd_str.split()[0]
     bin_name = os.path.basename(bin_name).replace(".sh", "")
-    try:
-        # Check using pgrep
-        res = subprocess.run(["pgrep", "-f", bin_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return res.returncode == 0
-    except Exception:
+    if not bin_name:
         return False
+    names, cmdlines = _get_running_procs()
+    if bin_name in names or bin_name[:15] in names:
+        return True
+    for cl in cmdlines:
+        if bin_name in cl:
+            return True
+    return False
 
 
 def get_hyprland_commands():
@@ -477,7 +508,15 @@ def test_run_cmd(cmd):
     if not cmd:
         return {"success": False, "error": "Empty command"}
     try:
-        subprocess.Popen(cmd, shell=True, start_new_session=True)
+        subprocess.Popen(
+            cmd,
+            shell=True,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            close_fds=True,
+            start_new_session=True
+        )
         return {"success": True, "message": f"Started '{cmd}'"}
     except Exception as e:
         return {"success": False, "error": str(e)}

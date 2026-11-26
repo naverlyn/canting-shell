@@ -41,7 +41,7 @@ Rectangle {
     color: theme.bgSurface
     border.color: badgeCard.editing
         ? Style.withAlpha(theme.accentPrimary, 0.5)
-        : (theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+        : theme.bgBorder
     border.width: 1
 
     Behavior on color { ColorAnimation { duration: 150 } }

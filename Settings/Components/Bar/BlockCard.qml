@@ -71,7 +71,7 @@ Rectangle {
         Text {
             text: "󰍜"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             color: cardHover.hovered ? root.theme.textSecondary : root.theme.textMuted
             opacity: cardHover.hovered ? 0.85 : 0.35
             Layout.preferredWidth: 12
@@ -81,7 +81,7 @@ Rectangle {
         Text {
             text: blockCard.meta.icon
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             color: blockCard.isVisible ? blockCard.activeColor : root.theme.textMuted
             horizontalAlignment: Text.AlignHCenter
             Layout.preferredWidth: 18
@@ -91,7 +91,7 @@ Rectangle {
         Text {
             text: blockCard.meta.name
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: blockCard.isVisible ? root.theme.textPrimary : root.theme.textMuted
             elide: Text.ElideRight

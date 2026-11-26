@@ -4,13 +4,17 @@ import Quickshell
 import Quickshell.Io
 import "../../bar"
 import ".."
+import "../../ThemeSwitcher"
 
 RowLayout {
     id: root
 
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: "Lato Nerd Font"
-    property string userName: "User"
+    property string userName: {
+        const u = String(Quickshell.env("USER") || "").trim();
+        return u !== "" ? (u.charAt(0).toUpperCase() + u.slice(1)) : "User";
+    }
 
     signal closeRequested()
 
@@ -18,20 +22,6 @@ RowLayout {
     implicitHeight: 30
     Layout.preferredHeight: 30
     spacing: 12
-
-    // Fetch the current username
-    Process {
-        command: ["whoami"]
-        running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.trim() !== "") {
-                    const name = text.trim();
-                    root.userName = name.charAt(0).toUpperCase() + name.slice(1);
-                }
-            }
-        }
-    }
 
     // Native Power Menu Process
     Process {

@@ -142,27 +142,27 @@ ColumnLayout {
                 spacing: 0
                 AboutInfoRow {
                     theme: detailsRoot.theme; font: detailsRoot.font
-                    iconText: "󰣇"; label: "OS Name"; value: detailsRoot.osName
+                    label: "OS Name"; value: detailsRoot.osName
                     onCopied: (l, v) => detailsRoot.rowCopied(l, v)
                 }
                 AboutInfoRow {
                     theme: detailsRoot.theme; font: detailsRoot.font
-                    iconText: "󰻠"; label: "Architecture"; value: detailsRoot.osTypeText
+                    label: "Architecture"; value: detailsRoot.osTypeText
                     onCopied: (l, v) => detailsRoot.rowCopied(l, v)
                 }
                 AboutInfoRow {
                     theme: detailsRoot.theme; font: detailsRoot.font
-                    iconText: "󰌽"; label: "Kernel Version"; value: detailsRoot.kernelVer
+                    label: "Kernel Version"; value: detailsRoot.kernelVer
                     onCopied: (l, v) => detailsRoot.rowCopied(l, v)
                 }
                 AboutInfoRow {
                     theme: detailsRoot.theme; font: detailsRoot.font
-                    iconText: "󰖲"; label: "Windowing System"; value: detailsRoot.windowingText
+                    label: "Windowing System"; value: detailsRoot.windowingText
                     onCopied: (l, v) => detailsRoot.rowCopied(l, v)
                 }
                 AboutInfoRow {
                     theme: detailsRoot.theme; font: detailsRoot.font
-                    iconText: "󰥔"; label: "Uptime"; value: detailsRoot.uptimeStr
+                    label: "Uptime"; value: detailsRoot.uptimeStr
                     showDivider: false
                     onCopied: (l, v) => detailsRoot.rowCopied(l, v)
                 }

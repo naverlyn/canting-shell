@@ -154,7 +154,7 @@ Rectangle {
       }
     }
     Component.onDestruction: {
-      if (hostContainer.activeInfoProvider === wifiProvider) hostContainer.activeInfoProvider = null;
+      if (hostContainer && hostContainer.activeInfoProvider === wifiProvider) hostContainer.activeInfoProvider = null;
     }
 
     property Component contentComponent: Component {

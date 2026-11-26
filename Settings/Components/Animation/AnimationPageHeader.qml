@@ -19,7 +19,7 @@ RowLayout {
         Text {
             text: "Animations"
             font.family: root.font
-            font.pixelSize: 20
+            font.pixelSize: Style.px(20)
             font.bold: true
             color: root.theme.textPrimary
         }
@@ -40,9 +40,9 @@ RowLayout {
             height: 30
             radius: 7
             color: root.isCreatingCustom
-                ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
-                : (newAnimMouse.containsMouse ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.06)))
-            border.color: (root.isCreatingCustom || newAnimMouse.containsMouse) ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.12))
+                ? root.theme.bgSelected
+                : (newAnimMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgSelected)
+            border.color: (root.isCreatingCustom || newAnimMouse.containsMouse) ? root.theme.accentPrimary : root.theme.bgBorder
             border.width: 1
 
             Behavior on color { ColorAnimation { duration: 120 } }
@@ -57,7 +57,7 @@ RowLayout {
                 Text {
                     text: root.isCreatingCustom ? "Close Studio" : "New Animation"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: root.isCreatingCustom
                         ? root.theme.accentPrimary
@@ -82,8 +82,8 @@ RowLayout {
             implicitWidth: refreshRow.implicitWidth + 20
             height: 30
             radius: 7
-            color: refreshMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.05))
-            border.color: refreshMouse.containsMouse ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.12))
+            color: refreshMouse.containsMouse ? root.theme.bgHover : root.theme.bgSelected
+            border.color: refreshMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgBorder
             border.width: 1
 
             Behavior on color { ColorAnimation { duration: 120 } }
@@ -98,7 +98,7 @@ RowLayout {
                 Text {
                     text: "Reload"
                     font.family: root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: refreshMouse.containsMouse ? root.theme.accentPrimary : root.theme.textPrimary
                 }

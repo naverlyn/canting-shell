@@ -13,6 +13,7 @@ Singleton {
     // Configuration Properties
     property int spotlightWidth: 620
     property int spotlightHeight: 480
+    property string spotlightPosition: "center" // "top", "center", "bottom"
     property string defaultMode: "apps" // "apps" or "command"
     property string sortMode: "frecency" // "frecency", "alphabetical", "recent"
     property bool matchGenericName: true
@@ -21,6 +22,7 @@ Singleton {
     property bool clearSearchOnClose: true
     property int gridColumns: 5
     property int gridCellSize: 96
+    property string appMenuMode: "grid" // "grid" or "list"
     property var hiddenApps: []
     property var favoriteApps: []
 
@@ -38,6 +40,12 @@ Singleton {
     readonly property var modeOptions: [
         { id: "apps",    label: "Applications",    desc: "Open directly in application search mode" },
         { id: "command", label: "Execute Command", desc: "Open directly in terminal command runner mode" }
+    ]
+
+    readonly property var positionOptions: [
+        { id: "top",    label: "Top",    icon: "󰁝" },
+        { id: "center", label: "Center", icon: "󰆾" },
+        { id: "bottom", label: "Bottom", icon: "󰁅" }
     ]
 
     function isAppHidden(appKey) {
@@ -94,6 +102,15 @@ Singleton {
         }
     }
 
+    function setSpotlightPosition(pos) {
+        if (["top", "center", "bottom"].indexOf(pos) !== -1) {
+            if (root.spotlightPosition !== pos) {
+                root.spotlightPosition = pos;
+                root.saveConfig();
+            }
+        }
+    }
+
     function setDefaultMode(mode) {
         if (mode === "apps" || mode === "command") {
             if (root.defaultMode !== mode) {
@@ -128,6 +145,15 @@ Singleton {
         }
     }
 
+    function setAppMenuMode(mode) {
+        if (mode === "grid" || mode === "list") {
+            if (root.appMenuMode !== mode) {
+                root.appMenuMode = mode;
+                root.saveConfig();
+            }
+        }
+    }
+
     function setMatchGenericName(val) {
         root.matchGenericName = Boolean(val);
         root.saveConfig();
@@ -156,6 +182,7 @@ Singleton {
     function resetDefaults() {
         root.spotlightWidth = 620;
         root.spotlightHeight = 480;
+        root.spotlightPosition = "center";
         root.defaultMode = "apps";
         root.sortMode = "frecency";
         root.matchGenericName = true;
@@ -164,6 +191,7 @@ Singleton {
         root.clearSearchOnClose = true;
         root.gridColumns = 5;
         root.gridCellSize = 96;
+        root.appMenuMode = "grid";
         root.hiddenApps = [];
         root.favoriteApps = [];
         root.saveConfig();
@@ -182,6 +210,7 @@ Singleton {
         const data = {
             spotlightWidth: root.spotlightWidth,
             spotlightHeight: root.spotlightHeight,
+            spotlightPosition: root.spotlightPosition,
             defaultMode: root.defaultMode,
             sortMode: root.sortMode,
             matchGenericName: root.matchGenericName,
@@ -190,6 +219,7 @@ Singleton {
             clearSearchOnClose: root.clearSearchOnClose,
             gridColumns: root.gridColumns,
             gridCellSize: root.gridCellSize,
+            appMenuMode: root.appMenuMode,
             hiddenApps: root.hiddenApps,
             favoriteApps: root.favoriteApps
         };
@@ -207,6 +237,10 @@ Singleton {
         if (!cfg) return;
         if (cfg.spotlightWidth !== undefined) root.spotlightWidth = Math.max(480, Math.min(840, Number(cfg.spotlightWidth) || 620));
         if (cfg.spotlightHeight !== undefined) root.spotlightHeight = Math.max(360, Math.min(680, Number(cfg.spotlightHeight) || 480));
+        if (cfg.spotlightPosition !== undefined) {
+            const sp = String(cfg.spotlightPosition);
+            if (["top", "center", "bottom"].indexOf(sp) !== -1) root.spotlightPosition = sp;
+        }
         if (cfg.defaultMode !== undefined) root.defaultMode = String(cfg.defaultMode) === "command" ? "command" : "apps";
         if (cfg.sortMode !== undefined) {
             const sm = String(cfg.sortMode);
@@ -218,6 +252,7 @@ Singleton {
         if (cfg.clearSearchOnClose !== undefined) root.clearSearchOnClose = Boolean(cfg.clearSearchOnClose);
         if (cfg.gridColumns !== undefined) root.gridColumns = Math.max(3, Math.min(8, Number(cfg.gridColumns) || 5));
         if (cfg.gridCellSize !== undefined) root.gridCellSize = Math.max(72, Math.min(128, Number(cfg.gridCellSize) || 96));
+        if (cfg.appMenuMode !== undefined) root.appMenuMode = String(cfg.appMenuMode) === "list" ? "list" : "grid";
         if (Array.isArray(cfg.hiddenApps)) root.hiddenApps = cfg.hiddenApps;
         if (Array.isArray(cfg.favoriteApps)) root.favoriteApps = cfg.favoriteApps;
     }

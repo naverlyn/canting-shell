@@ -6,11 +6,13 @@ import Quickshell.Services.Notifications
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import "../bar"
 import "Components"
+import "../ThemeSwitcher"
 
 Scope {
     id: root
-    property var theme: DefaultTheme {}
+    property var theme: Theme
     property string font: (root.theme && root.theme.fontFamily) ? root.theme.fontFamily : "Lato Nerd Font"
 
     IpcHandler {
@@ -44,7 +46,13 @@ Scope {
             id: notifWindow
             required property var modelData
             screen: modelData
-            visible: NotificationService.notifications.length > 0
+            readonly property bool suppressedByDynamicIsland: {
+                void BarConfig.panelsRevision;
+                void BarConfig.barVisible;
+                const scrName = (modelData && modelData.name) ? String(modelData.name) : "";
+                return BarConfig.shouldSuppressToastOnScreen(scrName);
+            }
+            visible: NotificationService.notifications.length > 0 && !suppressedByDynamicIsland
             focusable: false
             color: "transparent"
 
@@ -60,6 +68,7 @@ Scope {
             WlrLayershell.namespace: "quickshell-notifications"
 
             exclusionMode: ExclusionMode.Normal
+            exclusiveZone: 0
 
             anchors {
                 top: notifWindow.isTop
@@ -87,7 +96,7 @@ Scope {
 
                 Repeater {
                     model: ScriptModel {
-                        values: NotificationService.notifications
+                        values: notifWindow.suppressedByDynamicIsland ? [] : NotificationService.notifications
                         objectProp: "seqId"
                     }
 

@@ -111,7 +111,7 @@ Item {
                     Layout.alignment: Qt.AlignVCenter
                     radius: 5
                     color: pickerRow.normalizedColor
-                    border.color: Qt.rgba(1, 1, 1, 0.25)
+                    border.color: Style.theme.bgBorder
                     border.width: 1
 
                     Behavior on color { ColorAnimation { duration: 160 } }

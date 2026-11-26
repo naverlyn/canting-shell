@@ -24,7 +24,7 @@ RowLayout {
         Layout.preferredWidth: 55
         radius: 8
         color: root.theme.bgBase
-        border.color: Qt.rgba(1, 1, 1, 0.08)
+        border.color: Style.theme.bgBorder
         border.width: 1
         clip: true
 
@@ -297,7 +297,7 @@ RowLayout {
                     Text {
                         text: "P1: (" + bezierCanvas.coords[0].toFixed(2) + ", " + bezierCanvas.coords[1].toFixed(2) + ")"
                         font.family: root.font
-                        font.pixelSize: 9
+                        font.pixelSize: Style.px(9)
                         color: "#ff8787"
                     }
                 }
@@ -308,7 +308,7 @@ RowLayout {
                     Text {
                         text: "P2: (" + bezierCanvas.coords[2].toFixed(2) + ", " + bezierCanvas.coords[3].toFixed(2) + ")"
                         font.family: root.font
-                        font.pixelSize: 9
+                        font.pixelSize: Style.px(9)
                         color: "#74c0fc"
                     }
                 }
@@ -318,7 +318,7 @@ RowLayout {
                 Text {
                     text: "Points:"
                     font.family: root.font
-                    font.pixelSize: 9
+                    font.pixelSize: Style.px(9)
                     color: root.theme.textMuted
                 }
 
@@ -327,7 +327,7 @@ RowLayout {
                     height: 22
                     radius: 4
                     color: root.theme.bgSurface
-                    border.color: coordIn.activeFocus ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1))
+                    border.color: coordIn.activeFocus ? root.theme.accentPrimary : root.theme.bgBorder
                     border.width: 1
 
                     TextInput {
@@ -337,7 +337,7 @@ RowLayout {
                         anchors.rightMargin: 6
                         verticalAlignment: TextInput.AlignVCenter
                         font.family: root.font
-                        font.pixelSize: 9
+                        font.pixelSize: Style.px(9)
                         color: root.theme.textPrimary
                         text: root.newCurvePoints
                         onEditingFinished: {

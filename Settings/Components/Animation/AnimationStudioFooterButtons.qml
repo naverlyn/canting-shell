@@ -17,8 +17,8 @@ RowLayout {
         height: 32
         implicitWidth: footerCloseText.implicitWidth + 24
         radius: 7
-        color: footerCloseMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.05))
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)
+        color: footerCloseMouse.containsMouse ? root.theme.bgHover : root.theme.bgSelected
+        border.color: root.theme.bgBorder
         border.width: 1
 
         Text {
@@ -26,7 +26,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "Close Studio"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: root.theme.textSecondary
         }
@@ -47,8 +47,8 @@ RowLayout {
         height: 32
         implicitWidth: footerTestText.implicitWidth + 24
         radius: 7
-        color: footerTestMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.08)) : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.05))
-        border.color: footerTestMouse.containsMouse ? root.theme.accentPrimary : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.12))
+        color: footerTestMouse.containsMouse ? root.theme.bgHover : root.theme.bgSelected
+        border.color: footerTestMouse.containsMouse ? root.theme.accentPrimary : root.theme.bgBorder
         border.width: 1
 
         Text {
@@ -56,7 +56,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "Test Live Motion on Hyprland"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: footerTestMouse.containsMouse ? root.theme.accentPrimary : root.theme.textPrimary
         }
@@ -82,7 +82,7 @@ RowLayout {
             anchors.centerIn: parent
             text: "Save & Apply Profile"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: "#ffffff"
         }

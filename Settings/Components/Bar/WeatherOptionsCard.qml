@@ -69,7 +69,7 @@ ColumnLayout {
                         Text {
                             text: "Weather Location (City / Region)"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -99,7 +99,7 @@ ColumnLayout {
                                 anchors.rightMargin: 10
                                 verticalAlignment: TextInput.AlignVCenter
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 color: root.theme.textPrimary
                                 selectByMouse: true
                                 text: BarConfig.weatherLocation
@@ -119,7 +119,7 @@ ColumnLayout {
                                     anchors.verticalCenter: parent.verticalCenter
                                     text: "Auto-detect (by IP)..."
                                     font.family: root.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     color: root.theme.textMuted
                                 }
                             }
@@ -153,7 +153,7 @@ ColumnLayout {
                         Text {
                             text: "Temperature Unit"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -202,7 +202,7 @@ ColumnLayout {
                         Text {
                             text: "Popup Forecast Detail"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -250,7 +250,7 @@ ColumnLayout {
                         Text {
                             text: "Auto-Refresh Interval"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }

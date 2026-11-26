@@ -25,7 +25,7 @@ Rectangle {
         height: 520
         radius: 12
         color: (root.theme && root.theme.bgSurface) ? root.theme.bgSurface : "#1e1e2e"
-        border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.12)
+        border.color: root.theme.bgBorder
         border.width: 1
         anchors.centerIn: parent
 
@@ -50,7 +50,7 @@ Rectangle {
                     Text {
                         text: "Add Application to Autostart"
                         font.family: root.font
-                        font.pixelSize: 16
+                        font.pixelSize: Style.px(16)
                         font.bold: true
                         color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                     }
@@ -58,7 +58,7 @@ Rectangle {
                     Text {
                         text: "Choose an installed desktop application to launch on login"
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                     }
                 }
@@ -67,7 +67,7 @@ Rectangle {
                     width: 28
                     height: 28
                     radius: 14
-                    color: closeAddHover.hovered ? ((root.theme && root.theme.bgHover) ? root.theme.bgHover : Qt.rgba(1, 1, 1, 0.1)) : "transparent"
+                    color: closeAddHover.hovered ? root.theme.bgHover : "transparent"
 
                     HoverHandler { id: closeAddHover }
                     MouseArea {
@@ -80,7 +80,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "✕"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: (root.theme && root.theme.textSecondary) ? root.theme.textSecondary : "#a0a0a0"
                     }
                 }
@@ -91,10 +91,10 @@ Rectangle {
                 Layout.fillWidth: true
                 height: 36
                 radius: 7
-                color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.3)
+                color: root.theme.bgBase
                 border.color: addSearchInput.activeFocus
                     ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
-                    : ((root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08))
+                    : root.theme.bgBorder
                 border.width: 1
 
                 RowLayout {
@@ -106,7 +106,7 @@ Rectangle {
                     Text {
                         text: "󰍉"
                         font.family: root.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         color: addSearchInput.activeFocus
                             ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")
                             : ((root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060")
@@ -116,7 +116,7 @@ Rectangle {
                         id: addSearchInput
                         Layout.fillWidth: true
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                         clip: true
                         selectByMouse: true
@@ -128,7 +128,7 @@ Rectangle {
                             visible: !parent.text && !parent.activeFocus
                             text: "Search applications..."
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             color: (root.theme && root.theme.textMuted) ? root.theme.textMuted : "#606060"
                         }
                     }
@@ -140,8 +140,8 @@ Rectangle {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 radius: 8
-                color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.25)
-                border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.08)
+                color: root.theme.bgBase
+                border.color: root.theme.bgBorder
                 border.width: 1
                 clip: true
 
@@ -158,7 +158,7 @@ Rectangle {
                         contentItem: Rectangle {
                             implicitWidth: 4
                             radius: 2
-                            color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.15)
+                            color: root.theme.bgBorder
                         }
                     }
 
@@ -169,7 +169,7 @@ Rectangle {
                         width: modalAppList.width - 8
                         height: 48
                         radius: 6
-                        color: mAppHover.hovered ? ((root.theme && root.theme.bgSurface) ? root.theme.bgSurface : Qt.rgba(1, 1, 1, 0.08)) : "transparent"
+                        color: mAppHover.hovered ? root.theme.bgSurface : "transparent"
 
                         HoverHandler { id: mAppHover }
                         MouseArea {
@@ -193,8 +193,8 @@ Rectangle {
                                 width: 30
                                 height: 30
                                 radius: 6
-                                color: (root.theme && root.theme.bgBase) ? root.theme.bgBase : Qt.rgba(0, 0, 0, 0.2)
-                                border.color: (root.theme && root.theme.bgBorder) ? root.theme.bgBorder : Qt.rgba(1, 1, 1, 0.06)
+                                color: root.theme.bgBase
+                                border.color: root.theme.bgBorder
                                 border.width: 1
 
                                 readonly property string resIcon: {
@@ -217,7 +217,7 @@ Rectangle {
                                     anchors.centerIn: parent
                                     text: "󰵆"
                                     font.family: root.font
-                                    font.pixelSize: 14
+                                    font.pixelSize: Style.px(14)
                                     color: (root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7"
                                     visible: mIconBox.resIcon === ""
                                 }
@@ -230,7 +230,7 @@ Rectangle {
                                 Text {
                                     text: mAppRow.modelData.name || "Unknown App"
                                     font.family: root.font
-                                    font.pixelSize: 12
+                                    font.pixelSize: Style.px(12)
                                     font.bold: true
                                     color: (root.theme && root.theme.textPrimary) ? root.theme.textPrimary : "#ffffff"
                                 }
@@ -239,7 +239,7 @@ Rectangle {
                                     Layout.fillWidth: true
                                     text: mAppRow.modelData.comment || mAppRow.modelData.exec || ""
                                     font.family: root.font
-                                    font.pixelSize: 10
+                                    font.pixelSize: Style.px(10)
                                     color: (root.theme && root.theme.textMuted) ? root.theme.textMuted : "#707070"
                                     elide: Text.ElideRight
                                 }
@@ -248,7 +248,7 @@ Rectangle {
                             Text {
                                 text: "󰐕 Add"
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: true
                                 color: mAppHover.hovered
                                     ? ((root.theme && root.theme.accentPrimary) ? root.theme.accentPrimary : "#7aa2f7")

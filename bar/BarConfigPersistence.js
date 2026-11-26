@@ -1,5 +1,7 @@
 .pragma library
 
+.import "BarConfigDefaults.js" as Defaults
+
 // Config (de)serialisation and defaults for BarConfig.
 // Each function receives the BarConfig singleton as `root`.
 
@@ -12,6 +14,7 @@ function buildSaveData(root) {
     barHeight: primary ? primary.barHeight : root.barHeight,
     floating: primary ? primary.floating : root.floating,
     dashed: primary && primary.dashed !== undefined ? Boolean(primary.dashed) : Boolean(root.dashed),
+    dynamicIsland: primary && primary.dynamicIsland !== undefined ? Boolean(primary.dynamicIsland) : Boolean(root.dynamicIsland),
     barOpacity: root.barOpacity !== undefined ? root.barOpacity : (primary ? primary.barOpacity : 1.0),
     pillRadius: primary && primary.pillRadius !== undefined ? primary.pillRadius : root.pillRadius,
     barRadius: primary && primary.barRadius !== undefined ? primary.barRadius : root.barRadius,
@@ -25,6 +28,27 @@ function buildSaveData(root) {
     secondaryPosition: primary && primary.secondaryPosition !== undefined ? primary.secondaryPosition : (root.secondaryPosition || "top"),
     secondaryFloating: primary && primary.secondaryFloating !== undefined ? Boolean(primary.secondaryFloating) : Boolean(root.secondaryFloating),
     secondaryDashed: primary && primary.secondaryDashed !== undefined ? Boolean(primary.secondaryDashed) : Boolean(root.secondaryDashed),
+    secondaryDynamicIsland: primary && primary.secondaryDynamicIsland !== undefined ? Boolean(primary.secondaryDynamicIsland) : Boolean(root.secondaryDynamicIsland),
+    islandPosition: primary && primary.islandPosition !== undefined ? String(primary.islandPosition) : root.islandPosition,
+    islandIdleMode: primary && primary.islandIdleMode !== undefined ? String(primary.islandIdleMode) : root.islandIdleMode,
+    islandLiveActivity: primary && primary.islandLiveActivity !== undefined ? Boolean(primary.islandLiveActivity) : Boolean(root.islandLiveActivity),
+    islandLayoutMode: primary && primary.islandLayoutMode !== undefined ? String(primary.islandLayoutMode) : root.islandLayoutMode,
+    islandModules: primary && Array.isArray(primary.islandModules) ? primary.islandModules : root.islandModules,
+    islandDefaultModule: primary && primary.islandDefaultModule !== undefined ? String(primary.islandDefaultModule) : root.islandDefaultModule,
+    islandSplitModules: primary && Array.isArray(primary.islandSplitModules) ? primary.islandSplitModules : root.islandSplitModules,
+    islandHoverDelay: primary && primary.islandHoverDelay !== undefined ? Number(primary.islandHoverDelay) : root.islandHoverDelay,
+    islandCloseDelay: primary && primary.islandCloseDelay !== undefined ? Number(primary.islandCloseDelay) : root.islandCloseDelay,
+    islandExpandedWidth: primary && primary.islandExpandedWidth !== undefined ? Number(primary.islandExpandedWidth) : root.islandExpandedWidth,
+    islandNotificationMode: primary && primary.islandNotificationMode !== undefined ? String(primary.islandNotificationMode) : root.islandNotificationMode,
+    islandOsdEnabled: primary && primary.islandOsdEnabled !== undefined ? Boolean(primary.islandOsdEnabled) : Boolean(root.islandOsdEnabled),
+    islandControlTiles: primary && Array.isArray(primary.islandControlTiles) ? primary.islandControlTiles : root.islandControlTiles,
+    islandAppShortcuts: primary && Array.isArray(primary.islandAppShortcuts) ? primary.islandAppShortcuts : root.islandAppShortcuts,
+    barDropShadow: primary && primary.barDropShadow !== undefined ? Boolean(primary.barDropShadow) : Boolean(root.barDropShadow),
+    barDropShadowTarget: primary && primary.barDropShadowTarget !== undefined ? String(primary.barDropShadowTarget) : root.barDropShadowTarget,
+    barDropShadowBlur: primary && primary.barDropShadowBlur !== undefined ? Number(primary.barDropShadowBlur) : root.barDropShadowBlur,
+    barDropShadowOpacity: primary && primary.barDropShadowOpacity !== undefined ? Number(primary.barDropShadowOpacity) : root.barDropShadowOpacity,
+    barDropShadowOffsetY: primary && primary.barDropShadowOffsetY !== undefined ? Number(primary.barDropShadowOffsetY) : root.barDropShadowOffsetY,
+    barDropShadowColorMode: primary && primary.barDropShadowColorMode !== undefined ? String(primary.barDropShadowColorMode) : root.barDropShadowColorMode,
     secondaryMode: primary && primary.secondaryMode !== undefined ? primary.secondaryMode : root.secondaryMode,
     blankOnSecondary: primary && primary.blankOnSecondary !== undefined ? Boolean(primary.blankOnSecondary) : root.blankOnSecondary,
     secondaryPanels: primary && primary.secondaryPanels ? primary.secondaryPanels : root.secondaryPanels,
@@ -121,6 +145,7 @@ function applyConfig(root, cfg) {
   if (cfg.barHeight !== undefined) root.barHeight = Number(cfg.barHeight);
   if (cfg.floating !== undefined) root.floating = Boolean(cfg.floating);
   if (cfg.dashed !== undefined) root.dashed = Boolean(cfg.dashed);
+  if (cfg.dynamicIsland !== undefined) root.dynamicIsland = Boolean(cfg.dynamicIsland) && root.position === "top";
   if (cfg.barOpacity !== undefined) root.barOpacity = Number(cfg.barOpacity);
   if (cfg.screenFrameOpacity !== undefined) {
     root.screenFrameOpacity = Math.max(0.0, Math.min(1.0, Number(cfg.screenFrameOpacity)));
@@ -142,6 +167,27 @@ function applyConfig(root, cfg) {
   if (cfg.secondaryPosition !== undefined) root.secondaryPosition = String(cfg.secondaryPosition);
   if (cfg.secondaryFloating !== undefined) root.secondaryFloating = Boolean(cfg.secondaryFloating);
   if (cfg.secondaryDashed !== undefined) root.secondaryDashed = Boolean(cfg.secondaryDashed);
+  if (cfg.secondaryDynamicIsland !== undefined) root.secondaryDynamicIsland = Boolean(cfg.secondaryDynamicIsland) && root.secondaryPosition === "top";
+  if (cfg.islandPosition !== undefined) root.islandPosition = String(cfg.islandPosition);
+  if (cfg.islandIdleMode !== undefined) root.islandIdleMode = String(cfg.islandIdleMode);
+  if (cfg.islandLiveActivity !== undefined) root.islandLiveActivity = Boolean(cfg.islandLiveActivity);
+  if (cfg.islandLayoutMode !== undefined) root.islandLayoutMode = String(cfg.islandLayoutMode);
+  if (Array.isArray(cfg.islandModules) && cfg.islandModules.length > 0) root.islandModules = cfg.islandModules.slice();
+  if (cfg.islandDefaultModule !== undefined) root.islandDefaultModule = String(cfg.islandDefaultModule);
+  if (Array.isArray(cfg.islandSplitModules) && cfg.islandSplitModules.length >= 2) root.islandSplitModules = cfg.islandSplitModules.slice(0, 2);
+  if (cfg.islandHoverDelay !== undefined) root.islandHoverDelay = Math.max(0, Math.min(500, Math.round(Number(cfg.islandHoverDelay))));
+  if (cfg.islandCloseDelay !== undefined) root.islandCloseDelay = Math.max(80, Math.min(800, Math.round(Number(cfg.islandCloseDelay))));
+  if (cfg.islandExpandedWidth !== undefined) root.islandExpandedWidth = Math.max(320, Math.min(680, Math.round(Number(cfg.islandExpandedWidth))));
+  if (cfg.islandNotificationMode !== undefined) root.islandNotificationMode = String(cfg.islandNotificationMode);
+  if (cfg.islandOsdEnabled !== undefined) root.islandOsdEnabled = Boolean(cfg.islandOsdEnabled);
+  if (Array.isArray(cfg.islandControlTiles)) root.islandControlTiles = cfg.islandControlTiles.slice();
+  if (Array.isArray(cfg.islandAppShortcuts)) root.islandAppShortcuts = cfg.islandAppShortcuts.slice();
+  if (cfg.barDropShadow !== undefined) root.barDropShadow = Boolean(cfg.barDropShadow);
+  if (cfg.barDropShadowTarget !== undefined) root.barDropShadowTarget = String(cfg.barDropShadowTarget);
+  if (cfg.barDropShadowBlur !== undefined) root.barDropShadowBlur = Math.max(4, Math.min(36, Math.round(Number(cfg.barDropShadowBlur))));
+  if (cfg.barDropShadowOpacity !== undefined) root.barDropShadowOpacity = Math.max(0.05, Math.min(0.85, Number(cfg.barDropShadowOpacity)));
+  if (cfg.barDropShadowOffsetY !== undefined) root.barDropShadowOffsetY = Math.max(0, Math.min(16, Math.round(Number(cfg.barDropShadowOffsetY))));
+  if (cfg.barDropShadowColorMode !== undefined) root.barDropShadowColorMode = String(cfg.barDropShadowColorMode);
   if (cfg.secondaryMode !== undefined) root.secondaryMode = String(cfg.secondaryMode);
   if (cfg.blankOnSecondary !== undefined) root.blankOnSecondary = Boolean(cfg.blankOnSecondary);
   if (Array.isArray(cfg.secondaryPanels) && cfg.secondaryPanels.length > 0) {
@@ -225,6 +271,7 @@ function applyConfig(root, cfg) {
       barHeight: b.barHeight !== undefined ? Number(b.barHeight) : 32,
       floating: b.floating !== undefined ? Boolean(b.floating) : false,
       dashed: b.dashed !== undefined ? Boolean(b.dashed) : false,
+      dynamicIsland: (b.dynamicIsland !== undefined ? Boolean(b.dynamicIsland) : false) && (b.position || "top") === "top",
       barOpacity: b.barOpacity !== undefined ? Number(b.barOpacity) : globalOpacity,
       pillRadius: b.pillRadius !== undefined ? Number(b.pillRadius) : root.pillRadius,
       barRadius: b.barRadius !== undefined ? Number(b.barRadius) : root.barRadius,
@@ -240,6 +287,27 @@ function applyConfig(root, cfg) {
       secondaryPosition: b.secondaryPosition || root.secondaryPosition || "top",
       secondaryFloating: b.secondaryFloating !== undefined ? Boolean(b.secondaryFloating) : (b.floating !== undefined ? Boolean(b.floating) : false),
       secondaryDashed: b.secondaryDashed !== undefined ? Boolean(b.secondaryDashed) : (b.dashed !== undefined ? Boolean(b.dashed) : false),
+      secondaryDynamicIsland: (b.secondaryDynamicIsland !== undefined ? Boolean(b.secondaryDynamicIsland) : false) && (b.secondaryPosition || root.secondaryPosition || "top") === "top",
+      islandPosition: b.islandPosition !== undefined ? String(b.islandPosition) : root.islandPosition,
+      islandIdleMode: b.islandIdleMode !== undefined ? String(b.islandIdleMode) : root.islandIdleMode,
+      islandLiveActivity: b.islandLiveActivity !== undefined ? Boolean(b.islandLiveActivity) : root.islandLiveActivity,
+      islandLayoutMode: b.islandLayoutMode !== undefined ? String(b.islandLayoutMode) : root.islandLayoutMode,
+      islandModules: Array.isArray(b.islandModules) && b.islandModules.length > 0 ? b.islandModules.slice() : root.islandModules.slice(),
+      islandDefaultModule: b.islandDefaultModule !== undefined ? String(b.islandDefaultModule) : root.islandDefaultModule,
+      islandSplitModules: Array.isArray(b.islandSplitModules) && b.islandSplitModules.length >= 2 ? b.islandSplitModules.slice(0, 2) : root.islandSplitModules.slice(),
+      islandHoverDelay: b.islandHoverDelay !== undefined ? Math.max(0, Math.min(500, Math.round(Number(b.islandHoverDelay)))) : root.islandHoverDelay,
+      islandCloseDelay: b.islandCloseDelay !== undefined ? Math.max(80, Math.min(800, Math.round(Number(b.islandCloseDelay)))) : root.islandCloseDelay,
+      islandExpandedWidth: b.islandExpandedWidth !== undefined ? Math.max(320, Math.min(680, Math.round(Number(b.islandExpandedWidth)))) : root.islandExpandedWidth,
+      islandNotificationMode: b.islandNotificationMode !== undefined ? String(b.islandNotificationMode) : root.islandNotificationMode,
+      islandOsdEnabled: b.islandOsdEnabled !== undefined ? Boolean(b.islandOsdEnabled) : root.islandOsdEnabled,
+      islandControlTiles: Array.isArray(b.islandControlTiles) ? b.islandControlTiles.slice() : root.islandControlTiles.slice(),
+      islandAppShortcuts: Array.isArray(b.islandAppShortcuts) ? b.islandAppShortcuts.slice() : root.islandAppShortcuts.slice(),
+      barDropShadow: b.barDropShadow !== undefined ? Boolean(b.barDropShadow) : root.barDropShadow,
+      barDropShadowTarget: b.barDropShadowTarget !== undefined ? String(b.barDropShadowTarget) : root.barDropShadowTarget,
+      barDropShadowBlur: b.barDropShadowBlur !== undefined ? Math.max(4, Math.min(36, Math.round(Number(b.barDropShadowBlur)))) : root.barDropShadowBlur,
+      barDropShadowOpacity: b.barDropShadowOpacity !== undefined ? Math.max(0.05, Math.min(0.85, Number(b.barDropShadowOpacity))) : root.barDropShadowOpacity,
+      barDropShadowOffsetY: b.barDropShadowOffsetY !== undefined ? Math.max(0, Math.min(16, Math.round(Number(b.barDropShadowOffsetY)))) : root.barDropShadowOffsetY,
+      barDropShadowColorMode: b.barDropShadowColorMode !== undefined ? String(b.barDropShadowColorMode) : root.barDropShadowColorMode,
       secondaryMode: b.secondaryMode || root.secondaryMode,
       blankOnSecondary: b.blankOnSecondary !== undefined ? Boolean(b.blankOnSecondary) : (b.secondaryMode === "blank"),
       secondaryPanels: Array.isArray(b.secondaryPanels) && b.secondaryPanels.length > 0
@@ -267,6 +335,7 @@ function applyConfig(root, cfg) {
       barHeight: root.barHeight,
       floating: root.floating,
       dashed: Boolean(root.dashed),
+      dynamicIsland: Boolean(root.dynamicIsland) && root.position === "top",
       barOpacity: root.barOpacity,
       pillRadius: root.pillRadius,
       barRadius: root.barRadius,
@@ -280,6 +349,27 @@ function applyConfig(root, cfg) {
       secondaryPosition: root.secondaryPosition || "top",
       secondaryFloating: root.secondaryFloating !== undefined ? Boolean(root.secondaryFloating) : Boolean(root.floating),
       secondaryDashed: root.secondaryDashed !== undefined ? Boolean(root.secondaryDashed) : Boolean(root.dashed),
+      secondaryDynamicIsland: Boolean(root.secondaryDynamicIsland) && (root.secondaryPosition || "top") === "top",
+      islandPosition: root.islandPosition,
+      islandIdleMode: root.islandIdleMode,
+      islandLiveActivity: root.islandLiveActivity,
+      islandLayoutMode: root.islandLayoutMode,
+      islandModules: root.islandModules.slice(),
+      islandDefaultModule: root.islandDefaultModule,
+      islandSplitModules: root.islandSplitModules.slice(),
+      islandHoverDelay: root.islandHoverDelay,
+      islandCloseDelay: root.islandCloseDelay,
+      islandExpandedWidth: root.islandExpandedWidth,
+      islandNotificationMode: root.islandNotificationMode,
+      islandOsdEnabled: root.islandOsdEnabled,
+      islandControlTiles: root.islandControlTiles.slice(),
+      islandAppShortcuts: root.islandAppShortcuts.slice(),
+      barDropShadow: root.barDropShadow,
+      barDropShadowTarget: root.barDropShadowTarget,
+      barDropShadowBlur: root.barDropShadowBlur,
+      barDropShadowOpacity: root.barDropShadowOpacity,
+      barDropShadowOffsetY: root.barDropShadowOffsetY,
+      barDropShadowColorMode: root.barDropShadowColorMode,
       secondaryMode: root.secondaryMode,
       blankOnSecondary: root.blankOnSecondary,
       secondaryPanels: root.secondaryPanels,
@@ -298,7 +388,19 @@ function applyConfig(root, cfg) {
     root.selectedBarIndex = 0;
   }
 
-  root.removedWidgets = rem;
+  // Prune stale @color:<barId>: and @hidden:<barId>: tokens for deleted bars
+  const validBarIds = {};
+  for (let bi = 0; bi < root.bars.length; bi++) {
+    if (root.bars[bi] && root.bars[bi].id) validBarIds[String(root.bars[bi].id)] = true;
+  }
+  root.removedWidgets = rem.filter(item => {
+    const s = String(item);
+    if (s.startsWith("@color:") || s.startsWith("@hidden:")) {
+      const parts = s.split(":");
+      if (parts.length >= 3) return Boolean(validBarIds[parts[1]]);
+    }
+    return true;
+  });
 
   if (cfg.appGridIcon !== undefined) root.appGridIcon = String(cfg.appGridIcon).trim() || "󰀻";
   if (cfg.showNetDown !== undefined) root.showNetDown = Boolean(cfg.showNetDown);
@@ -365,6 +467,31 @@ function resetDefaults(root) {
   root.position = "top";
   root.barHeight = 32;
   root.floating = false;
+  root.dashed = false;
+  root.dynamicIsland = false;
+  root.secondaryFloating = false;
+  root.secondaryDashed = false;
+  root.secondaryDynamicIsland = false;
+  root.islandPosition = "center";
+  root.islandIdleMode = "widgets";
+  root.islandLiveActivity = true;
+  root.islandLayoutMode = "tabs";
+  root.islandModules = ["mpris", "calendar", "notifications", "weather", "quickControls", "systemStats"];
+  root.islandDefaultModule = "auto";
+  root.islandSplitModules = ["mpris", "calendar"];
+  root.islandHoverDelay = 120;
+  root.islandCloseDelay = 220;
+  root.islandExpandedWidth = 400;
+  root.islandNotificationMode = "island";
+  root.islandOsdEnabled = false;
+  root.islandControlTiles = [];
+  root.islandAppShortcuts = [];
+  root.barDropShadow = false;
+  root.barDropShadowTarget = "all";
+  root.barDropShadowBlur = 16;
+  root.barDropShadowOpacity = 0.45;
+  root.barDropShadowOffsetY = 4;
+  root.barDropShadowColorMode = "dark";
   root.barOpacity = 0.85;
   root.screenFrameOpacity = 1.0;
   root.pillRadius = 10;
@@ -415,14 +542,10 @@ function resetDefaults(root) {
   root.cavaShowIcon = false;
   root.allMonitors = true;
   root.displayTarget = "all";
-  root.secondaryPosition = "top";
+  root.secondaryPosition = "bottom";
   root.secondaryMode = "custom";
   root.blankOnSecondary = false;
-  root.secondaryPanels = [
-    ["workspaces"],
-    ["windowTitle"],
-    ["weather", "clock"]
-  ];
+  root.secondaryPanels = Defaults.clonePanels(Defaults.DEFAULT_SECONDARY_PANELS);
   root.activeEditingDisplay = "primary";
   root.innerCorners = true;
   root.fluidCards = false;
@@ -430,44 +553,11 @@ function resetDefaults(root) {
   root.screenBorderThickness = 4;
   root.screenBorderColor = "";
   root.screenBorderCorners = true;
-  root.screenBorderShadow = false;
+  root.screenBorderShadow = true;
   root.screenBorderShadowSize = 12;
 
   root.selectedBarIndex = 0;
-  root.bars = [
-    {
-      id: "bar_1",
-      name: "Primary Bar",
-      enabled: true,
-      position: "top",
-      barHeight: 32,
-      floating: false,
-      barOpacity: 0.85,
-      pillRadius: 10,
-      pillOpacity: 1.0,
-      hidePill: false,
-      scaleWidgets: true,
-      allMonitors: true,
-      displayTarget: "all",
-      secondaryPosition: "top",
-      secondaryMode: "custom",
-      blankOnSecondary: false,
-      secondaryPanels: [
-        ["workspaces"],
-        ["windowTitle"],
-        ["weather", "clock"]
-      ],
-      barColor: "",
-      secondaryBarColor: "",
-      innerCorners: true,
-      fluidCards: false,
-      panels: [
-        root.defaultLeftWidgets.slice(),
-        root.defaultCenterWidgets.slice(),
-        root.defaultRightWidgets.slice()
-      ]
-    }
-  ];
+  root.bars = [Defaults.createBarInstance()];
   root.removedWidgets = ["battery", "volume", "media"];
 
   root.showAppGrid = true;

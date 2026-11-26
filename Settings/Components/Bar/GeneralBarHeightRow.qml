@@ -46,7 +46,7 @@ Item {
                 Text {
                     text: root.generalTab.curIsVert ? "Bar Thickness (Width)" : "Bar Height"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -123,7 +123,7 @@ Item {
                                     ? (barHeightItem.customActive ? (barHeightItem.activeH + "px") : "Custom...")
                                     : hSegBtn.modelData.label
                                 font.family: root.font
-                                font.pixelSize: 11
+                                font.pixelSize: Style.px(11)
                                 font.bold: hSegBtn.isSel
                                 color: hSegBtn.isSel ? root.theme.accentPrimary : root.theme.textPrimary
                                 opacity: hSegBtn.isSel || hSegHover.hovered ? 1.0 : 0.75
@@ -164,7 +164,7 @@ Item {
             Text {
                 text: "Custom Height:"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 font.bold: true
                 color: root.theme.textSecondary
                 Layout.preferredWidth: 160
@@ -257,7 +257,7 @@ Item {
             Text {
                 text: barHeightItem.activeH + "px"
                 font.family: root.font
-                font.pixelSize: 12
+                font.pixelSize: Style.px(12)
                 font.bold: true
                 color: root.theme.accentPrimary
                 Layout.preferredWidth: 44

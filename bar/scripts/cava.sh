@@ -16,6 +16,9 @@ SUPPORTED_METHODS=$(printf "[input]\nmethod = probe\n" | cava -p /dev/stdin 2>&1
 RUN_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 METHOD=""
 
+# Clean up any legacy leaked temp config files from older shell runs
+rm -f "${RUN_DIR}"/quickshell_cava_*.conf 2>/dev/null || true
+
 # 1. Native PipeWire (e.g. Arch Linux with cava pipewire build)
 if [ -e "${RUN_DIR}/pipewire-0" ] && echo "$SUPPORTED_METHODS" | grep -qw "pipewire"; then
     METHOD="pipewire"
@@ -39,18 +42,8 @@ if [ -z "$METHOD" ]; then
     fi
 fi
 
-PID=$$
-if [ -z "$RUN_DIR" ] || [ ! -d "$RUN_DIR" ] || [ ! -w "$RUN_DIR" ]; then
-    RUN_DIR="/tmp"
-fi
-CFG_FILE="${RUN_DIR}/quickshell_cava_${UID:-1000}_${PID}.conf"
-
-cleanup() {
-    rm -f "$CFG_FILE"
-}
-trap cleanup EXIT INT TERM HUP
-
-cat <<EOF > "$CFG_FILE"
+# Stream config via stdin so exec never leaves orphaned temp files behind
+exec cava -p /dev/stdin <<EOF
 [general]
 bars = $BARS
 framerate = $FRAMERATE
@@ -69,6 +62,3 @@ bar_delimiter = 59
 frame_delimiter = 10
 channels = $CHANNELS
 EOF
-
-exec cava -p "$CFG_FILE"
-

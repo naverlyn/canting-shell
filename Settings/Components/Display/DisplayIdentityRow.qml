@@ -31,7 +31,7 @@ Item {
                 Text {
                     text: root.selectedMonitor ? root.selectedMonitor.name : ""
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -53,7 +53,7 @@ Item {
                             ? (root.editState.length === 1 ? "Primary Output" : "Enabled")
                             : "Disabled"
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         font.bold: true
                         color: (root.selectedMonitor && !root.selectedMonitor.disabled)
                             ? (root.theme.accentGreen ?? root.theme.accentPrimary)
@@ -71,7 +71,7 @@ Item {
                     return desc + "  ·  Logical " + lw + " × " + lh;
                 }
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: root.theme.textSecondary
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -85,7 +85,7 @@ Item {
             height: 24
             radius: 12
             readonly property bool isMonEnabled: root.selectedMonitor ? !root.selectedMonitor.disabled : true
-            color: isMonEnabled ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
+            color: isMonEnabled ? root.theme.accentPrimary : root.theme.bgSelected
             Layout.alignment: Qt.AlignVCenter
 
             Behavior on color { ColorAnimation { duration: 160 } }

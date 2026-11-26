@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import "../Common"
 
 ColumnLayout {
     id: expanderRow
@@ -35,7 +36,7 @@ ColumnLayout {
             Text {
                 text: expanderRow.title
                 font.family: expanderRow.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: expanderRow.theme.textPrimary
                 Layout.alignment: Qt.AlignVCenter
@@ -56,7 +57,7 @@ ColumnLayout {
                     ? expanderRow.theme.accentPrimary
                     : (pillHover.hovered
                         ? Qt.rgba(expanderRow.theme.accentPrimary.r, expanderRow.theme.accentPrimary.g, expanderRow.theme.accentPrimary.b, 0.5)
-                        : (expanderRow.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.1)))
+                        : expanderRow.theme.bgBorder)
                 border.width: appPopup.visible ? 1.5 : 1
 
                 Behavior on color { ColorAnimation { duration: 140 } }
@@ -73,7 +74,7 @@ ColumnLayout {
                     Text {
                         text: expanderRow.getDisplayName(expanderRow.options, expanderRow.currentValue)
                         font.family: expanderRow.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: expanderRow.theme.textPrimary
                         elide: Text.ElideRight
@@ -83,7 +84,7 @@ ColumnLayout {
                     Text {
                         text: "󰅀"
                         font.family: expanderRow.font
-                        font.pixelSize: 13
+                        font.pixelSize: Style.px(13)
                         color: appPopup.visible ? expanderRow.theme.accentPrimary : expanderRow.theme.textSecondary
                         rotation: appPopup.visible ? 180 : 0
                         Behavior on rotation { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
@@ -173,7 +174,7 @@ ColumnLayout {
                                     Text {
                                         text: appOptItem.modelData.name
                                         font.family: expanderRow.font
-                                        font.pixelSize: 12
+                                        font.pixelSize: Style.px(12)
                                         font.bold: appOptItem.isSelected
                                         color: appOptItem.isSelected ? expanderRow.theme.accentPrimary : expanderRow.theme.textPrimary
                                         elide: Text.ElideRight

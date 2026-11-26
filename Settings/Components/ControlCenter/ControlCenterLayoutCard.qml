@@ -94,7 +94,7 @@ ColumnLayout {
                         Text {
                             text: "Active Panels:"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -138,7 +138,7 @@ ColumnLayout {
                                         anchors.centerIn: parent
                                         text: pCountBtn.modelData + (pCountBtn.modelData === 1 ? " Panel" : " Panels")
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: pCountBtn.isCurrent
                                         color: pCountBtn.isCurrent
                                             ? root.theme.accentPrimary

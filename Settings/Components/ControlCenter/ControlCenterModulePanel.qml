@@ -88,7 +88,7 @@ Rectangle {
                 Text {
                     text: "Panel " + (panelIndex + 1)
                     font.family: hostRoot.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: modPanel.isPanelActive ? hostRoot.theme.accentPrimary : hostRoot.theme.textMuted
                 }
@@ -106,7 +106,7 @@ Rectangle {
                             ? ("(" + modPanel.itemCount + (modPanel.itemCount === 1 ? " module)" : " modules)"))
                             : "(Inactive)"
                         font.family: hostRoot.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         color: hostRoot.theme.textMuted
                     }
                 }
@@ -194,7 +194,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: "Panel " + (panelIndex + 1) + " Empty"
                     font.family: hostRoot.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     font.bold: true
                     color: hostRoot.theme.textMuted
                 }
@@ -203,7 +203,7 @@ Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     text: "Drag any module here or click +"
                     font.family: hostRoot.font
-                    font.pixelSize: 10
+                    font.pixelSize: Style.px(10)
                     color: hostRoot.theme.textMuted
                 }
             }

@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import ".."
 import "WeatherUtils.js" as WeatherUtils
+import "../../ThemeSwitcher"
 
 Item {
   id: popup
@@ -17,7 +18,7 @@ Item {
   property var hostRoot: (target && target.hostRoot !== undefined) ? target.hostRoot : null
   property bool hovered: false
   property bool pinned: false
-  property var theme: DefaultTheme {}
+  property var theme: Theme
   property string font: (popup.theme && popup.theme.fontFamily) ? popup.theme.fontFamily : "Lato Nerd Font"
   readonly property string effectiveNerdFont: {
     const families = Qt.fontFamilies();
@@ -218,20 +219,9 @@ Item {
   }
 
   Timer {
-    interval: 900
-    repeat: false
-    running: true
-    onTriggered: {
-      if (!popup.hasValidData && !popup.isLoading) {
-        popup.refresh(false);
-      }
-    }
-  }
-
-  Timer {
     interval: Math.max(5, BarConfig.weatherIntervalMinutes || 15) * 60 * 1000
     repeat: true
-    running: true
+    running: popup.isWeatherActive
     onTriggered: popup.refresh(false)
   }
 

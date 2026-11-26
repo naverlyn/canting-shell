@@ -45,7 +45,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             text: dragGhostCard.isRemoving ? "󰅖" : (dragGhostCard.isTargetBlocked ? "󰀪" : root.draggedBlockIcon)
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             color: (dragGhostCard.isRemoving || dragGhostCard.isTargetBlocked) ? root.theme.accentRed : root.theme.accentPrimary
         }
 
@@ -55,7 +55,7 @@ Rectangle {
                 ? (root.draggedBlockLabel + " (Cannot place here)")
                 : (dragGhostCard.isRemoving ? ("Remove " + root.draggedBlockLabel) : root.draggedBlockLabel)
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: (dragGhostCard.isRemoving || dragGhostCard.isTargetBlocked) ? root.theme.accentRed : root.theme.textPrimary
         }

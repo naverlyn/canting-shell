@@ -1,20 +1,17 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
-import Quickshell
-import "../../../notifications"
-import "../.."
-import "../Common"
-import ".."
 
 Rectangle {
-    required property var root
     id: subTabTrack
+    property int currentIndex: 0
+    property var tabs: []
+    signal tabSelected(int index)
+
     Layout.fillWidth: true
     height: 40
     radius: 10
-    color: root.theme.bgSurface
-    border.color: root.theme.bgBorder
+    color: Style.theme.bgSurface
+    border.color: Style.theme.bgBorder
     border.width: 1
 
     RowLayout {
@@ -24,14 +21,13 @@ Rectangle {
         spacing: 8
 
         Repeater {
-            model: [
-                { idx: 0, icon: "󰕮", label: "Layout & Building Blocks" },
-                { idx: 1, icon: "󰒓", label: "Placement & General" }
-            ]
+            model: subTabTrack.tabs
             delegate: Rectangle {
                 id: subTabItem
                 required property var modelData
-                readonly property bool isCurrent: root.currentSubTab === modelData.idx
+                required property int index
+                readonly property int tabIdx: modelData.idx !== undefined ? modelData.idx : index
+                readonly property bool isCurrent: subTabTrack.currentIndex === tabIdx
 
                 Layout.fillWidth: true
                 Layout.fillHeight: true
@@ -51,7 +47,7 @@ Rectangle {
                         ? subTabRow.implicitWidth + 16
                         : (subTabHover.hovered ? (subTabRow.implicitWidth + 16) * 0.5 : 0)
                     opacity: subTabItem.isCurrent ? 1.0 : (subTabHover.hovered ? 0.5 : 0.0)
-                    color: subTabItem.isCurrent ? root.theme.accentPrimary : root.theme.textSecondary
+                    color: subTabItem.isCurrent ? Style.theme.accentPrimary : Style.theme.textSecondary
 
                     Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                     Behavior on opacity { NumberAnimation { duration: 160 } }
@@ -64,27 +60,32 @@ Rectangle {
                     spacing: 8
 
                     Text {
+                        visible: Boolean(subTabItem.modelData.icon)
                         width: 16
                         anchors.verticalCenter: parent.verticalCenter
                         horizontalAlignment: Text.AlignHCenter
-                        text: subTabItem.modelData.icon
-                        font.family: root.font
-                        font.pixelSize: 13
+                        text: subTabItem.modelData.icon || ""
+                        font.family: Style.font
+                        font.pixelSize: Style.px(13)
                         color: subTabItem.isCurrent
-                            ? root.theme.accentPrimary
-                            : (subTabHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
+                            ? Style.theme.accentPrimary
+                            : (subTabHover.hovered ? Style.theme.textPrimary : Style.theme.textSecondary)
                         Behavior on color { ColorAnimation { duration: 140 } }
                     }
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: subTabItem.modelData.label
-                        font.family: root.font
-                        font.pixelSize: 12
+                        text: subTabItem.modelData.label || ""
+                        font.family: Style.font
+                        font.pixelSize: Style.px(12)
                         font.bold: subTabItem.isCurrent
+                        font.letterSpacing: Style.letterSpacing
+                        font.hintingPreference: Style.fontHintingEnum
+                        antialiasing: Style.fontAntialiasing
+                        renderType: Style.fontRenderTypeEnum
                         color: subTabItem.isCurrent
-                            ? root.theme.accentPrimary
-                            : (subTabHover.hovered ? root.theme.textPrimary : root.theme.textSecondary)
+                            ? Style.theme.accentPrimary
+                            : (subTabHover.hovered ? Style.theme.textPrimary : Style.theme.textSecondary)
                         Behavior on color { ColorAnimation { duration: 140 } }
                     }
                 }
@@ -94,9 +95,8 @@ Rectangle {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        if (root.currentSubTab !== subTabItem.modelData.idx) {
-                            root.currentSubTab = subTabItem.modelData.idx;
-                            root.subTabContentAnimation.restart();
+                        if (subTabTrack.currentIndex !== subTabItem.tabIdx) {
+                            subTabTrack.tabSelected(subTabItem.tabIdx);
                         }
                     }
                 }

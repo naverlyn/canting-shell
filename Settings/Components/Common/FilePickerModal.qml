@@ -166,7 +166,7 @@ PanelWindow {
                 Text {
                     text: modal.title
                     font.family: modal.root.font
-                    font.pixelSize: 15
+                    font.pixelSize: Style.px(15)
                     font.bold: true
                     color: modal.root.theme.textPrimary
                     Layout.fillWidth: true
@@ -211,7 +211,7 @@ PanelWindow {
                             anchors.centerIn: parent
                             text: placeBtn.modelData.label
                             font.family: modal.root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: placeBtn.active
                             color: placeBtn.active ? modal.root.theme.accentPrimary : modal.root.theme.textSecondary
                         }
@@ -226,7 +226,7 @@ PanelWindow {
                 Text {
                     text: modal.currentDir
                     font.family: modal.root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: modal.root.theme.textMuted
                     elide: Text.ElideMiddle
                     Layout.fillWidth: true
@@ -250,7 +250,7 @@ PanelWindow {
                     anchors.rightMargin: 12
                     verticalAlignment: TextInput.AlignVCenter
                     font.family: modal.root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: modal.root.theme.textPrimary
                     selectByMouse: true
                     text: modal.searchQuery
@@ -261,7 +261,7 @@ PanelWindow {
                         verticalAlignment: Text.AlignVCenter
                         text: modal.searchPlaceholder
                         font.family: modal.root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         color: modal.root.theme.textMuted
                         visible: searchInput.text === ""
                     }
@@ -323,7 +323,7 @@ PanelWindow {
                                     visible: entryTile.modelData.isDir || !modal.showThumbnails
                                     text: entryTile.modelData.isDir ? "󰉋" : modal.fileGlyph
                                     font.family: modal.root.font
-                                    font.pixelSize: 28
+                                    font.pixelSize: Style.px(28)
                                     color: (entryTile.modelData.isDir || entryTile.isSelected) ? modal.root.theme.accentPrimary : modal.root.theme.textSecondary
                                 }
 
@@ -344,7 +344,7 @@ PanelWindow {
                                 Layout.fillWidth: true
                                 text: entryTile.modelData.name
                                 font.family: modal.root.font
-                                font.pixelSize: 10
+                                font.pixelSize: Style.px(10)
                                 font.bold: entryTile.isSelected
                                 color: entryTile.isSelected ? modal.root.theme.accentPrimary : modal.root.theme.textPrimary
                                 elide: Text.ElideMiddle
@@ -379,7 +379,7 @@ PanelWindow {
                     visible: entryGrid.count === 0
                     text: modal.emptyText
                     font.family: modal.root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     color: modal.root.theme.textMuted
                 }
             }
@@ -392,7 +392,7 @@ PanelWindow {
                 Text {
                     text: modal.selectedPath !== "" ? modal.selectedPath : modal.hintText
                     font.family: modal.root.font
-                    font.pixelSize: 11
+                    font.pixelSize: Style.px(11)
                     color: modal.root.theme.textSecondary
                     elide: Text.ElideMiddle
                     Layout.fillWidth: true

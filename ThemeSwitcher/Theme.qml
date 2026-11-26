@@ -161,6 +161,8 @@ Singleton {
     readonly property color bgSelected:   current.bgSelected
     readonly property color bgBorder:     current.bgBorder
     readonly property color bgOverlay:    "#88000000"
+    readonly property color bgPlayer:     "#2c2c2c"
+    readonly property color bgTransparent: "#4b545454"
 
     readonly property color textPrimary:   current.textPrimary
     readonly property color textSecondary: current.textSecondary
@@ -658,6 +660,7 @@ Singleton {
         id: themesFile
         path: Qt.resolvedUrl("themes.json").toString().replace(/^file:\/\//, "")
         watchChanges: true
+        onFileChanged: reload()
         onTextChanged: {
             const raw = themesFile.text();
             if (!raw) return;

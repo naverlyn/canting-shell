@@ -140,10 +140,10 @@ Singleton {
             if (root.validOrientations.indexOf(o) !== -1) root.orientation = o;
         }
         if (cfg.marginX !== undefined) {
-            root.marginX = Math.max(-400, Math.min(400, Math.round(Number(cfg.marginX) || 0)));
+            root.marginX = Math.max(-2500, Math.min(2500, Math.round(Number(cfg.marginX) || 0)));
         }
         if (cfg.marginY !== undefined) {
-            root.marginY = Math.max(-400, Math.min(400, Math.round(Number(cfg.marginY) || 0)));
+            root.marginY = Math.max(-2500, Math.min(2500, Math.round(Number(cfg.marginY) || 0)));
         }
         if (cfg.timeoutMs !== undefined) {
             root.timeoutMs = Math.max(800, Math.min(5000, Math.round(Number(cfg.timeoutMs) || 1500)));
@@ -154,6 +154,7 @@ Singleton {
         id: configFile
         path: root.configPath
         watchChanges: true
+        onFileChanged: reload()
         onTextChanged: {
             const raw = configFile.text();
             if (!raw) {

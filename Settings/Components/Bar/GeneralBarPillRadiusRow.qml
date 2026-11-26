@@ -36,7 +36,7 @@ Item {
             Text {
                 text: "Pill Corner Radius"
                 font.family: root.font
-                font.pixelSize: 13
+                font.pixelSize: Style.px(13)
                 font.bold: true
                 color: root.theme.textPrimary
                 Layout.fillWidth: true
@@ -137,7 +137,7 @@ Item {
                 Text {
                     text: pillRadiusItem.activeRadius + "px"
                     font.family: root.font
-                    font.pixelSize: 12
+                    font.pixelSize: Style.px(12)
                     font.bold: true
                     color: root.theme.textSecondary
                     Layout.preferredWidth: 40
@@ -177,7 +177,7 @@ Item {
                             anchors.centerIn: parent
                             text: rPresetBtn.modelData.label + " (" + rPresetBtn.modelData.r + ")"
                             font.family: root.font
-                            font.pixelSize: 9
+                            font.pixelSize: Style.px(9)
                             font.bold: rPresetBtn.isSel
                             color: rPresetBtn.isSel ? root.theme.accentPrimary : root.theme.textSecondary
                             Behavior on color { ColorAnimation { duration: 140 } }

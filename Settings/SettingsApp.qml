@@ -208,7 +208,7 @@ Scope {
             y: Math.max(10, (settingsWindow.height - height) / 2)
             radius: 14
             color: root.theme.bgBase
-            border.color: root.theme.bgBorder ?? Qt.rgba(1,1,1,0.1)
+            border.color: root.theme.bgBorder
             border.width: 1
             opacity: root.windowActive ? 1.0 : 0.0
             scale: root.windowActive ? 1.0 : 0.96
@@ -283,7 +283,7 @@ Scope {
                         width: 26
                         height: 26
                         radius: 13
-                        color: closeMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1,1,1,0.1)) : "transparent"
+                        color: closeMouse.containsMouse ? root.theme.bgHover : "transparent"
 
                         Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -291,7 +291,7 @@ Scope {
                             anchors.centerIn: parent
                             text: "󰅖"
                             font.family: root.font
-                            font.pixelSize: 12
+                            font.pixelSize: Style.px(12)
                             color: closeMouse.containsMouse ? root.theme.accentRed : root.theme.textMuted
 
                             Behavior on color { ColorAnimation { duration: 150 } }
@@ -490,6 +490,22 @@ Scope {
                         hostWindow: settingsWindow
                         pageIndex: 22
                         pageComponent: FontSettings { theme: root.theme; font: root.font }
+                    }
+
+                    Connections {
+                        target: Style
+                        function onToast(msg) {
+                            globalToastBanner.show(msg, false);
+                        }
+                        function onToastStatus(msg, warn) {
+                            globalToastBanner.show(msg, warn);
+                        }
+                    }
+
+                    ToastBanner {
+                        id: globalToastBanner
+                        anchors.bottomMargin: 28
+                        durationMs: 2600
                     }
                 }
             }

@@ -73,8 +73,8 @@ ColumnLayout {
                             height: 52
                             radius: 8
                             color: isSelected
-                                ? (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.08))
-                                : (sortHover.hovered ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.04)) : root.theme.bgBase)
+                                ? root.theme.bgSelected
+                                : (sortHover.hovered ? root.theme.bgHover : root.theme.bgBase)
                             border.color: isSelected ? root.theme.accentPrimary : root.theme.bgBorder
                             border.width: isSelected ? 1.5 : 1
 
@@ -127,7 +127,7 @@ ColumnLayout {
                                     width: parent.width
                                     text: sortCard.modelData.label
                                     font.family: root.font
-                                    font.pixelSize: 13
+                                    font.pixelSize: Style.px(13)
                                     font.bold: true
                                     color: sortCard.isSelected ? root.theme.accentPrimary : root.theme.textPrimary
                                     horizontalAlignment: Text.AlignLeft
@@ -137,7 +137,7 @@ ColumnLayout {
                                     width: parent.width
                                     text: sortCard.modelData.desc
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     color: root.theme.textMuted
                                     horizontalAlignment: Text.AlignLeft
                                 }
@@ -284,7 +284,7 @@ ColumnLayout {
                             width: parent.width
                             text: "Clear App Launch History"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                             elide: Text.ElideRight
@@ -294,7 +294,7 @@ ColumnLayout {
                             width: parent.width
                             text: "Wipe all recorded application launch counts and timestamps in ~/.cache/qs_app_usage.json"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textMuted
                             elide: Text.ElideRight
                         }
@@ -330,7 +330,7 @@ ColumnLayout {
                             width: parent.width
                             text: "Reset All Launcher Settings"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                             elide: Text.ElideRight
@@ -340,7 +340,7 @@ ColumnLayout {
                             width: parent.width
                             text: "Revert dimensions, sorting, search scopes, and exclusions to default values"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textMuted
                             elide: Text.ElideRight
                         }

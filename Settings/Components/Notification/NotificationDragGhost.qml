@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import "../Common"
 
 Rectangle {
     required property var root
@@ -27,7 +28,7 @@ Rectangle {
         Text {
             text: "󰍜"
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             color: root.theme.accentPrimary
         }
 
@@ -35,14 +36,14 @@ Rectangle {
             visible: root.draggedBlockIcon !== ""
             text: root.draggedBlockIcon
             font.family: root.font
-            font.pixelSize: 13
+            font.pixelSize: Style.px(13)
             color: root.theme.accentPrimary
         }
 
         Text {
             text: root.draggedBlockLabel
             font.family: root.font
-            font.pixelSize: 11
+            font.pixelSize: Style.px(11)
             font.bold: true
             color: root.theme.textPrimary
             elide: Text.ElideRight
@@ -67,7 +68,7 @@ Rectangle {
                     return "";
                 }
                 font.family: root.font
-                font.pixelSize: 9
+                font.pixelSize: Style.px(9)
                 font.bold: true
                 color: root.theme.accentPrimary
             }

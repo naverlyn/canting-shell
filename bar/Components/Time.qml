@@ -9,6 +9,11 @@ Singleton {
 
   property string timeString: Qt.formatDateTime(new Date(), "hh:mm:ss")
   property string dateString: Qt.formatDateTime(new Date(), "ddd MMM d")
+  property string fullDateString: Qt.formatDateTime(new Date(), "dddd, MMM d")
+  property string monthYearString: Qt.formatDateTime(new Date(), "MMMM yyyy")
+  property int currentYear: new Date().getFullYear()
+  property int currentMonth: new Date().getMonth()
+  property int currentDay: new Date().getDate()
 
   SystemClock {
     id: clock
@@ -33,6 +38,11 @@ Singleton {
       }
     } catch (e2) {}
     root.dateString = Qt.formatDateTime(d, showYr ? "ddd MMM d yyyy" : "ddd MMM d") || "";
+    root.fullDateString = Qt.formatDateTime(d, "dddd, MMM d") || "";
+    root.monthYearString = Qt.formatDateTime(d, "MMMM yyyy") || "";
+    root.currentYear = d.getFullYear();
+    root.currentMonth = d.getMonth();
+    root.currentDay = d.getDate();
   }
 
   Connections {

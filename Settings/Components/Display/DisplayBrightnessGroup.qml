@@ -19,7 +19,7 @@ ColumnLayout {
     Text {
         text: "Illumination & Brightness"
         font.family: root.font
-        font.pixelSize: 13
+        font.pixelSize: Style.px(13)
         font.bold: true
         color: root.theme.textSecondary
         Layout.leftMargin: 4
@@ -30,7 +30,7 @@ ColumnLayout {
         implicitHeight: brightGroupCol.implicitHeight + 16
         radius: 12
         color: root.theme.bgSurface
-        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+        border.color: root.theme.bgBorder
         border.width: 1
 
         ColumnLayout {
@@ -62,7 +62,7 @@ ColumnLayout {
                         Text {
                             text: "Screen Brightness"
                             font.family: root.font
-                            font.pixelSize: 13
+                            font.pixelSize: Style.px(13)
                             font.bold: true
                             color: root.theme.textPrimary
                         }
@@ -71,7 +71,7 @@ ColumnLayout {
                             visible: root.hasBacklightDevice && root.brightnessDevice !== ""
                             text: "Backlight · " + root.brightnessDevice
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textSecondary
                         }
                     }
@@ -83,7 +83,7 @@ ColumnLayout {
                         height: 8
                         radius: 4
                         color: Qt.rgba(root.theme.textPrimary.r, root.theme.textPrimary.g, root.theme.textPrimary.b, 0.14)
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        border.color: root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -167,7 +167,7 @@ ColumnLayout {
                         height: 26
                         radius: 6
                         color: root.theme.bgBase
-                        border.color: root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08)
+                        border.color: root.theme.bgBorder
                         border.width: 1
                         Layout.alignment: Qt.AlignVCenter
 
@@ -175,7 +175,7 @@ ColumnLayout {
                             anchors.centerIn: parent
                             text: root.brightness + "%"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: root.theme.accentPrimary
                         }

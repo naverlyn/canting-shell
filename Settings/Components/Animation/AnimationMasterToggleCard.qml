@@ -13,8 +13,8 @@ Rectangle {
     Layout.fillWidth: true
     height: 68
     radius: 12
-    color: switchCardMouse.containsMouse ? (root.theme.bgHover ?? Qt.rgba(1, 1, 1, 0.04)) : root.theme.bgSurface
-    border.color: switchCardMouse.containsMouse ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : (root.theme.bgBorder ?? Qt.rgba(1, 1, 1, 0.08))
+    color: switchCardMouse.containsMouse ? root.theme.bgHover : root.theme.bgSurface
+    border.color: switchCardMouse.containsMouse ? Qt.rgba(root.theme.accentPrimary.r, root.theme.accentPrimary.g, root.theme.accentPrimary.b, 0.4) : root.theme.bgBorder
     border.width: 1
 
     Behavior on color { ColorAnimation { duration: 120 } }
@@ -45,7 +45,7 @@ Rectangle {
                 Text {
                     text: "Enable Compositor Animations"
                     font.family: root.font
-                    font.pixelSize: 13
+                    font.pixelSize: Style.px(13)
                     font.bold: true
                     color: root.theme.textPrimary
                 }
@@ -55,7 +55,7 @@ Rectangle {
                     implicitWidth: globalBadgeText.implicitWidth + 12
                     radius: 9
                     color: Qt.rgba(1, 1, 1, 0.08)
-                    border.color: Qt.rgba(1, 1, 1, 0.15)
+                    border.color: Style.theme.bgBorder
                     border.width: 1
 
                     Text {
@@ -63,7 +63,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: "Global Scope"
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         font.bold: true
                         color: root.theme.textSecondary
                     }
@@ -84,7 +84,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: root.animationsEnabled ? "Active" : "Disabled"
                         font.family: root.font
-                        font.pixelSize: 10
+                        font.pixelSize: Style.px(10)
                         font.bold: true
                         color: root.animationsEnabled ? root.theme.accentPrimary : root.theme.textMuted
                     }
@@ -94,7 +94,7 @@ Rectangle {
             Text {
                 text: "Global Master Switch: controls whether Hyprland plays animations for windows, workspaces, and fades globally"
                 font.family: root.font
-                font.pixelSize: 11
+                font.pixelSize: Style.px(11)
                 color: root.theme.textSecondary
             }
         }
@@ -104,7 +104,7 @@ Rectangle {
             width: 48
             height: 26
             radius: 13
-            color: root.animationsEnabled ? root.theme.accentPrimary : (root.theme.bgSelected ?? Qt.rgba(1, 1, 1, 0.15))
+            color: root.animationsEnabled ? root.theme.accentPrimary : root.theme.bgSelected
             Layout.alignment: Qt.AlignVCenter
 
             Behavior on color { ColorAnimation { duration: 160 } }

@@ -84,7 +84,7 @@ ColumnLayout {
                     Text {
                         text: "Bar Panels:"
                         font.family: root.font
-                        font.pixelSize: 12
+                        font.pixelSize: Style.px(12)
                         font.bold: true
                         color: root.theme.textPrimary
                     }
@@ -128,7 +128,7 @@ ColumnLayout {
                                     anchors.centerIn: parent
                                     text: pCountBtn.modelData + " Panels"
                                     font.family: root.font
-                                    font.pixelSize: 11
+                                    font.pixelSize: Style.px(11)
                                     font.bold: pCountBtn.isCurrent
                                     color: pCountBtn.isCurrent
                                         ? root.theme.accentPrimary
@@ -232,7 +232,7 @@ ColumnLayout {
                                     Text {
                                         text: BarConfig.getPanelTitle(panelColumnCard.index)
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: true
                                         color: panelColumnCard.isMaxedOut ? root.theme.accentRed : root.theme.accentPrimary
                                     }
@@ -254,7 +254,7 @@ ColumnLayout {
                                                 ? ("MAX (" + (BarConfig.maxPanelWidgets || 12) + "/" + (BarConfig.maxPanelWidgets || 12) + ")")
                                                 : ("(" + panelColumnCard.currentPanelItems.length + "/" + (BarConfig.maxPanelWidgets || 12) + ")")
                                             font.family: root.font
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             font.bold: panelColumnCard.isMaxedOut
                                             color: panelColumnCard.isMaxedOut ? root.theme.accentRed : root.theme.textMuted
                                         }
@@ -328,7 +328,7 @@ ColumnLayout {
                                             ? "Drop here to place in " + BarConfig.getPanelTitle(panelColumnCard.index)
                                             : ("Blank Panel (" + BarConfig.getPanelTitle(panelColumnCard.index) + ")")
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: true
                                         color: panelColumnCard.isPanelDropTarget ? root.theme.accentPrimary : root.theme.textMuted
                                         horizontalAlignment: Text.AlignHCenter
@@ -341,7 +341,7 @@ ColumnLayout {
                                             ? "Drag block here, or click to add"
                                             : "Drag any building block here"
                                         font.family: root.font
-                                        font.pixelSize: 10
+                                        font.pixelSize: Style.px(10)
                                         color: blankHover.hovered && BarConfig.unassignedWidgets.length > 0 ? root.theme.accentPrimary : root.theme.textMuted
                                         horizontalAlignment: Text.AlignHCenter
                                     }
@@ -384,7 +384,7 @@ ColumnLayout {
                                         Text {
                                             text: panelColumnCard.isIncomingBlocked ? "󰀪" : "󰐕"
                                             font.family: root.font
-                                            font.pixelSize: 11
+                                            font.pixelSize: Style.px(11)
                                             color: panelColumnCard.isIncomingBlocked ? root.theme.accentRed : root.theme.accentPrimary
                                         }
 
@@ -393,7 +393,7 @@ ColumnLayout {
                                                 ? "Already maxed out, please move somewhere else"
                                                 : ("Append to " + BarConfig.getPanelTitle(panelColumnCard.index))
                                             font.family: root.font
-                                            font.pixelSize: 10
+                                            font.pixelSize: Style.px(10)
                                             font.bold: true
                                             color: panelColumnCard.isIncomingBlocked ? root.theme.accentRed : root.theme.accentPrimary
                                         }
@@ -422,7 +422,7 @@ ColumnLayout {
                     Text {
                         text: "󰌨"
                         font.family: root.font
-                        font.pixelSize: 36
+                        font.pixelSize: Style.px(36)
                         color: root.theme.accentPrimary
                         Layout.alignment: Qt.AlignHCenter
                     }
@@ -430,7 +430,7 @@ ColumnLayout {
                     Text {
                         text: "Clean Blank Bar Active on Secondary Display"
                         font.family: root.font
-                        font.pixelSize: 14
+                        font.pixelSize: Style.px(14)
                         font.bold: true
                         color: root.theme.textPrimary
                         Layout.alignment: Qt.AlignHCenter
@@ -439,7 +439,7 @@ ColumnLayout {
                     Text {
                         text: "An empty status bar frame matching your bar's height, opacity, and corners is displayed on your secondary monitor.\nThis maintains window docking margins and desktop balance with zero widget overhead."
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         horizontalAlignment: Text.AlignHCenter
                         color: root.theme.textSecondary
                         Layout.alignment: Qt.AlignHCenter
@@ -472,7 +472,7 @@ ColumnLayout {
                     Text {
                         text: "󰍹"
                         font.family: root.font
-                        font.pixelSize: 36
+                        font.pixelSize: Style.px(36)
                         color: root.theme.accentPrimary
                         Layout.alignment: Qt.AlignHCenter
                     }
@@ -480,7 +480,7 @@ ColumnLayout {
                     Text {
                         text: "Mirroring Primary Display Layout"
                         font.family: root.font
-                        font.pixelSize: 14
+                        font.pixelSize: Style.px(14)
                         font.bold: true
                         color: root.theme.textPrimary
                         Layout.alignment: Qt.AlignHCenter
@@ -489,7 +489,7 @@ ColumnLayout {
                     Text {
                         text: "Your secondary monitor duplicates the exact panel layout and widgets configured on the Primary Display bar in real time."
                         font.family: root.font
-                        font.pixelSize: 11
+                        font.pixelSize: Style.px(11)
                         horizontalAlignment: Text.AlignHCenter
                         color: root.theme.textSecondary
                         Layout.alignment: Qt.AlignHCenter
@@ -540,7 +540,7 @@ ColumnLayout {
                         Text {
                             text: "Available Building Blocks"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             font.bold: true
                             color: availPoolCard.isPoolDropTarget ? root.theme.accentRed : root.theme.accentPrimary
                         }
@@ -548,7 +548,7 @@ ColumnLayout {
                         Text {
                             text: "(" + BarConfig.unassignedWidgets.length + " available)"
                             font.family: root.font
-                            font.pixelSize: 11
+                            font.pixelSize: Style.px(11)
                             color: root.theme.textMuted
                         }
 
@@ -561,7 +561,7 @@ ColumnLayout {
                                     ? "Drag block into any panel above"
                                     : "All building blocks are placed on panels (drag here or click ✕ to remove)")
                             font.family: root.font
-                            font.pixelSize: 10
+                            font.pixelSize: Style.px(10)
                             font.bold: availPoolCard.isPoolDropTarget
                             color: availPoolCard.isPoolDropTarget ? root.theme.accentRed : root.theme.textMuted
                         }
@@ -609,7 +609,7 @@ ColumnLayout {
                                         horizontalAlignment: Text.AlignHCenter
                                         text: poolCard.modelData.icon
                                         font.family: root.font
-                                        font.pixelSize: 13
+                                        font.pixelSize: Style.px(13)
                                         color: poolCard.blockAccent
                                     }
 
@@ -617,7 +617,7 @@ ColumnLayout {
                                         anchors.verticalCenter: parent.verticalCenter
                                         text: poolCard.modelData.name
                                         font.family: root.font
-                                        font.pixelSize: 11
+                                        font.pixelSize: Style.px(11)
                                         font.bold: true
                                         color: root.theme.textPrimary
                                     }
